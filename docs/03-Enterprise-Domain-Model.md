@@ -85,5 +85,7 @@ Self-Service First	Business owners should configure and operate domains without 
 Offline First	Critical business functions continue offline and synchronize automatically when connectivity is restored.
 Intelligence Ready	Every domain can leverage Business Rules, Machine Learning and Generative AI through the Enterprise Intelligence Engine.
 Engine & Module Separation	Core Engines encapsulate reusable business processing, calculations, workflow orchestration, document generation, notifications, integrations, and intelligence services. Domain Modules provide the user-facing business functionality, tenant configuration, and industry-specific workflows by orchestrating the appropriate Core Engines. Domain Modules should never duplicate business logic that belongs in a Core Engine.
+Capability Reuse Before Creation:
+Before introducing a new business capability, developers (or AI coding assistants) must verify that an equivalent capability does not already exist within the platform. Existing capabilities should be extended through configuration or well-defined extension points rather than duplicated.
 ________________________________________
 
