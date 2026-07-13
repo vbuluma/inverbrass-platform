@@ -96,5 +96,16 @@ npm install drizzle-orm @supabase/supabase-js zod react-hook-form @hookform/vali
 5.	Create Structure & Documentation: Build out your directory skeleton exactly as outlined above and paste your .cursorrules in place.
 I can help you construct your foundational multi-tenant database blueprint inside src/db/schema/core.ts (CORE-001 & CORE-002), or we can write the unified configurations inside src/config/ for roles and menus. Which one would you like to handle first?
 
+Product Design Principles, containing the philosophies  defined:
+
+1. Self-Service First
+2. Mobile-First Experience
+3. Simplicity Over Feature Count
+4. Configuration Over Consulting
+5. Progressive Feature Disclosure
+6. CRM as a Shared Capability
+7. 80/20 Design-Build the features that solve 80% of SME needs with 20% of the complexity. Always ask, What is the simplest workflow that solves the business problem?"
+8. AI as a Guide, Not a Replacement
+
 [1] https://www.theglobeandmail.com
 
