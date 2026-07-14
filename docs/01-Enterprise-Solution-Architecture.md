@@ -106,5 +106,25 @@ Product Design Principles, containing the philosophies  defined below:
 7. 80/20 Design-Build the features that solve 80% of SME needs with 20% of the complexity. Always ask, What is the simplest workflow that solves the business problem?"
 8. AI as a Guide, Not a Replacement
 
+##5 – Platform Layer Architecture
+Layer 1 – Core Platform ServicesS
+Engine ID	Core Engine	Purpose
+ENG-001	Authentication Engine	Identity, Login, PIN, MFA
+ENG-002	Authorization Engine	Roles & Permissions
+ENG-003	Configuration Engine	Stores configurable behaviour
+ENG-004	Rules Engine	Executes deterministic business rules
+ENG-005	Workflow Engine	Maker-Checker, approvals
+ENG-006	Payment Engine	Cash, M-Pesa, Cards, Credit, Split Payments
+ENG-007	Receipting Engine	Receipts, Invoices, Credit Notes
+ENG-008	Reconciliation Engine	Cash balancing & payment reconciliation
+ENG-009	Notification Engine	SMS, Email, WhatsApp, Push
+ENG-010	Integration Engine	APIs, Daraja, Banks, eTIMS
+ENG-011	Reporting Engine	Operational & Management reports
+ENG-012	AI Engine	Rules → ML → GenAI
+ENG-013	Audit Engine	Immutable audit trail
+ENG-014	Offline Sync Engine	Offline-first synchronization
+ENG-015	Document Engine	PDF, Attachments, Contracts
+ENG-016	Search Engine	Global search
+
 [1] https://www.theglobeandmail.com
 
