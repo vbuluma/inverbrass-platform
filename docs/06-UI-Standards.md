@@ -9,6 +9,9 @@ Version	1.0
 Purpose	Defines the user experience principles, interface standards, reusable components and design guidelines that ensure a consistent, intuitive and mobile-first experience across all Industry Solutions.
 Scope	Entire InverBrass Business Platform
 Audience	Product Owner, UX Designers, Developers, AI Coding Assistants
+
+Principle	Description
+Cross-Platform Consistency	User interfaces shall provide a consistent experience across Android, iOS, and desktop browsers while remaining responsive to different screen sizes.
 ________________________________________
 2. Design Philosophy
 Principle	Description
