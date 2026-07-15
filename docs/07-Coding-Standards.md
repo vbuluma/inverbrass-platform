@@ -46,6 +46,8 @@ Composition Over Inheritance	Build reusable components through composition.
 Configuration Before Customization	Extend behaviour through configuration before code changes.
 Capability Reuse Before Creation	Reuse existing capabilities before introducing new ones.
 Engine & Module Separation	Business processing belongs in Core Engines; business workflows belong in Domain Modules.
+
+UI components shall be developed as responsive, standards-compliant web components without platform-specific logic unless explicitly approved.
 ________________________________________
 5. Naming Standards
 Item	Convention
