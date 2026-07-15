@@ -67,14 +67,17 @@ ________________________________________
 11. Learning Domain
 Business Domain	Purpose	Owning Capability	Key Business Entities	Used By	Configuration Driven
 SME Academy	Manage training programmes	SME Academy	Course, Enrollment, Lesson, Assessment, Certificate	SME Academy	Yes
+
+12. Programme & Field Operations Domain
+Support programme-driven operations, field activities, inspections, and outcome tracking across multiple industries.
 ________________________________________
-12. Enterprise Intelligence Domain
+13. Enterprise Intelligence Domain
 Business Domain	Purpose	Owning Capability	Key Business Entities	Used By	Configuration Driven
 Business Rules	Execute configurable business rules	Business Rules Engine	Rule, Condition, Action	All Industry Solutions	Yes
 Machine Learning	Predict outcomes and detect anomalies	Machine Learning Engine	Model, Prediction, Forecast	All Industry Solutions	Yes
 Generative AI	Provide conversational assistance and recommendations	Generative AI Engine	Prompt, Conversation, Recommendation	All Industry Solutions	Yes
 ________________________________________
-13. Domain Design Principles
+14. Domain Design Principles
 Principle	Description
 Single Ownership	Every business domain has one owning capability.
 Reuse First	Domains are reused across multiple industry solutions wherever possible.
