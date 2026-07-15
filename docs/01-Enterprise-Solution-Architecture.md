@@ -126,5 +126,10 @@ ENG-014	Offline Sync Engine	Offline-first synchronization
 ENG-015	Document Engine	PDF, Attachments, Contracts
 ENG-016	Search Engine	Global search
 
-[1] https://www.theglobeandmail.com
+| Principle |          Description                                                                  |
+------------------------------------------------------------------------------------- |
+| **Cross-Platform First** | InverBrass shall be delivered as a mobile-first Progressive Web Application (PWA) providing a consistent user experience across Android, iOS, and modern desktop browsers from a single codebase. |
+
+
+
 
