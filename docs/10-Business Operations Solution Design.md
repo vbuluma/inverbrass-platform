@@ -134,6 +134,28 @@ Inherited Shared Platform Services
 •	AI Engine 
 •	Reporting Engine 
 •	Workflow Engine 
+
+DOM-011 – Programme & Field Operations
+ID	Capability
+SC-039	Programme & Initiative Management
+SC-040	Community & Group Management
+SC-041	Activity & Schedule Management
+SC-042	Allocation & Distribution Management
+SC-043	Inspection & Field Operations
+SC-044	Production & Outcome Management
+
+
+Digital Forms & Surveys
+This would support:
+•	Farmer registration 
+•	Inspection checklists 
+•	Customer onboarding 
+•	School admission forms 
+•	Compliance forms 
+•	Asset inspections 
+•	Health assessments 
+•	Project monitoring
+
 (These are implemented as Core Engines in your architecture and consumed by all business domains rather than being business capabilities themselves.)
 
 3.2 Out of Scope (Version 1)
