@@ -130,6 +130,23 @@ ENG-016	Search Engine	Global search
 ------------------------------------------------------------------------------------- |
 | **Cross-Platform First** | InverBrass shall be delivered as a mobile-first Progressive Web Application (PWA) providing a consistent user experience across Android, iOS, and modern desktop browsers from a single codebase. |
 
+Technology Baseline (Version 1.0)
+This is the official approved technology stack
+1. Next.js
+2. TypeScript
+3. Supabase
+4. Drizzle
+5. Tailwind
+6. shadcn/ui
+7. PWA
+8. GitHub
+9. GitHubActions
+10. Cursor
+11. Playwright
+12. Vitest
+13. Pino
+14. Zod
 
+.
 
 
