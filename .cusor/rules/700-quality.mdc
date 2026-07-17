@@ -1,3 +1,219 @@
----
+description: "Quality engineering, testing standards, Definition of Ready (DoR), Definition of Done (DoD) and code quality requirements for the InverBrass Platform."
+globs: "*"
 alwaysApply: true
 ---
+
+# InverBrass Quality Standards
+
+Apply these standards whenever implementing, reviewing or testing software.
+
+---
+
+# Quality Philosophy
+
+Quality is designed into the product.
+
+It is not something added after development.
+
+Every implementation must improve:
+
+- Correctness
+- Reliability
+- Maintainability
+- Testability
+- Performance
+- Security
+- User Experience
+
+---
+
+# Definition of Ready (DoR)
+
+Development should not begin unless:
+
+- Business requirements are approved.
+- Functional Requirements are complete.
+- Business Rules are documented.
+- Acceptance Criteria are defined.
+- Dependencies are identified.
+- Assumptions are documented.
+- Scope is understood.
+- The active Build Pack is identified.
+
+If any of the above are unclear, request clarification before implementation.
+
+---
+
+# Definition of Done (DoD)
+
+A feature is complete only when:
+
+- Functional Requirements are implemented.
+- Business Rules are implemented.
+- Acceptance Criteria are satisfied.
+- Security requirements are met.
+- Code follows approved architecture.
+- Code passes linting.
+- Code passes formatting checks.
+- Tests pass successfully.
+- No known defects remain.
+- Documentation is updated where required.
+- No unnecessary files or orphan code remain.
+
+Working code alone is not considered complete.
+
+---
+
+# Code Quality
+
+Write code that is:
+
+- Readable
+- Maintainable
+- Consistent
+- Reusable
+- Self-documenting
+
+Prefer clarity over cleverness.
+
+---
+
+# Comments
+
+Every significant block of code should explain:
+
+- What it is doing.
+- Why it exists.
+- Any important assumptions.
+- Any important business rules.
+
+Avoid redundant comments that simply repeat the code.
+
+---
+
+# Testing
+
+Test the behaviour, not the implementation.
+
+Cover:
+
+- Normal scenarios
+- Boundary conditions
+- Validation failures
+- Security scenarios
+- Error handling
+
+---
+
+# Test Types
+
+Use appropriate testing levels:
+
+- Unit Tests
+- Integration Tests
+- End-to-End Tests
+
+Choose the simplest test that provides confidence.
+
+---
+
+# Build Verification
+
+Before considering work complete:
+
+- Verify the application builds successfully.
+- Verify no compilation errors exist.
+- Verify linting passes.
+- Verify formatting passes.
+
+Never submit code that does not build.
+
+---
+
+# Performance
+
+Verify that new implementations:
+
+- Avoid unnecessary database calls.
+- Avoid unnecessary API calls.
+- Avoid memory leaks.
+- Avoid excessive CPU usage.
+- Avoid unnecessary object creation.
+- Scale appropriately.
+
+Performance should be considered during implementation, not after deployment.
+
+---
+
+# Reliability
+
+Design software to:
+
+- Handle failures gracefully.
+- Recover where appropriate.
+- Prevent duplicate processing.
+- Preserve data integrity.
+
+---
+
+# Code Reviews
+
+Review every implementation for:
+
+- Correctness
+- Simplicity
+- Security
+- Maintainability
+- Performance
+- Reusability
+- Architectural compliance
+
+Recommend improvements separately from mandatory fixes.
+
+---
+
+# Refactoring
+
+Improve existing code when:
+
+- Readability increases.
+- Complexity decreases.
+- Maintainability improves.
+- Existing behaviour is preserved.
+
+Do not refactor unrelated code without approval.
+
+---
+
+# Technical Debt
+
+Avoid introducing technical debt.
+
+When unavoidable:
+
+- Document it.
+- Explain the reason.
+- Recommend future remediation.
+
+---
+
+# Documentation
+
+Update documentation whenever:
+
+- Architecture changes.
+- Public APIs change.
+- Configuration changes.
+- User behaviour changes.
+- Operational procedures change.
+
+Documentation should remain aligned with implementation.
+
+---
+
+# Engineering Principles
+
+Every completed feature should leave the codebase better than it was found.
+
+Quality is measured not only by working software, but by software that remains understandable, maintainable and reliable for many years.
+________________________________________

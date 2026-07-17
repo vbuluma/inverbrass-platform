@@ -1,3 +1,304 @@
----
+description: "Security architecture, secure coding, authentication, authorization and data protection standards for the InverBrass Platform."
+globs: "*"
 alwaysApply: true
 ---
+
+# InverBrass Security Standards
+
+Apply these standards whenever designing, implementing or reviewing software.
+
+---
+
+# Security Philosophy
+
+Security is a core quality attribute.
+
+Every implementation must protect:
+
+- Confidentiality
+- Integrity
+- Availability
+- Privacy
+- Auditability
+
+Security must be built into the platform from the beginning.
+
+---
+
+# Secure by Default
+
+Design secure defaults.
+
+Always:
+
+- Deny access unless explicitly permitted.
+- Validate all inputs.
+- Verify all permissions.
+- Encrypt sensitive data.
+- Record security-relevant events.
+
+Never rely on users to behave correctly.
+
+---
+
+# Authentication
+
+Authenticate every protected resource.
+
+Support enterprise authentication providers through approved authentication services.
+
+Never:
+
+- Store passwords in plain text.
+- Hardcode credentials.
+- Expose authentication tokens.
+- Bypass authentication for convenience.
+
+---
+
+# Authorization
+
+Authorization must be enforced on every protected operation.
+
+Always verify:
+
+- User identity
+- Assigned role
+- Permissions
+- Tenant ownership
+
+Never assume authorization because authentication succeeded.
+
+---
+
+# Multi-Tenant Security
+
+Tenant isolation is mandatory.
+
+Always:
+
+- Filter data by tenant.
+- Validate tenant ownership.
+- Prevent cross-tenant access.
+
+Never expose another tenant's information.
+
+---
+
+# Input Validation
+
+Treat all external input as untrusted.
+
+Validate:
+
+- API requests
+- Forms
+- Query parameters
+- Uploaded files
+- Imported data
+
+Reject invalid input early.
+
+---
+
+# Secrets Management
+
+Store secrets securely.
+
+Examples include:
+
+- API Keys
+- Database credentials
+- Access tokens
+- Encryption keys
+
+Never:
+
+- Commit secrets to source control.
+- Hardcode secrets.
+- Log secrets.
+
+Use secure environment configuration.
+
+---
+
+# Data Protection
+
+Protect sensitive information.
+
+Encrypt where appropriate:
+
+- Personal data
+- Financial information
+- Authentication data
+- Sensitive business information
+
+Collect only the data required for business purposes.
+
+---
+
+# Logging & Audit
+
+Maintain audit trails for security-sensitive operations.
+
+Examples include:
+
+- Login
+- Logout
+- Password changes
+- Permission changes
+- Financial approvals
+- Workflow approvals
+- Data exports
+- Administrative actions
+
+Audit logs should be immutable where practical.
+
+---
+
+# Error Handling
+
+Security-related errors must:
+
+- Be meaningful to authorized users.
+- Avoid exposing implementation details.
+- Avoid revealing system internals.
+
+Never expose:
+
+- Stack traces
+- SQL statements
+- Server configuration
+- Internal file paths
+
+---
+
+# File Upload Security
+
+Validate uploaded files.
+
+Verify:
+
+- File type
+- File size
+- File extension
+- Malware scanning where applicable
+
+Never execute uploaded content.
+
+---
+
+# Session Management
+
+Sessions should:
+
+- Expire appropriately.
+- Be invalidated after logout.
+- Use secure transport.
+- Protect against session fixation and hijacking.
+
+---
+
+# API Security
+
+Protect APIs using:
+
+- Authentication
+- Authorization
+- Rate limiting
+- Input validation
+- Secure transport (HTTPS)
+
+Never expose internal APIs publicly unless explicitly intended.
+
+---
+
+# OWASP Principles
+
+Follow current OWASP secure coding guidance.
+
+Protect against common vulnerabilities including:
+
+- Injection attacks
+- Broken authentication
+- Broken access control
+- Cross-Site Scripting (XSS)
+- Cross-Site Request Forgery (CSRF)
+- Security misconfiguration
+- Sensitive data exposure
+
+Review implementations against recognized security best practices.
+
+---
+
+# Privacy
+
+Design with privacy in mind.
+
+Support:
+
+- Data minimization
+- Consent where applicable
+- Auditability
+- Data retention policies
+- Secure deletion where required
+
+Respect applicable regulatory requirements.
+
+---
+
+# Dependency Security
+
+Use actively maintained dependencies.
+
+Monitor for known vulnerabilities.
+
+Remove unused packages.
+
+Avoid introducing unnecessary third-party libraries.
+
+---
+
+# Security Reviews
+
+Before completing a feature, verify:
+
+- Authentication implemented.
+- Authorization enforced.
+- Tenant isolation preserved.
+- Sensitive data protected.
+- Inputs validated.
+- Errors sanitized.
+- Audit logging implemented where required.
+
+---
+
+# Engineering Principles
+
+Security is everyone's responsibility.
+
+Every implementation should improve:
+
+- Confidentiality
+- Integrity
+- Availability
+- Privacy
+- Compliance
+- Auditability
+
+Protect customer data and platform trust above implementation convenience.
+________________________________________
+Senior Architect Review
+I rate this 10/10.
+Why I like this version
+Unlike many security guides, it doesn't tie us to a specific vendor or product. Instead, it enforces enduring security principles:
+•	Secure by default
+•	Least privilege
+•	Tenant isolation
+•	Defense in depth
+•	Privacy by design
+•	OWASP alignment
+•	Auditability
+These principles will still be valid if, years from now, InverBrass moves from Supabase Auth to Microsoft Entra ID, Keycloak, Auth0, or another identity provider.
+________________________________________
+

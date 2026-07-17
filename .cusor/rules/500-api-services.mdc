@@ -1,6 +1,3 @@
----
-alwaysApply: true
----
 description: "API, Server Actions, Route Handlers, service layer and integration standards for the InverBrass Platform."
 globs: "app/api/**/*, src/services/**/*, src/lib/**/*, **/actions/**/*"
 alwaysApply: false

@@ -1,3 +1,211 @@
+description: "Code review, architectural review and continuous improvement standards for the InverBrass Platform."
+globs: "*"
+alwaysApply: false
 ---
-alwaysApply: true
+
+# InverBrass Engineering Review Standards
+
+Apply these standards whenever reviewing, refactoring or evaluating existing code.
+
 ---
+
+# Review Philosophy
+
+The objective of a review is to improve the software.
+
+Reviews should:
+
+- Identify risks.
+- Improve maintainability.
+- Improve readability.
+- Improve security.
+- Improve performance.
+- Preserve correctness.
+
+Do not make changes merely for personal preference.
+
+---
+
+# Functional Review
+
+Verify that:
+
+- Functional Requirements are fully implemented.
+- Business Rules are correctly implemented.
+- Acceptance Criteria are satisfied.
+- No requested functionality is missing.
+- No unintended functionality has been introduced.
+
+---
+
+# Architecture Review
+
+Verify that:
+
+- Module boundaries are respected.
+- Layer separation is maintained.
+- No circular dependencies exist.
+- Shared platform services are reused.
+- No orphan code exists.
+- The implementation aligns with the approved Enterprise Architecture.
+
+Recommend improvements where appropriate.
+
+---
+
+# Code Quality Review
+
+Evaluate whether the implementation is:
+
+- Simple.
+- Readable.
+- Maintainable.
+- Reusable.
+- Consistent.
+
+Identify:
+
+- Duplicate logic.
+- Dead code.
+- Overly complex methods.
+- Excessive file sizes.
+- Poor naming.
+
+Recommend simplifications where practical.
+
+---
+
+# Security Review
+
+Verify:
+
+- Authentication is enforced.
+- Authorization is enforced.
+- Tenant isolation is preserved.
+- Sensitive data is protected.
+- Inputs are validated.
+- Secrets are handled securely.
+- Errors do not expose implementation details.
+
+---
+
+# Database Review
+
+Where applicable verify:
+
+- Referential integrity.
+- Appropriate indexing.
+- Efficient queries.
+- Correct transaction handling.
+- Proper pagination.
+- Soft delete implementation where required.
+
+Identify potential performance bottlenecks.
+
+---
+
+# Performance Review
+
+Look for:
+
+- Duplicate database queries.
+- N+1 query patterns.
+- Excessive API calls.
+- Memory leaks.
+- Excessive CPU usage.
+- Inefficient loops.
+- Unnecessary object creation.
+
+Recommend improvements.
+
+---
+
+# User Experience Review
+
+Verify:
+
+- Consistent UI.
+- Responsive design.
+- Accessibility considerations.
+- Clear validation.
+- Helpful error messages.
+- Minimal user effort.
+
+---
+
+# Testing Review
+
+Verify appropriate tests exist for:
+
+- Normal scenarios.
+- Boundary conditions.
+- Error handling.
+- Validation.
+- Security-sensitive behaviour.
+
+Identify missing test coverage.
+
+---
+
+# Documentation Review
+
+Verify documentation reflects implementation.
+
+Where applicable confirm updates to:
+
+- Architecture
+- APIs
+- Configuration
+- Build Packs
+- Operational procedures
+
+---
+
+# Technical Debt Review
+
+Identify:
+
+- Temporary workarounds.
+- TODO comments.
+- Deprecated patterns.
+- Unnecessary dependencies.
+- Areas requiring future improvement.
+
+Distinguish mandatory fixes from future enhancements.
+
+---
+
+# Review Report
+
+When reviewing code, provide findings grouped as:
+
+## Critical Issues
+
+Items that must be corrected before approval.
+
+## Recommended Improvements
+
+Items that improve quality but do not block approval.
+
+## Positive Observations
+
+Highlight good engineering practices that should be preserved.
+
+---
+
+# Engineering Principles
+
+A review should leave the software stronger than before.
+
+Protect:
+
+- Architecture
+- Security
+- Performance
+- Maintainability
+- Scalability
+- Simplicity
+
+The objective is continuous improvement, not criticism.
+________________________________________
+

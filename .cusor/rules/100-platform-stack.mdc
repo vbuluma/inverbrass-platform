@@ -1,6 +1,3 @@
----
-alwaysApply: true
----
 cursor/rules/100-platform-stack.mdc
 ---
 description: "Approved technology stack, project structure and development standards for the InverBrass Platform."

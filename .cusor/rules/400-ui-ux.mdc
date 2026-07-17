@@ -1,7 +1,3 @@
----
-alwaysApply: true
----
----
 description: "User Interface, User Experience, accessibility and interaction standards for the InverBrass Platform."
 globs: "app/**/*, components/**/*, src/components/**/*"
 alwaysApply: false

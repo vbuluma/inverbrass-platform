@@ -1,11 +1,4 @@
 ---
-alwaysApply: true
----
-Excellent. This is one of the most critical files because bad database design is almost impossible to fix later. I spent extra time thinking about this one because InverBrass is intended to support multiple industries for many years.
-________________________________________
-Save as:
-.cursor/rules/300-database.mdc
----
 description: "Database architecture, PostgreSQL, Supabase and Drizzle ORM standards for the InverBrass Platform."
 globs: "04-database/**/*, **/db/**/*, **/schema.ts, **/migrations/**/*"
 alwaysApply: false

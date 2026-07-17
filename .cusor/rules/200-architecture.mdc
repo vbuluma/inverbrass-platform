@@ -1,11 +1,6 @@
----
-alwaysApply: true
----
-________________________________________
----
 description: "Enterprise architecture, modular monolith design principles and implementation patterns for the InverBrass Platform."
 globs: "03-platform/**/*, app/**/*, src/**/*"
-alwaysApply: false
+alwaysApply: true
 ---
 
 # InverBrass Architecture Standards

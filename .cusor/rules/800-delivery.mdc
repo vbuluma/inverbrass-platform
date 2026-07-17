@@ -1,0 +1,256 @@
+---
+description: "Source control, Build Packs, delivery workflow, releases and engineering delivery standards for the InverBrass Platform."
+globs: "*"
+alwaysApply: false
+---
+
+# InverBrass Delivery Standards
+
+Apply these standards whenever implementing, modifying or delivering software.
+
+---
+
+# Delivery Philosophy
+
+Deliver software incrementally.
+
+Every delivery should:
+
+- Add measurable business value.
+- Maintain platform stability.
+- Preserve existing functionality.
+- Improve overall platform quality.
+
+Avoid large, uncontrolled changes.
+
+---
+
+# Build Pack Driven Development
+
+Development is organized around approved Build Packs.
+
+Always:
+
+- Identify the active Build Pack.
+- Implement only the approved scope.
+- Complete one Build Pack before starting another unless explicitly instructed.
+
+Do not introduce functionality from future Build Packs.
+
+---
+
+# Scope Control
+
+Remain within the requested scope.
+
+Avoid:
+
+- Scope creep.
+- Gold plating.
+- Premature optimization.
+- Unrequested features.
+
+Recommend future enhancements separately.
+
+---
+
+# Source Control
+
+Use Git for version control.
+
+Commit changes that are:
+
+- Small
+- Logical
+- Complete
+- Traceable
+
+Avoid large mixed-purpose commits.
+
+---
+
+# Commit Messages
+
+Write meaningful commit messages.
+
+Prefer:
+
+- feat:
+- fix:
+- refactor:
+- docs:
+- test:
+- chore:
+
+Explain the business purpose where appropriate.
+
+---
+
+# Branching
+
+Keep work isolated.
+
+Do not merge incomplete functionality into the main branch.
+
+Ensure branches remain synchronized with the latest approved baseline.
+
+---
+
+# Pull Requests
+
+Before requesting review:
+
+- Verify build success.
+- Verify tests pass.
+- Verify documentation is updated where required.
+- Verify scope matches the approved Build Pack.
+
+---
+
+# Code Reviews
+
+Every review should verify:
+
+- Functional correctness.
+- Architecture compliance.
+- Security.
+- Performance.
+- Maintainability.
+- Code readability.
+- Test coverage.
+
+Review quality is more important than review speed.
+
+---
+
+# Continuous Improvement
+
+Each implementation should improve the platform by:
+
+- Reducing duplication.
+- Increasing reuse.
+- Improving readability.
+- Simplifying maintenance.
+- Strengthening consistency.
+
+Leave the codebase better than it was found.
+
+---
+
+# Release Readiness
+
+Before considering a feature ready for release:
+
+- Functional Requirements implemented.
+- Business Rules implemented.
+- Acceptance Criteria satisfied.
+- Security verified.
+- Quality checks completed.
+- Documentation updated.
+- No critical defects remain.
+
+---
+
+# Deployment Readiness
+
+Software should be deployable at any time.
+
+Avoid:
+
+- Manual deployment dependencies.
+- Environment-specific code.
+- Hardcoded configuration.
+
+Configuration should be externalized.
+
+---
+
+# Configuration Management
+
+Separate:
+
+- Configuration
+- Secrets
+- Code
+- Environment-specific settings
+
+Never hardcode deployment values.
+
+---
+
+# Rollback Readiness
+
+Design deployments so they can be safely rolled back if necessary.
+
+Avoid irreversible deployment steps.
+
+---
+
+# Documentation
+
+Keep documentation synchronized with implementation.
+
+Update documentation whenever:
+
+- Features change.
+- Configuration changes.
+- Deployment processes change.
+- Operational procedures change.
+
+---
+
+# Engineering Principles
+
+Successful delivery is measured by:
+
+- Predictability.
+- Stability.
+- Traceability.
+- Maintainability.
+- Business value.
+
+Deliver software that the business can confidently adopt in production.
+```
+
+---
+
+# Senior Architect Review
+
+I rate this **10/10**.
+
+## One improvement I intentionally made
+
+Notice I **didn't** lock us into GitFlow, GitHub Flow, or Trunk-Based Development.
+
+At the beginning of the project you'll probably work directly on **main** because you're the only developer.
+
+Later, when InverBrass grows into a team of 10 or 20 engineers, you might adopt feature branches and pull requests.
+
+This rule supports both without needing to be rewritten.
+
+---
+
+# Only One Rule File Left
+
+After this, we create the final and, in my opinion, **the smartest** rule file:
+
+> **`900-reviewer.mdc`**
+
+This won't tell Cursor how to write code.
+
+It will tell Cursor **how to think like a Principal Engineer when reviewing code**.
+
+That file will make Cursor behave like an experienced reviewer who checks for:
+
+* Architectural violations
+* Performance issues
+* Memory leaks
+* Security weaknesses
+* Duplicate code
+* Poor naming
+* Build Pack compliance
+* Future scalability
+* Maintainability
+* Hidden technical debt
+
+I believe it will become one of the most valuable assets in the entire repository because it acts as the final quality gate before any code is accepted.
