@@ -1,0 +1,248 @@
+---
+alwaysApply: true
+---
+cursor/rules/100-platform-stack.mdc
+---
+description: "Approved technology stack, project structure and development standards for the InverBrass Platform."
+globs: "*"
+alwaysApply: true
+---
+
+# InverBrass Approved Platform Stack
+
+Use only the approved technologies unless explicitly instructed otherwise.
+
+---
+
+# Frontend
+
+Framework:
+- Next.js 15+ (App Router)
+
+Language:
+- TypeScript
+
+UI Framework:
+- React 19
+
+Styling:
+- Tailwind CSS
+
+UI Components:
+- shadcn/ui
+
+Icons:
+- Lucide React
+
+Forms:
+- React Hook Form
+- Zod validation
+
+State Management:
+- React Context for shared application state.
+- Server State through Next.js Server Components.
+- Avoid introducing Redux, MobX or other state libraries unless explicitly approved.
+
+Mobile Strategy:
+- Progressive Web App (PWA)
+- Mobile-first responsive design
+
+---
+
+# Backend
+
+Application Architecture:
+- Next.js Route Handlers
+- Next.js Server Actions
+- Modular Monolith architecture
+
+API Style:
+- REST APIs
+- JSON payloads
+
+Validation:
+- Zod
+
+Authentication:
+- Supabase Auth
+
+Authorization:
+- Role-Based Access Control (RBAC)
+
+File Storage:
+- Supabase Storage
+
+Background Processing:
+- Trigger only when approved.
+- Prefer lightweight scheduled jobs over unnecessary background services.
+
+---
+
+# Database
+
+# Database Platform
+Approved Database Engine:
+- PostgreSQL
+Current Managed Platform:
+- Supabase
+The application shall be designed so that PostgreSQL can be hosted on:
+- Supabase
+- Self-managed PostgreSQL
+- Azure Database for PostgreSQL
+- AWS RDS PostgreSQL
+- Google Cloud SQL
+- Any standards-compliant PostgreSQL deployment
+ORM:
+
+- Drizzle ORM
+
+Migration Tool:
+
+- Drizzle Kit
+
+
+Database Access Principles:
+- Parameterized queries only.
+- Never use raw SQL unless absolutely necessary.
+- Preserve referential integrity.
+- Design for multi-tenancy.
+
+---
+
+# Testing
+
+Unit Testing:
+- Vitest
+
+Integration Testing:
+- Vitest
+
+End-to-End Testing:
+- Playwright
+
+Linting:
+- ESLint
+
+Formatting:
+- Prettier
+
+---
+
+# Logging & Monitoring
+
+Application Logging:
+- Pino
+
+Error Handling:
+- Structured error responses.
+- Never expose internal implementation details.
+
+Monitoring:
+- Build with observability in mind.
+- Design code to support future monitoring and diagnostics.
+
+---
+
+# Integrations
+
+Primary Integrations:
+
+- Safaricom Daraja API
+- WhatsApp Business API
+- Email (SMTP/API)
+- SMS Gateway
+- REST APIs
+- Webhooks
+
+Build integrations through reusable service layers.
+
+---
+
+# AI
+
+Primary AI Assistant:
+- ChatGPT (Architecture, Design Review, Code Review)
+
+Primary Development Assistant:
+- Cursor AI
+
+AI Principles:
+- AI assists development.
+- AI does not replace engineering judgement.
+- Architectural decisions require human approval.
+
+---
+
+# Project Structure
+
+Follow the approved repository structure.
+
+Do not create alternative project structures.
+
+Respect module boundaries.
+
+Keep shared code inside approved shared libraries.
+
+Do not duplicate platform capabilities.
+
+---
+
+# Package Management
+
+Package Manager:
+- npm
+
+Only introduce new dependencies when:
+
+- They provide clear business value.
+- They are actively maintained.
+- They are compatible with the approved stack.
+- Existing platform capabilities cannot solve the problem.
+
+Always explain why a new dependency is required before recommending it.
+
+---
+
+# Prohibited Technologies
+
+Unless explicitly approved, do NOT introduce:
+
+- Angular
+- Vue
+- Svelte
+- Express.js
+- NestJS
+- Prisma ORM
+- MongoDB
+- MySQL
+- Firebase
+- Redux
+- MobX
+- Bootstrap
+- Material UI
+- jQuery
+
+Do not replace approved technologies with personal preferences.
+
+---
+
+# Engineering Philosophy
+
+Prefer:
+
+- Simplicity
+- Consistency
+- Reusability
+- Maintainability
+- Enterprise scalability
+
+Avoid:
+
+- Framework proliferation.
+- Duplicate libraries.
+- Experimental technologies in production.
+- Over-engineering.
+- Vendor lock-in where practical alternatives exist.
+
+The approved platform stack is the foundation of the InverBrass Platform and shall remain consistent across all Build Packs unless formally changed.
+________________________________________

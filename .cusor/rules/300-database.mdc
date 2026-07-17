@@ -1,0 +1,324 @@
+---
+alwaysApply: true
+---
+Excellent. This is one of the most critical files because bad database design is almost impossible to fix later. I spent extra time thinking about this one because InverBrass is intended to support multiple industries for many years.
+________________________________________
+Save as:
+.cursor/rules/300-database.mdc
+---
+description: "Database architecture, PostgreSQL, Supabase and Drizzle ORM standards for the InverBrass Platform."
+globs: "04-database/**/*, **/db/**/*, **/schema.ts, **/migrations/**/*"
+alwaysApply: false
+---
+
+# InverBrass Database Standards
+
+Apply these standards whenever designing, modifying or querying the database.
+
+---
+#Architectural principle
+The platform shall remain database-platform independent where practical.
+
+Application code should depend on repositories and services rather than database-specific features.
+
+Avoid vendor-specific features unless there is a measurable business benefit.
+
+Changes to the database platform should require minimal application changes.
+
+# Database Platform
+Approved Database Engine:
+- PostgreSQL
+Current Managed Platform:
+- Supabase
+The application shall be designed so that PostgreSQL can be hosted on:
+- Supabase
+- Self-managed PostgreSQL
+- Azure Database for PostgreSQL
+- AWS RDS PostgreSQL
+- Google Cloud SQL
+- Any standards-compliant PostgreSQL deployment
+ORM:
+
+- Drizzle ORM
+
+Migration Tool:
+
+- Drizzle Kit
+
+Use only the approved database technologies unless explicitly instructed otherwise.
+
+---
+
+# Database Design Principles
+
+Design for:
+- Maintainability
+- Scalability
+- Performance
+- Data Integrity
+- Security
+- Auditability
+- Multi-tenancy
+
+Never optimize prematurely at the expense of correctness.
+
+---
+
+# Data Integrity
+
+Always:
+
+- Use primary keys.
+- Use foreign key constraints.
+- Preserve referential integrity.
+- Apply appropriate unique constraints.
+- Use transactions where multiple updates must succeed or fail together.
+
+Never bypass database integrity rules.
+
+---
+
+# Multi-Tenancy
+
+Operational tables must support tenant isolation where applicable.
+
+Always consider:
+
+- tenant_id
+- Business ownership
+- Data segregation
+- Tenant-level security
+
+Never expose one tenant's data to another.
+
+---
+
+# Table Design
+
+Design tables with:
+
+- Clear naming conventions.
+- Appropriate data types.
+- Minimal redundancy.
+- Logical normalization.
+- Future extensibility.
+
+Avoid unnecessary nullable columns.
+
+Do not duplicate master data unless justified.
+
+---
+
+# Primary Keys
+
+Use UUIDs for primary keys unless a different strategy is formally approved.
+
+Avoid sequential IDs for externally exposed resources.
+
+---
+
+# Audit Fields
+
+Where applicable, include:
+
+- created_at
+- created_by
+- updated_at
+- updated_by
+- deleted_at
+- deleted_by
+
+Support soft deletes for business entities unless permanent deletion is explicitly required.
+
+---
+
+# Naming Standards
+
+Use:
+
+- snake_case for database objects.
+- Singular table names where practical.
+- Meaningful column names.
+
+Avoid abbreviations unless they are industry standard.
+
+---
+
+# Relationships
+
+Model relationships explicitly.
+
+Prefer:
+
+- One-to-Many
+- Many-to-One
+
+Use Many-to-Many relationships only where justified.
+
+Avoid unnecessary relationship complexity.
+
+---
+
+# Query Standards
+
+Always:
+
+- Use parameterized queries.
+- Use Drizzle ORM.
+- Optimize joins.
+- Select only required columns.
+- Limit returned data.
+
+Avoid:
+
+- SELECT *
+- Raw SQL unless absolutely necessary.
+- Duplicate queries.
+- N+1 query problems.
+
+---
+
+# Pagination
+
+Collections expected to grow over time must support pagination.
+
+Never load very large datasets into memory unnecessarily.
+
+---
+
+# Indexing
+
+Create indexes only where justified.
+
+Typical candidates include:
+
+- Foreign Keys
+- tenant_id
+- Frequently searched fields
+- Frequently filtered fields
+
+Avoid unnecessary indexes that slow writes.
+
+---
+
+# Transactions
+
+Use transactions whenever multiple related database operations must succeed or fail together.
+
+Maintain consistency.
+
+---
+
+# Performance
+
+Design queries for scalability.
+
+Prefer:
+
+- Efficient joins
+- Indexed lookups
+- Batch operations
+
+Avoid:
+
+- Full table scans where indexes should exist.
+- Duplicate database calls.
+- Excessive round trips.
+
+---
+
+# Security
+
+Never expose:
+
+- Internal database structure.
+- Raw SQL errors.
+- Sensitive information.
+
+Validate all external inputs before persistence.
+
+Use least-privilege database access.
+
+---
+
+# Migrations
+
+All schema changes must be implemented through Drizzle migrations.
+
+Migration principles:
+
+- Version controlled.
+- Reversible.
+- Tested before deployment.
+
+Never modify production schemas manually.
+
+---
+
+# Seed Data
+
+Seed data must:
+
+- Be repeatable.
+- Be deterministic.
+- Be environment appropriate.
+
+Separate:
+
+- Reference Data
+- Demo Data
+- Test Data
+
+Never seed production with demo data.
+
+---
+
+# Data Lifecycle
+
+Design for the complete lifecycle.
+
+Consider:
+
+- Creation
+- Update
+- Soft Delete
+- Restore
+- Archival
+- Retention
+- Purging
+
+Support regulatory and audit requirements.
+
+---
+
+# Documentation
+
+Document significant schema changes.
+
+Explain:
+
+- Why the change exists.
+- Business impact.
+- Migration considerations.
+
+Keep the logical data model aligned with implementation.
+
+---
+
+# Engineering Principles
+
+Every database change should improve:
+
+- Integrity
+- Performance
+- Security
+- Maintainability
+- Scalability
+- Auditability
+
+The database is a long-term enterprise asset.
+
+Protect its quality at all times.
+________________________________________
+
+

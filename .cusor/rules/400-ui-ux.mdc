@@ -1,0 +1,277 @@
+---
+alwaysApply: true
+---
+---
+description: "User Interface, User Experience, accessibility and interaction standards for the InverBrass Platform."
+globs: "app/**/*, components/**/*, src/components/**/*"
+alwaysApply: false
+---
+
+# InverBrass UI & UX Standards
+
+Apply these standards whenever designing or implementing user interfaces.
+
+---
+
+# Design Philosophy
+
+Every screen should be:
+
+- Simple
+- Intuitive
+- Consistent
+- Responsive
+- Accessible
+- Efficient
+
+Design for business users who spend many hours using the platform.
+
+Prioritize productivity over visual complexity.
+
+---
+
+# Mobile First
+
+Design mobile-first.
+
+Every screen must:
+
+- Work on phones.
+- Scale naturally to tablets.
+- Expand cleanly to desktop.
+
+Avoid desktop-only layouts.
+
+---
+
+# Responsive Design
+
+Ensure layouts adapt gracefully to different screen sizes.
+
+Avoid:
+
+- Horizontal scrolling.
+- Fixed-width layouts.
+- Content overflow.
+- Hidden functionality on smaller devices.
+
+---
+
+# User Journey
+
+Reduce user effort.
+
+Always:
+
+- Minimize clicks.
+- Minimize typing.
+- Minimize navigation.
+- Present the next logical action.
+
+Avoid unnecessary screens.
+
+---
+
+# Form Design
+
+Forms should be:
+
+- Clean.
+- Well grouped.
+- Easy to scan.
+- Easy to complete.
+
+Support:
+
+- Progressive disclosure.
+- Inline validation.
+- Helpful placeholder text.
+- Keyboard navigation.
+
+Avoid overwhelming users with excessive fields.
+
+---
+
+# Metadata-Driven Forms
+
+Where supported by the platform:
+
+- Generate forms from metadata.
+- Generate validation rules from metadata.
+- Generate field visibility from metadata.
+- Generate mandatory fields from metadata.
+
+Avoid hardcoded form behaviour where configuration exists.
+
+---
+
+# Validation
+
+Validate as early as possible.
+
+Display:
+
+- Clear validation messages.
+- Field-level guidance.
+- Actionable error messages.
+
+Never display technical errors to users.
+
+---
+
+# Navigation
+
+Navigation should be:
+
+- Predictable.
+- Consistent.
+- Easy to understand.
+
+Users should always know:
+
+- Where they are.
+- What they are doing.
+- What happens next.
+
+---
+
+# Workflow Experience
+
+Workflow screens should clearly display:
+
+- Current stage.
+- Current owner.
+- Status.
+- Pending actions.
+- Next step.
+-Page loading/Successful  icons
+
+Avoid hiding workflow information.
+
+---
+
+# Progress Tracking
+
+Long forms and multi-step processes should provide progress indicators.
+
+Where applicable display:
+
+- Completed sections.
+- Remaining sections.
+- Overall completion progress.
+
+Support tracker sidebars where appropriate.
+
+---
+
+# Tables
+
+Tables should support:
+
+- Sorting.
+- Searching.
+- Filtering.
+- Pagination.
+- Column resizing where practical.
+- Export where supported.
+
+Avoid excessive horizontal scrolling.
+
+---
+
+# Accessibility
+
+Design for accessibility.
+
+Support:
+
+- Keyboard navigation.
+- Screen readers where practical.
+- Sufficient colour contrast.
+- Meaningful labels.
+- Accessible form controls.
+
+Do not rely solely on colour to communicate meaning.
+---
+# Notifications
+Notifications should be:
+
+- Clear.
+- Concise.
+- Actionable.
+
+Differentiate:
+
+- Success
+- Information
+- Warning
+- Error
+
+Avoid unnecessary notifications.
+
+---
+
+# Consistency
+
+Reuse approved UI components.
+
+Maintain:
+
+- Consistent spacing.
+- Consistent typography.
+- Consistent colours.
+- Consistent icons.
+- Consistent button behaviour.
+
+Do not create multiple patterns for the same interaction.
+
+---
+
+# Performance
+
+Interfaces should feel responsive.
+
+Avoid:
+
+- Unnecessary page reloads.
+- Blocking operations.
+- Large rendering delays.
+
+Provide loading indicators where appropriate.
+
+---
+
+# Error Handling
+
+When errors occur:
+
+- Explain the problem.
+- Explain what the user can do.
+- Preserve entered information where possible.
+
+Never expose stack traces or technical implementation details.
+
+---
+
+# User Experience Principles
+
+Every screen should optimize for:
+
+- Simplicity
+- Speed
+- Consistency
+- Discoverability
+- Accessibility
+- Productivity
+
+Good UX reduces training requirements and increases user confidence.
+
+---
+
+# Engineering Principle
+
+Build interfaces that users enjoy working with every day—not interfaces that merely demonstrate technical capability.
+
+Every UI decision should improve usability, reduce cognitive load and support efficient business operations.
+________________________________________
+

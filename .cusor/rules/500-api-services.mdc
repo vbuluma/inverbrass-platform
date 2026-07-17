@@ -1,0 +1,246 @@
+---
+alwaysApply: true
+---
+description: "API, Server Actions, Route Handlers, service layer and integration standards for the InverBrass Platform."
+globs: "app/api/**/*, src/services/**/*, src/lib/**/*, **/actions/**/*"
+alwaysApply: false
+---
+# InverBrass API & Service Standards
+
+Apply these standards whenever implementing APIs, Server Actions, Route Handlers or integration services.
+
+---
+
+# Service Design
+
+Every service should:
+
+- Have a single responsibility.
+- Be reusable.
+- Be testable.
+- Be independent of UI implementation.
+- Encapsulate business operations.
+
+Avoid creating large "God Services."
+---
+# Business Logic
+Business rules belong in the service layer.
+
+Do not place business logic inside:
+
+- API routes
+- Route Handlers
+- Server Actions
+- UI Components
+- Utility functions
+
+Keep business rules centralized.
+
+---
+
+# API Principles
+
+Design APIs that are:
+
+- Consistent
+- Predictable
+- Secure
+- Versionable
+- Well documented
+
+Return structured JSON responses.
+
+---
+
+# Validation
+
+Validate every request.
+
+Use approved validation libraries.
+
+Validate:
+
+- Request body
+- Query parameters
+- Route parameters
+- Uploaded files
+
+Never trust client input.
+
+---
+
+# Authentication
+
+Authenticate every protected endpoint.
+
+Never assume authentication has already occurred.
+
+---
+
+# Authorization
+
+Verify permissions for every protected operation.
+
+Enforce Role-Based Access Control (RBAC).
+
+Users should only access resources they are authorized to view or modify.
+
+---
+
+# Error Handling
+
+Return meaningful error responses.
+
+Include:
+
+- Error code
+- User-friendly message
+- Correlation ID where applicable
+
+Never expose:
+
+- Stack traces
+- SQL errors
+- Internal implementation details
+
+---
+
+# Idempotency
+
+Operations that may be retried (such as payments or webhook callbacks) should be idempotent where appropriate.
+
+Prevent duplicate processing.
+
+---
+
+# Transactions
+
+Where multiple related operations occur:
+
+- Execute atomically.
+- Roll back on failure.
+
+Maintain business consistency.
+
+---
+
+# Integration Services
+
+External integrations must be isolated behind dedicated services.
+
+Examples include:
+
+- Payment providers
+- SMS gateways
+- Email providers
+- WhatsApp
+- AI providers
+- Government APIs
+
+Never scatter external API calls throughout the application.
+
+---
+
+# Retry Strategy
+
+Retry only when appropriate.
+
+Avoid infinite retry loops.
+
+Use exponential backoff for transient failures where applicable.
+
+---
+
+# Logging
+
+Log:
+
+- Business events
+- Integration failures
+- Unexpected exceptions
+
+Never log:
+
+- Passwords
+- Secrets
+- Authentication tokens
+- Personally identifiable information (PII)
+
+Use structured logging.
+
+---
+
+# Performance
+
+Design services for scalability.
+
+Avoid:
+
+- Duplicate API calls
+- Blocking operations
+- Excessive database round trips
+
+Use asynchronous processing where appropriate.
+
+---
+
+# API Versioning
+
+Design APIs to support future versioning.
+
+Avoid breaking existing consumers unnecessarily.
+
+---
+
+# Response Standards
+
+Responses should be:
+
+- Consistent
+- Predictable
+- Machine-readable
+
+Use standard HTTP status codes appropriately.
+
+---
+
+# Dependency Management
+
+Services should depend on abstractions rather than concrete implementations where practical.
+
+Keep external providers replaceable.
+
+Avoid vendor lock-in.
+
+---
+
+# Documentation
+
+Document:
+
+- Public APIs
+- Integration points
+- Request formats
+- Response formats
+- Authentication requirements
+
+Keep documentation aligned with implementation.
+
+---
+
+# Engineering Principles
+
+Every service should improve:
+
+- Maintainability
+- Reusability
+- Security
+- Performance
+- Reliability
+- Testability
+
+Services form the operational backbone of the InverBrass Platform.
+
+Design them to remain stable as business capabilities evolve.
+________________________________________
+

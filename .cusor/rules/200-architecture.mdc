@@ -1,0 +1,272 @@
+---
+alwaysApply: true
+---
+________________________________________
+---
+description: "Enterprise architecture, modular monolith design principles and implementation patterns for the InverBrass Platform."
+globs: "03-platform/**/*, app/**/*, src/**/*"
+alwaysApply: false
+---
+
+# InverBrass Architecture Standards
+
+Apply these standards whenever implementing application features.
+
+---
+
+# Architectural Style
+
+The InverBrass Platform follows a Modular Monolith architecture.
+
+Every module must:
+
+- Be highly cohesive.
+- Be loosely coupled.
+- Own its business capability.
+- Minimize dependencies on other modules.
+- Communicate through well-defined interfaces.
+- Be capable of future extraction into a microservice if business needs change.
+
+Do not introduce architectural shortcuts that compromise long-term maintainability.
+
+---
+
+# Module Boundaries
+
+Respect module ownership.
+
+Do not access another module's internal implementation directly.
+
+Use approved service interfaces or shared platform services.
+
+Business logic must remain inside the owning module.
+
+---
+
+# Layered Architecture
+
+Separate responsibilities clearly.
+
+Presentation Layer
+
+- UI Components
+- Pages
+- Layouts
+- Forms
+
+Application Layer
+
+- Server Actions
+- Route Handlers
+- Application Services
+
+Domain Layer
+
+- Business Rules
+- Domain Services
+- Validation
+- Business Policies
+
+Infrastructure Layer
+
+- Database
+- Storage
+- External APIs
+- Messaging
+- Email
+- SMS
+
+Do not mix responsibilities between layers.
+
+---
+
+# Business Logic
+
+Business rules belong inside domain services.
+
+Do not place business logic inside:
+
+- UI Components
+- Route Handlers
+- Database schema
+- Utility functions
+
+Keep business logic centralized.
+
+---
+
+# Shared Platform Services
+
+Build reusable platform capabilities.
+
+Examples include:
+
+- Authentication
+- Authorization
+- Notifications
+- Workflow
+- Audit
+- Reporting
+- File Management
+- Payments
+- Receipting
+- AI Services
+
+Avoid duplicating shared capabilities inside business modules.
+
+---
+
+# Configuration First
+
+Prefer configuration over code changes.
+
+Business users should be able to configure where appropriate:
+
+- Statuses
+- Categories
+- Approval workflows
+- Notification templates
+- Numbering formats
+- Business rules
+- Form metadata
+- Lookup values
+
+Avoid hardcoding configurable values.
+
+---
+
+# Metadata Driven Design
+
+Prefer metadata-driven implementation wherever possible.
+
+Suitable examples include:
+
+- Dynamic forms
+- Validation rules
+- Workflow routing
+- Approval matrices
+- Screen visibility
+- Business configuration
+
+Do not hardcode behaviour that is intended to vary by customer, business type or configuration.
+
+---
+
+# Multi-Tenancy
+
+Design every operational feature for multi-tenancy.
+
+Always consider:
+
+- Tenant isolation
+- Tenant configuration
+- Tenant security
+- Tenant data ownership
+
+Never expose data across tenants.
+
+---
+
+# Integration Principles
+
+External systems must communicate through dedicated integration services.
+
+Never scatter API calls throughout the application.
+
+Centralize:
+
+- Authentication
+- Retry logic
+- Error handling
+- Logging
+- Mapping
+- Rate limiting
+
+---
+
+# Error Handling
+
+Handle failures gracefully.
+
+Return meaningful messages.
+
+Do not expose:
+
+- Stack traces
+- SQL errors
+- Internal implementation details
+
+Always fail safely.
+
+---
+
+# Performance Principles
+
+Prefer efficient solutions.
+
+Avoid:
+
+- Duplicate queries
+- Duplicate processing
+- Unnecessary API calls
+- Large memory allocations
+
+Consider scalability during implementation.
+
+---
+
+# Code Organization
+
+Keep files focused.
+
+Prefer:
+
+- Small services
+- Small components
+- Small utility functions
+
+Avoid large "God classes" or oversized files with unrelated responsibilities.
+
+---
+
+# Dependency Management
+
+Before introducing a new dependency, verify:
+
+- The capability does not already exist.
+- The dependency is actively maintained.
+- The dependency aligns with the approved platform stack.
+- The dependency provides measurable value.
+
+Always justify new dependencies.
+
+---
+
+# Documentation
+
+When introducing significant architectural changes:
+
+- Explain the architectural decision.
+- Explain why it was chosen.
+- Update relevant documentation where applicable.
+
+Architecture documentation and implementation must remain aligned.
+
+---
+
+# Implementation Principles
+
+Every implementation should strive for:
+
+- Simplicity
+- Readability
+- Maintainability
+- Reusability
+- Scalability
+- Security
+- Performance
+- Testability
+
+Never trade long-term architecture for short-term convenience.
+________________________________________
+
