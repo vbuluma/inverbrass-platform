@@ -147,6 +147,14 @@ This is the official approved technology stack
 13. Pino
 14. Zod
 
-.
+Approved Technology Decisions
+ADR	Decision	Status
+ADR-001	Modular Monolith Architecture	Approved
+ADR-002	Next.js 15 as Application Framework	Approved
+ADR-003	PostgreSQL (Supabase) as Database	Approved
+ADR-004	Drizzle ORM	Approved
+ADR-005	PWA instead of Native Mobile	Approved
+ADR-006	GitHub as Source Control	Approved
+ADR-007	Cursor AI as Primary Development Tool	Approved
 
 
