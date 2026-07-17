@@ -62,8 +62,16 @@ Always:
 
 # Engineering Behaviour
 
-Before implementing any feature:
+Before implementing any feature, review:
 
+- Enterprise Architecture documentation
+- Approved Business Capability Model
+- Active Build Pack
+- Functional Requirements
+- Business Rules
+- Repository standards
+
+Do not duplicate functionality that already exists within the platform.
 - Understand the requirement.
 - Identify the affected Build Pack.
 - Review existing platform capabilities for reuse.
