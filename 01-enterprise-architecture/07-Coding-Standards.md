@@ -391,5 +391,18 @@ Database Standards Followed	✅
 .cursorrules Compliant	✅
 Tests Implemented	✅
 Business Documentation Added	✅
-________________________________________
 
+Engineering Principles
+
+Include:
+
+No Orphan Code
+Configuration over Customization
+Security by Design
+API First
+Test Automation
+Deployment Agnostic – The platform shall support Cloud, On-Premises, and Hybrid deployments through configuration rather than code changes.
+Reuse Before Create
+Modular Development
+Metadata Driven
+Logging Required
