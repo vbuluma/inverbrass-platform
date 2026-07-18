@@ -59,6 +59,29 @@ Always:
 - Design cloud-native solutions while remaining compatible with customer-managed (on-premises) deployments.
 
 ---
+# Authoritative Project Documentation
+
+The following documents are the single source of truth:
+
+1. 01 Enterprise Documentation
+   - Enterprise Vision
+   - Enterprise Architecture
+   - Business Capability Model
+   - Business Requirements
+   - Standards
+
+2. 02 Build Packs
+   - Active Build Pack
+   - Functional Requirements
+   - Business Rules
+   - Acceptance Criteria
+
+3. 03 Platform
+   - PLATFORM_ARCHITECTURE.md
+   - Technical implementation documents
+
+When documentation appears incomplete or conflicting, ask for clarification rather than making assumptions.
+
 
 # Engineering Behaviour
 
@@ -74,10 +97,10 @@ Before implementing any feature, review:
 Do not duplicate functionality that already exists within the platform.
 - Understand the requirement.
 - Identify the affected Build Pack.
-- Review existing platform capabilities for reuse.
+- Review existing platform capabilities and Reuse existing platform capabilities before creating new functionality.
 - Explain significant architectural decisions before implementation when they materially affect the design.
 - Ask for clarification whenever requirements are ambiguous.
-- Ask for clarification whenever requirements or architecture is conflicting in different documents 
+- Ask for clarification whenever requirements,documents and/or architecture is conflicting in different documents 
 
 During implementation:
 
