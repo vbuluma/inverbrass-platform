@@ -155,7 +155,7 @@ BR-008	Mandatory Validation	Business activation shall not proceed until all mand
 BR-009	Audit Configuration	Every onboarding action and configuration change shall be recorded within the Audit Engine.
 BR-010	Tenant Isolation	Business activation shall create a unique tenant with complete logical isolation from every other business.
 BR-011	Default Configuration	Where optional values are not supplied, the platform shall apply approved default configurations which remain editable after activation.
-BR-012	Branch Independence	Every branch shall inherit business defaults while allowing authorized branch-level configuration overrides where supported. However, owner should be able to view all branches on one pane of glass
+BR-012	Branch Independence	Every branch shall inherit business defaults while allowing authorized branch-level configuration overrides where supported. However, owner should be able to operate all branches on one pane of glass
 BR-013	Mobile First	Every onboarding activity shall be fully completable through the Progressive Web Application (PWA) on supported Android devices, iOS devices, and modern desktop browsers. The user experience shall be optimized for mobile while maintaining full desktop functionality.
 BR-014	Offline Support	Where internet connectivity is lost during onboarding, entered information shall be securely stored locally and synchronized once connectivity is restored.
 BR-015	Secure Activation	Business activation shall only occur after successful authentication and security validation of the Business Owner.
@@ -167,7 +167,7 @@ FR-002	The platform shall allow businesses to pause and resume onboarding withou
 FR-003	The platform shall support configurable industry templates managed through the Configuration Engine.
 FR-004	The platform shall automatically initialize default business configurations based on the selected industry template.
 FR-005	The platform shall support creation of one or more branches during onboarding.
-FR-006	The platform shall allow optional employee creation during onboarding.
+FR-006	The platform shall allow optional employee creation and assign roless(Suppervisor, Maker, checker)during onboarding.
 FR-007	The platform shall support Owner authentication using PIN and configurable recovery mechanisms as defined in Document 09.
 FR-008	The platform shall allow the Business Owner to enable or disable optional platform capabilities including AI, Loyalty, Notifications, and future premium services.
 FR-009	The platform shall validate mandatory information before business activation.
