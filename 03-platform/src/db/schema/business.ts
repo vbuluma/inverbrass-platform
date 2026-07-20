@@ -18,7 +18,7 @@ import {
       .references(() => businessType.id)
       .notNull(),
   
-    status: varchar("status", { length: 20 }).notNull(),
+    status_code: varchar("status_code", { length: 20 }).notNull(),
   
     country_code: varchar("country_code", { length: 2 }).notNull(),
   
