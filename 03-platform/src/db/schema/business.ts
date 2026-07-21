@@ -1,38 +1,52 @@
 import {
-    pgTable,
-    uuid,
-    varchar,
-    timestamp,
-  } from "drizzle-orm/pg-core";
-  
-  import { businessType } from "./business-type";
-  
-  export const business = pgTable("business", {
-    id: uuid("id").defaultRandom().primaryKey(),
-  
-    code: varchar("code", { length: 20 }).notNull().unique(),
-  
-    name: varchar("name", { length: 200 }).notNull(),
-  
-    business_type_id: uuid("business_type_id")
-      .references(() => businessType.id)
-      .notNull(),
-  
-    status_code: varchar("status_code", { length: 20 }).notNull(),
-  
-    country_code: varchar("country_code", { length: 2 }).notNull(),
-  
-    timezone: varchar("timezone", { length: 100 }).notNull(),
-  
-    created_at: timestamp("created_at", {
-      withTimezone: true,
-    })
-      .defaultNow()
-      .notNull(),
-  
-    updated_at: timestamp("updated_at", {
-      withTimezone: true,
-    })
-      .defaultNow()
-      .notNull(),
-  });
+  pgTable,
+  uuid,
+  varchar,
+  timestamp,
+} from "drizzle-orm/pg-core";
+
+import { businessType } from "./business-type";
+
+export const business = pgTable("business", {
+  // Primary Key
+  id: uuid("id").defaultRandom().primaryKey(),
+
+  // Business Code
+  code: varchar("code", { length: 20 })
+    .notNull()
+    .unique(),
+
+  // Business Name
+  name: varchar("name", { length: 200 })
+    .notNull(),
+
+  // Business Type
+  businessTypeId: uuid("business_type_id")
+    .references(() => businessType.id)
+    .notNull(),
+
+  // Business Status
+  statusCode: varchar("status_code", { length: 20 })
+    .notNull(),
+
+  // Country
+  countryCode: varchar("country_code", { length: 2 })
+    .notNull(),
+
+  // Time Zone
+  timezone: varchar("timezone", { length: 100 })
+    .notNull(),
+
+  // Audit Fields
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+  })
+    .defaultNow()
+    .notNull(),
+
+  updatedAt: timestamp("updated_at", {
+    withTimezone: true,
+  })
+    .defaultNow()
+    .notNull(),
+});
