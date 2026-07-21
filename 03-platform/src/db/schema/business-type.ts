@@ -7,11 +7,18 @@ import {
   timestamp,
 } from "drizzle-orm/pg-core";
 
+import { industry } from "./industry";
+
 export const businessType = pgTable("business_type", {
   // Primary Key
   id: uuid("id").defaultRandom().primaryKey(),
 
-  // Business Type Code (Unique)
+  // Parent Industry
+  industryId: uuid("industry_id")
+    .references(() => industry.id)
+    .notNull(),
+
+  // Unique Business Type Code
   code: varchar("code", { length: 50 })
     .notNull()
     .unique(),
@@ -24,14 +31,14 @@ export const businessType = pgTable("business_type", {
   description: varchar("description", { length: 500 }),
 
   // UI Icon Identifier
-  iconCode: varchar("icon", { length: 100 }),
+  iconCode: varchar("icon_code", { length: 100 }),
 
   // Display Order
   displayOrder: integer("display_order")
     .default(0)
     .notNull(),
 
-  // Status
+  // Active Flag
   isActive: boolean("is_active")
     .default(true)
     .notNull(),
