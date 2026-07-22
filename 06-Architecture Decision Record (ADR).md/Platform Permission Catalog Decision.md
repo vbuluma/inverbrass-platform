@@ -666,3 +666,22 @@ Makes permission ownership clear.
 One additional improvement before coding
 
 I recommend we add permission codes as constants (or an enum-like structure) later in the application layer rather than scattering string literals throughout the codebase. That way, services reference `PermissionCodes.CRM.Customer.Read` instead of typing raw strings, reducing errors and making refactoring easier.
+
+
+ADR-010 – Permission Constants
+Decision
+
+Application code shall never reference permission strings directly.
+
+Instead:
+
+PermissionCodes.TenantManagement.Business.Read
+
+shall be used throughout the platform.
+
+Rationale
+Compile-time safety
+Easier refactoring
+Prevents spelling errors
+Improves discoverability
+Better IDE auto-completion
