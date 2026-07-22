@@ -23,7 +23,7 @@ The onboarding experience shall be mobile-first, intuitive, and designed to mini
 Required Platform Foundation Capabilities
 
 Capability	Required	Status
-Authentication	Yes	⏳
+Authentication	Yes	✅ Architecture Complete
 Tenant Management	Yes	✅
 User Management	Yes	🟡
 Role & Permission	Yes	🟡
@@ -31,6 +31,20 @@ Configuration	Yes	✅
 Audit	Minimal	⏳
 File Management	No	N/A
 Subscription	No	N/A
+
+BP-001 Deliverable Progress Tracker
+
+Deliverable ID	Deliverable	Capability	Status
+D-004	Role Schema (role.ts)	Role & Permission Management	✅ Complete
+D-005	IAM Schema Freeze Review	Role & Permission Management	✅ Approved
+D-006	IAM Schema Freeze Corrections	Role & Permission Management	✅ Complete
+D-007	IAM Seed Design & Validation	Role & Permission Management	🟡 Design — Awaiting Approval
+D-009	Authentication & Business Onboarding Architecture	Authentication & Business Onboarding	✅ COMPLETED
+D-010	Security Profile & Security Question Schema Design	Authentication & Business Onboarding	⏳ Next
+D-011	Authentication Engine Service Implementation	Authentication & Business Onboarding	⏳ Planned
+D-012	Onboarding & Login UI Flows	Authentication & Business Onboarding	⏳ Planned
+
+Status key: ✅ COMPLETED/Complete/Approved · 🟡 In Progress · ⏳ Planned/Next
 
 Now BP-001 becomes the driver of the implementation.
 ________________________________________
