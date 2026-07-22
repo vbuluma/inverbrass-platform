@@ -8,6 +8,9 @@ export const AUTH_ERROR_CODES = {
   PROVIDER_ERROR: "PROVIDER_ERROR",
   SESSION_REQUIRED: "SESSION_REQUIRED",
   MUST_CHANGE_PASSWORD: "MUST_CHANGE_PASSWORD",
+  PHONE_ALREADY_REGISTERED: "PHONE_ALREADY_REGISTERED",
+  REGISTRATION_FAILED: "REGISTRATION_FAILED",
+  INVALID_SECURITY_QUESTION: "INVALID_SECURITY_QUESTION",
 } as const;
 
 export type AuthErrorCode =
@@ -36,4 +39,10 @@ export const AUTH_USER_MESSAGES = {
   PROVIDER_ERROR: "We could not complete authentication. Please try again.",
   SESSION_REQUIRED: "Your session has expired. Please sign in again.",
   MUST_CHANGE_PASSWORD: "You must change your password before continuing.",
+  PHONE_ALREADY_REGISTERED:
+    "This mobile number is already registered. Sign in or recover your account.",
+  REGISTRATION_FAILED:
+    "We could not complete registration. Please try again.",
+  INVALID_SECURITY_QUESTION:
+    "Select a valid security question and try again.",
 } as const;

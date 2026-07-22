@@ -3,7 +3,7 @@ import { permissions } from "./permissions";
 const allPermissionCodes = permissions.map((permission) => permission.code);
 
 export const rolePermissionMatrix: Record<string, readonly string[]> = {
-  BUSINESS_OWNER: allPermissionCodes,
+  OWNER: allPermissionCodes,
 
   SUPERVISOR: [
     "TenantManagement.Business.Read",

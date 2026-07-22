@@ -22,5 +22,9 @@ export const AUTH_COOKIE_OPTIONS = {
   maxAge: 60 * 60 * 24 * 7,
 };
 
+export const PLATFORM_ROLE_CODES = {
+  OWNER: "OWNER",
+} as const;
+
 export const LOCKOUT_THRESHOLD = 5;
 export const LOCKOUT_DURATION_MINUTES = 15;

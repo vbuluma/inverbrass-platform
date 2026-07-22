@@ -15,6 +15,7 @@ CREATE TABLE "business" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"code" varchar(20) NOT NULL,
 	"name" varchar(200) NOT NULL,
+	"phone_number" varchar(30) NOT NULL,
 	"business_type_id" uuid NOT NULL,
 	"status_code" varchar(20) NOT NULL,
 	"country_code" varchar(2) NOT NULL,

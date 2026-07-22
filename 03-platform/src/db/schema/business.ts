@@ -20,6 +20,9 @@ export const business = pgTable("business", {
   name: varchar("name", { length: 200 })
     .notNull(),
 
+  // Business Contact Phone (E.164)
+  phoneNumber: varchar("phone_number", { length: 30 }).notNull(),
+
   // Business Type
   businessTypeId: uuid("business_type_id")
     .references(() => businessType.id)

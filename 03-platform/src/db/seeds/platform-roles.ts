@@ -9,7 +9,7 @@ export type PlatformRoleSeed = {
 
 export const platformRoles: PlatformRoleSeed[] = [
   {
-    code: "BUSINESS_OWNER",
+    code: "OWNER",
     name: "Business Owner",
     description:
       "Full tenant administration including onboarding, activation, configuration, security, and user management.",

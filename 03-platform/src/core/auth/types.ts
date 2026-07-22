@@ -32,3 +32,27 @@ export type LoginResult = {
   requiresBusinessSelection: boolean;
   requiresPasswordChange: boolean;
 };
+
+export type OwnerRegistrationPayload = {
+  firstName: string;
+  lastName: string;
+  mobileNumber: string;
+  countryCode: string;
+  email?: string;
+  password: string;
+  confirmPassword: string;
+  securityQuestionId: string;
+  securityAnswer: string;
+  businessName: string;
+  businessTypeId: string;
+  businessCountryCode: string;
+  businessMobileNumber: string;
+  businessEmail?: string;
+};
+
+export type OwnerRegistrationResult = {
+  user: AuthSessionUser;
+  businessContext: CurrentBusinessContext;
+  businessId: string;
+  platformUserId: string;
+};

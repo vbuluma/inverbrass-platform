@@ -10,6 +10,7 @@ import {
   formatSeedSummary,
   seedIamReferenceData,
 } from "@/db/seeds/iam-seed";
+import { seedSecurityQuestions } from "@/db/seeds/security-questions-seed";
 
 async function runSeed() {
   const connectionString = process.env.DATABASE_URL;
@@ -30,6 +31,14 @@ async function runSeed() {
 
     console.log("IAM seed complete.");
     console.log(formatSeedSummary(results));
+
+    console.log("Seeding security question catalog...");
+
+    const securityQuestionResults = await seedSecurityQuestions(db);
+
+    console.log(
+      `securityQuestions: inserted=${securityQuestionResults.inserted}, updated=${securityQuestionResults.updated}, skipped=${securityQuestionResults.skipped}`
+    );
   } catch (error) {
     console.error("Seed failed:");
     console.error(error);

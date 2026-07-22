@@ -19,3 +19,5 @@ export { taxType } from "./tax-type";
 export { timezone } from "./timezones";
 export { userRole } from "./user-role";
 export { userSecurityProfile } from "./user-security-profile";
+export { securityQuestion } from "./security-question";
+export { userSecurityAnswer } from "./user-security-answer";

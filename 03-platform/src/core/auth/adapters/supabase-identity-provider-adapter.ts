@@ -8,6 +8,7 @@ import {
 import type {
   IdentityProviderAdapter,
   IdentityProviderSignInInput,
+  IdentityProviderSignUpInput,
   IdentityProviderUser,
 } from "@/core/auth/adapters/identity-provider-adapter";
 
@@ -25,6 +26,17 @@ function mapProviderError(errorMessage: string): AuthError {
     );
   }
 
+  if (
+    normalized.includes("already registered") ||
+    normalized.includes("user already exists")
+  ) {
+    return new AuthError(
+      AUTH_ERROR_CODES.PHONE_ALREADY_REGISTERED,
+      AUTH_USER_MESSAGES.PHONE_ALREADY_REGISTERED,
+      409
+    );
+  }
+
   return new AuthError(
     AUTH_ERROR_CODES.PROVIDER_ERROR,
     AUTH_USER_MESSAGES.PROVIDER_ERROR,
@@ -35,6 +47,29 @@ function mapProviderError(errorMessage: string): AuthError {
 export class SupabaseIdentityProviderAdapter
   implements IdentityProviderAdapter
 {
+  async signUp(
+    input: IdentityProviderSignUpInput
+  ): Promise<{ authUserId: string; session: NonNullable<Awaited<ReturnType<IdentityProviderAdapter["getSession"]>>> | null }> {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase.auth.signUp({
+      email: input.authEmailAlias,
+      password: input.password,
+      options: {
+        data: input.metadata,
+      },
+    });
+
+    if (error || !data.user) {
+      throw mapProviderError(error?.message ?? "Sign up failed.");
+    }
+
+    return {
+      authUserId: data.user.id,
+      session: data.session,
+    };
+  }
+
   async signInWithPassword(
     input: IdentityProviderSignInInput
   ): Promise<{ authUserId: string; session: NonNullable<Awaited<ReturnType<IdentityProviderAdapter["getSession"]>>> }> {
