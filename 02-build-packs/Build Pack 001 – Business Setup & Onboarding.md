@@ -19,6 +19,20 @@ ________________________________________
 The Business Setup & Onboarding feature enables an SME to register, configure, and activate their business in a guided self-service process.
 Upon completion, the business shall be immediately ready to perform operational activities such as creating products, registering customers, and processing sales.
 The onboarding experience shall be mobile-first, intuitive, and designed to minimize setup time while allowing advanced configuration where required.
+
+Required Platform Foundation Capabilities
+
+Capability	Required	Status
+Authentication	Yes	⏳
+Tenant Management	Yes	✅
+User Management	Yes	🟡
+Role & Permission	Yes	🟡
+Configuration	Yes	✅
+Audit	Minimal	⏳
+File Management	No	N/A
+Subscription	No	N/A
+
+Now BP-001 becomes the driver of the implementation.
 ________________________________________
 Principle	Description
 Mobile First	Design every feature for mobile devices before desktop.
