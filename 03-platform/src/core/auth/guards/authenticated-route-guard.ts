@@ -35,7 +35,6 @@
 import { redirect } from "next/navigation";
 
 import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 
 /**
  * Purpose:
@@ -49,14 +48,9 @@ import { createBusinessContextService } from "@/core/auth/services/business-cont
  */
 export async function assertAuthenticatedSession(): Promise<void> {
   const authService = createAuthService();
+  const user = await authService.getAuthenticatedUser();
 
-  try {
-    const user = await authService.getAuthenticatedUser();
-
-    if (!user) {
-      redirect("/login");
-    }
-  } catch {
+  if (!user) {
     redirect("/login");
   }
 }
@@ -84,42 +78,13 @@ export async function assertAuthenticatedSession(): Promise<void> {
  */
 export async function assertFirstLoginCompleted(): Promise<void> {
   const authService = createAuthService();
+  const user = await authService.getAuthenticatedUser();
 
-  try {
-    const user = await authService.getAuthenticatedUser();
-
-    if (!user) {
-      redirect("/login");
-    }
-
-    if (user.mustChangePassword) {
-      redirect("/first-login");
-    }
-  } catch {
+  if (!user) {
     redirect("/login");
   }
-}
 
-/**
- * Purpose:
- * Ensure a validated business context exists before rendering business module routes.
- *
- * Business Context:
- * Middleware only checks cookie presence on the Edge runtime. This guard delegates
- * signature validation to BusinessContextService so tampered cookies cannot reach
- * business modules.
- *
- * Outputs:
- * - Redirects to `/select-business` when validated context is unavailable
- *
- * Business Rules Implemented:
- * - ADR-012 — business modules require validated current business context
- */
-export async function assertBusinessContextAvailable(): Promise<void> {
-  const businessContextService = createBusinessContextService();
-  const context = await businessContextService.getCurrentContext();
-
-  if (!context) {
-    redirect("/select-business");
+  if (user.mustChangePassword) {
+    redirect("/first-login");
   }
 }

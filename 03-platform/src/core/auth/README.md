@@ -28,6 +28,5 @@ Authentication and onboarding services for BP-001, implemented per AD-009 §2.7.
 - Auth Server Actions: `src/core/auth/actions/auth-actions.ts`
 - First Login Server Actions: `src/core/auth/actions/first-login-actions.ts`
 - Route guards: `src/core/auth/guards/authenticated-route-guard.ts`
-- Edge cookie presence: `src/core/auth/session/business-context-cookie-presence.ts`
 - Onboarding Server Actions: `src/core/auth/actions/onboarding-actions.ts`
 - Middleware: `middleware.ts`
