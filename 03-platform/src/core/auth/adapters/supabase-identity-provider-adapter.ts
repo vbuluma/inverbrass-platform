@@ -128,6 +128,10 @@ export class SupabaseIdentityProviderAdapter
     };
   }
 
+  async verifyPassword(input: IdentityProviderSignInInput): Promise<void> {
+    await this.signInWithPassword(input);
+  }
+
   async updatePassword(newPassword: string): Promise<void> {
     const supabase = await createClient();
     const { error } = await supabase.auth.updateUser({

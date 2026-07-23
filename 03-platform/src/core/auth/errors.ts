@@ -11,6 +11,9 @@ export const AUTH_ERROR_CODES = {
   PHONE_ALREADY_REGISTERED: "PHONE_ALREADY_REGISTERED",
   REGISTRATION_FAILED: "REGISTRATION_FAILED",
   INVALID_SECURITY_QUESTION: "INVALID_SECURITY_QUESTION",
+  CURRENT_PASSWORD_INVALID: "CURRENT_PASSWORD_INVALID",
+  SECURITY_QUESTION_REQUIRED: "SECURITY_QUESTION_REQUIRED",
+  FIRST_LOGIN_NOT_REQUIRED: "FIRST_LOGIN_NOT_REQUIRED",
 } as const;
 
 export type AuthErrorCode =
@@ -45,4 +48,9 @@ export const AUTH_USER_MESSAGES = {
     "We could not complete registration. Please try again.",
   INVALID_SECURITY_QUESTION:
     "Select a valid security question and try again.",
+  CURRENT_PASSWORD_INVALID: "Your current password is incorrect.",
+  SECURITY_QUESTION_REQUIRED:
+    "Select a security question and provide an answer to continue.",
+  FIRST_LOGIN_NOT_REQUIRED:
+    "Password change is not required for your account.",
 } as const;

@@ -13,15 +13,21 @@ import {
 } from "@/core/auth/errors";
 import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import type { BusinessContextService } from "@/core/auth/services/business-context-service";
+import { createSecurityQuestionService } from "@/core/auth/services/security-question-service";
+import type { SecurityQuestionService } from "@/core/auth/services/security-question-service";
 import type {
   AuthSessionUser,
   ClientContext,
+  FirstLoginContext,
+  FirstLoginPayload,
+  FirstLoginResult,
   LoginCredentials,
   LoginResult,
 } from "@/core/auth/types";
 import {
   loginCredentialsSchema,
 } from "@/core/auth/validators/auth-validators";
+import { firstLoginSchema } from "@/core/auth/validators/first-login-validators";
 import {
   normalizeMobileNumber,
   toAuthEmailAlias,
@@ -47,10 +53,49 @@ type PlatformUserRecord = {
   lockedUntil: Date | null;
 };
 
+/**
+ * Purpose:
+ * Orchestrate authentication, session resolution, and first-login password change.
+ *
+ * Business Context:
+ * BP-001 requires secure login/logout, forced first-login password changes for provisioned
+ * users, and audit emission without storing credentials in platform tables.
+ *
+ * Architecture Dependency:
+ * AD-009 Authentication & Business Onboarding
+ *
+ * Implementation Package:
+ * IP-001 (foundation), IP-004 (first login)
+ *
+ * Responsibilities:
+ * - Login and logout orchestration
+ * - Authenticated user resolution from Supabase session + platform tables
+ * - First-login password change orchestration
+ * - Authentication audit event emission
+ *
+ * Non-Responsibilities:
+ * - Owner registration (OnboardingService)
+ * - Business context ownership (BusinessContextService)
+ * - Security answer hashing (SecurityQuestionService)
+ * - Route protection (authenticated-route-guard)
+ *
+ * Dependencies:
+ * - IdentityProviderAdapter, BusinessContextService, SecurityQuestionService
+ * - Drizzle ORM platform tables, AuthenticationAuditEmitter
+ *
+ * Business Rules Implemented:
+ * - AD-009 §3.4 — first-login detection and completion
+ * - AD-009 §3.5 — login orchestration and lockout handling
+ * - ADR-010 — mobile username via E.164 alias
+ *
+ * Extension Points:
+ * - Voluntary password change and recovery delegate to future IP packages
+ */
 export class AuthService {
   constructor(
     private readonly identityProvider: IdentityProviderAdapter = createIdentityProviderAdapter(),
-    private readonly businessContextService: BusinessContextService = createBusinessContextService()
+    private readonly businessContextService: BusinessContextService = createBusinessContextService(),
+    private readonly securityQuestionService: SecurityQuestionService = createSecurityQuestionService()
   ) {}
 
   async login(
@@ -150,11 +195,18 @@ export class AuthService {
     const sessionUser = this.toAuthSessionUser(platformUserRecord);
 
     if (platformUserRecord.mustChangePassword) {
+      const initialization =
+        await this.businessContextService.initializeContextForUser(
+          platformUserRecord.id,
+          clientContext
+        );
+
       await getAuthenticationAuditEmitter().emit({
         eventType: AUTHENTICATION_AUDIT_EVENT_TYPES.LOGIN_SUCCESS,
         outcome: "SUCCESS",
         timestamp: new Date(),
         platformUserId: platformUserRecord.id,
+        businessId: initialization.context?.businessId,
         clientContext,
         metadata: {
           requiresPasswordChange: true,
@@ -163,8 +215,8 @@ export class AuthService {
 
       return {
         user: sessionUser,
-        businessContext: null,
-        requiresBusinessSelection: false,
+        businessContext: initialization.context,
+        requiresBusinessSelection: initialization.requiresBusinessSelection,
         requiresPasswordChange: true,
       };
     }
@@ -278,6 +330,231 @@ export class AuthService {
         401
       );
     }
+  }
+
+  /**
+   * Purpose:
+   * Load first-login screen state for an authenticated user.
+   *
+   * Business Context:
+   * The first-login page needs to know whether security question setup is required
+   * while preserving the active business context established at login.
+   *
+   * Inputs:
+   * - None — reads the current authenticated session user
+   *
+   * Outputs:
+   * - FirstLoginContext with user, business context, and security question requirement
+   *
+   * Exceptions:
+   * - AuthError when session is missing or first login is not required
+   *
+   * Business Rules Implemented:
+   * - AD-009 §3.4 — security question captured only when not yet configured
+   */
+  async getFirstLoginContext(): Promise<FirstLoginContext> {
+    const user = await this.getAuthenticatedUser();
+
+    if (!user) {
+      throw new AuthError(
+        AUTH_ERROR_CODES.SESSION_REQUIRED,
+        AUTH_USER_MESSAGES.SESSION_REQUIRED,
+        401
+      );
+    }
+
+    if (!user.mustChangePassword) {
+      throw new AuthError(
+        AUTH_ERROR_CODES.FIRST_LOGIN_NOT_REQUIRED,
+        AUTH_USER_MESSAGES.FIRST_LOGIN_NOT_REQUIRED
+      );
+    }
+
+    const businessContext = await this.businessContextService.getCurrentContext();
+    const requiresSecurityQuestion =
+      !(await this.securityQuestionService.hasStoredAnswer(user.platformUserId));
+
+    return {
+      user,
+      businessContext,
+      requiresSecurityQuestion,
+    };
+  }
+
+  /**
+   * Purpose:
+   * Complete forced first-login password change and optional security question setup.
+   *
+   * Business Context:
+   * Employees provisioned with a temporary password must set a permanent password,
+   * configure security Q&A when missing, and continue with uninterrupted business context.
+   *
+   * Inputs:
+   * - payload — current password, new password, optional security Q&A
+   * - clientContext — optional request metadata for audit enrichment
+   *
+   * Outputs:
+   * - FirstLoginResult with refreshed user and preserved business context
+   *
+   * Exceptions:
+   * - AuthError for validation, invalid current password, or missing security question
+   *
+   * Business Rules Implemented:
+   * - AD-009 §2.10 — BP-001 password policy
+   * - AD-009 §3.4.2 — current password validation and security answer hashing
+   * - IP-004 — business context remains active; no re-login required
+   */
+  async completeFirstLogin(
+    payload: FirstLoginPayload,
+    clientContext?: ClientContext
+  ): Promise<FirstLoginResult> {
+    const parsed = firstLoginSchema.safeParse(payload);
+
+    if (!parsed.success) {
+      throw new AuthError(
+        AUTH_ERROR_CODES.INVALID_INPUT,
+        parsed.error.issues[0]?.message ?? AUTH_USER_MESSAGES.INVALID_INPUT
+      );
+    }
+
+    const user = await this.getAuthenticatedUser();
+
+    if (!user) {
+      throw new AuthError(
+        AUTH_ERROR_CODES.SESSION_REQUIRED,
+        AUTH_USER_MESSAGES.SESSION_REQUIRED,
+        401
+      );
+    }
+
+    if (!user.mustChangePassword) {
+      throw new AuthError(
+        AUTH_ERROR_CODES.FIRST_LOGIN_NOT_REQUIRED,
+        AUTH_USER_MESSAGES.FIRST_LOGIN_NOT_REQUIRED
+      );
+    }
+
+    const requiresSecurityQuestion =
+      !(await this.securityQuestionService.hasStoredAnswer(user.platformUserId));
+
+    if (requiresSecurityQuestion) {
+      if (!parsed.data.securityQuestionId || !parsed.data.securityAnswer) {
+        throw new AuthError(
+          AUTH_ERROR_CODES.SECURITY_QUESTION_REQUIRED,
+          AUTH_USER_MESSAGES.SECURITY_QUESTION_REQUIRED
+        );
+      }
+    }
+
+    const authEmailAlias = toAuthEmailAlias(user.phoneNumber);
+
+    try {
+      await this.identityProvider.verifyPassword({
+        authEmailAlias,
+        password: parsed.data.currentPassword,
+      });
+    } catch (error) {
+      if (error instanceof AuthError) {
+        throw new AuthError(
+          AUTH_ERROR_CODES.CURRENT_PASSWORD_INVALID,
+          AUTH_USER_MESSAGES.CURRENT_PASSWORD_INVALID,
+          401
+        );
+      }
+
+      throw error;
+    }
+
+    await this.identityProvider.updatePassword(parsed.data.newPassword);
+
+    const existingBusinessContext =
+      await this.businessContextService.getCurrentContext();
+
+    const db = getDb();
+
+    /**
+     * Transaction required because security answer insert and must_change_password=false
+     * must succeed together. Rollback restores the prior profile row and removes any
+     * partial answer insert, keeping user_security_profile as the single source of truth.
+     */
+    await db.transaction(async (tx) => {
+      if (requiresSecurityQuestion) {
+        await this.securityQuestionService.hashAndStoreAnswer(
+          user.platformUserId,
+          parsed.data.securityQuestionId!,
+          parsed.data.securityAnswer!,
+          tx
+        );
+      }
+
+      await tx
+        .insert(userSecurityProfile)
+        .values({
+          platformUserId: user.platformUserId,
+          mustChangePassword: false,
+        })
+        .onConflictDoUpdate({
+          target: userSecurityProfile.platformUserId,
+          set: {
+            mustChangePassword: false,
+            updatedAt: new Date(),
+          },
+        });
+    });
+
+    await this.updateLastLogin(user.platformUserId);
+
+    const refreshedUser = await this.getAuthenticatedUser();
+
+    if (!refreshedUser) {
+      throw new AuthError(
+        AUTH_ERROR_CODES.PROVIDER_ERROR,
+        AUTH_USER_MESSAGES.PROVIDER_ERROR,
+        500
+      );
+    }
+
+    let businessContext = existingBusinessContext;
+    let requiresBusinessSelection = false;
+
+    if (!businessContext) {
+      const initialization =
+        await this.businessContextService.initializeContextForUser(
+          user.platformUserId,
+          clientContext
+        );
+      businessContext = initialization.context;
+      requiresBusinessSelection = initialization.requiresBusinessSelection;
+    }
+
+    const auditTimestamp = new Date();
+
+    await getAuthenticationAuditEmitter().emit({
+      eventType: AUTHENTICATION_AUDIT_EVENT_TYPES.PASSWORD_CHANGED,
+      outcome: "SUCCESS",
+      timestamp: auditTimestamp,
+      platformUserId: user.platformUserId,
+      businessId: businessContext?.businessId,
+      clientContext,
+      metadata: {
+        firstLogin: true,
+      },
+    });
+
+    await getAuthenticationAuditEmitter().emit({
+      eventType: AUTHENTICATION_AUDIT_EVENT_TYPES.FIRST_LOGIN_COMPLETED,
+      outcome: "SUCCESS",
+      timestamp: auditTimestamp,
+      platformUserId: user.platformUserId,
+      businessId: businessContext?.businessId,
+      clientContext,
+    });
+
+    return {
+      user: refreshedUser,
+      businessContext,
+      requiresBusinessSelection,
+    };
   }
 
   private async loadPlatformUserByPhone(

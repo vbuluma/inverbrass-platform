@@ -95,6 +95,38 @@ export class SecurityQuestionService {
     });
   }
 
+  /**
+   * Purpose:
+   * Determine whether the user has already configured a security question answer.
+   *
+   * Business Context:
+   * Owner registration captures security Q&A during signup; employee first login
+   * captures it only when no answer exists yet.
+   *
+   * Inputs:
+   * - platformUserId — platform user identifier
+   *
+   * Outputs:
+   * - true when a hashed answer row exists; otherwise false
+   *
+   * Exceptions:
+   * - None — returns false when no row exists
+   *
+   * Business Rules Implemented:
+   * - AD-009 §3.7 — at most one stored answer per platform user
+   */
+  async hasStoredAnswer(platformUserId: string): Promise<boolean> {
+    const db = getDb();
+
+    const [row] = await db
+      .select({ id: userSecurityAnswer.id })
+      .from(userSecurityAnswer)
+      .where(eq(userSecurityAnswer.platformUserId, platformUserId))
+      .limit(1);
+
+    return Boolean(row);
+  }
+
   constantTimeCompare(left: string, right: string): boolean {
     const leftBuffer = Buffer.from(left);
     const rightBuffer = Buffer.from(right);

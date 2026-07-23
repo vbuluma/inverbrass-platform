@@ -5,6 +5,10 @@ export {
   getAuthenticatedUserAction,
 } from "@/core/auth/actions/auth-actions";
 export {
+  completeFirstLoginAction,
+  getFirstLoginContextAction,
+} from "@/core/auth/actions/first-login-actions";
+export {
   registerOwnerAction,
   getSecurityQuestionsAction,
 } from "@/core/auth/actions/onboarding-actions";
@@ -20,4 +24,7 @@ export type {
   AuthSessionUser,
   OwnerRegistrationPayload,
   OwnerRegistrationResult,
+  FirstLoginPayload,
+  FirstLoginResult,
+  FirstLoginContext,
 } from "@/core/auth/types";

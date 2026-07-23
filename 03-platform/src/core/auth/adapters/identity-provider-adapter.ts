@@ -26,5 +26,6 @@ export interface IdentityProviderAdapter {
   signOut(): Promise<void>;
   getSession(): Promise<Session | null>;
   getUser(): Promise<IdentityProviderUser | null>;
+  verifyPassword(input: IdentityProviderSignInInput): Promise<void>;
   updatePassword(newPassword: string): Promise<void>;
 }

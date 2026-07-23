@@ -56,3 +56,23 @@ export type OwnerRegistrationResult = {
   businessId: string;
   platformUserId: string;
 };
+
+export type FirstLoginPayload = {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+  securityQuestionId?: string;
+  securityAnswer?: string;
+};
+
+export type FirstLoginResult = {
+  user: AuthSessionUser;
+  businessContext: CurrentBusinessContext | null;
+  requiresBusinessSelection: boolean;
+};
+
+export type FirstLoginContext = {
+  user: AuthSessionUser;
+  businessContext: CurrentBusinessContext | null;
+  requiresSecurityQuestion: boolean;
+};
