@@ -1,3 +1,39 @@
+/**
+ * Purpose:
+ * Transport the current business context between requests via a signed httpOnly cookie.
+ *
+ * Business Context:
+ * The platform stores the selected business membership in a cookie so subsequent server
+ * requests can resolve current business context without re-querying membership on every
+ * navigation. Signature verification is performed in the service layer, not middleware.
+ *
+ * Architecture Dependency:
+ * AD-009 Authentication & Business Onboarding (ADR-012)
+ *
+ * Implementation Package:
+ * IP-001 (transport), IP-004 (runtime architecture fix)
+ *
+ * Responsibilities:
+ * - Encode and write signed business context payloads
+ * - Read raw cookie values for service-layer validation
+ * - Clear the transport cookie on logout or tamper detection
+ *
+ * Non-Responsibilities:
+ * - Route protection (middleware — presence only)
+ * - Membership validation (BusinessContextService)
+ * - Business rule enforcement
+ *
+ * Dependencies:
+ * - Node.js crypto (server runtime only — must not be imported by middleware)
+ * - Next.js cookies API
+ *
+ * Business Rules Implemented:
+ * - ADR-012 — signed transport prevents casual tampering; validation occurs in services
+ *
+ * Extension Points:
+ * - Payload shape follows CurrentBusinessContext and may gain metadata in future IPs
+ */
+
 import { createHmac, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
 
@@ -34,7 +70,22 @@ function encodeContext(context: CurrentBusinessContext): string {
   return `${payload}.${signature}`;
 }
 
-function decodeContext(rawValue: string): CurrentBusinessContext | null {
+/**
+ * Purpose:
+ * Decode and verify a signed business context transport payload.
+ *
+ * Business Context:
+ * BusinessContextService relies on this to detect tampering before trusting the cookie.
+ *
+ * Inputs:
+ * - rawValue — cookie value written by setBusinessContextCookie
+ *
+ * Outputs:
+ * - Parsed CurrentBusinessContext when signature and shape are valid; otherwise null
+ */
+function decodeSignedBusinessContext(
+  rawValue: string
+): CurrentBusinessContext | null {
   const [payload, signature] = rawValue.split(".");
 
   if (!payload || !signature) {
@@ -72,7 +123,14 @@ function decodeContext(rawValue: string): CurrentBusinessContext | null {
   }
 }
 
-export async function getBusinessContextFromCookie(): Promise<CurrentBusinessContext | null> {
+/**
+ * Purpose:
+ * Read and cryptographically validate the business context transport cookie.
+ *
+ * Business Context:
+ * BusinessContextService uses this as the authoritative read path on the server runtime.
+ */
+export async function readValidatedBusinessContextFromCookie(): Promise<CurrentBusinessContext | null> {
   const cookieStore = await cookies();
   const rawValue = cookieStore.get(BUSINESS_CONTEXT_COOKIE)?.value;
 
@@ -80,7 +138,7 @@ export async function getBusinessContextFromCookie(): Promise<CurrentBusinessCon
     return null;
   }
 
-  return decodeContext(rawValue);
+  return decodeSignedBusinessContext(rawValue);
 }
 
 export async function setBusinessContextCookie(
@@ -99,24 +157,20 @@ export async function clearBusinessContextCookie(): Promise<void> {
   cookieStore.delete(BUSINESS_CONTEXT_COOKIE);
 }
 
-export function parseBusinessContextFromRequest(
-  request: Request
-): CurrentBusinessContext | null {
-  const cookieHeader = request.headers.get("cookie");
+/**
+ * Purpose:
+ * Remove a tampered transport cookie so middleware presence checks stay aligned with
+ * service-layer validation outcomes.
+ */
+export async function clearBusinessContextCookieIfInvalid(): Promise<void> {
+  const cookieStore = await cookies();
+  const rawValue = cookieStore.get(BUSINESS_CONTEXT_COOKIE)?.value;
 
-  if (!cookieHeader) {
-    return null;
+  if (!rawValue) {
+    return;
   }
 
-  const match = cookieHeader
-    .split(";")
-    .map((part) => part.trim())
-    .find((part) => part.startsWith(`${BUSINESS_CONTEXT_COOKIE}=`));
-
-  if (!match) {
-    return null;
+  if (!decodeSignedBusinessContext(rawValue)) {
+    cookieStore.delete(BUSINESS_CONTEXT_COOKIE);
   }
-
-  const rawValue = decodeURIComponent(match.slice(BUSINESS_CONTEXT_COOKIE.length + 1));
-  return decodeContext(rawValue);
 }
