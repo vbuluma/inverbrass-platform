@@ -161,18 +161,12 @@ Reusability	Build reusable components and services.
 Minimal Complexity	Keep implementations as simple as possible while meeting requirements.
 Refactoring	Continuously improve code quality without changing behaviour.
 ________________________________________
-Excellent questions. Before I output the document, let me answer the second question because it's an important architectural decision.
-1. Should we include Security & Privacy here?
-Partially, yes—but not completely.
-Think of the documents like this:
-Document	Purpose
 07 – Development Standards & Coding Guidelines	How developers (and Cursor) should write code. Includes secure coding practices.
 08 – AI & Intelligence Architecture	Rules Engine → ML → GenAI architecture, governance and explainability.
 09 – Security, Privacy & Governance Architecture	Enterprise security, privacy, compliance, RBAC, encryption, backup, disaster recovery, data retention, audit, monitoring, secrets management, GDPR/Kenya Data Protection Act readiness, OWASP, etc.
 So Document 07 will contain Secure Coding Standards, while Document 09 will contain the enterprise security architecture.
 ________________________________________
 2. Every code explained for maintainability
-I think this is one of the best decisions you've made.
 As a solo founder using AI, your biggest risk isn't writing code—it's understanding it six months later.
 I recommend making this a non-negotiable standard.
 Instead of simply saying "comment your code," let's define an Explainability Standard.
@@ -377,6 +371,196 @@ For example:
  *
  * Output:
  * Creates payment allocation records and updates invoice balances.
+
+ CS-01-EXPLAINABLE CODE ACCEPTANCE CRITERIA-Mandatory Code Documentation Standard
+File Header (Required)
+
+Every non-trivial source file (services, repositories, engines, integrations, middleware, APIs, utilities, workflows) shall begin with a structured documentation block containing:
+
+Purpose
+Business Context
+Architecture Dependency (AD)
+Implementation Package (IP)
+Primary Responsibilities
+Explicit Non-Responsibilities
+Dependencies
+Business Rules Implemented
+Extension Points
+
+Example:
+
+/**
+ * ============================================================================
+ * Service: OnboardingService
+ * ============================================================================
+ *
+ * Purpose
+ * --------
+ * Registers a new Business Owner and provisions the initial Business.
+ *
+ * Business Context
+ * ----------------
+ * Implements owner self-registration for BP-001.
+ *
+ * Architecture
+ * ------------
+ * AD-009 Authentication & Business Onboarding
+ *
+ * Implementation Package
+ * ----------------------
+ * IP-002 Business Owner Registration
+ *
+ * Responsibilities
+ * ----------------
+ * • Create Platform User
+ * • Create Business
+ * • Create Membership
+ * • Assign OWNER role
+ * • Initialize Business Context
+ *
+ * Does NOT
+ * --------
+ * • Invite employees
+ * • Recover passwords
+ * • Create additional businesses
+ *
+ * ============================================================================
+ */
+2. Every public method must explain WHY
+
+Not just "what."
+
+Example:
+
+/**
+ * Purpose
+ * -------
+ * Ensures the supplied mobile number has not already been
+ * registered as a Platform User.
+ *
+ * Business Rule
+ * -------------
+ * Mobile number is the Platform Username
+ * (ADR-016) and therefore must be globally unique.
+ *
+ * Throws
+ * ------
+ * PHONE_ALREADY_REGISTERED
+ */
+3. Every transaction must explain why it exists
+
+Instead of
+
+db.transaction(...)
+
+Cursor should generate
+
+/**
+ * Atomic provisioning.
+ *
+ * All Business Owner records are created inside one transaction
+ * to guarantee consistency.
+ *
+ * If any step fails,
+ * the platform data is rolled back.
+ *
+ * NOTE
+ * ----
+ * Supabase Auth user is created outside the transaction.
+ */
+4. Every business rule must reference its source
+
+Instead of
+
+status: ACTIVE
+
+Cursor should produce
+
+// AD-009 A4
+// Newly registered businesses become ACTIVE immediately.
+status: BUSINESS_STATUS.ACTIVE
+
+Now you know where the rule came from.
+
+5. Require an Implementation Summary
+
+After every IP, Cursor should produce:
+
+Implementation Summary
+
+Architecture:
+AD-009
+
+Implementation Package:
+IP-002
+
+Files Added:
+...
+
+Files Modified:
+...
+
+Business Rules Implemented:
+...
+
+Known Technical Debt:
+...
+
+Future Packages Affected:
+...
+
+Open Questions:
+...
+
+Verification:
+Typecheck
+Lint
+
+This gives you an auditable trail.
+
+6. Add measurable acceptance criteria
+
+Right now you have:
+
+Explainable Code
+
+Change it to something like:
+
+Check	Required
+Every Service has file header	✅
+Every Engine has file header	✅
+Every Middleware documented	✅
+Every API documented	✅
+Every public method documented	✅
+Every DB transaction explained	✅
+Every business rule referenced	✅
+Every algorithm explained	✅
+Every integration documented	✅
+Every exported interface documented	✅
+
+Business Traceability in Code
+
+Every major service should declare the business capability it implements.
+
+For example:
+
+/**
+ * Capability
+ * ----------
+ * BP-001 – Business Setup & Onboarding
+ *
+ * Module
+ * ------
+ * Platform Foundation
+ *
+ * Architecture
+ * ------------
+ * AD-009
+ *
+ * Implementation Package
+ * ----------------------
+ * IP-002
+ */
 
 18. Architecture Compliance Checklist
 Before merging any feature, verify:
