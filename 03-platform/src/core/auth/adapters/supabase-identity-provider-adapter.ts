@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 import {
   AUTH_ERROR_CODES,
@@ -104,6 +105,16 @@ export class SupabaseIdentityProviderAdapter
     const { data, error } = await supabase.auth.getSession();
 
     if (error) {
+      const normalized = error.message.toLowerCase();
+
+      if (
+        normalized.includes("session") ||
+        normalized.includes("jwt") ||
+        normalized.includes("not authenticated")
+      ) {
+        return null;
+      }
+
       throw mapProviderError(error.message);
     }
 
@@ -112,9 +123,22 @@ export class SupabaseIdentityProviderAdapter
 
   async getUser(): Promise<IdentityProviderUser | null> {
     const supabase = await createClient();
-    const { data, error } = await supabase.auth.getUser();
+    const { data, error } = await supabase.auth.getUser().catch(() => ({
+      data: { user: null },
+      error: null,
+    }));
 
     if (error) {
+      const normalized = error.message.toLowerCase();
+
+      if (
+        normalized.includes("session") ||
+        normalized.includes("jwt") ||
+        normalized.includes("not authenticated")
+      ) {
+        return null;
+      }
+
       throw mapProviderError(error.message);
     }
 
@@ -135,6 +159,20 @@ export class SupabaseIdentityProviderAdapter
   async updatePassword(newPassword: string): Promise<void> {
     const supabase = await createClient();
     const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) {
+      throw mapProviderError(error.message);
+    }
+  }
+
+  async updatePasswordByAuthUserId(
+    authUserId: string,
+    newPassword: string
+  ): Promise<void> {
+    const supabase = createAdminClient();
+    const { error } = await supabase.auth.admin.updateUserById(authUserId, {
       password: newPassword,
     });
 

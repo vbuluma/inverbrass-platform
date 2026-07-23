@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
 
 import {
   AUTHENTICATION_AUDIT_EVENT_TYPES,
@@ -7,6 +7,7 @@ import { getAuthenticationAuditEmitter } from "@/core/audit/authentication-audit
 import {
   BUSINESS_MEMBERSHIP_STATUS,
   BUSINESS_STATUS,
+  PLATFORM_ROLE_CODES,
 } from "@/core/auth/constants";
 import {
   AUTH_ERROR_CODES,
@@ -16,6 +17,7 @@ import {
 import type {
   ClientContext,
   CurrentBusinessContext,
+  SelectableBusiness,
 } from "@/core/auth/types";
 import {
   clearBusinessContextCookie,
@@ -25,7 +27,11 @@ import {
 import { getDb } from "@/db/client";
 import { business } from "@/db/schema/business";
 import { businessMembership } from "@/db/schema/business-membership";
+import { businessType } from "@/db/schema/business-type";
+import { country } from "@/db/schema/country";
 import { platformUser } from "@/db/schema/platform-user";
+import { role } from "@/db/schema/role";
+import { userRole } from "@/db/schema/user-role";
 
 export type ActiveMembershipRecord = {
   membershipId: string;
@@ -183,6 +189,81 @@ export class BusinessContextService {
       isPrimary: row.isPrimary,
       businessStatusCode: row.businessStatusCode,
     }));
+  }
+
+  /**
+   * Purpose:
+   * Load enriched business options for the select-business screen.
+   *
+   * Business Context:
+   * Users with multiple memberships choose which business context to activate next.
+   *
+   * Inputs:
+   * - platformUserId — authenticated platform user identifier
+   *
+   * Outputs:
+   * - SelectableBusiness entries including owner and primary badges
+   *
+   * Business Rules Implemented:
+   * - ADR-012 — only active memberships on active businesses are selectable
+   */
+  async getSelectableBusinesses(
+    platformUserId: string
+  ): Promise<SelectableBusiness[]> {
+    const db = getDb();
+
+    const rows = await db
+      .select({
+        membershipId: businessMembership.id,
+        businessId: business.id,
+        businessName: business.name,
+        businessTypeName: businessType.name,
+        countryName: country.name,
+        isPrimary: businessMembership.isPrimary,
+        roleCode: role.code,
+      })
+      .from(businessMembership)
+      .innerJoin(business, eq(businessMembership.businessId, business.id))
+      .innerJoin(businessType, eq(business.businessTypeId, businessType.id))
+      .innerJoin(country, eq(business.countryCode, country.code))
+      .leftJoin(
+        userRole,
+        and(
+          eq(userRole.businessMembershipId, businessMembership.id),
+          isNull(userRole.effectiveTo)
+        )
+      )
+      .leftJoin(role, eq(userRole.roleId, role.id))
+      .where(
+        and(
+          eq(businessMembership.platformUserId, platformUserId),
+          eq(businessMembership.status, BUSINESS_MEMBERSHIP_STATUS.ACTIVE),
+          eq(business.statusCode, BUSINESS_STATUS.ACTIVE)
+        )
+      )
+      .orderBy(asc(business.name));
+
+    const businesses = new Map<string, SelectableBusiness>();
+
+    for (const row of rows) {
+      const existing = businesses.get(row.membershipId) ?? {
+        membershipId: row.membershipId,
+        businessId: row.businessId,
+        businessName: row.businessName,
+        businessTypeName: row.businessTypeName,
+        countryName: row.countryName,
+        isOwner: false,
+        isPrimary: row.isPrimary,
+      };
+
+      if (row.roleCode === PLATFORM_ROLE_CODES.OWNER) {
+        existing.isOwner = true;
+      }
+
+      businesses.set(row.membershipId, existing);
+    }
+
+    return Array.from(businesses.values());
   }
 
   private assertMembershipAccess(membership: {

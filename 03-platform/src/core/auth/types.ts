@@ -76,3 +76,55 @@ export type FirstLoginContext = {
   businessContext: CurrentBusinessContext | null;
   requiresSecurityQuestion: boolean;
 };
+
+export type OwnerRegistrationUiPayload = {
+  businessName: string;
+  businessTypeId: string;
+  countryCode: string;
+  mobileNumber: string;
+  password: string;
+  confirmPassword: string;
+  securityQuestionId: string;
+  securityAnswer: string;
+};
+
+export type RecoveryInitiationPayload = {
+  mobileNumber: string;
+  countryCode: string;
+};
+
+export type RecoveryInitiationResult = {
+  securityQuestionText: string;
+  mobileNumber: string;
+  countryCode: string;
+};
+
+export type RecoveryCompletionPayload = {
+  mobileNumber: string;
+  countryCode: string;
+  securityAnswer: string;
+  newPassword: string;
+  confirmPassword: string;
+};
+
+export type SelectableBusiness = {
+  membershipId: string;
+  businessId: string;
+  businessName: string;
+  businessTypeName: string;
+  countryName: string;
+  isOwner: boolean;
+  isPrimary: boolean;
+};
+
+export type CountryOption = {
+  code: string;
+  name: string;
+  phoneCode: string;
+};
+
+export type BusinessTypeOption = {
+  id: string;
+  name: string;
+  code: string;
+};

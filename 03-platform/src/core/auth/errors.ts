@@ -14,6 +14,9 @@ export const AUTH_ERROR_CODES = {
   CURRENT_PASSWORD_INVALID: "CURRENT_PASSWORD_INVALID",
   SECURITY_QUESTION_REQUIRED: "SECURITY_QUESTION_REQUIRED",
   FIRST_LOGIN_NOT_REQUIRED: "FIRST_LOGIN_NOT_REQUIRED",
+  RECOVERY_USER_NOT_FOUND: "RECOVERY_USER_NOT_FOUND",
+  RECOVERY_ANSWER_INVALID: "RECOVERY_ANSWER_INVALID",
+  RECOVERY_NOT_CONFIGURED: "RECOVERY_NOT_CONFIGURED",
 } as const;
 
 export type AuthErrorCode =
@@ -53,4 +56,10 @@ export const AUTH_USER_MESSAGES = {
     "Select a security question and provide an answer to continue.",
   FIRST_LOGIN_NOT_REQUIRED:
     "Password change is not required for your account.",
+  RECOVERY_USER_NOT_FOUND:
+    "We could not find an account matching those details.",
+  RECOVERY_ANSWER_INVALID:
+    "The security answer you entered is incorrect.",
+  RECOVERY_NOT_CONFIGURED:
+    "Password recovery is not available for this account.",
 } as const;

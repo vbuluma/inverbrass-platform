@@ -28,4 +28,8 @@ export interface IdentityProviderAdapter {
   getUser(): Promise<IdentityProviderUser | null>;
   verifyPassword(input: IdentityProviderSignInInput): Promise<void>;
   updatePassword(newPassword: string): Promise<void>;
+  updatePasswordByAuthUserId(
+    authUserId: string,
+    newPassword: string
+  ): Promise<void>;
 }
