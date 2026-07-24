@@ -29,6 +29,13 @@
       "when": 1784564588804,
       "tag": "0003_ip006_configuration_metadata",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1784564588805,
+      "tag": "0004_currency_reference",
+      "breakpoints": true
     }
   ]
 }

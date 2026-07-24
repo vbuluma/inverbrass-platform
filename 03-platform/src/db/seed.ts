@@ -1,7 +1,17 @@
-import { config } from "dotenv";
+/**
+ * Purpose:
+ * Seed IAM, security-question, and currency reference data.
+ *
+ * Why the shared env loader is imported first:
+ * Ensures `DATABASE_URL` is read from `.env.local` (then `.env`) consistently
+ * with migrate and other Node utility scripts.
+ *
+ * Non-responsibilities:
+ * - Schema migrations
+ * - Business transaction seeding
+ */
 
-config({ path: ".env.local" });
-config();
+import "@/lib/env/load-env";
 
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
@@ -14,6 +24,9 @@ import { seedCurrencies } from "@/db/seeds/currencies-seed";
 import { seedSecurityQuestions } from "@/db/seeds/security-questions-seed";
 
 async function runSeed() {
+  // ----------------------------------------------------
+  // DATABASE_URL must already be available via load-env.
+  // ----------------------------------------------------
   const connectionString = process.env.DATABASE_URL;
 
   if (!connectionString) {

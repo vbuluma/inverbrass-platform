@@ -74,6 +74,7 @@ const REQUIRED_FILES = [
   "src/db/seeds/currencies-seed.ts",
   "drizzle/0002_ip006_business_setup.sql",
   "drizzle/0003_ip006_configuration_metadata.sql",
+  "drizzle/0004_currency_reference.sql",
 ] as const;
 
 type CheckResult = {
@@ -182,6 +183,13 @@ function checkStepCatalogue(): CheckResult[] {
     {
       name: "catalogue:wizardVersion",
       ok: SETUP_WIZARD_VERSION === "1.0.0",
+    },
+    {
+      name: "migration:currencyTableInChain",
+      ok: existsSync(
+        path.join(ROOT, "drizzle/0004_currency_reference.sql")
+      ),
+      detail: "currency CREATE TABLE must be in migration chain for clean DBs",
     },
   ];
 }
