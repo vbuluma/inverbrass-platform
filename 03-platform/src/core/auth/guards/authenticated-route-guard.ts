@@ -123,3 +123,48 @@ export async function assertBusinessContextAvailable(): Promise<void> {
     redirect("/select-business");
   }
 }
+
+/**
+ * Purpose:
+ * Block operational modules until the current business is ACTIVE.
+ *
+ * Business Context:
+ * DRAFT businesses may only use the setup wizard (IP-006 BR-013).
+ *
+ * Outputs:
+ * - Redirects to `/setup` when the current business is still DRAFT
+ *
+ * Business Rules Implemented:
+ * - IP-006 BR-013 — only ACTIVE businesses access operational Build Packs
+ */
+export async function assertBusinessActivated(): Promise<void> {
+  const authService = createAuthService();
+  const businessContextService = createBusinessContextService();
+
+  try {
+    const user = await authService.getAuthenticatedUser();
+
+    if (!user) {
+      redirect("/login");
+    }
+
+    const context = await businessContextService.getCurrentContext();
+
+    if (!context) {
+      redirect("/select-business");
+    }
+
+    const memberships = await businessContextService.getActiveMemberships(
+      user.platformUserId
+    );
+    const current = memberships.find(
+      (membership) => membership.businessId === context.businessId
+    );
+
+    if (!current || current.businessStatusCode === "DRAFT") {
+      redirect("/setup");
+    }
+  } catch {
+    redirect("/login");
+  }
+}

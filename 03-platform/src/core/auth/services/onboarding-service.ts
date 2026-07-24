@@ -156,7 +156,8 @@ export class OnboardingService {
             name: data.businessName,
             phoneNumber: businessPhoneE164,
             businessTypeId: data.businessTypeId,
-            statusCode: BUSINESS_STATUS.ACTIVE,
+            // AD-009 A4 / IP-006 BR-011 — DRAFT until setup activation.
+            statusCode: BUSINESS_STATUS.DRAFT,
             countryCode: data.businessCountryCode,
             timezone: countryRow.timezoneCode,
           })

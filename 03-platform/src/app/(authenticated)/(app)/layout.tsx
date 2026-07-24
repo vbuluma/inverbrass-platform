@@ -11,13 +11,15 @@
  *
  * Implementation Package:
  * IP-004 – Post-Implementation Validation
+ * IP-006 – Business Setup Wizard, Configuration & Activation (activation gate)
  *
  * Responsibilities:
- * - Delegate first-login and business context guards to AuthService and BusinessContextService
+ * - Delegate first-login, business context, and activation guards
  *
  * Non-Responsibilities:
  * - Password change orchestration
  * - Business module rendering
+ * - Setup wizard orchestration
  *
  * Dependencies:
  * - authenticated-route-guard
@@ -25,12 +27,14 @@
  * Business Rules Implemented:
  * - AD-009 §3.4.2 — business modules blocked until first login completes
  * - ADR-012 — validated business context required for business modules
+ * - IP-006 BR-013 — only ACTIVE businesses access operational modules
  *
  * Extension Points:
- * - Future business pages placed under (app) inherit both guards automatically
+ * - Future business pages placed under (app) inherit all guards automatically
  */
 
 import {
+  assertBusinessActivated,
   assertBusinessContextAvailable,
   assertFirstLoginCompleted,
 } from "@/core/auth/guards/authenticated-route-guard";
@@ -42,6 +46,7 @@ export default async function AppShellLayout({
 }>) {
   await assertFirstLoginCompleted();
   await assertBusinessContextAvailable();
+  await assertBusinessActivated();
 
   return children;
 }

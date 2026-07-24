@@ -1,4 +1,4 @@
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 
 import {
   AUTHENTICATION_AUDIT_EVENT_TYPES,
@@ -165,6 +165,10 @@ export class BusinessContextService {
   ): Promise<ActiveMembershipRecord[]> {
     const db = getDb();
 
+    // ----------------------------------------------------
+    // DRAFT businesses remain selectable so owners can finish
+    // IP-006 setup. SUSPENDED / CLOSED remain excluded.
+    // ----------------------------------------------------
     const rows = await db
       .select({
         membershipId: businessMembership.id,
@@ -179,7 +183,10 @@ export class BusinessContextService {
         and(
           eq(businessMembership.platformUserId, platformUserId),
           eq(businessMembership.status, BUSINESS_MEMBERSHIP_STATUS.ACTIVE),
-          eq(business.statusCode, BUSINESS_STATUS.ACTIVE)
+          inArray(business.statusCode, [
+            BUSINESS_STATUS.ACTIVE,
+            BUSINESS_STATUS.DRAFT,
+          ])
         )
       );
 
@@ -205,7 +212,8 @@ export class BusinessContextService {
    * - SelectableBusiness entries including owner and primary badges
    *
    * Business Rules Implemented:
-   * - ADR-012 — only active memberships on active businesses are selectable
+   * - ADR-012 — active memberships on ACTIVE or DRAFT businesses are selectable
+   * - IP-006 — DRAFT businesses remain accessible for setup completion
    */
   async getSelectableBusinesses(
     platformUserId: string
@@ -221,6 +229,7 @@ export class BusinessContextService {
         countryName: country.name,
         isPrimary: businessMembership.isPrimary,
         roleCode: role.code,
+        businessStatusCode: business.statusCode,
       })
       .from(businessMembership)
       .innerJoin(business, eq(businessMembership.businessId, business.id))
@@ -238,7 +247,10 @@ export class BusinessContextService {
         and(
           eq(businessMembership.platformUserId, platformUserId),
           eq(businessMembership.status, BUSINESS_MEMBERSHIP_STATUS.ACTIVE),
-          eq(business.statusCode, BUSINESS_STATUS.ACTIVE)
+          inArray(business.statusCode, [
+            BUSINESS_STATUS.ACTIVE,
+            BUSINESS_STATUS.DRAFT,
+          ])
         )
       )
       .orderBy(asc(business.name));
@@ -254,6 +266,7 @@ export class BusinessContextService {
         countryName: row.countryName,
         isOwner: false,
         isPrimary: row.isPrimary,
+        businessStatusCode: row.businessStatusCode,
       };
 
       if (row.roleCode === PLATFORM_ROLE_CODES.OWNER) {
@@ -287,7 +300,11 @@ export class BusinessContextService {
       );
     }
 
-    if (membership.businessStatusCode !== BUSINESS_STATUS.ACTIVE) {
+    // IP-006 — DRAFT allowed for setup; only SUSPENDED/CLOSED are unavailable.
+    if (
+      membership.businessStatusCode !== BUSINESS_STATUS.ACTIVE &&
+      membership.businessStatusCode !== BUSINESS_STATUS.DRAFT
+    ) {
       throw new AuthError(
         AUTH_ERROR_CODES.BUSINESS_UNAVAILABLE,
         AUTH_USER_MESSAGES.BUSINESS_UNAVAILABLE,

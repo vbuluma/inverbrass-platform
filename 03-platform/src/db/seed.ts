@@ -10,6 +10,7 @@ import {
   formatSeedSummary,
   seedIamReferenceData,
 } from "@/db/seeds/iam-seed";
+import { seedCurrencies } from "@/db/seeds/currencies-seed";
 import { seedSecurityQuestions } from "@/db/seeds/security-questions-seed";
 
 async function runSeed() {
@@ -38,6 +39,14 @@ async function runSeed() {
 
     console.log(
       `securityQuestions: inserted=${securityQuestionResults.inserted}, updated=${securityQuestionResults.updated}, skipped=${securityQuestionResults.skipped}`
+    );
+
+    console.log("Seeding currency catalog...");
+
+    const currencyResults = await seedCurrencies(db);
+
+    console.log(
+      `currencies: inserted=${currencyResults.inserted}, updated=${currencyResults.updated}, skipped=${currencyResults.skipped}`
     );
   } catch (error) {
     console.error("Seed failed:");

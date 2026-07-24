@@ -34,10 +34,12 @@ import { asc, eq } from "drizzle-orm";
 import type {
   BusinessTypeOption,
   CountryOption,
+  CurrencyOption,
 } from "@/core/auth/types";
 import { getDb } from "@/db/client";
 import { businessType } from "@/db/schema/business-type";
 import { country } from "@/db/schema/country";
+import { currency } from "@/db/schema/currency";
 
 export class ReferenceDataService {
   async getActiveCountries(): Promise<CountryOption[]> {
@@ -48,6 +50,7 @@ export class ReferenceDataService {
         code: country.code,
         name: country.name,
         phoneCode: country.phoneCode,
+        currencyCode: country.currencyCode,
       })
       .from(country)
       .where(eq(country.isActive, true))
@@ -68,6 +71,29 @@ export class ReferenceDataService {
       .from(businessType)
       .where(eq(businessType.isActive, true))
       .orderBy(asc(businessType.displayOrder), asc(businessType.name));
+
+    return rows;
+  }
+
+  /**
+   * WHAT: Load active ISO currency catalogue rows for selectors.
+   * WHY: IP-006 currency steps consume shared reference data (no duplicate ownership).
+   * RATIONALE: Returns ISO code, name, symbol, decimal places, and active status.
+   */
+  async getActiveCurrencies(): Promise<CurrencyOption[]> {
+    const db = getDb();
+
+    const rows = await db
+      .select({
+        code: currency.code,
+        name: currency.name,
+        symbol: currency.symbol,
+        decimalPlaces: currency.decimalPlaces,
+        isActive: currency.isActive,
+      })
+      .from(currency)
+      .where(eq(currency.isActive, true))
+      .orderBy(asc(currency.displayOrder), asc(currency.name));
 
     return rows;
   }

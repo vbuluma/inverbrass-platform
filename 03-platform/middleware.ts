@@ -42,7 +42,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import { hasBusinessContextCookie } from "@/core/auth/session/business-context-cookie-presence";
 
 const PUBLIC_PATHS = ["/", "/login", "/register", "/forgot-password"];
-const AUTHENTICATED_WITHOUT_BUSINESS_CONTEXT = ["/select-business", "/first-login"];
+const AUTHENTICATED_WITHOUT_BUSINESS_CONTEXT = [
+  "/select-business",
+  "/first-login",
+];
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some(

@@ -15,6 +15,20 @@
       "when": 1784564588802,
       "tag": "0001_ip002_business_owner_registration",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784564588803,
+      "tag": "0002_ip006_business_setup",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1784564588804,
+      "tag": "0003_ip006_configuration_metadata",
+      "breakpoints": true
     }
   ]
 }

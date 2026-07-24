@@ -142,6 +142,25 @@ export async function loginUiAction(
       redirect("/select-business");
     }
 
+    // IP-006 — incomplete setup must finish before operational modules.
+    if (result.businessContext) {
+      const { createBusinessContextService } = await import(
+        "@/core/auth/services/business-context-service"
+      );
+      const businessContextService = createBusinessContextService();
+      const memberships = await businessContextService.getActiveMemberships(
+        result.user.platformUserId
+      );
+      const current = memberships.find(
+        (membership) =>
+          membership.businessId === result.businessContext?.businessId
+      );
+
+      if (current?.businessStatusCode === "DRAFT") {
+        redirect("/setup");
+      }
+    }
+
     redirect("/dashboard");
   } catch (error) {
     if (error instanceof AuthError) {

@@ -1,5 +1,9 @@
 export { businessType } from "./business-type";
 export { business } from "./business";
+export { businessProfile } from "./business-profile";
+export { businessOperatingCurrency } from "./business-operating-currency";
+export { businessConfiguration } from "./business-configuration";
+export { businessSetupProgress } from "./business-setup-progress";
 export { businessMembershipStatus } from "./business-membership-status";
 export { businessMembership } from "./business-membership";
 export { country } from "./country";

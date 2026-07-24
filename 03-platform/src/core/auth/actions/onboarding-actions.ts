@@ -85,7 +85,8 @@ export async function registerOwnerUiAction(
       getClientContextFromHeaders(requestHeaders)
     );
 
-    redirect("/dashboard");
+    // IP-006 — newly registered businesses are DRAFT and enter setup.
+    redirect("/setup");
   } catch (error) {
     if (error instanceof AuthError) {
       return {

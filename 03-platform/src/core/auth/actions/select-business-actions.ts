@@ -73,10 +73,22 @@ export async function selectBusinessAction(
   try {
     const requestHeaders = await headers();
     const businessContextService = createBusinessContextService();
-    await businessContextService.setCurrentBusiness(
+    const context = await businessContextService.setCurrentBusiness(
       membershipId,
       getClientContextFromHeaders(requestHeaders)
     );
+
+    // IP-006 — DRAFT businesses continue into setup; ACTIVE go to dashboard.
+    const memberships = await businessContextService.getActiveMemberships(
+      context.platformUserId
+    );
+    const selected = memberships.find(
+      (membership) => membership.membershipId === membershipId
+    );
+
+    if (selected?.businessStatusCode === "DRAFT") {
+      redirect("/setup");
+    }
 
     redirect("/dashboard");
   } catch (error) {

@@ -115,12 +115,22 @@ export type SelectableBusiness = {
   countryName: string;
   isOwner: boolean;
   isPrimary: boolean;
+  businessStatusCode: string;
 };
 
 export type CountryOption = {
   code: string;
   name: string;
   phoneCode: string;
+  currencyCode?: string;
+};
+
+export type CurrencyOption = {
+  code: string;
+  name: string;
+  symbol: string;
+  decimalPlaces: number;
+  isActive: boolean;
 };
 
 export type BusinessTypeOption = {
