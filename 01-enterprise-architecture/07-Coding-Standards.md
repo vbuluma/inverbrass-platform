@@ -590,3 +590,23 @@ Reuse Before Create
 Modular Development
 Metadata Driven
 Logging Required
+
+Rule: Architecture Decision Documentation
+
+Whenever Cursor introduces a new architectural mechanism (for example a cookie, cache, route guard, event, state store, background job, etc.), it must justify it.
+
+For example:
+
+Architecture Decision
+
+Why does this exist?
+
+Why can't existing components perform this responsibility?
+
+What is the single source of truth?
+
+How does this align with AD-009?
+
+What future extension does it support?
+
+If Cursor cannot answer these questions, it should not introduce the mechanism.
