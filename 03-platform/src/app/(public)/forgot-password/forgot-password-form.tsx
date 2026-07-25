@@ -36,10 +36,12 @@ import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { CatalogEmptyNotice } from "@/components/auth/catalog-empty-notice";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CATALOG_EMPTY_MESSAGES } from "@/core/auth/catalog-messages";
 import {
   completeRecoveryAction,
   initiateRecoveryAction,
@@ -64,7 +66,10 @@ export function ForgotPasswordForm({ countries }: ForgotPasswordFormProps) {
   const [mobileNumber, setMobileNumber] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  // Show/Hide for answers is UI-only — verification compares bcrypt hashes only.
+  const [showSecurityAnswer, setShowSecurityAnswer] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const catalogsReady = countries.length > 0;
 
   function handleInitiate(formData: FormData) {
     setErrorMessage(null);
@@ -113,11 +118,16 @@ export function ForgotPasswordForm({ countries }: ForgotPasswordFormProps) {
   if (!recoveryContext) {
     return (
       <form action={handleInitiate} className="space-y-4">
+        {!catalogsReady ? (
+          <CatalogEmptyNotice message={CATALOG_EMPTY_MESSAGES.countries} />
+        ) : null}
+
         <div className="space-y-2">
           <Label htmlFor="countryCode">Country</Label>
           <select
             id="countryCode"
             name="countryCode"
+            disabled={!catalogsReady}
             required
             defaultValue={countryCode}
             className={selectClassName}
@@ -149,7 +159,11 @@ export function ForgotPasswordForm({ countries }: ForgotPasswordFormProps) {
           </Alert>
         ) : null}
 
-        <Button type="submit" disabled={isPending} className="w-full">
+        <Button
+          type="submit"
+          disabled={isPending || !catalogsReady}
+          className="w-full"
+        >
           {isPending ? "Verifying..." : "Continue"}
         </Button>
       </form>
@@ -176,13 +190,28 @@ export function ForgotPasswordForm({ countries }: ForgotPasswordFormProps) {
 
       <div className="space-y-2">
         <Label htmlFor="securityAnswer">Security answer</Label>
-        <Input
-          id="securityAnswer"
-          name="securityAnswer"
-          type="password"
-          autoComplete="off"
-          required
-        />
+        <div className="relative">
+          <Input
+            id="securityAnswer"
+            name="securityAnswer"
+            type={showSecurityAnswer ? "text" : "password"}
+            autoComplete="off"
+            required
+            className="pr-10"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="absolute top-1/2 right-1 -translate-y-1/2"
+            onClick={() => setShowSecurityAnswer((current) => !current)}
+            aria-label={
+              showSecurityAnswer ? "Hide security answer" : "Show security answer"
+            }
+          >
+            {showSecurityAnswer ? <EyeOffIcon /> : <EyeIcon />}
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-2">

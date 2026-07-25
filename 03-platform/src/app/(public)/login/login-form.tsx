@@ -36,11 +36,13 @@ import Link from "next/link";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { useState, useTransition } from "react";
 
+import { CatalogEmptyNotice } from "@/components/auth/catalog-empty-notice";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CATALOG_EMPTY_MESSAGES } from "@/core/auth/catalog-messages";
 import { loginUiAction } from "@/core/auth/actions/auth-actions";
 import type { CountryOption } from "@/core/auth/types";
 import { cn } from "@/lib/utils";
@@ -60,6 +62,7 @@ export function LoginForm({ countries }: LoginFormProps) {
   const [isPending, startTransition] = useTransition();
 
   const defaultCountryCode = countries[0]?.code ?? "KE";
+  const catalogsReady = countries.length > 0;
 
   function handleSubmit(formData: FormData) {
     setErrorMessage(null);
@@ -79,6 +82,10 @@ export function LoginForm({ countries }: LoginFormProps) {
 
   return (
     <form action={handleSubmit} className="space-y-4">
+      {!catalogsReady ? (
+        <CatalogEmptyNotice message={CATALOG_EMPTY_MESSAGES.countries} />
+      ) : null}
+
       <div className="space-y-2">
         <Label htmlFor="countryCode">Country</Label>
         <select
@@ -87,6 +94,7 @@ export function LoginForm({ countries }: LoginFormProps) {
           required
           defaultValue={defaultCountryCode}
           className={selectClassName}
+          disabled={!catalogsReady}
         >
           {countries.map((country) => (
             <option key={country.code} value={country.code}>
@@ -158,9 +166,13 @@ export function LoginForm({ countries }: LoginFormProps) {
         </Alert>
       ) : null}
 
-      <Button type="submit" disabled={isPending} className="w-full">
-        {isPending ? "Signing in..." : "Sign in"}
-      </Button>
+        <Button
+          type="submit"
+          disabled={isPending || !catalogsReady}
+          className="w-full"
+        >
+          {isPending ? "Signing in..." : "Sign in"}
+        </Button>
     </form>
   );
 }

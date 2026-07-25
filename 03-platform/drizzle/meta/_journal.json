@@ -36,6 +36,27 @@
       "when": 1784564588805,
       "tag": "0004_currency_reference",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1784564588806,
+      "tag": "0005_ip006a_platform_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1784564588807,
+      "tag": "0006_bp001_platform_registration",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1784564588808,
+      "tag": "0007_bp001_platform_auth",
+      "breakpoints": true
     }
   ]
 }

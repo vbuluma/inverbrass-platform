@@ -35,10 +35,12 @@
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { useState, useTransition } from "react";
 
+import { CatalogEmptyNotice } from "@/components/auth/catalog-empty-notice";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CATALOG_EMPTY_MESSAGES } from "@/core/auth/catalog-messages";
 import { completeFirstLoginAction } from "@/core/auth/actions/first-login-actions";
 import { cn } from "@/lib/utils";
 
@@ -65,7 +67,11 @@ export function FirstLoginForm({
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  // Show/Hide for answers is UI-only — answers are hashed before persistence.
+  const [showSecurityAnswer, setShowSecurityAnswer] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const securityCatalogReady =
+    !requiresSecurityQuestion || securityQuestions.length > 0;
 
   function handleSubmit(formData: FormData) {
     setErrorMessage(null);
@@ -91,6 +97,12 @@ export function FirstLoginForm({
 
   return (
     <form action={handleSubmit} className="space-y-4">
+      {requiresSecurityQuestion && securityQuestions.length === 0 ? (
+        <CatalogEmptyNotice
+          message={CATALOG_EMPTY_MESSAGES.securityQuestions}
+        />
+      ) : null}
+
       <div className="space-y-2">
         <Label htmlFor="currentPassword">Current password</Label>
         <div className="relative">
@@ -191,13 +203,30 @@ export function FirstLoginForm({
 
           <div className="space-y-2">
             <Label htmlFor="securityAnswer">Security answer</Label>
-            <Input
-              id="securityAnswer"
-              name="securityAnswer"
-              type="password"
-              autoComplete="off"
-              required
-            />
+            <div className="relative">
+              <Input
+                id="securityAnswer"
+                name="securityAnswer"
+                type={showSecurityAnswer ? "text" : "password"}
+                autoComplete="off"
+                required
+                className="pr-10"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="absolute top-1/2 right-1 -translate-y-1/2"
+                onClick={() => setShowSecurityAnswer((current) => !current)}
+                aria-label={
+                  showSecurityAnswer
+                    ? "Hide security answer"
+                    : "Show security answer"
+                }
+              >
+                {showSecurityAnswer ? <EyeOffIcon /> : <EyeIcon />}
+              </Button>
+            </div>
           </div>
         </>
       ) : null}
@@ -208,7 +237,11 @@ export function FirstLoginForm({
         </Alert>
       ) : null}
 
-      <Button type="submit" disabled={isPending} className="w-full">
+      <Button
+        type="submit"
+        disabled={isPending || !securityCatalogReady}
+        className="w-full"
+      >
         {isPending ? "Saving..." : "Continue"}
       </Button>
     </form>

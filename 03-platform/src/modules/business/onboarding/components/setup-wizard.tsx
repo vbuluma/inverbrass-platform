@@ -18,11 +18,13 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 
+import { CatalogEmptyNotice } from "@/components/auth/catalog-empty-notice";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CATALOG_EMPTY_MESSAGES } from "@/core/auth/catalog-messages";
 import type { CountryOption, CurrencyOption } from "@/core/auth/types";
 import { cn } from "@/lib/utils";
 import {
@@ -44,6 +46,7 @@ import {
   OPTIONAL_SETUP_STEPS,
   SETUP_STEP_ORDER,
   SETUP_STEPS,
+  formatSetupWelcomeMessage,
   type SetupStep,
 } from "@/modules/business/onboarding/constants";
 import type { SetupProgressView } from "@/modules/business/onboarding/types";
@@ -230,9 +233,7 @@ export function SetupWizard(props: SetupWizardProps) {
           <div className="space-y-4">
             <h2 className="text-xl font-medium">Welcome</h2>
             <p className="text-sm text-muted-foreground">
-              Complete a short setup so {props.businessName} can start operating.
-              You can pause anytime and resume later. Estimated time: about 10
-              minutes.
+              {formatSetupWelcomeMessage(props.businessName)}
             </p>
             <Button
               className="w-full"
@@ -399,6 +400,10 @@ export function SetupWizard(props: SetupWizardProps) {
               Changing country resets currency selections and loads the country
               default currency.
             </p>
+            {/* Empty catalogue fails soft — show guidance instead of a blank selector. */}
+            {props.countries.length === 0 ? (
+              <CatalogEmptyNotice message={CATALOG_EMPTY_MESSAGES.countries} />
+            ) : null}
             <div className="space-y-2">
               <Label htmlFor="countryCode">Country</Label>
               <select
@@ -407,6 +412,7 @@ export function SetupWizard(props: SetupWizardProps) {
                 required
                 defaultValue={props.businessCountryCode}
                 className={selectClassName}
+                disabled={props.countries.length === 0}
               >
                 {props.countries.map((country) => (
                   <option key={country.code} value={country.code}>
@@ -415,7 +421,12 @@ export function SetupWizard(props: SetupWizardProps) {
                 ))}
               </select>
             </div>
-            <WizardNav onBack={onBack} isPending={isPending} canSkip={false} />
+            <WizardNav
+              onBack={onBack}
+              isPending={isPending}
+              canSkip={false}
+              disableContinue={props.countries.length === 0}
+            />
           </form>
         ) : null}
 
@@ -437,6 +448,9 @@ export function SetupWizard(props: SetupWizardProps) {
               Default currency is loaded from the selected country. You may
               change the base currency.
             </p>
+            {props.currencies.length === 0 ? (
+              <CatalogEmptyNotice message={CATALOG_EMPTY_MESSAGES.currencies} />
+            ) : null}
             <div className="space-y-2">
               <Label htmlFor="currencyCode">Base currency</Label>
               <select
@@ -445,6 +459,7 @@ export function SetupWizard(props: SetupWizardProps) {
                 required
                 defaultValue={baseCurrencyDefault}
                 className={selectClassName}
+                disabled={props.currencies.length === 0}
               >
                 {props.currencies.map((currency) => (
                   <option key={currency.code} value={currency.code}>
@@ -453,7 +468,12 @@ export function SetupWizard(props: SetupWizardProps) {
                 ))}
               </select>
             </div>
-            <WizardNav onBack={onBack} isPending={isPending} canSkip={false} />
+            <WizardNav
+              onBack={onBack}
+              isPending={isPending}
+              canSkip={false}
+              disableContinue={props.currencies.length === 0}
+            />
           </form>
         ) : null}
 
@@ -776,13 +796,18 @@ function WizardNav({
   onContinue,
   isPending,
   canSkip,
+  disableContinue = false,
 }: {
   onBack: () => void;
   onSkip?: () => void;
   onContinue?: () => void;
   isPending: boolean;
   canSkip: boolean;
+  /** WHAT: Block continue when required catalogues are empty. */
+  disableContinue?: boolean;
 }) {
+  const continueDisabled = isPending || disableContinue;
+
   return (
     <div className="flex flex-col gap-2 sm:flex-row">
       <Button
@@ -810,12 +835,12 @@ function WizardNav({
           type="button"
           className="flex-1"
           onClick={onContinue}
-          disabled={isPending}
+          disabled={continueDisabled}
         >
           {isPending ? "Saving..." : "Continue"}
         </Button>
       ) : (
-        <Button type="submit" className="flex-1" disabled={isPending}>
+        <Button type="submit" className="flex-1" disabled={continueDisabled}>
           {isPending ? "Saving..." : "Save & continue"}
         </Button>
       )}

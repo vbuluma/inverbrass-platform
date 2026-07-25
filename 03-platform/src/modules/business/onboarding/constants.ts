@@ -3,18 +3,38 @@
  * Define setup wizard step catalogue, mandatory/optional classification, and
  * wizard version for progress auditability.
  *
- * WHY:
+ * Design rationale:
  * Step codes drive UI routing, resume logic, and activation gates. Wizard
  * version isolates future catalogue changes from historical progress rows.
+ *
+ * Business rationale:
+ * Configuration-driven onboarding keeps activation gates consistent across
+ * environments; welcome copy is validated at startup (IP-006A).
  *
  * Architecture Dependency:
  * AD-009 Authentication & Business Onboarding (A4)
  *
  * Implementation Package:
- * IP-006 – Business Activation & Configuration Wizard
+ * IP-006 / IP-006A – Business Activation & Platform Initialization
  */
 
 export const SETUP_WIZARD_VERSION = "1.0.0";
+
+/**
+ * WHAT: Canonical welcome copy template for the setup Welcome step.
+ * WHY: Startup validation and UI share one message so copy cannot drift.
+ */
+export const SETUP_WELCOME_MESSAGE =
+  "Complete a short setup so {businessName} can start operating. You can pause anytime and resume later. Estimated time: about 10 minutes.";
+
+/**
+ * WHAT: Resolve welcome copy for a named business.
+ * WHY: Keeps UI presentation aligned with the validated template.
+ */
+export function formatSetupWelcomeMessage(businessName: string): string {
+  const name = businessName.trim() || "your business";
+  return SETUP_WELCOME_MESSAGE.replace("{businessName}", name);
+}
 
 export const SETUP_STEPS = {
   WELCOME: "welcome",

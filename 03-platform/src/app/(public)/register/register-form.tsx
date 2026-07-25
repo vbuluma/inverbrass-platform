@@ -1,49 +1,34 @@
 /**
  * Purpose:
- * Collect owner registration inputs and submit them through the onboarding UI action.
+ * Collect Platform Registration inputs and submit through registerOwnerUiAction.
  *
- * Business Context:
- * Phase 1 registration captures a reduced field set mapped to the IP-002
- * OwnerRegistrationPayload before atomic business provisioning.
+ * Design rationale:
+ * Creates a Platform User only. Email and proposed business name are optional.
+ * Live password validation disables Register until policy and match checks pass.
+ * Country remains for E.164 mobile normalization (username = mobile number).
  *
- * Architecture Dependency:
- * AD-009 Authentication & Business Onboarding (§3.1)
- *
- * Implementation Package:
- * IP-005 – Authentication UI
- *
- * Responsibilities:
- * - Render business, mobile, password, and security question fields
- * - Invoke registerOwnerUiAction and surface validation errors
- *
- * Non-Responsibilities:
- * - Payload mapping and validation rules (registration-ui-validators)
- * - Business provisioning (OnboardingService)
- *
- * Dependencies:
- * - registerOwnerUiAction, shadcn/ui form controls
- *
- * Business Rules Implemented:
- * - AD-009 §3.1 — owner mobile doubles as initial business contact
- *
- * Extension Points:
- * - React Hook Form integration deferred to future UI packages
+ * Why this exists:
+ * BP-001 Stage 1 platform-owned authentication registration UX.
  */
 
 "use client";
 
 import { EyeIcon, EyeOffIcon } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 
+import { CatalogEmptyNotice } from "@/components/auth/catalog-empty-notice";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CATALOG_EMPTY_MESSAGES } from "@/core/auth/catalog-messages";
 import { registerOwnerUiAction } from "@/core/auth/actions/onboarding-actions";
-import type {
-  BusinessTypeOption,
-  CountryOption,
-} from "@/core/auth/types";
+import type { CountryOption } from "@/core/auth/types";
+import {
+  evaluatePasswordStrength,
+  getPasswordMatchState,
+  isPasswordPolicySatisfied,
+} from "@/core/auth/utils/password-strength";
 import { cn } from "@/lib/utils";
 
 type SecurityQuestionOption = {
@@ -54,7 +39,6 @@ type SecurityQuestionOption = {
 
 type RegisterFormProps = {
   countries: CountryOption[];
-  businessTypes: BusinessTypeOption[];
   securityQuestions: SecurityQuestionOption[];
 };
 
@@ -64,15 +48,39 @@ const selectClassName = cn(
 
 export function RegisterForm({
   countries,
-  businessTypes,
   securityQuestions,
 }: RegisterFormProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  // Show/Hide for answers is UI-only — persistence always stores bcrypt hashes.
+  const [showSecurityAnswer, setShowSecurityAnswer] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isPending, startTransition] = useTransition();
 
   const defaultCountryCode = countries[0]?.code ?? "KE";
+  const catalogsReady =
+    countries.length > 0 && securityQuestions.length > 0;
+
+  const passwordRules = useMemo(
+    () => evaluatePasswordStrength(password),
+    [password]
+  );
+  const passwordPolicyMet = useMemo(
+    () => isPasswordPolicySatisfied(password),
+    [password]
+  );
+  const matchState = useMemo(
+    () => getPasswordMatchState(password, confirmPassword),
+    [password, confirmPassword]
+  );
+
+  const canSubmit =
+    catalogsReady &&
+    passwordPolicyMet &&
+    matchState === "match" &&
+    !isPending;
 
   function handleSubmit(formData: FormData) {
     setErrorMessage(null);
@@ -80,9 +88,9 @@ export function RegisterForm({
     startTransition(async () => {
       const result = await registerOwnerUiAction({
         businessName: String(formData.get("businessName") ?? ""),
-        businessTypeId: String(formData.get("businessTypeId") ?? ""),
         countryCode: String(formData.get("countryCode") ?? defaultCountryCode),
         mobileNumber: String(formData.get("mobileNumber") ?? ""),
+        email: String(formData.get("email") ?? ""),
         password: String(formData.get("password") ?? ""),
         confirmPassword: String(formData.get("confirmPassword") ?? ""),
         securityQuestionId: String(formData.get("securityQuestionId") ?? ""),
@@ -97,29 +105,32 @@ export function RegisterForm({
 
   return (
     <form action={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="businessName">Business name</Label>
-        <Input id="businessName" name="businessName" required />
-      </div>
+      {!catalogsReady ? (
+        <CatalogEmptyNotice
+          message={
+            countries.length === 0
+              ? CATALOG_EMPTY_MESSAGES.countries
+              : securityQuestions.length === 0
+                ? CATALOG_EMPTY_MESSAGES.securityQuestions
+                : CATALOG_EMPTY_MESSAGES.generic
+          }
+        />
+      ) : null}
 
       <div className="space-y-2">
-        <Label htmlFor="businessTypeId">Business type</Label>
-        <select
-          id="businessTypeId"
-          name="businessTypeId"
+        <Label htmlFor="mobileNumber">Mobile number</Label>
+        <Input
+          id="mobileNumber"
+          name="mobileNumber"
+          type="tel"
+          autoComplete="tel"
+          inputMode="tel"
           required
-          defaultValue=""
-          className={selectClassName}
-        >
-          <option value="" disabled>
-            Select a business type
-          </option>
-          {businessTypes.map((type) => (
-            <option key={type.id} value={type.id}>
-              {type.name}
-            </option>
-          ))}
-        </select>
+          placeholder="712345678"
+        />
+        <p className="text-xs text-muted-foreground">
+          Your mobile number is your username.
+        </p>
       </div>
 
       <div className="space-y-2">
@@ -137,19 +148,9 @@ export function RegisterForm({
             </option>
           ))}
         </select>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="mobileNumber">Mobile number</Label>
-        <Input
-          id="mobileNumber"
-          name="mobileNumber"
-          type="tel"
-          autoComplete="tel"
-          inputMode="tel"
-          required
-          placeholder="712345678"
-        />
+        <p className="text-xs text-muted-foreground">
+          Used to normalize your mobile number to international format.
+        </p>
       </div>
 
       <div className="space-y-2">
@@ -162,6 +163,8 @@ export function RegisterForm({
             autoComplete="new-password"
             required
             className="pr-10"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
           />
           <Button
             type="button"
@@ -174,6 +177,18 @@ export function RegisterForm({
             {showPassword ? <EyeOffIcon /> : <EyeIcon />}
           </Button>
         </div>
+        <ul className="space-y-1 text-xs" aria-live="polite">
+          {passwordRules.map((rule) => (
+            <li
+              key={rule.id}
+              className={
+                rule.met ? "text-emerald-700" : "text-muted-foreground"
+              }
+            >
+              {rule.met ? "✓" : "○"} {rule.label}
+            </li>
+          ))}
+        </ul>
       </div>
 
       <div className="space-y-2">
@@ -186,6 +201,8 @@ export function RegisterForm({
             autoComplete="new-password"
             required
             className="pr-10"
+            value={confirmPassword}
+            onChange={(event) => setConfirmPassword(event.target.value)}
           />
           <Button
             type="button"
@@ -200,6 +217,16 @@ export function RegisterForm({
             {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
           </Button>
         </div>
+        {matchState === "match" ? (
+          <p className="text-xs text-emerald-700" aria-live="polite">
+            ✓ Passwords Match
+          </p>
+        ) : null}
+        {matchState === "mismatch" ? (
+          <p className="text-xs text-destructive" aria-live="polite">
+            Passwords do not match
+          </p>
+        ) : null}
       </div>
 
       <div className="space-y-2">
@@ -224,13 +251,47 @@ export function RegisterForm({
 
       <div className="space-y-2">
         <Label htmlFor="securityAnswer">Security answer</Label>
+        <div className="relative">
+          <Input
+            id="securityAnswer"
+            name="securityAnswer"
+            type={showSecurityAnswer ? "text" : "password"}
+            autoComplete="off"
+            required
+            className="pr-10"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="absolute top-1/2 right-1 -translate-y-1/2"
+            onClick={() => setShowSecurityAnswer((current) => !current)}
+            aria-label={
+              showSecurityAnswer ? "Hide security answer" : "Show security answer"
+            }
+          >
+            {showSecurityAnswer ? <EyeOffIcon /> : <EyeIcon />}
+          </Button>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="email">Email address (optional)</Label>
         <Input
-          id="securityAnswer"
-          name="securityAnswer"
-          type="password"
-          autoComplete="off"
-          required
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          placeholder="you@example.com"
         />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="businessName">Proposed business name (optional)</Label>
+        <Input id="businessName" name="businessName" />
+        <p className="text-xs text-muted-foreground">
+          Prefills Business Creation later. No business is created at registration.
+        </p>
       </div>
 
       {errorMessage ? (
@@ -239,8 +300,8 @@ export function RegisterForm({
         </Alert>
       ) : null}
 
-      <Button type="submit" disabled={isPending} className="w-full">
-        {isPending ? "Creating account..." : "Create account"}
+      <Button type="submit" disabled={!canSubmit} className="w-full">
+        {isPending ? "Creating account..." : "Register"}
       </Button>
     </form>
   );

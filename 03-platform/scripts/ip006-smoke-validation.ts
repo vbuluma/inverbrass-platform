@@ -75,6 +75,9 @@ const REQUIRED_FILES = [
   "drizzle/0002_ip006_business_setup.sql",
   "drizzle/0003_ip006_configuration_metadata.sql",
   "drizzle/0004_currency_reference.sql",
+  "drizzle/0005_ip006a_platform_foundation.sql",
+  "src/core/auth/services/business-registration-service.ts",
+  "src/app/(authenticated)/businesses/create/page.tsx",
 ] as const;
 
 type CheckResult = {

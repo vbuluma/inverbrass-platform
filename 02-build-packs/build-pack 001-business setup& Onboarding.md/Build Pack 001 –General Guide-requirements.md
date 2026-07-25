@@ -99,49 +99,53 @@ The onboarding process shall enable a business to:
 •	Begin using the system immediately after completion.
 ________________________________________
 6. High-Level Business Flow
+Phase A – Platform User Onboarding
 Start
-   │
-   ▼
+    ↓
+Register User
+    ↓
+Verify Account (future)
+    ↓
+First Login
+    ↓
+Security Questions
+    ↓
+Security PIN
+    ↓
+Platform Home
+No business exists yet.
+
+Phase B – Business Onboarding
+Platform Home
+      ↓
 Create Business
-   │
-   ▼
-Select Industry Template
-   │
-   ▼
+      ↓
+Select Industry Solution
+      ↓
+Select Business Template
+      ↓
 Configure Business Details
-   │
-   ▼
+      ↓
 Configure Payments
-   │
-   ▼
+      ↓
 Configure Taxes
-   │
-   ▼
+      ↓
 Configure Receipts
-   │
-   ▼
+      ↓
 Configure AI (Optional)
-   │
-   ▼
+      ↓
 Configure Loyalty (Optional)
-   │
-   ▼
-Create Branch(es)
-   │
-   ▼
+      ↓
+Create Branches
+      ↓
 Create Employees (Optional)
-   │
-   ▼
-Set Security & PIN
-   │
-   ▼
-Review Configuration
-   │
-   ▼
+      ↓
+Review
+      ↓
 Activate Business
-   │
-   ▼
-Dashboard
+      ↓
+Business Dashboard
+
 ________________________________________
 7. Guiding Design Principles
 Principle	Description

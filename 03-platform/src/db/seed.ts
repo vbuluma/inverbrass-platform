@@ -1,14 +1,10 @@
 /**
  * Purpose:
- * Seed IAM, security-question, and currency reference data.
+ * Seed all platform reference catalogues required for BP-001 onboarding.
  *
- * Why the shared env loader is imported first:
- * Ensures `DATABASE_URL` is read from `.env.local` (then `.env`) consistently
- * with migrate and other Node utility scripts.
- *
- * Non-responsibilities:
- * - Schema migrations
- * - Business transaction seeding
+ * Connection policy:
+ * Uses a single postgres client and always closes it so seed does not
+ * contribute to EMAXCONNSESSION on Supabase session poolers.
  */
 
 import "@/lib/env/load-env";
@@ -16,57 +12,79 @@ import "@/lib/env/load-env";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
+import { createPostgresOptions } from "@/db/client";
 import {
   formatSeedSummary,
   seedIamReferenceData,
 } from "@/db/seeds/iam-seed";
+import { seedBusinessMembershipStatuses } from "@/db/seeds/business-membership-statuses-seed";
+import { seedBusinessTypes } from "@/db/seeds/business-types-seed";
+import { seedCountries } from "@/db/seeds/countries-seed";
 import { seedCurrencies } from "@/db/seeds/currencies-seed";
+import { seedIndustries } from "@/db/seeds/industries-seed";
 import { seedSecurityQuestions } from "@/db/seeds/security-questions-seed";
 
 async function runSeed() {
-  // ----------------------------------------------------
-  // DATABASE_URL must already be available via load-env.
-  // ----------------------------------------------------
   const connectionString = process.env.DATABASE_URL;
 
   if (!connectionString) {
     throw new Error("DATABASE_URL is missing.");
   }
 
-  console.log("Connecting to database...");
+  console.log("Connecting to database (single session client)...");
 
-  const sql = postgres(connectionString, { max: 1 });
+  const sql = postgres(connectionString, createPostgresOptions());
   const db = drizzle(sql);
 
   try {
     console.log("Seeding IAM reference data...");
-
-    const results = await seedIamReferenceData(db);
-
+    const iamResults = await seedIamReferenceData(db);
     console.log("IAM seed complete.");
-    console.log(formatSeedSummary(results));
+    console.log(formatSeedSummary(iamResults));
+
+    console.log("Seeding business membership statuses...");
+    const membershipStatusResults = await seedBusinessMembershipStatuses(db);
+    console.log(
+      `membershipStatuses: inserted=${membershipStatusResults.inserted}, updated=${membershipStatusResults.updated}, skipped=${membershipStatusResults.skipped}`
+    );
+
+    console.log("Seeding industries...");
+    const industryResults = await seedIndustries(db);
+    console.log(
+      `industries: inserted=${industryResults.inserted}, updated=${industryResults.updated}, skipped=${industryResults.skipped}`
+    );
+
+    console.log("Seeding business types...");
+    const businessTypeResults = await seedBusinessTypes(db);
+    console.log(
+      `businessTypes: inserted=${businessTypeResults.inserted}, updated=${businessTypeResults.updated}, skipped=${businessTypeResults.skipped}`
+    );
+
+    console.log("Seeding countries...");
+    const countryResults = await seedCountries(db);
+    console.log(
+      `countries: inserted=${countryResults.inserted}, updated=${countryResults.updated}, skipped=${countryResults.skipped}`
+    );
 
     console.log("Seeding security question catalog...");
-
     const securityQuestionResults = await seedSecurityQuestions(db);
-
     console.log(
       `securityQuestions: inserted=${securityQuestionResults.inserted}, updated=${securityQuestionResults.updated}, skipped=${securityQuestionResults.skipped}`
     );
 
     console.log("Seeding currency catalog...");
-
     const currencyResults = await seedCurrencies(db);
-
     console.log(
       `currencies: inserted=${currencyResults.inserted}, updated=${currencyResults.updated}, skipped=${currencyResults.skipped}`
     );
+
+    console.log("✅ Seed completed.");
   } catch (error) {
     console.error("Seed failed:");
     console.error(error);
     process.exitCode = 1;
   } finally {
-    await sql.end();
+    await sql.end({ timeout: 5 });
   }
 }
 
