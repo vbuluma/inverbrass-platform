@@ -1,32 +1,10 @@
 /**
  * Purpose:
- * Validate the IP-005 owner registration UI payload before mapping to OnboardingService.
+ * Validate Platform Registration UI payload before mapping to OnboardingService.
  *
- * Business Context:
- * The registration screen captures business and credential fields required for BP-001
- * owner self-registration while keeping the existing OwnerRegistrationPayload contract.
- *
- * Architecture Dependency:
- * AD-009 Authentication & Business Onboarding (§3.1)
- *
- * Implementation Package:
- * IP-005 – Authentication UI
- *
- * Responsibilities:
- * - Validate IP-005 registration form fields with Zod
- *
- * Non-Responsibilities:
- * - Owner registration orchestration (OnboardingService)
- * - Reference data loading
- *
- * Dependencies:
- * - Zod, passwordPolicySchema
- *
- * Business Rules Implemented:
- * - AD-009 §2.10 — BP-001 password policy
- *
- * Extension Points:
- * - Additional owner profile fields may be added when registration UI expands
+ * Design rationale:
+ * Required: mobile, password, confirm password, security Q&A, country (for E.164).
+ * Optional: email, proposed business name.
  */
 
 import { z } from "zod";
@@ -38,13 +16,20 @@ export const ownerRegistrationUiSchema = z
     businessName: z
       .string()
       .trim()
-      .min(1, "Business name is required.")
-      .max(200, "Business name is too long."),
-    businessTypeId: z.string().uuid("Select a business type."),
+      .max(200, "Business name is too long.")
+      .optional()
+      .or(z.literal("")),
     countryCode: z
       .string()
       .length(2, "Country code must be a 2-letter ISO code."),
     mobileNumber: z.string().min(1, "Mobile number is required."),
+    email: z
+      .string()
+      .trim()
+      .email("Enter a valid email address.")
+      .max(255, "Email address is too long.")
+      .optional()
+      .or(z.literal("")),
     password: passwordPolicySchema,
     confirmPassword: z.string().min(1, "Confirm your password."),
     securityQuestionId: z.string().uuid("Select a security question."),

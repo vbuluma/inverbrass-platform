@@ -120,7 +120,8 @@ export async function assertBusinessContextAvailable(): Promise<void> {
   const context = await businessContextService.getCurrentContext();
 
   if (!context) {
-    redirect("/select-business");
+    // Platform Home is the recovery point when no business context is active.
+    redirect("/home");
   }
 }
 
@@ -151,7 +152,7 @@ export async function assertBusinessActivated(): Promise<void> {
     const context = await businessContextService.getCurrentContext();
 
     if (!context) {
-      redirect("/select-business");
+      redirect("/home");
     }
 
     const memberships = await businessContextService.getActiveMemberships(
@@ -167,4 +168,13 @@ export async function assertBusinessActivated(): Promise<void> {
   } catch {
     redirect("/login");
   }
+}
+
+/**
+ * WHAT: Ensure an authenticated Platform User session for Platform Home routes.
+ * WHY: Platform Home is available with or without business memberships.
+ */
+export async function assertPlatformHomeAccess(): Promise<void> {
+  await assertAuthenticatedSession();
+  await assertFirstLoginCompleted();
 }

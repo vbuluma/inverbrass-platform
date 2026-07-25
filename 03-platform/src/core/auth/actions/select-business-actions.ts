@@ -19,6 +19,7 @@ import { AuthError } from "@/core/auth/errors";
 import { createAuthService } from "@/core/auth/services/auth-service";
 import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { getClientContextFromHeaders } from "@/core/auth/utils/helpers";
+import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 
 export async function getSelectableBusinessesAction(): Promise<
   AuthActionResult<
@@ -92,12 +93,21 @@ export async function selectBusinessAction(
 
     redirect("/dashboard");
   } catch (error) {
+    if (isNextRedirectError(error)) {
+      throw error;
+    }
+
     if (error instanceof AuthError) {
       return {
         success: false,
         error: { code: error.code, message: error.message },
       };
     }
+
+    console.error(
+      "[select-business-actions] selectBusinessAction failed.",
+      error
+    );
 
     return {
       success: false,

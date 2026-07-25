@@ -2,41 +2,16 @@
  * Purpose:
  * Orchestrate forgot-password recovery using security question verification.
  *
- * Business Context:
- * BP-001 Phase 1 recovery uses mobile number and configured security Q&A only, without
- * email, SMS, or OTP channels per ADR-013.
+ * Design rationale (Stage 1):
+ * Recovery resets the platform password hash in PostgreSQL. No email/SMS/OTP.
+ * Supabase Auth is not used for password updates.
  *
  * Architecture Dependency:
- * AD-009 Authentication & Business Onboarding (§3.7)
- *
- * Implementation Package:
- * IP-005 – Authentication UI
- *
- * Responsibilities:
- * - Initiate recovery by resolving the user's configured security question
- * - Verify security answers and reset passwords through AuthService
- * - Emit password reset audit events and enforce lockout policy
- *
- * Non-Responsibilities:
- * - UI rendering
- * - Security answer hashing (SecurityQuestionService)
- * - Session establishment after recovery
- *
- * Dependencies:
- * - AuthService, SecurityQuestionService, IdentityProviderAdapter, Drizzle ORM
- *
- * Business Rules Implemented:
- * - AD-009 §3.7 — mobile + security Q&A recovery
- * - ADR-013 — no email/SMS recovery in Phase 1
- *
- * Extension Points:
- * - Additional recovery channels belong to future Progressive Authentication phases
+ * AD-009 §3.7 (recovery channel) + BP-001 Foundation Stabilization Stage 1
  */
 
 import { eq } from "drizzle-orm";
 
-import { createIdentityProviderAdapter } from "@/core/auth/adapters/supabase-identity-provider-adapter";
-import type { IdentityProviderAdapter } from "@/core/auth/adapters/identity-provider-adapter";
 import {
   LOCKOUT_DURATION_MINUTES,
   LOCKOUT_THRESHOLD,
@@ -46,6 +21,8 @@ import {
   AUTH_USER_MESSAGES,
   AuthError,
 } from "@/core/auth/errors";
+import { createCredentialService } from "@/core/auth/services/credential-service";
+import type { CredentialService } from "@/core/auth/services/credential-service";
 import { createSecurityQuestionService } from "@/core/auth/services/security-question-service";
 import type { SecurityQuestionService } from "@/core/auth/services/security-question-service";
 import type {
@@ -54,16 +31,13 @@ import type {
   RecoveryInitiationPayload,
   RecoveryInitiationResult,
 } from "@/core/auth/types";
-import {
-  normalizeMobileNumber,
-} from "@/core/auth/utils/phone-normalizer";
+import { logAuthFailure } from "@/core/auth/utils/auth-stage-log";
+import { normalizeMobileNumber } from "@/core/auth/utils/phone-normalizer";
 import {
   recoveryCompletionSchema,
   recoveryInitiationSchema,
 } from "@/core/auth/validators/recovery-validators";
-import {
-  AUTHENTICATION_AUDIT_EVENT_TYPES,
-} from "@/core/audit/types";
+import { AUTHENTICATION_AUDIT_EVENT_TYPES } from "@/core/audit/types";
 import { getAuthenticationAuditEmitter } from "@/core/audit/authentication-audit-emitter";
 import { getDb } from "@/db/client";
 import { platformUser } from "@/db/schema/platform-user";
@@ -73,7 +47,6 @@ import { userSecurityProfile } from "@/db/schema/user-security-profile";
 
 type RecoveryUserRecord = {
   platformUserId: string;
-  authUserId: string;
   isActive: boolean;
   failedLoginAttempts: number;
   lockedUntil: Date | null;
@@ -83,27 +56,10 @@ type RecoveryUserRecord = {
 
 export class PasswordRecoveryService {
   constructor(
-    private readonly identityProvider: IdentityProviderAdapter = createIdentityProviderAdapter(),
+    private readonly credentialService: CredentialService = createCredentialService(),
     private readonly securityQuestionService: SecurityQuestionService = createSecurityQuestionService()
   ) {}
 
-  /**
-   * Purpose:
-   * Resolve the configured security question for a mobile number.
-   *
-   * Business Context:
-   * Recovery step one confirms the account exists and exposes only the question text.
-   *
-   * Inputs:
-   * - payload — mobile number and country code
-   * - clientContext — optional request metadata for audit enrichment
-   *
-   * Outputs:
-   * - RecoveryInitiationResult containing the configured question text
-   *
-   * Exceptions:
-   * - AuthError when account is unavailable or recovery is not configured
-   */
   async initiateRecovery(
     payload: RecoveryInitiationPayload,
     clientContext?: ClientContext
@@ -128,9 +84,7 @@ export class PasswordRecoveryService {
         outcome: "FAILURE",
         timestamp: new Date(),
         clientContext,
-        metadata: {
-          reason: "RECOVERY_USER_NOT_FOUND",
-        },
+        metadata: { reason: "RECOVERY_USER_NOT_FOUND" },
       });
 
       throw new AuthError(
@@ -148,26 +102,6 @@ export class PasswordRecoveryService {
     };
   }
 
-  /**
-   * Purpose:
-   * Complete password recovery after security answer verification.
-   *
-   * Business Context:
-   * Successful recovery resets the Supabase Auth password and clears forced-change flags.
-   *
-   * Inputs:
-   * - payload — mobile, answer, and new password fields
-   * - clientContext — optional request metadata for audit enrichment
-   *
-   * Outputs:
-   * - void on success; user signs in separately afterward
-   *
-   * Exceptions:
-   * - AuthError for invalid answer, lockout, or provider failures
-   *
-   * Business Rules Implemented:
-   * - AD-009 §3.7.2 — constant-time answer verification and lockout on failures
-   */
   async completeRecovery(
     payload: RecoveryCompletionPayload,
     clientContext?: ClientContext
@@ -209,9 +143,7 @@ export class PasswordRecoveryService {
         timestamp: new Date(),
         platformUserId: user.platformUserId,
         clientContext,
-        metadata: {
-          reason: "RECOVERY_ANSWER_INVALID",
-        },
+        metadata: { reason: "RECOVERY_ANSWER_INVALID" },
       });
 
       throw new AuthError(
@@ -221,30 +153,36 @@ export class PasswordRecoveryService {
       );
     }
 
-    await this.identityProvider.updatePasswordByAuthUserId(
-      user.authUserId,
-      parsed.data.newPassword
-    );
+    try {
+      await this.credentialService.setPasswordHash(
+        user.platformUserId,
+        parsed.data.newPassword
+      );
 
-    const db = getDb();
+      const db = getDb();
 
-    await db
-      .insert(userSecurityProfile)
-      .values({
-        platformUserId: user.platformUserId,
-        mustChangePassword: false,
-        failedLoginAttempts: 0,
-        lockedUntil: null,
-      })
-      .onConflictDoUpdate({
-        target: userSecurityProfile.platformUserId,
-        set: {
+      await db
+        .update(userSecurityProfile)
+        .set({
           mustChangePassword: false,
           failedLoginAttempts: 0,
           lockedUntil: null,
           updatedAt: new Date(),
-        },
+        })
+        .where(eq(userSecurityProfile.platformUserId, user.platformUserId));
+    } catch (error) {
+      logAuthFailure("Database persistence", error, {
+        step: "password-recovery-update",
+        platformUserId: user.platformUserId,
       });
+      throw error instanceof AuthError
+        ? error
+        : new AuthError(
+            AUTH_ERROR_CODES.PROVIDER_ERROR,
+            AUTH_USER_MESSAGES.PROVIDER_ERROR,
+            500
+          );
+    }
 
     await getAuthenticationAuditEmitter().emit({
       eventType: AUTHENTICATION_AUDIT_EVENT_TYPES.PASSWORD_RESET,
@@ -272,7 +210,6 @@ export class PasswordRecoveryService {
     const [row] = await db
       .select({
         platformUserId: platformUser.id,
-        authUserId: platformUser.authUserId,
         isActive: platformUser.isActive,
         failedLoginAttempts: userSecurityProfile.failedLoginAttempts,
         lockedUntil: userSecurityProfile.lockedUntil,
@@ -301,7 +238,6 @@ export class PasswordRecoveryService {
 
     return {
       platformUserId: row.platformUserId,
-      authUserId: row.authUserId,
       isActive: row.isActive,
       failedLoginAttempts: row.failedLoginAttempts ?? 0,
       lockedUntil: row.lockedUntil ?? null,

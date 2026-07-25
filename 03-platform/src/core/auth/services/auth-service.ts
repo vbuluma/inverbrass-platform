@@ -1,7 +1,23 @@
+/**
+ * Purpose:
+ * Orchestrate Stage 1 platform authentication, sessions, and first-login.
+ *
+ * Design rationale (architecture change):
+ * BP-001 Foundation Stabilization Stage 1 requires application-owned auth:
+ * Username = Mobile Number, Password = bcrypt hash in PostgreSQL, session =
+ * signed HttpOnly cookie. Supabase Auth is no longer the primary mechanism;
+ * Supabase remains PostgreSQL / Storage / Realtime infrastructure.
+ *
+ * Why this diverges from AD-009 ADR-009:
+ * ADR-009 delegated credentials to Supabase Auth. Stage 1 roadmap alignment
+ * moves the source of truth to PostgreSQL for credentials and sessions.
+ *
+ * Architecture:
+ * UI → Server Actions → AuthService → CredentialService / session cookies → Drizzle
+ */
+
 import { eq } from "drizzle-orm";
 
-import { createIdentityProviderAdapter } from "@/core/auth/adapters/supabase-identity-provider-adapter";
-import type { IdentityProviderAdapter } from "@/core/auth/adapters/identity-provider-adapter";
 import {
   LOCKOUT_DURATION_MINUTES,
   LOCKOUT_THRESHOLD,
@@ -13,8 +29,15 @@ import {
 } from "@/core/auth/errors";
 import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import type { BusinessContextService } from "@/core/auth/services/business-context-service";
+import { createCredentialService } from "@/core/auth/services/credential-service";
+import type { CredentialService } from "@/core/auth/services/credential-service";
 import { createSecurityQuestionService } from "@/core/auth/services/security-question-service";
 import type { SecurityQuestionService } from "@/core/auth/services/security-question-service";
+import {
+  clearAuthSessionCookie,
+  getAuthSessionFromCookie,
+  setAuthSessionCookie,
+} from "@/core/auth/session/auth-session-cookie";
 import type {
   AuthSessionUser,
   ClientContext,
@@ -24,17 +47,11 @@ import type {
   LoginCredentials,
   LoginResult,
 } from "@/core/auth/types";
-import {
-  loginCredentialsSchema,
-} from "@/core/auth/validators/auth-validators";
+import { logAuthFailure } from "@/core/auth/utils/auth-stage-log";
+import { normalizeMobileNumber } from "@/core/auth/utils/phone-normalizer";
+import { loginCredentialsSchema } from "@/core/auth/validators/auth-validators";
 import { firstLoginSchema } from "@/core/auth/validators/first-login-validators";
-import {
-  normalizeMobileNumber,
-  toAuthEmailAlias,
-} from "@/core/auth/utils/phone-normalizer";
-import {
-  AUTHENTICATION_AUDIT_EVENT_TYPES,
-} from "@/core/audit/types";
+import { AUTHENTICATION_AUDIT_EVENT_TYPES } from "@/core/audit/types";
 import { getAuthenticationAuditEmitter } from "@/core/audit/authentication-audit-emitter";
 import { getDb } from "@/db/client";
 import { platformUser } from "@/db/schema/platform-user";
@@ -42,7 +59,7 @@ import { userSecurityProfile } from "@/db/schema/user-security-profile";
 
 type PlatformUserRecord = {
   id: string;
-  authUserId: string;
+  authUserId: string | null;
   phoneNumber: string | null;
   email: string | null;
   firstName: string;
@@ -51,53 +68,20 @@ type PlatformUserRecord = {
   mustChangePassword: boolean;
   failedLoginAttempts: number;
   lockedUntil: Date | null;
+  proposedBusinessName: string | null;
 };
 
-/**
- * Purpose:
- * Orchestrate authentication, session resolution, and first-login password change.
- *
- * Business Context:
- * BP-001 requires secure login/logout, forced first-login password changes for provisioned
- * users, and audit emission without storing credentials in platform tables.
- *
- * Architecture Dependency:
- * AD-009 Authentication & Business Onboarding
- *
- * Implementation Package:
- * IP-001 (foundation), IP-004 (first login)
- *
- * Responsibilities:
- * - Login and logout orchestration
- * - Authenticated user resolution from Supabase session + platform tables
- * - First-login password change orchestration
- * - Authentication audit event emission
- *
- * Non-Responsibilities:
- * - Owner registration (OnboardingService)
- * - Business context ownership (BusinessContextService)
- * - Security answer hashing (SecurityQuestionService)
- * - Route protection (authenticated-route-guard)
- *
- * Dependencies:
- * - IdentityProviderAdapter, BusinessContextService, SecurityQuestionService
- * - Drizzle ORM platform tables, AuthenticationAuditEmitter
- *
- * Business Rules Implemented:
- * - AD-009 §3.4 — first-login detection and completion
- * - AD-009 §3.5 — login orchestration and lockout handling
- * - ADR-010 — mobile username via E.164 alias
- *
- * Extension Points:
- * - Voluntary password change and recovery delegate to future IP packages
- */
 export class AuthService {
   constructor(
-    private readonly identityProvider: IdentityProviderAdapter = createIdentityProviderAdapter(),
+    private readonly credentialService: CredentialService = createCredentialService(),
     private readonly businessContextService: BusinessContextService = createBusinessContextService(),
     private readonly securityQuestionService: SecurityQuestionService = createSecurityQuestionService()
   ) {}
 
+  /**
+   * WHAT: Authenticate with mobile + password and establish a platform session.
+   * WHY: Stage 1 login uses PostgreSQL credentials — no OTP, SMS, or IdP.
+   */
   async login(
     credentials: LoginCredentials,
     clientContext?: ClientContext
@@ -118,52 +102,11 @@ export class AuthService {
         parsed.data.mobileNumber,
         parsed.data.countryCode
       );
-    } catch {
+    } catch (error) {
+      logAuthFailure("Authentication", error, { step: "phone-normalize" });
       throw new AuthError(
         AUTH_ERROR_CODES.INVALID_INPUT,
         `Enter a valid mobile number for ${parsed.data.countryCode}.`
-      );
-    }
-
-    const authEmailAlias = toAuthEmailAlias(phoneNumberE164);
-
-    try {
-      await this.identityProvider.signInWithPassword({
-        authEmailAlias,
-        password: parsed.data.password,
-      });
-    } catch (error) {
-      await this.recordFailedLoginByPhone(phoneNumberE164, clientContext);
-
-      if (error instanceof AuthError) {
-        await getAuthenticationAuditEmitter().emit({
-          eventType: AUTHENTICATION_AUDIT_EVENT_TYPES.LOGIN_FAILURE,
-          outcome: "FAILURE",
-          timestamp: new Date(),
-          clientContext,
-          metadata: {
-            reason: error.code,
-            phoneNumber: phoneNumberE164,
-          },
-        });
-        throw error;
-      }
-
-      await getAuthenticationAuditEmitter().emit({
-        eventType: AUTHENTICATION_AUDIT_EVENT_TYPES.LOGIN_FAILURE,
-        outcome: "FAILURE",
-        timestamp: new Date(),
-        clientContext,
-        metadata: {
-          reason: AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-          phoneNumber: phoneNumberE164,
-        },
-      });
-
-      throw new AuthError(
-        AUTH_ERROR_CODES.INVALID_CREDENTIALS,
-        AUTH_USER_MESSAGES.INVALID_CREDENTIALS,
-        401
       );
     }
 
@@ -190,17 +133,73 @@ export class AuthService {
 
     this.assertAccountIsAccessible(platformUserRecord);
 
+    try {
+      const passwordValid = await this.credentialService.verifyUserPassword(
+        platformUserRecord.id,
+        parsed.data.password
+      );
+
+      if (!passwordValid) {
+        await this.recordFailedLoginByPhone(phoneNumberE164, clientContext);
+
+        await getAuthenticationAuditEmitter().emit({
+          eventType: AUTHENTICATION_AUDIT_EVENT_TYPES.LOGIN_FAILURE,
+          outcome: "FAILURE",
+          timestamp: new Date(),
+          platformUserId: platformUserRecord.id,
+          clientContext,
+          metadata: {
+            reason: AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+            phoneNumber: phoneNumberE164,
+          },
+        });
+
+        throw new AuthError(
+          AUTH_ERROR_CODES.INVALID_CREDENTIALS,
+          AUTH_USER_MESSAGES.INVALID_CREDENTIALS,
+          401
+        );
+      }
+    } catch (error) {
+      if (error instanceof AuthError) {
+        throw error;
+      }
+
+      logAuthFailure("Authentication", error, {
+        platformUserId: platformUserRecord.id,
+      });
+      throw new AuthError(
+        AUTH_ERROR_CODES.PROVIDER_ERROR,
+        AUTH_USER_MESSAGES.PROVIDER_ERROR,
+        500
+      );
+    }
+
     await this.resetLoginFailures(platformUserRecord.id);
+
+    // Session creation — signed HttpOnly cookie.
+    try {
+      await setAuthSessionCookie(platformUserRecord.id);
+    } catch (error) {
+      logAuthFailure("Session creation", error, {
+        platformUserId: platformUserRecord.id,
+      });
+      throw new AuthError(
+        AUTH_ERROR_CODES.PROVIDER_ERROR,
+        AUTH_USER_MESSAGES.PROVIDER_ERROR,
+        500
+      );
+    }
 
     const sessionUser = this.toAuthSessionUser(platformUserRecord);
 
-    if (platformUserRecord.mustChangePassword) {
-      const initialization =
-        await this.businessContextService.initializeContextForUser(
-          platformUserRecord.id,
-          clientContext
-        );
+    const initialization =
+      await this.businessContextService.initializeContextForUser(
+        platformUserRecord.id,
+        clientContext
+      );
 
+    if (platformUserRecord.mustChangePassword) {
       await getAuthenticationAuditEmitter().emit({
         eventType: AUTHENTICATION_AUDIT_EVENT_TYPES.LOGIN_SUCCESS,
         outcome: "SUCCESS",
@@ -210,6 +209,7 @@ export class AuthService {
         clientContext,
         metadata: {
           requiresPasswordChange: true,
+          hasNoBusinesses: initialization.hasNoBusinesses,
         },
       });
 
@@ -218,14 +218,9 @@ export class AuthService {
         businessContext: initialization.context,
         requiresBusinessSelection: initialization.requiresBusinessSelection,
         requiresPasswordChange: true,
+        hasNoBusinesses: initialization.hasNoBusinesses,
       };
     }
-
-    const initialization =
-      await this.businessContextService.initializeContextForUser(
-        platformUserRecord.id,
-        clientContext
-      );
 
     await getAuthenticationAuditEmitter().emit({
       eventType: AUTHENTICATION_AUDIT_EVENT_TYPES.LOGIN_SUCCESS,
@@ -234,6 +229,9 @@ export class AuthService {
       platformUserId: platformUserRecord.id,
       businessId: initialization.context?.businessId,
       clientContext,
+      metadata: {
+        hasNoBusinesses: initialization.hasNoBusinesses,
+      },
     });
 
     await this.updateLastLogin(platformUserRecord.id);
@@ -243,26 +241,16 @@ export class AuthService {
       businessContext: initialization.context,
       requiresBusinessSelection: initialization.requiresBusinessSelection,
       requiresPasswordChange: false,
+      hasNoBusinesses: initialization.hasNoBusinesses,
     };
   }
 
   async logout(clientContext?: ClientContext): Promise<void> {
-    const session = await this.identityProvider.getSession();
-    let platformUserId: string | undefined;
-
-    if (session?.user.id) {
-      const db = getDb();
-      const [row] = await db
-        .select({ id: platformUser.id })
-        .from(platformUser)
-        .where(eq(platformUser.authUserId, session.user.id))
-        .limit(1);
-
-      platformUserId = row?.id;
-    }
+    const session = await getAuthSessionFromCookie();
+    const platformUserId = session?.platformUserId;
 
     await this.businessContextService.clearContext();
-    await this.identityProvider.signOut();
+    await clearAuthSessionCookie();
 
     await getAuthenticationAuditEmitter().emit({
       eventType: AUTHENTICATION_AUDIT_EVENT_TYPES.LOGOUT,
@@ -273,10 +261,14 @@ export class AuthService {
     });
   }
 
+  /**
+   * WHAT: Resolve the authenticated Platform User from the session cookie.
+   * WHY: Server guards and pages use PostgreSQL identity, not Supabase Auth.
+   */
   async getAuthenticatedUser(): Promise<AuthSessionUser | null> {
-    const providerUser = await this.identityProvider.getUser();
+    const session = await getAuthSessionFromCookie();
 
-    if (!providerUser) {
+    if (!session) {
       return null;
     }
 
@@ -290,6 +282,7 @@ export class AuthService {
         firstName: platformUser.firstName,
         lastName: platformUser.lastName,
         isActive: platformUser.isActive,
+        proposedBusinessName: platformUser.proposedBusinessName,
         mustChangePassword: userSecurityProfile.mustChangePassword,
         failedLoginAttempts: userSecurityProfile.failedLoginAttempts,
         lockedUntil: userSecurityProfile.lockedUntil,
@@ -299,7 +292,7 @@ export class AuthService {
         userSecurityProfile,
         eq(userSecurityProfile.platformUserId, platformUser.id)
       )
-      .where(eq(platformUser.authUserId, providerUser.authUserId))
+      .where(eq(platformUser.id, session.platformUserId))
       .limit(1);
 
     if (!row) {
@@ -314,6 +307,7 @@ export class AuthService {
       firstName: row.firstName,
       lastName: row.lastName,
       isActive: row.isActive,
+      proposedBusinessName: row.proposedBusinessName,
       mustChangePassword: row.mustChangePassword ?? false,
       failedLoginAttempts: row.failedLoginAttempts ?? 0,
       lockedUntil: row.lockedUntil ?? null,
@@ -321,7 +315,7 @@ export class AuthService {
   }
 
   async refreshSession(): Promise<void> {
-    const session = await this.identityProvider.getSession();
+    const session = await getAuthSessionFromCookie();
 
     if (!session) {
       throw new AuthError(
@@ -330,28 +324,10 @@ export class AuthService {
         401
       );
     }
+
+    await setAuthSessionCookie(session.platformUserId);
   }
 
-  /**
-   * Purpose:
-   * Load first-login screen state for an authenticated user.
-   *
-   * Business Context:
-   * The first-login page needs to know whether security question setup is required
-   * while preserving the active business context established at login.
-   *
-   * Inputs:
-   * - None — reads the current authenticated session user
-   *
-   * Outputs:
-   * - FirstLoginContext with user, business context, and security question requirement
-   *
-   * Exceptions:
-   * - AuthError when session is missing or first login is not required
-   *
-   * Business Rules Implemented:
-   * - AD-009 §3.4 — security question captured only when not yet configured
-   */
   async getFirstLoginContext(): Promise<FirstLoginContext> {
     const user = await this.getAuthenticatedUser();
 
@@ -381,29 +357,6 @@ export class AuthService {
     };
   }
 
-  /**
-   * Purpose:
-   * Complete forced first-login password change and optional security question setup.
-   *
-   * Business Context:
-   * Employees provisioned with a temporary password must set a permanent password,
-   * configure security Q&A when missing, and continue with uninterrupted business context.
-   *
-   * Inputs:
-   * - payload — current password, new password, optional security Q&A
-   * - clientContext — optional request metadata for audit enrichment
-   *
-   * Outputs:
-   * - FirstLoginResult with refreshed user and preserved business context
-   *
-   * Exceptions:
-   * - AuthError for validation, invalid current password, or missing security question
-   *
-   * Business Rules Implemented:
-   * - AD-009 §2.10 — BP-001 password policy
-   * - AD-009 §3.4.2 — current password validation and security answer hashing
-   * - IP-004 — business context remains active; no re-login required
-   */
   async completeFirstLogin(
     payload: FirstLoginPayload,
     clientContext?: ClientContext
@@ -446,15 +399,16 @@ export class AuthService {
       }
     }
 
-    const authEmailAlias = toAuthEmailAlias(user.phoneNumber);
-
     try {
-      await this.identityProvider.verifyPassword({
-        authEmailAlias,
-        password: parsed.data.currentPassword,
-      });
+      await this.credentialService.assertPasswordValid(
+        user.platformUserId,
+        parsed.data.currentPassword
+      );
     } catch (error) {
-      if (error instanceof AuthError) {
+      if (
+        error instanceof AuthError &&
+        error.code === AUTH_ERROR_CODES.INVALID_CREDENTIALS
+      ) {
         throw new AuthError(
           AUTH_ERROR_CODES.CURRENT_PASSWORD_INVALID,
           AUTH_USER_MESSAGES.CURRENT_PASSWORD_INVALID,
@@ -462,51 +416,61 @@ export class AuthService {
         );
       }
 
+      logAuthFailure("Authentication", error, {
+        step: "first-login-verify-current",
+      });
       throw error;
     }
-
-    await this.identityProvider.updatePassword(parsed.data.newPassword);
 
     const existingBusinessContext =
       await this.businessContextService.getCurrentContext();
 
     const db = getDb();
 
-    /**
-     * Transaction required because security answer insert and must_change_password=false
-     * must succeed together. Rollback restores the prior profile row and removes any
-     * partial answer insert, keeping user_security_profile as the single source of truth.
-     */
-    await db.transaction(async (tx) => {
-      if (requiresSecurityQuestion) {
-        await this.securityQuestionService.hashAndStoreAnswer(
+    try {
+      await db.transaction(async (tx) => {
+        if (requiresSecurityQuestion) {
+          await this.securityQuestionService.hashAndStoreAnswer(
+            user.platformUserId,
+            parsed.data.securityQuestionId!,
+            parsed.data.securityAnswer!,
+            tx
+          );
+        }
+
+        await this.credentialService.setPasswordHash(
           user.platformUserId,
-          parsed.data.securityQuestionId!,
-          parsed.data.securityAnswer!,
+          parsed.data.newPassword,
           tx
         );
-      }
 
-      await tx
-        .insert(userSecurityProfile)
-        .values({
-          platformUserId: user.platformUserId,
-          mustChangePassword: false,
-        })
-        .onConflictDoUpdate({
-          target: userSecurityProfile.platformUserId,
-          set: {
+        await tx
+          .update(userSecurityProfile)
+          .set({
             mustChangePassword: false,
             updatedAt: new Date(),
-          },
-        });
-    });
+          })
+          .where(eq(userSecurityProfile.platformUserId, user.platformUserId));
+      });
+    } catch (error) {
+      logAuthFailure("Database persistence", error, {
+        step: "first-login-persist",
+      });
+      throw error instanceof AuthError
+        ? error
+        : new AuthError(
+            AUTH_ERROR_CODES.PROVIDER_ERROR,
+            AUTH_USER_MESSAGES.PROVIDER_ERROR,
+            500
+          );
+    }
 
     await this.updateLastLogin(user.platformUserId);
 
     const refreshedUser = await this.getAuthenticatedUser();
 
     if (!refreshedUser) {
+      logAuthFailure("Session creation", new Error("Session user missing after first login"));
       throw new AuthError(
         AUTH_ERROR_CODES.PROVIDER_ERROR,
         AUTH_USER_MESSAGES.PROVIDER_ERROR,
@@ -516,6 +480,7 @@ export class AuthService {
 
     let businessContext = existingBusinessContext;
     let requiresBusinessSelection = false;
+    let hasNoBusinesses = false;
 
     if (!businessContext) {
       const initialization =
@@ -525,6 +490,13 @@ export class AuthService {
         );
       businessContext = initialization.context;
       requiresBusinessSelection = initialization.requiresBusinessSelection;
+      hasNoBusinesses = initialization.hasNoBusinesses;
+    } else {
+      const memberships =
+        await this.businessContextService.getActiveMemberships(
+          user.platformUserId
+        );
+      hasNoBusinesses = memberships.length === 0;
     }
 
     const auditTimestamp = new Date();
@@ -536,9 +508,7 @@ export class AuthService {
       platformUserId: user.platformUserId,
       businessId: businessContext?.businessId,
       clientContext,
-      metadata: {
-        firstLogin: true,
-      },
+      metadata: { firstLogin: true },
     });
 
     await getAuthenticationAuditEmitter().emit({
@@ -554,6 +524,7 @@ export class AuthService {
       user: refreshedUser,
       businessContext,
       requiresBusinessSelection,
+      hasNoBusinesses,
     };
   }
 
@@ -571,6 +542,7 @@ export class AuthService {
         firstName: platformUser.firstName,
         lastName: platformUser.lastName,
         isActive: platformUser.isActive,
+        proposedBusinessName: platformUser.proposedBusinessName,
         mustChangePassword: userSecurityProfile.mustChangePassword,
         failedLoginAttempts: userSecurityProfile.failedLoginAttempts,
         lockedUntil: userSecurityProfile.lockedUntil,
@@ -595,6 +567,7 @@ export class AuthService {
       firstName: row.firstName,
       lastName: row.lastName,
       isActive: row.isActive,
+      proposedBusinessName: row.proposedBusinessName,
       mustChangePassword: row.mustChangePassword ?? false,
       failedLoginAttempts: row.failedLoginAttempts ?? 0,
       lockedUntil: row.lockedUntil ?? null,
@@ -629,6 +602,7 @@ export class AuthService {
       lastName: user.lastName,
       isActive: user.isActive,
       mustChangePassword: user.mustChangePassword,
+      proposedBusinessName: user.proposedBusinessName,
     };
   }
 
@@ -672,9 +646,7 @@ export class AuthService {
         timestamp: new Date(),
         platformUserId: user.id,
         clientContext,
-        metadata: {
-          failedLoginAttempts: nextAttempts,
-        },
+        metadata: { failedLoginAttempts: nextAttempts },
       });
     }
   }

@@ -1,3 +1,12 @@
+/**
+ * Purpose:
+ * Validate Platform Registration service payloads (Stage 1).
+ *
+ * Design rationale:
+ * Email and proposed business name are optional. Password policy remains
+ * authoritative on the server. No industry/template/business fields.
+ */
+
 import { z } from "zod";
 
 import { passwordPolicySchema } from "@/core/auth/utils/password-policy";
@@ -22,7 +31,7 @@ export const ownerRegistrationSchema = z
       .string()
       .trim()
       .email("Enter a valid email address.")
-      .max(255)
+      .max(255, "Email address is too long.")
       .optional()
       .or(z.literal("")),
     password: passwordPolicySchema,
@@ -36,18 +45,7 @@ export const ownerRegistrationSchema = z
     businessName: z
       .string()
       .trim()
-      .min(1, "Business name is required.")
-      .max(200, "Business name is too long."),
-    businessTypeId: z.string().uuid("Select a business type."),
-    businessCountryCode: z
-      .string()
-      .length(2, "Country code must be a 2-letter ISO code."),
-    businessMobileNumber: z.string().min(1, "Business mobile number is required."),
-    businessEmail: z
-      .string()
-      .trim()
-      .email("Enter a valid business email address.")
-      .max(255)
+      .max(200, "Business name is too long.")
       .optional()
       .or(z.literal("")),
   })

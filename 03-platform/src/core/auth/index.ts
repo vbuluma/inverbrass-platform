@@ -16,8 +16,11 @@ export {
 } from "@/core/auth/actions/onboarding-actions";
 export {
   getCountriesAction,
+  getIndustriesAction,
   getBusinessTypesAction,
 } from "@/core/auth/actions/catalog-actions";
+export { createBusinessUiAction } from "@/core/auth/actions/business-registration-actions";
+export { createBusinessRegistrationService } from "@/core/auth/services/business-registration-service";
 export {
   initiateRecoveryAction,
   completeRecoveryAction,
@@ -28,6 +31,7 @@ export {
 } from "@/core/auth/actions/select-business-actions";
 export { createAuthService } from "@/core/auth/services/auth-service";
 export { createBusinessContextService } from "@/core/auth/services/business-context-service";
+export { createCredentialService } from "@/core/auth/services/credential-service";
 export { createOnboardingService } from "@/core/auth/services/onboarding-service";
 export { createPasswordRecoveryService } from "@/core/auth/services/password-recovery-service";
 export { createReferenceDataService } from "@/core/auth/services/reference-data-service";
@@ -49,5 +53,8 @@ export type {
   RecoveryCompletionPayload,
   SelectableBusiness,
   CountryOption,
+  IndustryOption,
   BusinessTypeOption,
+  CreateBusinessPayload,
+  CreateBusinessResult,
 } from "@/core/auth/types";

@@ -1,3 +1,19 @@
+/**
+ * Purpose:
+ * Expose Platform Registration server actions to the App Router UI.
+ *
+ * Design rationale:
+ * Thin action boundary over OnboardingService. Redirect throws are rethrown so
+ * successful navigation is not mapped to PROVIDER_ERROR.
+ *
+ * Why this exists:
+ * BP-001 foundation correction — registration creates a Platform User only and
+ * redirects to Platform Home (via first-login when applicable).
+ *
+ * Architecture Dependency:
+ * AD-009 Authentication & Business Onboarding
+ */
+
 "use server";
 
 import { headers } from "next/headers";
@@ -11,7 +27,9 @@ import type {
   OwnerRegistrationPayload,
   OwnerRegistrationUiPayload,
 } from "@/core/auth/types";
+import { logAuthFailure } from "@/core/auth/utils/auth-stage-log";
 import { getClientContextFromHeaders } from "@/core/auth/utils/helpers";
+import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 import { mapRegistrationUiToOwnerPayload } from "@/core/auth/utils/registration-ui-mapper";
 import { ownerRegistrationUiSchema } from "@/core/auth/validators/registration-ui-validators";
 
@@ -44,6 +62,10 @@ export async function registerOwnerAction(
       };
     }
 
+    logAuthFailure("Platform User creation", error, {
+      action: "registerOwnerAction",
+    });
+
     return {
       success: false,
       error: {
@@ -54,6 +76,10 @@ export async function registerOwnerAction(
   }
 }
 
+/**
+ * WHAT: Validate UI payload, register Platform User, redirect to Platform Home.
+ * WHY: Post-registration destination is Platform Home — no Business exists yet.
+ */
 export async function registerOwnerUiAction(
   payload: OwnerRegistrationUiPayload
 ): Promise<
@@ -80,14 +106,22 @@ export async function registerOwnerUiAction(
   try {
     const requestHeaders = await headers();
     const onboardingService = createOnboardingService();
-    await onboardingService.registerOwner(
+    const result = await onboardingService.registerOwner(
       mapRegistrationUiToOwnerPayload(parsed.data),
       getClientContextFromHeaders(requestHeaders)
     );
 
-    // IP-006 — newly registered businesses are DRAFT and enter setup.
-    redirect("/setup");
+    // Owners set security Q&A at registration — first-login only when required.
+    if (result.user.mustChangePassword) {
+      redirect("/first-login");
+    }
+
+    redirect("/home");
   } catch (error) {
+    if (isNextRedirectError(error)) {
+      throw error;
+    }
+
     if (error instanceof AuthError) {
       return {
         success: false,
@@ -97,6 +131,10 @@ export async function registerOwnerUiAction(
         },
       };
     }
+
+    logAuthFailure("Platform User creation", error, {
+      action: "registerOwnerUiAction",
+    });
 
     return {
       success: false,
@@ -132,6 +170,11 @@ export async function getSecurityQuestionsAction(): Promise<
         },
       };
     }
+
+    console.error(
+      "[onboarding-actions] getSecurityQuestionsAction failed.",
+      error
+    );
 
     return {
       success: false,

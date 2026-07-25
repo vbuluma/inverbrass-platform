@@ -30,11 +30,14 @@
  * - Auto-select single membership may be added when product policy requires it
  */
 
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { SelectBusinessList } from "@/app/(authenticated)/select-business/select-business-list";
 import { AuthPageShell } from "@/components/auth/auth-page-shell";
+import { buttonVariants } from "@/components/ui/button";
 import { getSelectableBusinessesAction } from "@/core/auth/actions/select-business-actions";
+import { cn } from "@/lib/utils";
 
 export default async function SelectBusinessPage() {
   const businessesResult = await getSelectableBusinessesAction();
@@ -45,19 +48,24 @@ export default async function SelectBusinessPage() {
 
   const businesses = businessesResult.data;
 
+  if (businesses.length === 0) {
+    redirect("/home");
+  }
+
   return (
     <AuthPageShell
-      title="Select a business"
+      title="Switch Business"
       description="Choose the business you want to work in for this session."
+      footer={
+        <Link
+          href="/home"
+          className={cn(buttonVariants({ variant: "ghost" }), "w-full")}
+        >
+          Back to Platform Home
+        </Link>
+      }
     >
-      {businesses.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No active business memberships are available for your account. Contact
-          your administrator if you believe this is an error.
-        </p>
-      ) : (
-        <SelectBusinessList businesses={businesses} />
-      )}
+      <SelectBusinessList businesses={businesses} />
     </AuthPageShell>
   );
 }

@@ -113,21 +113,28 @@ export class BusinessContextService {
     return context;
   }
 
+  /**
+   * WHAT: Initialize business context when memberships exist; allow zero businesses.
+   * WHY: Platform Users without businesses are valid and land on Platform Home.
+   */
   async initializeContextForUser(
     platformUserId: string,
     clientContext?: ClientContext
   ): Promise<{
     context: CurrentBusinessContext | null;
     requiresBusinessSelection: boolean;
+    hasNoBusinesses: boolean;
   }> {
     const memberships = await this.getActiveMemberships(platformUserId);
 
     if (memberships.length === 0) {
-      throw new AuthError(
-        AUTH_ERROR_CODES.NO_BUSINESS_ACCESS,
-        AUTH_USER_MESSAGES.NO_BUSINESS_ACCESS,
-        403
-      );
+      await this.clearContext();
+
+      return {
+        context: null,
+        requiresBusinessSelection: false,
+        hasNoBusinesses: true,
+      };
     }
 
     if (memberships.length === 1) {
@@ -139,6 +146,7 @@ export class BusinessContextService {
       return {
         context,
         requiresBusinessSelection: false,
+        hasNoBusinesses: false,
       };
     }
 
@@ -153,6 +161,7 @@ export class BusinessContextService {
     return {
       context,
       requiresBusinessSelection: true,
+      hasNoBusinesses: false,
     };
   }
 

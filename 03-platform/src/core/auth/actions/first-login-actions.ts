@@ -40,6 +40,7 @@ import { AuthError } from "@/core/auth/errors";
 import { createAuthService } from "@/core/auth/services/auth-service";
 import type { FirstLoginPayload } from "@/core/auth/types";
 import { getClientContextFromHeaders } from "@/core/auth/utils/helpers";
+import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 
 export async function getFirstLoginContextAction(): Promise<
   AuthActionResult<
@@ -86,35 +87,18 @@ export async function completeFirstLoginAction(
   try {
     const requestHeaders = await headers();
     const authService = createAuthService();
-    const result = await authService.completeFirstLogin(
+    await authService.completeFirstLogin(
       payload,
       getClientContextFromHeaders(requestHeaders)
     );
 
-    if (result.requiresBusinessSelection) {
-      redirect("/select-business");
-    }
-
-    if (result.businessContext) {
-      const { createBusinessContextService } = await import(
-        "@/core/auth/services/business-context-service"
-      );
-      const businessContextService = createBusinessContextService();
-      const memberships = await businessContextService.getActiveMemberships(
-        result.user.platformUserId
-      );
-      const current = memberships.find(
-        (membership) =>
-          membership.businessId === result.businessContext?.businessId
-      );
-
-      if (current?.businessStatusCode === "DRAFT") {
-        redirect("/setup");
-      }
-    }
-
-    redirect("/dashboard");
+    // After first-login security setup, Platform Home is the entry point.
+    redirect("/home");
   } catch (error) {
+    if (isNextRedirectError(error)) {
+      throw error;
+    }
+
     if (error instanceof AuthError) {
       return {
         success: false,
@@ -124,6 +108,11 @@ export async function completeFirstLoginAction(
         },
       };
     }
+
+    console.error(
+      "[first-login-actions] completeFirstLoginAction failed.",
+      error
+    );
 
     return {
       success: false,

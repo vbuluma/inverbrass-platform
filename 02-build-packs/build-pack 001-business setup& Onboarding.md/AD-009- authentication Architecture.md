@@ -20,12 +20,17 @@
 
 This document defines the complete Authentication and Business Onboarding architecture for the InverBrass Platform. It builds on the approved **Platform Foundation**, **Hybrid Role Model** (ADR-005), **IAM Schema** (D-005/D-006), and **IAM Seed Design** (D-007).
 
-**Authentication Provider:** Supabase Auth (ADR-003)  
-**Identity bridge:** `platform_user.auth_user_id` → Supabase Auth user UUID  
+**Authentication (Stage 1 — current implementation):** Platform-owned authentication (ADR-021)  
+**Username:** Mobile number (E.164)  
+**Credentials:** bcrypt password hash on `user_security_profile.password_hash` (PostgreSQL source of truth)  
+**Sessions:** Signed secure HttpOnly cookie (`inverbrass-auth-session`)  
+**Supabase role:** PostgreSQL database, Storage, Realtime, and infrastructure only — **not** the primary Authentication Provider for Stage 1  
 **Tenant context:** `business_membership` + session-scoped **Current Business Context**  
-**Authorization:** Hybrid Role Model via `user_role` → seeded Platform Role `BUSINESS_OWNER` (and other platform roles per D-007)
+**Authorization:** Hybrid Role Model via `user_role` → seeded Platform Role `OWNER` / platform roles per D-007  
 
-The design implements **Progressive Authentication**: Phase 1 (mobile + password + security question) is fully specified; Phases 2–5 extend the Authentication Provider and platform services without redesigning identity, membership, or RBAC.
+**Historical note:** ADR-009 originally selected Supabase Auth as Phase 1 provider. That decision is **Superseded by ADR-021** to match the approved BP-001 Stage 1 foundation stabilization roadmap.
+
+The design still implements **Progressive Authentication**: Stage 1 (mobile + password + security question) is implemented; later stages may add OTP, email recovery, MFA, and external IdP without redesigning membership or RBAC.
 
 ---
 
@@ -1176,30 +1181,60 @@ This avoids duplicating OIDC client logic in the Next.js app and preserves Progr
 
 | ID | Decision | Status |
 |----|----------|--------|
-| ADR-009 | Supabase Auth is the Phase 1 Authentication Provider; platform tables do not store password hashes | Approved |
+| ADR-009 | Supabase Auth is the Phase 1 Authentication Provider; platform tables do not store password hashes | **Superseded by ADR-021** |
 | ADR-010 | Mobile number is the primary username for BP-001 authentication flows | Approved |
-| ADR-011 | Security answers stored as platform-managed hashes — never in Supabase Auth metadata as plain text | Approved |
+| ADR-011 | Security answers stored as platform-managed hashes — never as plain text | Approved |
 | ADR-012 | Current Business Context is session-scoped with `business_membership.is_primary` persistence | Approved |
 | ADR-013 | Password recovery in R1 uses security questions only — no email/SMS | Approved |
-| ADR-014 | Progressive Authentication extends provider capabilities without redesigning membership/RBAC | Approved |
+| ADR-014 | Progressive Authentication extends capabilities without redesigning membership/RBAC | Approved |
 | ADR-015 | External IAM integrates via provider adapter; platform RBAC remains authoritative | Approved |
 | ADR-016 | Mobile numbers stored in canonical E.164 format; country-aware validation at registration | Approved |
 | ADR-017 | BP-001 minimum password policy: 8 chars, uppercase, lowercase, number, special character | Approved |
 | ADR-018 | Authentication audit events (§2.11) are mandatory platform outputs to Audit Engine | Approved |
 | ADR-019 | Business invitations use Pending → Active membership lifecycle; acceptance required before access | Approved |
 | ADR-020 | Security question text stored in catalog only; per-user storage is question ID + answer hash | Approved |
+| ADR-021 | Stage 1 authentication is platform-owned (PostgreSQL password hashes + HttpOnly session cookies); Supabase is infrastructure only | **Approved (current)** |
 
 #### ADR-009 — Supabase Auth as Phase 1 Authentication Provider
 
-**Status:** Approved
+**Status:** Superseded by ADR-021 (2026-07-25)
 
-**Context:** BP-001 requires password-based authentication with progressive enhancement. Credentials must not be stored in platform tables.
+**Context:** BP-001 originally planned password-based authentication with credentials delegated to Supabase Auth.
 
-**Decision:** Supabase Auth is the Phase 1 Authentication Provider. Password hashing, session/JWT management, sign-up, sign-in, sign-out, and password update are delegated to Supabase Auth. Platform tables store identity and tenancy only.
+**Decision (historical):** Supabase Auth was the Phase 1 Authentication Provider. Password hashing, session/JWT management, sign-up, sign-in, sign-out, and password update were delegated to Supabase Auth. Platform tables stored identity and tenancy only.
 
-**Rationale:** Aligns with approved technology stack (Document 01, Document 07). Separates credential security from business IAM.
+**Supersession reason:** BP-001 Foundation Stabilization Stage 1 requires application-managed authentication with PostgreSQL as the credential source of truth, no dependency on Supabase Auth as the primary authentication mechanism, and secure HttpOnly application sessions. See **ADR-021**.
 
-**Consequences:** `platform_user.auth_user_id` is the immutable join key. Provider swap requires `IdentityProviderAdapter` (ADR-015).
+**Consequences (historical):** `platform_user.auth_user_id` was the immutable join key. This column is retained as an optional legacy bridge under ADR-021.
+
+---
+
+#### ADR-021 — Platform-Owned Stage 1 Authentication (PostgreSQL + HttpOnly Sessions)
+
+**Status:** Approved  
+**Date:** 2026-07-25  
+**Supersedes:** ADR-009  
+
+**Context:** Manual validation and foundation stabilization require Stage 1 authentication that does not depend on Supabase Auth. Username is mobile number; passwords and security answers must be hashed in PostgreSQL; sessions must use secure HttpOnly cookies. Supabase remains the managed PostgreSQL / Storage / Realtime platform.
+
+**Decision:**
+1. Application authentication is owned by the platform (`AuthService`, `CredentialService`, `OnboardingService`).
+2. Username = mobile number (E.164; ADR-010 / ADR-016).
+3. Passwords are stored only as bcrypt hashes on `user_security_profile.password_hash`.
+4. Security answers remain platform-hashed (ADR-011 / ADR-020).
+5. Authenticated sessions use a signed secure HttpOnly cookie (`inverbrass-auth-session`).
+6. Email remains in the data model but is optional for registration and login.
+7. Platform Registration creates only a Platform User — never a Business, membership, industry, template, branch, or configuration.
+8. Supabase Auth is not the primary Stage 1 authentication mechanism. Supabase provides PostgreSQL, Storage, Realtime, and infrastructure.
+9. Progressive stages (OTP, email recovery, MFA, external IdP) may extend Stage 1 later without redesigning membership/RBAC (ADR-014).
+
+**Rationale:** Matches the approved Stage 1 roadmap, removes opaque provider failures from the critical registration/login path, and keeps credential source of truth inside the platform database for enterprise auditability.
+
+**Consequences:**
+- Middleware authenticates via platform session cookie presence; `AuthService` verifies the signed cookie and loads `platform_user`.
+- `auth_user_id` is optional/nullable (legacy bridge).
+- Password recovery updates `password_hash` in PostgreSQL (ADR-013 channel unchanged).
+- Future IdP integration continues to follow ADR-015 adapter principles without reversing Stage 1 ownership.
 
 ---
 
@@ -1513,7 +1548,7 @@ No implementation code for D-009 scope shall be generated until the correspondin
 
 | ID | Decision |
 |----|----------|
-| ADR-009 | Supabase Auth as Phase 1 Authentication Provider |
+| ADR-009 | Supabase Auth as Phase 1 Authentication Provider (**Superseded by ADR-021**) |
 | ADR-010 | Mobile number as primary username (BP-001) |
 | ADR-011 | Security answer platform-side hashing |
 | ADR-012 | Session-scoped Current Business Context + `is_primary` |
@@ -1525,6 +1560,7 @@ No implementation code for D-009 scope shall be generated until the correspondin
 | ADR-018 | Mandatory authentication audit events |
 | ADR-019 | Business invitation Pending → Active lifecycle |
 | ADR-020 | Security question ID + answer hash storage |
+| ADR-021 | Platform-owned Stage 1 authentication (PostgreSQL hashes + HttpOnly sessions); Supabase is infrastructure only |
 
 ### 13.4 Documents updated
 
@@ -1543,7 +1579,7 @@ Reviewed for contradictions only. **No redesign applied.** Known inconsistencies
 | 2 | D-009 vs Document 01 (Enterprise Solution Architecture) | **ADR namespace collision:** Document 01 ADR-005–007 (PWA, GitHub, Cursor) differ from IAM ADRs using same IDs (ADR-005 Hybrid Role Model, ADR-006 Tenant Isolation in D-005/D-006). |
 | 3 | D-009 Executive Summary vs D-007 Platform Permission Catalog | D-009 references **IAM Seed Design (D-007)** as approved foundation; D-007 document header status remains **Design for approval**. |
 | 4 | D-009 (ADR-010, §2.9) vs Document 09 §4.2–4.3 | Document 09 lists **Email & Password** as primary for Business Owners and **PIN** as default for Employees; D-009 locks BP-001 Phase 1 to **Mobile + Password** for owners and employees (PIN deferred to separate Phase 1b per Assumption A9). |
-| 5 | D-009 vs frozen `platform_user` schema | D-009 requires **optional email**; schema defines `email` as **NOT NULL**. Documented as known gap in §9.3 — not yet resolved. |
+| 5 | D-009 vs frozen `platform_user` schema | **Resolved in implementation (ADR-021 / migration 0007):** email is optional (`NULL` allowed). |
 | 6 | D-009 vs frozen IAM/business schema | Proposed entities (`security_question`, `user_security_answer`, `user_security_profile`, `business_invitation`) and fields (`must_change_password`, `platform_user.status`) referenced in architecture but **not present** in frozen schema. Deferred to D-010+. |
 | 7 | D-009 vs Document 11 (Development Roadmap) | Roadmap lists **BP-001 as ✅ Complete** at release level; BP-001 deliverable tracker shows multiple deliverables still pending (D-007, D-010–D-012). Different granularity — not necessarily contradictory but may cause confusion. |
 

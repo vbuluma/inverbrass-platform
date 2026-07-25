@@ -1,12 +1,18 @@
-import { and, eq } from "drizzle-orm";
+/**
+ * Purpose:
+ * Orchestrate Platform Registration — create a Platform User and session only.
+ *
+ * Design rationale (BP-001 Stage 1):
+ * Registration creates ONLY a Platform User with a bcrypt password hash.
+ * No Business, membership, industry, template, branch, or configuration.
+ * Credentials and sessions are platform-owned (PostgreSQL + HttpOnly cookie).
+ *
+ * Why this exists:
+ * Separates identity provisioning from Tenant Business registration.
+ */
 
-import { createIdentityProviderAdapter } from "@/core/auth/adapters/supabase-identity-provider-adapter";
-import type { IdentityProviderAdapter } from "@/core/auth/adapters/identity-provider-adapter";
-import {
-  BUSINESS_MEMBERSHIP_STATUS,
-  BUSINESS_STATUS,
-  PLATFORM_ROLE_CODES,
-} from "@/core/auth/constants";
+import { and, eq, sql } from "drizzle-orm";
+
 import {
   AUTH_ERROR_CODES,
   AUTH_USER_MESSAGES,
@@ -14,44 +20,35 @@ import {
 } from "@/core/auth/errors";
 import { createAuthService } from "@/core/auth/services/auth-service";
 import type { AuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
-import type { BusinessContextService } from "@/core/auth/services/business-context-service";
-import { createRoleAssignmentService } from "@/core/auth/services/role-assignment-service";
-import type { RoleAssignmentService } from "@/core/auth/services/role-assignment-service";
 import { createSecurityQuestionService } from "@/core/auth/services/security-question-service";
 import type { SecurityQuestionService } from "@/core/auth/services/security-question-service";
+import { setAuthSessionCookie } from "@/core/auth/session/auth-session-cookie";
 import type {
   ClientContext,
   OwnerRegistrationPayload,
   OwnerRegistrationResult,
 } from "@/core/auth/types";
-import { generateUniqueBusinessCode } from "@/core/auth/utils/business-code";
-import {
-  normalizeMobileNumber,
-  toAuthEmailAlias,
-} from "@/core/auth/utils/phone-normalizer";
+import { logAuthFailure } from "@/core/auth/utils/auth-stage-log";
+import { hashPassword } from "@/core/auth/utils/password-hasher";
+import { normalizeMobileNumber } from "@/core/auth/utils/phone-normalizer";
 import { ownerRegistrationSchema } from "@/core/auth/validators/registration-validators";
-import {
-  AUTHENTICATION_AUDIT_EVENT_TYPES,
-} from "@/core/audit/types";
+import { AUTHENTICATION_AUDIT_EVENT_TYPES } from "@/core/audit/types";
 import { getAuthenticationAuditEmitter } from "@/core/audit/authentication-audit-emitter";
 import { getDb } from "@/db/client";
-import { business } from "@/db/schema/business";
-import { businessMembership } from "@/db/schema/business-membership";
-import { businessType } from "@/db/schema/business-type";
 import { country } from "@/db/schema/country";
 import { platformUser } from "@/db/schema/platform-user";
 import { userSecurityProfile } from "@/db/schema/user-security-profile";
 
 export class OnboardingService {
   constructor(
-    private readonly identityProvider: IdentityProviderAdapter = createIdentityProviderAdapter(),
     private readonly authService: AuthService = createAuthService(),
-    private readonly businessContextService: BusinessContextService = createBusinessContextService(),
-    private readonly securityQuestionService: SecurityQuestionService = createSecurityQuestionService(),
-    private readonly roleAssignmentService: RoleAssignmentService = createRoleAssignmentService()
+    private readonly securityQuestionService: SecurityQuestionService = createSecurityQuestionService()
   ) {}
 
+  /**
+   * WHAT: Register a Platform User with mobile/password — no Business created.
+   * WHY: Business registration begins only after login from Platform Home.
+   */
   async registerOwner(
     payload: OwnerRegistrationPayload,
     clientContext?: ClientContext
@@ -68,124 +65,89 @@ export class OnboardingService {
     const data = parsed.data;
 
     let ownerPhoneE164: string;
-    let businessPhoneE164: string;
 
     try {
       ownerPhoneE164 = normalizeMobileNumber(
         data.mobileNumber,
         data.countryCode
       );
-      businessPhoneE164 = normalizeMobileNumber(
-        data.businessMobileNumber,
-        data.businessCountryCode
-      );
-    } catch {
+    } catch (error) {
+      logAuthFailure("Authentication", error, { step: "phone-normalize" });
       throw new AuthError(
         AUTH_ERROR_CODES.INVALID_INPUT,
-        "Enter valid mobile numbers for the selected countries."
+        "Enter a valid mobile number for the selected country."
       );
     }
 
     await this.assertPhoneAvailable(ownerPhoneE164);
-    await this.assertBusinessReferences(data.businessTypeId, data.businessCountryCode);
+
+    if (data.email && data.email.trim().length > 0) {
+      await this.assertEmailAvailable(data.email);
+    }
+
+    await this.assertCountryActive(data.countryCode);
     await this.securityQuestionService.assertActiveQuestion(
       data.securityQuestionId
     );
 
-    const authEmailAlias = toAuthEmailAlias(ownerPhoneE164);
-    const contactEmail =
-      data.email && data.email.length > 0 ? data.email : authEmailAlias;
-
-    const signUpResult = await this.identityProvider.signUp({
-      authEmailAlias,
-      password: data.password,
-      metadata: {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        phoneNumber: ownerPhoneE164,
-      },
-    });
-
     let platformUserId = "";
-    let businessId = "";
-    let membershipId = "";
-    let userRoleId = "";
 
     try {
+      const passwordHash = await hashPassword(data.password);
       const db = getDb();
-      const countryRow = await this.loadCountry(data.businessCountryCode);
+      const contactEmail =
+        data.email && data.email.trim().length > 0
+          ? data.email.trim().toLowerCase()
+          : null;
+      const proposedName =
+        data.businessName && data.businessName.trim().length > 0
+          ? data.businessName.trim()
+          : null;
 
       await db.transaction(async (tx) => {
+        // Platform User creation — identity only.
         const [createdUser] = await tx
           .insert(platformUser)
           .values({
-            authUserId: signUpResult.authUserId,
+            authUserId: null,
             firstName: data.firstName,
             lastName: data.lastName,
             displayName: `${data.firstName} ${data.lastName}`.trim(),
             email: contactEmail,
             phoneNumber: ownerPhoneE164,
+            proposedBusinessName: proposedName,
             isActive: true,
           })
           .returning({ id: platformUser.id });
 
         platformUserId = createdUser.id;
 
+        // Persist bcrypt password hash — never plain text.
         await tx.insert(userSecurityProfile).values({
           platformUserId,
+          passwordHash,
           mustChangePassword: false,
           failedLoginAttempts: 0,
         });
 
+        // Persist bcrypt security-answer hash — never plain text.
         await this.securityQuestionService.hashAndStoreAnswer(
           platformUserId,
           data.securityQuestionId,
           data.securityAnswer,
           tx
         );
-
-        const businessCode = await generateUniqueBusinessCode(
-          data.businessName,
-          tx
-        );
-
-        const [createdBusiness] = await tx
-          .insert(business)
-          .values({
-            code: businessCode,
-            name: data.businessName,
-            phoneNumber: businessPhoneE164,
-            businessTypeId: data.businessTypeId,
-            // AD-009 A4 / IP-006 BR-011 — DRAFT until setup activation.
-            statusCode: BUSINESS_STATUS.DRAFT,
-            countryCode: data.businessCountryCode,
-            timezone: countryRow.timezoneCode,
-          })
-          .returning({ id: business.id });
-
-        businessId = createdBusiness.id;
-
-        const [createdMembership] = await tx
-          .insert(businessMembership)
-          .values({
-            businessId,
-            platformUserId,
-            status: BUSINESS_MEMBERSHIP_STATUS.ACTIVE,
-            isPrimary: true,
-          })
-          .returning({ id: businessMembership.id });
-
-        membershipId = createdMembership.id;
-
-        userRoleId = await this.roleAssignmentService.assignPlatformRole(
-          membershipId,
-          PLATFORM_ROLE_CODES.OWNER,
-          platformUserId,
-          "Owner self-registration",
-          tx
-        );
       });
     } catch (error) {
+      logAuthFailure(
+        error instanceof AuthError &&
+          error.code === AUTH_ERROR_CODES.PHONE_ALREADY_REGISTERED
+          ? "Platform User creation"
+          : "Database persistence",
+        error,
+        { phoneNumber: ownerPhoneE164 }
+      );
+
       await getAuthenticationAuditEmitter().emit({
         eventType: AUTHENTICATION_AUDIT_EVENT_TYPES.USER_REGISTERED,
         outcome: "FAILURE",
@@ -207,21 +169,11 @@ export class OnboardingService {
           );
     }
 
-    if (!signUpResult.session) {
-      await this.identityProvider.signInWithPassword({
-        authEmailAlias,
-        password: data.password,
-      });
-    }
-
-    const businessContext = await this.businessContextService.setCurrentBusiness(
-      membershipId,
-      clientContext
-    );
-
-    const user = await this.authService.getAuthenticatedUser();
-
-    if (!user) {
+    // Session creation after successful persistence.
+    try {
+      await setAuthSessionCookie(platformUserId);
+    } catch (error) {
+      logAuthFailure("Session creation", error, { platformUserId });
       throw new AuthError(
         AUTH_ERROR_CODES.REGISTRATION_FAILED,
         AUTH_USER_MESSAGES.REGISTRATION_FAILED,
@@ -229,62 +181,34 @@ export class OnboardingService {
       );
     }
 
-    const auditTimestamp = new Date();
+    const user = await this.authService.getAuthenticatedUser();
+
+    if (!user) {
+      logAuthFailure(
+        "Session creation",
+        new Error("Authenticated user missing after registration")
+      );
+      throw new AuthError(
+        AUTH_ERROR_CODES.REGISTRATION_FAILED,
+        AUTH_USER_MESSAGES.REGISTRATION_FAILED,
+        500
+      );
+    }
 
     await getAuthenticationAuditEmitter().emit({
       eventType: AUTHENTICATION_AUDIT_EVENT_TYPES.USER_REGISTERED,
       outcome: "SUCCESS",
-      timestamp: auditTimestamp,
+      timestamp: new Date(),
       platformUserId,
       clientContext,
       metadata: {
         phoneNumber: ownerPhoneE164,
-      },
-    });
-
-    await getAuthenticationAuditEmitter().emit({
-      eventType: AUTHENTICATION_AUDIT_EVENT_TYPES.BUSINESS_CREATED,
-      outcome: "SUCCESS",
-      timestamp: auditTimestamp,
-      platformUserId,
-      businessId,
-      clientContext,
-      metadata: {
-        businessPhoneNumber: businessPhoneE164,
-        businessEmail: data.businessEmail ?? null,
-      },
-    });
-
-    await getAuthenticationAuditEmitter().emit({
-      eventType: AUTHENTICATION_AUDIT_EVENT_TYPES.MEMBERSHIP_CREATED,
-      outcome: "SUCCESS",
-      timestamp: auditTimestamp,
-      platformUserId,
-      businessId,
-      clientContext,
-      metadata: {
-        businessMembershipId: membershipId,
-      },
-    });
-
-    await getAuthenticationAuditEmitter().emit({
-      eventType: AUTHENTICATION_AUDIT_EVENT_TYPES.ROLE_ASSIGNED,
-      outcome: "SUCCESS",
-      timestamp: auditTimestamp,
-      platformUserId,
-      businessId,
-      clientContext,
-      metadata: {
-        businessMembershipId: membershipId,
-        userRoleId,
-        roleCode: PLATFORM_ROLE_CODES.OWNER,
+        hasBusiness: false,
       },
     });
 
     return {
       user,
-      businessContext,
-      businessId,
       platformUserId,
     };
   }
@@ -307,26 +231,27 @@ export class OnboardingService {
     }
   }
 
-  private async assertBusinessReferences(
-    businessTypeId: string,
-    countryCode: string
-  ): Promise<void> {
+  private async assertEmailAvailable(email: string): Promise<void> {
     const db = getDb();
+    const normalized = email.trim().toLowerCase();
 
-    const [typeRow] = await db
-      .select({ id: businessType.id })
-      .from(businessType)
-      .where(
-        and(eq(businessType.id, businessTypeId), eq(businessType.isActive, true))
-      )
+    const [existing] = await db
+      .select({ id: platformUser.id })
+      .from(platformUser)
+      .where(sql`lower(${platformUser.email}) = ${normalized}`)
       .limit(1);
 
-    if (!typeRow) {
+    if (existing) {
       throw new AuthError(
         AUTH_ERROR_CODES.INVALID_INPUT,
-        "Select a valid business type."
+        "This email address is already registered. Sign in or recover your account.",
+        409
       );
     }
+  }
+
+  private async assertCountryActive(countryCode: string): Promise<void> {
+    const db = getDb();
 
     const [countryRow] = await db
       .select({ code: country.code })
@@ -340,27 +265,6 @@ export class OnboardingService {
         "Select a valid country."
       );
     }
-  }
-
-  private async loadCountry(countryCode: string): Promise<{
-    timezoneCode: string;
-  }> {
-    const db = getDb();
-
-    const [countryRow] = await db
-      .select({ timezoneCode: country.timezoneCode })
-      .from(country)
-      .where(eq(country.code, countryCode))
-      .limit(1);
-
-    if (!countryRow) {
-      throw new AuthError(
-        AUTH_ERROR_CODES.INVALID_INPUT,
-        "Select a valid country."
-      );
-    }
-
-    return countryRow;
   }
 }
 

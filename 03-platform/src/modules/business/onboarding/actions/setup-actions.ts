@@ -279,13 +279,10 @@ export async function activateBusinessAction(): Promise<
     );
   } catch (error) {
     // Next.js redirect() throws; rethrow so navigation is not swallowed.
-    if (
-      error &&
-      typeof error === "object" &&
-      "digest" in error &&
-      typeof (error as { digest?: unknown }).digest === "string" &&
-      String((error as { digest: string }).digest).startsWith("NEXT_REDIRECT")
-    ) {
+    const { isNextRedirectError } = await import(
+      "@/core/auth/utils/next-redirect"
+    );
+    if (isNextRedirectError(error)) {
       throw error;
     }
 

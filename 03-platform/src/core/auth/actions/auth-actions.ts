@@ -1,3 +1,16 @@
+/**
+ * Purpose:
+ * Expose login/logout/session server actions with standardized result envelopes.
+ *
+ * Design rationale:
+ * UI actions must rethrow Next.js redirect control-flow errors. Successful login
+ * lands on Platform Home — the entry point for Industry Solutions.
+ *
+ * Why this exists:
+ * BP-001 foundation correction — auth failure message was caused by swallowing
+ * NEXT_REDIRECT after successful login/registration.
+ */
+
 "use server";
 
 import { headers } from "next/headers";
@@ -6,7 +19,9 @@ import { redirect } from "next/navigation";
 import { createAuthService } from "@/core/auth/services/auth-service";
 import { AuthError } from "@/core/auth/errors";
 import type { LoginCredentials } from "@/core/auth/types";
+import { logAuthFailure } from "@/core/auth/utils/auth-stage-log";
 import { getClientContextFromHeaders } from "@/core/auth/utils/helpers";
+import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 import { loginCredentialsSchema } from "@/core/auth/validators/auth-validators";
 
 export type AuthActionResult<T> =
@@ -35,6 +50,8 @@ export async function loginAction(
         },
       };
     }
+
+    logAuthFailure("Authentication", error, { action: "loginAction" });
 
     return {
       success: false,
@@ -66,6 +83,8 @@ export async function logoutAction(): Promise<AuthActionResult<{ loggedOut: true
         },
       };
     }
+
+    console.error("[auth-actions] logoutAction failed.", error);
 
     return {
       success: false,
@@ -99,6 +118,8 @@ export async function getAuthenticatedUserAction(): Promise<
       };
     }
 
+    console.error("[auth-actions] getAuthenticatedUserAction failed.", error);
+
     return {
       success: false,
       error: {
@@ -109,6 +130,10 @@ export async function getAuthenticatedUserAction(): Promise<
   }
 }
 
+/**
+ * WHAT: Authenticate and route to first-login or Platform Home.
+ * WHY: Platform Home is the post-auth entry point for all Industry Solutions.
+ */
 export async function loginUiAction(
   credentials: LoginCredentials
 ): Promise<AuthActionResult<never>> {
@@ -138,31 +163,13 @@ export async function loginUiAction(
       redirect("/first-login");
     }
 
-    if (result.requiresBusinessSelection) {
-      redirect("/select-business");
-    }
-
-    // IP-006 — incomplete setup must finish before operational modules.
-    if (result.businessContext) {
-      const { createBusinessContextService } = await import(
-        "@/core/auth/services/business-context-service"
-      );
-      const businessContextService = createBusinessContextService();
-      const memberships = await businessContextService.getActiveMemberships(
-        result.user.platformUserId
-      );
-      const current = memberships.find(
-        (membership) =>
-          membership.businessId === result.businessContext?.businessId
-      );
-
-      if (current?.businessStatusCode === "DRAFT") {
-        redirect("/setup");
-      }
-    }
-
-    redirect("/dashboard");
+    // Platform Home is the canonical post-authentication landing page.
+    redirect("/home");
   } catch (error) {
+    if (isNextRedirectError(error)) {
+      throw error;
+    }
+
     if (error instanceof AuthError) {
       return {
         success: false,
@@ -172,6 +179,8 @@ export async function loginUiAction(
         },
       };
     }
+
+    logAuthFailure("Authentication", error, { action: "loginUiAction" });
 
     return {
       success: false,
