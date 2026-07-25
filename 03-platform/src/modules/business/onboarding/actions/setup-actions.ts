@@ -12,7 +12,7 @@
  * AD-009 Authentication & Business Onboarding (A4)
  *
  * Implementation Package:
- * IP-006 – Business Setup Wizard, Configuration & Activation
+ * BP-001 / IP-006 – Business Setup Wizard, Configuration & Activation
  *
  * Responsibilities:
  * - Authenticate session and resolve business context
@@ -39,17 +39,22 @@ import type { AuthActionResult } from "@/core/auth/actions/auth-actions";
 import { AuthError } from "@/core/auth/errors";
 import { createAuthService } from "@/core/auth/services/auth-service";
 import { createBusinessContextService } from "@/core/auth/services/business-context-service";
-import type { SetupStep } from "@/modules/business/onboarding/constants";
+import {
+  SETUP_ALLOW_BASE_CURRENCY_CHANGE,
+  type SetupStep,
+} from "@/modules/business/onboarding/constants";
 import { SetupError } from "@/modules/business/onboarding/errors";
 import { createBusinessSetupService } from "@/modules/business/onboarding/services/business-setup-service";
 import type {
   AdditionalCurrenciesPayload,
   BaseCurrencyPayload,
+  BranchSetupPayload,
+  BusinessClassificationPayload,
   BusinessDetailsPayload,
+  BusinessOperationsPayload,
   CountryStepPayload,
-  FeatureTogglePayload,
-  PaymentMethodsPayload,
-  ReceiptConfigurationPayload,
+  CreatedEmployeeCredential,
+  EmployeeSetupPayload,
   SetupProgressView,
   SetupReviewSummary,
 } from "@/modules/business/onboarding/types";
@@ -149,6 +154,22 @@ export async function saveBusinessDetailsAction(
   }
 }
 
+export async function saveBusinessClassificationAction(
+  payload: BusinessClassificationPayload
+): Promise<AuthActionResult<SetupProgressView>> {
+  try {
+    const context = await requireSetupContext();
+    const setupService = createBusinessSetupService();
+    const data = await setupService.saveBusinessClassification(
+      context,
+      payload
+    );
+    return { success: true, data };
+  } catch (error) {
+    return toActionError(error);
+  }
+}
+
 export async function saveCountryAction(
   payload: CountryStepPayload
 ): Promise<AuthActionResult<SetupProgressView>> {
@@ -201,52 +222,44 @@ export async function skipOptionalStepAction(
   }
 }
 
-export async function savePaymentMethodsAction(
-  payload: PaymentMethodsPayload
+export async function saveBusinessOperationsAction(
+  payload: BusinessOperationsPayload
 ): Promise<AuthActionResult<SetupProgressView>> {
   try {
     const context = await requireSetupContext();
     const setupService = createBusinessSetupService();
-    const data = await setupService.savePaymentMethods(context, payload);
+    const data = await setupService.saveBusinessOperations(context, payload);
     return { success: true, data };
   } catch (error) {
     return toActionError(error);
   }
 }
 
-export async function saveReceiptConfigurationAction(
-  payload: ReceiptConfigurationPayload
+export async function saveBranchSetupAction(
+  payload: BranchSetupPayload
 ): Promise<AuthActionResult<SetupProgressView>> {
   try {
     const context = await requireSetupContext();
     const setupService = createBusinessSetupService();
-    const data = await setupService.saveReceiptConfiguration(context, payload);
+    const data = await setupService.saveBranchSetup(context, payload);
     return { success: true, data };
   } catch (error) {
     return toActionError(error);
   }
 }
 
-export async function saveAiToggleAction(
-  payload: FeatureTogglePayload
-): Promise<AuthActionResult<SetupProgressView>> {
+export async function saveEmployeeSetupAction(
+  payload: EmployeeSetupPayload
+): Promise<
+  AuthActionResult<{
+    progress: SetupProgressView;
+    credentials: CreatedEmployeeCredential[];
+  }>
+> {
   try {
     const context = await requireSetupContext();
     const setupService = createBusinessSetupService();
-    const data = await setupService.saveAiToggle(context, payload);
-    return { success: true, data };
-  } catch (error) {
-    return toActionError(error);
-  }
-}
-
-export async function saveLoyaltyToggleAction(
-  payload: FeatureTogglePayload
-): Promise<AuthActionResult<SetupProgressView>> {
-  try {
-    const context = await requireSetupContext();
-    const setupService = createBusinessSetupService();
-    const data = await setupService.saveLoyaltyToggle(context, payload);
+    const data = await setupService.saveEmployeeSetup(context, payload);
     return { success: true, data };
   } catch (error) {
     return toActionError(error);
@@ -322,11 +335,31 @@ export async function getSetupCatalogAction(): Promise<
         >["getActiveCurrencies"]
       >
     >;
+    industries: Awaited<
+      ReturnType<
+        ReturnType<
+          typeof import("@/core/auth/services/reference-data-service").createReferenceDataService
+        >["getActiveIndustries"]
+      >
+    >;
+    businessTypes: Awaited<
+      ReturnType<
+        ReturnType<
+          typeof import("@/core/auth/services/reference-data-service").createReferenceDataService
+        >["getActiveBusinessTypes"]
+      >
+    >;
     businessCountryCode: string;
     defaultCurrencyCode: string | null;
+    allowBaseCurrencyChange: boolean;
     profile: Awaited<
       ReturnType<
         ReturnType<typeof createBusinessSetupService>["getProfile"]
+      >
+    >;
+    classification: Awaited<
+      ReturnType<
+        ReturnType<typeof createBusinessSetupService>["getClassification"]
       >
     >;
     configuration: Awaited<
@@ -339,6 +372,11 @@ export async function getSetupCatalogAction(): Promise<
         ReturnType<typeof createBusinessSetupService>["getBusinessCurrencies"]
       >
     >;
+    branches: Awaited<
+      ReturnType<
+        ReturnType<typeof createBusinessSetupService>["listBranches"]
+      >
+    >;
     businessName: string;
   }>
 > {
@@ -349,38 +387,44 @@ export async function getSetupCatalogAction(): Promise<
     );
     const referenceDataService = createReferenceDataService();
     const setupService = createBusinessSetupService();
-    const businessContextService = createBusinessContextService();
 
-    const [countries, currencies, progress, profile, configuration, operatingCurrencies] =
-      await Promise.all([
-        referenceDataService.getActiveCountries(),
-        referenceDataService.getActiveCurrencies(),
-        setupService.getSetupProgress(context),
-        setupService.getProfile(context.businessId),
-        setupService.getConfiguration(context.businessId),
-        setupService.getBusinessCurrencies(context.businessId),
-      ]);
-
+    // Sequential reads avoid contention on the shared max:1 DB pool.
+    const countries = await referenceDataService.getActiveCountries();
+    const currencies = await referenceDataService.getActiveCurrencies();
+    const industries = await referenceDataService.getActiveIndustries();
+    const businessTypes = await referenceDataService.getActiveBusinessTypes();
+    const progress = await setupService.getSetupProgress(context);
+    const profile = await setupService.getProfile(context.businessId);
+    const classification = await setupService.getClassification(
+      context.businessId
+    );
+    const configuration = await setupService.getConfiguration(
+      context.businessId
+    );
+    const operatingCurrencies = await setupService.getBusinessCurrencies(
+      context.businessId
+    );
     const defaultCurrency = await setupService.getDefaultCurrencyForBusiness(
       context.businessId
     );
-
-    // Resolve country from live business row via review summary for accuracy.
+    const branches = await setupService.listBranches(context.businessId);
     const review = await setupService.getReviewSummary(context);
-
-    // Keep context service import used for future membership checks.
-    void businessContextService;
 
     return {
       success: true,
       data: {
         countries,
         currencies,
+        industries,
+        businessTypes,
         businessCountryCode: review.countryCode,
         defaultCurrencyCode: defaultCurrency?.currencyCode ?? null,
+        allowBaseCurrencyChange: SETUP_ALLOW_BASE_CURRENCY_CHANGE,
         profile,
+        classification,
         configuration,
         operatingCurrencies,
+        branches,
         businessName: progress.businessName,
       },
     };

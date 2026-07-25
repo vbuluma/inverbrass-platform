@@ -110,10 +110,11 @@ export async function assertFirstLoginCompleted(): Promise<void> {
  * business modules.
  *
  * Outputs:
- * - Redirects to `/select-business` when validated context is unavailable
+ * - Redirects to `/home` when validated context is unavailable
  *
  * Business Rules Implemented:
  * - ADR-012 — business modules require validated current business context
+ * - BP-001 — recovery is Platform Home (never Switch Business with 0 businesses)
  */
 export async function assertBusinessContextAvailable(): Promise<void> {
   const businessContextService = createBusinessContextService();

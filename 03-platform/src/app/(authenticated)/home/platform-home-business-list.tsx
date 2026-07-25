@@ -68,7 +68,9 @@ export function PlatformHomeBusinessList({
               disabled={isPending}
               onClick={() => openBusiness(business.membershipId)}
             >
-              {pendingId === business.membershipId ? "Opening..." : "Open"}
+              {pendingId === business.membershipId
+                ? "Opening..."
+                : "Open Business"}
             </Button>
           </li>
         ))}

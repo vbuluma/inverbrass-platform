@@ -41,7 +41,7 @@ import { BUSINESS_CONTEXT_COOKIE } from "@/core/auth/constants";
  *
  * Business Context:
  * Middleware uses this to redirect users without any business selection to
- * `/select-business` without performing cryptographic validation at the edge.
+ * `/home` without performing cryptographic validation at the edge.
  *
  * Inputs:
  * - request — incoming Next.js middleware request

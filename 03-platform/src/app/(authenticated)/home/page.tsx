@@ -3,11 +3,16 @@
  * Render Platform Home — the post-authentication entry point for Industry Solutions.
  *
  * Design rationale:
- * When the Platform User has no businesses, show Create Business and account links.
- * When businesses exist, show My Businesses, Create Business, and Switch Business.
+ * CTA matrix is membership-count driven:
+ * - 0 businesses → Create Business only (no Switch Business)
+ * - 1 business → Open Business; hide Switch Business
+ * - 2+ businesses → Open list + Switch Business
+ *
+ * Cookie writes are forbidden during page render. Session/business cookies are
+ * set only by Server Actions (login, register, open/switch business, logout).
  *
  * Why this exists:
- * BP-001 foundation correction — registration no longer lands in the setup wizard.
+ * BP-001 UX correction — never prompt to switch before a second business exists.
  */
 
 import Link from "next/link";
@@ -49,6 +54,7 @@ export default async function PlatformHomePage() {
     redirect("/first-login");
   }
 
+  // Read-only: never set/clear cookies while rendering Platform Home.
   const businessContextService = createBusinessContextService();
   const businesses = await businessContextService.getSelectableBusinesses(
     user.platformUserId
@@ -56,15 +62,18 @@ export default async function PlatformHomePage() {
 
   const displayName =
     `${user.firstName} ${user.lastName}`.trim() || user.email || "User";
-  const hasBusinesses = businesses.length > 0;
+  const businessCount = businesses.length;
+  const canSwitchBusiness = businessCount >= 2;
 
   return (
     <AuthPageShell
-      title={hasBusinesses ? "My Businesses" : `Welcome ${displayName}`}
+      title={businessCount > 0 ? "Platform Home" : `Welcome ${displayName}`}
       description={
-        hasBusinesses
-          ? "Choose a business to continue, create another, or manage your account."
-          : "You do not have a business yet. Create one to start an Industry Solution."
+        businessCount === 0
+          ? "You do not have a business yet. Create one to start setup."
+          : businessCount === 1
+            ? "Open your business to continue, or manage your platform profile."
+            : "Choose a business to continue, create another, or switch businesses."
       }
       className="max-w-lg"
       footer={
@@ -76,7 +85,7 @@ export default async function PlatformHomePage() {
       }
     >
       <div className="space-y-3">
-        {hasBusinesses ? (
+        {businessCount > 0 ? (
           <PlatformHomeBusinessList businesses={businesses} />
         ) : null}
 
@@ -87,7 +96,7 @@ export default async function PlatformHomePage() {
           Create Business
         </Link>
 
-        {hasBusinesses ? (
+        {canSwitchBusiness ? (
           <Link
             href="/select-business"
             className={cn(buttonVariants({ variant: "outline" }), "w-full")}
@@ -101,13 +110,6 @@ export default async function PlatformHomePage() {
           className={cn(buttonVariants({ variant: "outline" }), "w-full")}
         >
           Manage Profile
-        </Link>
-
-        <Link
-          href={hasBusinesses ? "/account" : "/security"}
-          className={cn(buttonVariants({ variant: "outline" }), "w-full")}
-        >
-          {hasBusinesses ? "Account Settings" : "Security Settings"}
         </Link>
       </div>
     </AuthPageShell>

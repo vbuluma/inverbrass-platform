@@ -1,33 +1,13 @@
 /**
  * Purpose:
- * Render the business selection page for authenticated multi-membership users.
+ * Render the business selection page for multi-membership users only.
  *
  * Business Context:
- * Users with more than one active membership must explicitly choose their current
- * business before accessing dashboard and other business modules (ADR-012).
+ * Switch Business is available only when the Platform User belongs to more
+ * than one business (ADR-012 / BP-001 UX correction).
  *
- * Architecture Dependency:
- * AD-009 Authentication & Business Onboarding (ADR-012)
- *
- * Implementation Package:
- * IP-005 – Authentication UI
- *
- * Responsibilities:
- * - Load selectable businesses for the authenticated user
- * - Render the selection list within the shared auth shell
- *
- * Non-Responsibilities:
- * - Business context cookie signing (BusinessContextService)
- * - Membership eligibility checks (BusinessContextService)
- *
- * Dependencies:
- * - getSelectableBusinessesAction, SelectBusinessList, AuthPageShell
- *
- * Business Rules Implemented:
- * - ADR-012 — explicit business selection for multi-membership users
- *
- * Extension Points:
- * - Auto-select single membership may be added when product policy requires it
+ * Cookie writes must not occur during page render. Single-business auto-select
+ * happens in login/register Server Actions via BusinessContextService.
  */
 
 import Link from "next/link";
@@ -36,19 +16,25 @@ import { redirect } from "next/navigation";
 import { SelectBusinessList } from "@/app/(authenticated)/select-business/select-business-list";
 import { AuthPageShell } from "@/components/auth/auth-page-shell";
 import { buttonVariants } from "@/components/ui/button";
-import { getSelectableBusinessesAction } from "@/core/auth/actions/select-business-actions";
+import { createAuthService } from "@/core/auth/services/auth-service";
+import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { cn } from "@/lib/utils";
 
 export default async function SelectBusinessPage() {
-  const businessesResult = await getSelectableBusinessesAction();
+  const authService = createAuthService();
+  const user = await authService.getAuthenticatedUser();
 
-  if (!businessesResult.success) {
+  if (!user) {
     redirect("/login");
   }
 
-  const businesses = businessesResult.data;
+  const businessContextService = createBusinessContextService();
+  const businesses = await businessContextService.getSelectableBusinesses(
+    user.platformUserId
+  );
 
-  if (businesses.length === 0) {
+  // 0 or 1 business — no Switch Business UI; never mutate cookies here.
+  if (businesses.length < 2) {
     redirect("/home");
   }
 

@@ -18,7 +18,8 @@ export default async function SetupIndexPage() {
   const progressResult = await getSetupProgressAction();
 
   if (!progressResult.success) {
-    redirect("/select-business");
+    // No valid business context — return to Platform Home (never switch with 0 businesses).
+    redirect("/home");
   }
 
   if (progressResult.data.isActivated) {

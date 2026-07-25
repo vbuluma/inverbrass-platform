@@ -3,8 +3,8 @@
  * Render Platform Registration and load country / security-question catalogues.
  *
  * Design rationale:
- * Platform Registration creates a Platform User only. Industry Solutions and
- * Business Templates are collected later during Business Registration.
+ * Catalogue reads use services directly during render. Cookie-setting session
+ * creation runs only inside registerOwnerUiAction after submit.
  *
  * Why this exists:
  * BP-001 foundation correction — signup must not ask for industry or template.
@@ -14,19 +14,17 @@ import Link from "next/link";
 
 import { RegisterForm } from "@/app/(public)/register/register-form";
 import { AuthPageShell } from "@/components/auth/auth-page-shell";
-import { getCountriesAction } from "@/core/auth/actions/catalog-actions";
-import { getSecurityQuestionsAction } from "@/core/auth/actions/onboarding-actions";
+import { createReferenceDataService } from "@/core/auth/services/reference-data-service";
+import { createSecurityQuestionService } from "@/core/auth/services/security-question-service";
 
 export default async function RegisterPage() {
-  const [countriesResult, questionsResult] = await Promise.all([
-    getCountriesAction(),
-    getSecurityQuestionsAction(),
-  ]);
+  const referenceDataService = createReferenceDataService();
+  const securityQuestionService = createSecurityQuestionService();
 
-  const countries = countriesResult.success ? countriesResult.data : [];
-  const securityQuestions = questionsResult.success
-    ? questionsResult.data
-    : [];
+  const [countries, securityQuestions] = await Promise.all([
+    referenceDataService.getActiveCountries(),
+    securityQuestionService.getActiveCatalog(),
+  ]);
 
   return (
     <AuthPageShell

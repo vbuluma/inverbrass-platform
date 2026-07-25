@@ -11,7 +11,7 @@
  * prevents accidental drift when the wizard catalogue evolves.
  *
  * Implementation Package:
- * IP-006 – Business Activation & Configuration Wizard
+ * BP-001 / IP-006 – Business Activation & Configuration Wizard
  */
 
 import { BUSINESS_STATUS } from "@/core/auth/constants";
@@ -27,23 +27,51 @@ import type {
   PaymentMethodsPayload,
 } from "@/modules/business/onboarding/types";
 
-export function isSetupStep(value: string): value is SetupStep {
-  return (
+const LEGACY_OPERATIONS_STEPS: SetupStep[] = [
+  SETUP_STEPS.PAYMENT_METHODS,
+  SETUP_STEPS.RECEIPT_CONFIGURATION,
+  SETUP_STEPS.AI_TOGGLE,
+  SETUP_STEPS.LOYALTY_TOGGLE,
+];
+
+/**
+ * WHAT: Normalize legacy step codes into the current wizard catalogue.
+ * WHY: In-flight DRAFT progress may still contain v1 step identifiers.
+ */
+export function normalizeSetupStep(value: string): SetupStep | null {
+  if (value === SETUP_STEPS.BUSINESS_DETAILS) {
+    return SETUP_STEPS.BUSINESS_PROFILE;
+  }
+
+  if (LEGACY_OPERATIONS_STEPS.includes(value as SetupStep)) {
+    return SETUP_STEPS.BUSINESS_OPERATIONS;
+  }
+
+  if (
     SETUP_STEP_ORDER.includes(value as SetupStep) ||
     value === SETUP_STEPS.COMPLETED
-  );
+  ) {
+    return value as SetupStep;
+  }
+
+  return null;
+}
+
+export function isSetupStep(value: string): value is SetupStep {
+  return normalizeSetupStep(value) !== null;
 }
 
 /**
  * WHAT: Deduplicate and normalize step codes.
- * WHY: Progress JSON may accumulate repeats after retries.
+ * WHY: Progress JSON may accumulate repeats after retries / version upgrades.
  */
 export function uniqueSteps(steps: string[]): SetupStep[] {
   const result: SetupStep[] = [];
 
   for (const step of steps) {
-    if (isSetupStep(step) && !result.includes(step)) {
-      result.push(step);
+    const normalized = normalizeSetupStep(step);
+    if (normalized && normalized !== SETUP_STEPS.COMPLETED && !result.includes(normalized)) {
+      result.push(normalized);
     }
   }
 
@@ -235,13 +263,14 @@ export function simulateHappyPathCompletedSteps(): SetupStep[] {
 }
 
 /**
- * WHAT: Simulate optional AI/Loyalty skips while keeping mandatory steps.
- * WHY: BR-007 — optional steps may be skipped yet activation remains valid.
+ * WHAT: Simulate optional skips while keeping mandatory steps.
+ * WHY: Optional steps may be skipped yet activation remains valid.
  */
 export function simulateOptionalSkipCompletedSteps(): SetupStep[] {
   return MANDATORY_SETUP_STEPS.filter(
     (step) =>
-      step !== SETUP_STEPS.AI_TOGGLE && step !== SETUP_STEPS.LOYALTY_TOGGLE
+      step !== SETUP_STEPS.ADDITIONAL_CURRENCIES &&
+      step !== SETUP_STEPS.EMPLOYEE_SETUP
   );
 }
 
@@ -262,4 +291,18 @@ export function paymentMethodsFromView(
     cardEnabled: view.cardEnabled,
     creditSalesEnabled: view.creditSalesEnabled,
   };
+}
+
+/**
+ * WHAT: Build a branch-code candidate from a branch name.
+ * WHY: Branch codes are auto-generated and editable — format stays stable.
+ */
+export function buildBranchCodeCandidate(branchName: string): string {
+  const slug = branchName
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "")
+    .slice(0, 8);
+
+  return `${slug || "BRN"}-01`.slice(0, 30);
 }

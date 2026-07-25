@@ -114,6 +114,10 @@ export async function getAuthSessionFromCookie(): Promise<AuthSessionPayload | n
 /**
  * WHAT: Establish a signed HttpOnly auth session cookie.
  * WHY: Successful login/registration must create a platform session transport.
+ *
+ * CONSTRAINT:
+ * Call only from a Server Action or Route Handler. Next.js forbids
+ * cookies().set during page/layout Server Component rendering.
  */
 export async function setAuthSessionCookie(
   platformUserId: string
@@ -134,6 +138,9 @@ export async function setAuthSessionCookie(
 /**
  * WHAT: Clear the platform auth session cookie.
  * WHY: Logout must terminate the authenticated session transport.
+ *
+ * CONSTRAINT:
+ * Call only from a Server Action or Route Handler (e.g. logoutAction).
  */
 export async function clearAuthSessionCookie(): Promise<void> {
   const cookieStore = await cookies();

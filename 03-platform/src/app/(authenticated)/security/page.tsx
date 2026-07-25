@@ -1,9 +1,9 @@
 /**
  * Purpose:
- * Security Settings entry point from Platform Home (users without businesses).
+ * Security section of Manage Profile — Platform User security only.
  *
  * Why this exists:
- * BP-001 Platform Home requires Security Settings when no businesses exist.
+ * BP-001 — security belongs to the Platform User, not an active business.
  */
 
 import Link from "next/link";
@@ -30,8 +30,8 @@ export default async function SecuritySettingsPage() {
 
   return (
     <AuthPageShell
-      title="Security Settings"
-      description="Review authentication and recovery settings for your Platform User."
+      title="Security"
+      description="Authentication and recovery settings for your Platform User."
       className="max-w-lg"
     >
       <dl className="space-y-3 text-sm">
@@ -59,10 +59,10 @@ export default async function SecuritySettingsPage() {
           Password recovery
         </Link>
         <Link
-          href="/home"
+          href="/profile"
           className={cn(buttonVariants({ variant: "outline" }), "w-full")}
         >
-          Back to Platform Home
+          Back to Manage Profile
         </Link>
       </div>
     </AuthPageShell>

@@ -33,6 +33,10 @@ export const PASSWORD_BCRYPT_ROUNDS = 12;
 
 export const PLATFORM_ROLE_CODES = {
   OWNER: "OWNER",
+  SUPERVISOR: "SUPERVISOR",
+  MAKER: "MAKER",
+  CHECKER: "CHECKER",
+  EMPLOYEE: "EMPLOYEE",
 } as const;
 
 export const LOCKOUT_THRESHOLD = 5;

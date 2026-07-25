@@ -6,12 +6,12 @@
  * Purpose
  * --------
  * Orchestrates the Business Activation & Configuration Wizard: step progress,
- * profile and configuration persistence, and DRAFT → ACTIVE activation.
+ * profile and configuration persistence, branch/employee setup, and activation.
  *
  * WHY
  * ---
  * Newly registered businesses remain DRAFT until mandatory setup completes.
- * This service is the single owner of IP-006 business rules.
+ * This service is the single owner of IP-006 / BP-001 setup business rules.
  *
  * RATIONALE
  * ---------
@@ -26,51 +26,79 @@
  *
  * Implementation Package
  * ----------------------
- * IP-006 – Business Activation & Configuration Wizard
+ * BP-001 / IP-006 – Business Activation & Configuration Wizard
  *
  * Responsibilities
  * ----------------
  * • Initialize and resume setup progress
  * • Save mandatory and optional wizard steps
  * • Enforce country-before-currency and single base currency rules
+ * • Provision branches and optional employees
  * • Activate business when mandatory steps are complete
  *
  * Does NOT
  * --------
  * • Authenticate users (AuthService)
  * • Sign business context cookies (BusinessContextService)
- * • Implement detailed tax catalogues
+ * • Duplicate first-login password-change (AuthService)
  *
  * ============================================================================
  */
 
-import { and, asc, eq, ne } from "drizzle-orm";
+import { randomBytes } from "node:crypto";
 
-import { BUSINESS_STATUS } from "@/core/auth/constants";
+import { and, asc, eq, ne } from "drizzle-orm";
+import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
+
+import {
+  BUSINESS_MEMBERSHIP_STATUS,
+  BUSINESS_STATUS,
+} from "@/core/auth/constants";
+import { createRoleAssignmentService } from "@/core/auth/services/role-assignment-service";
 import type { CurrentBusinessContext } from "@/core/auth/types";
+import { hashPassword } from "@/core/auth/utils/password-hasher";
+import { normalizeMobileNumber } from "@/core/auth/utils/phone-normalizer";
+import { generateTemporaryPassword } from "@/core/auth/utils/temporary-password";
 import { getDb } from "@/db/client";
+import * as schema from "@/db/schema";
 import { business } from "@/db/schema/business";
+import { businessMembership } from "@/db/schema/business-membership";
 import { businessOperatingCurrency } from "@/db/schema/business-operating-currency";
 import { businessProfile } from "@/db/schema/business-profile";
+import { businessType } from "@/db/schema/business-type";
 import { country } from "@/db/schema/country";
 import { currency } from "@/db/schema/currency";
+import { industry } from "@/db/schema/industry";
+import { platformUser } from "@/db/schema/platform-user";
+import { userSecurityProfile } from "@/db/schema/user-security-profile";
 import {
-  MANDATORY_SETUP_STEPS,
-  OPTIONAL_SETUP_STEPS,
+  EMPLOYEE_SETUP_ROLE_CODES,
+  SETUP_ALLOW_BASE_CURRENCY_CHANGE,
   SETUP_STEP_ORDER,
   SETUP_STEPS,
   SETUP_WIZARD_VERSION,
   type SetupStep,
+  MANDATORY_SETUP_STEPS,
+  OPTIONAL_SETUP_STEPS,
 } from "@/modules/business/onboarding/constants";
+import { BRANCH_TYPES } from "@/modules/business/onboarding/constants/branch-types";
 import {
   SETUP_ERROR_CODES,
   SETUP_USER_MESSAGES,
   SetupError,
 } from "@/modules/business/onboarding/errors";
 import {
+  createBranchRepository,
+  type BranchRepository,
+} from "@/modules/business/onboarding/repositories/branch-repository";
+import {
   createBusinessConfigurationRepository,
   type BusinessConfigurationRepository,
 } from "@/modules/business/onboarding/repositories/business-configuration-repository";
+import {
+  createBusinessEmployeeRepository,
+  type BusinessEmployeeRepository,
+} from "@/modules/business/onboarding/repositories/business-employee-repository";
 import {
   createBusinessSetupProgressRepository,
   type BusinessSetupProgressRepository,
@@ -78,6 +106,7 @@ import {
 import {
   applyCompletedStep,
   areMandatoryStepsComplete,
+  buildBranchCodeCandidate,
   calculateProgressPercent,
   createDefaultConfigurationSettings,
   hasDuplicateOperatingCurrency,
@@ -90,30 +119,44 @@ import {
 import type {
   AdditionalCurrenciesPayload,
   BaseCurrencyPayload,
+  BranchSetupPayload,
+  BusinessClassificationPayload,
   BusinessConfigurationSettings,
   BusinessConfigurationView,
   BusinessDetailsPayload,
+  BusinessOperationsPayload,
   CountryStepPayload,
+  CreatedEmployeeCredential,
+  EmployeeSetupPayload,
   FeatureTogglePayload,
   PaymentMethodsPayload,
   ReceiptConfigurationPayload,
   SetupProgressView,
   SetupReviewSummary,
 } from "@/modules/business/onboarding/types";
+import { withSetupStepTiming } from "@/modules/business/onboarding/utils/setup-step-timing";
 import {
   additionalCurrenciesSchema,
   baseCurrencySchema,
+  branchSetupSchema,
+  businessClassificationSchema,
   businessDetailsSchema,
+  businessOperationsSchema,
   countryStepSchema,
+  employeeSetupSchema,
   featureToggleSchema,
   paymentMethodsSchema,
   receiptConfigurationSchema,
 } from "@/modules/business/onboarding/validators/setup-validators";
 
+type DbClient = PostgresJsDatabase<typeof schema>;
+
 export class BusinessSetupService {
   constructor(
     private readonly configurationRepository: BusinessConfigurationRepository = createBusinessConfigurationRepository(),
-    private readonly progressRepository: BusinessSetupProgressRepository = createBusinessSetupProgressRepository()
+    private readonly progressRepository: BusinessSetupProgressRepository = createBusinessSetupProgressRepository(),
+    private readonly branchRepository: BranchRepository = createBranchRepository(),
+    private readonly employeeRepository: BusinessEmployeeRepository = createBusinessEmployeeRepository()
   ) {}
 
   /**
@@ -151,11 +194,11 @@ export class BusinessSetupService {
       businessName: businessRow.name,
       businessStatusCode: businessRow.statusCode,
       currentStep: isSetupStep(progress.currentStep)
-        ? progress.currentStep
+        ? (uniqueSteps([progress.currentStep])[0] ?? resumeStep)
         : resumeStep,
       lastCompletedStep:
         progress.lastCompletedStep && isSetupStep(progress.lastCompletedStep)
-          ? progress.lastCompletedStep
+          ? (uniqueSteps([progress.lastCompletedStep])[0] ?? null)
           : null,
       completedSteps,
       resumeStep,
@@ -168,76 +211,129 @@ export class BusinessSetupService {
   async completeWelcome(
     context: CurrentBusinessContext
   ): Promise<SetupProgressView> {
-    await this.requireDraftBusiness(context.businessId);
-    return this.markStepComplete(context, SETUP_STEPS.WELCOME);
+    return withSetupStepTiming("Step 1 - Welcome", async () => {
+      await this.requireDraftBusiness(context.businessId);
+      return this.markStepComplete(context, SETUP_STEPS.WELCOME);
+    });
   }
 
   /**
-   * WHAT: Persist remaining business profile fields.
-   * WHY: Registration already captured identity essentials; this completes profile.
+   * WHAT: Persist business profile fields and legal business name.
+   * WHY: Completes trading identity before classification and country steps.
    */
   async saveBusinessDetails(
     context: CurrentBusinessContext,
     payload: BusinessDetailsPayload
   ): Promise<SetupProgressView> {
-    await this.requireDraftBusiness(context.businessId);
+    return withSetupStepTiming("Step 2 - Save Business Profile", async () => {
+      await this.requireDraftBusiness(context.businessId);
 
-    const parsed = businessDetailsSchema.safeParse(payload);
+      const parsed = businessDetailsSchema.safeParse(payload);
 
-    if (!parsed.success) {
-      throw new SetupError(
-        SETUP_ERROR_CODES.INVALID_INPUT,
-        parsed.error.issues[0]?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT
-      );
-    }
+      if (!parsed.success) {
+        throw new SetupError(
+          SETUP_ERROR_CODES.INVALID_INPUT,
+          parsed.error.issues[0]?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT
+        );
+      }
 
-    const data = parsed.data;
-    const db = getDb();
-    const [businessRow] = await db
-      .select({ name: business.name })
-      .from(business)
-      .where(eq(business.id, context.businessId))
-      .limit(1);
+      const data = parsed.data;
+      const db = getDb();
+      const businessName = data.businessName.trim();
 
-    // Trading name defaults to legal name when blank (IP-006 clarification).
-    const tradingName =
-      data.tradingName && data.tradingName.trim().length > 0
-        ? data.tradingName.trim()
-        : businessRow.name;
-
-    const [existing] = await db
-      .select({ id: businessProfile.id })
-      .from(businessProfile)
-      .where(eq(businessProfile.businessId, context.businessId))
-      .limit(1);
-
-    const values = {
-      tradingName,
-      logoUrl: data.logoUrl,
-      email: data.email,
-      physicalAddress: data.physicalAddress,
-      county: data.county,
-      city: data.city,
-      website: data.website || null,
-      description: data.description || null,
-      gpsLatitude: data.gpsLatitude || null,
-      gpsLongitude: data.gpsLongitude || null,
-      updatedAt: new Date(),
-    };
-
-    if (existing) {
       await db
-        .update(businessProfile)
-        .set(values)
-        .where(eq(businessProfile.id, existing.id));
-    } else {
-      await db.insert(businessProfile).values({
-        businessId: context.businessId,
-        ...values,
-      });
-    }
+        .update(business)
+        .set({
+          name: businessName,
+          updatedAt: new Date(),
+        })
+        .where(eq(business.id, context.businessId));
 
-    return this.markStepComplete(context, SETUP_STEPS.BUSINESS_DETAILS);
+      // Trading name defaults to legal name when blank.
+      const tradingName =
+        data.tradingName && data.tradingName.trim().length > 0
+          ? data.tradingName.trim()
+          : businessName;
+
+      const [existing] = await db
+        .select({ id: businessProfile.id })
+        .from(businessProfile)
+        .where(eq(businessProfile.businessId, context.businessId))
+        .limit(1);
+
+      const values = {
+        tradingName,
+        logoUrl: data.logoUrl,
+        email: data.email,
+        physicalAddress: data.physicalAddress,
+        county: data.county,
+        city: data.city,
+        website: data.website || null,
+        description: data.description || null,
+        gpsLatitude: data.gpsLatitude || null,
+        gpsLongitude: data.gpsLongitude || null,
+        updatedAt: new Date(),
+      };
+
+      if (existing) {
+        await db
+          .update(businessProfile)
+          .set(values)
+          .where(eq(businessProfile.id, existing.id));
+      } else {
+        await db.insert(businessProfile).values({
+          businessId: context.businessId,
+          ...values,
+        });
+      }
+
+      return this.markStepComplete(context, SETUP_STEPS.BUSINESS_PROFILE);
+    });
+  }
+
+  /**
+   * WHAT: Persist Industry Solution and Business Type (template).
+   * WHY: Business Types are filtered by Industry; template = selected type.
+   */
+  async saveBusinessClassification(
+    context: CurrentBusinessContext,
+    payload: BusinessClassificationPayload
+  ): Promise<SetupProgressView> {
+    return withSetupStepTiming(
+      "Step 3 - Save Business Classification",
+      async () => {
+        await this.requireDraftBusiness(context.businessId);
+
+        const parsed = businessClassificationSchema.safeParse(payload);
+
+        if (!parsed.success) {
+          throw new SetupError(
+            SETUP_ERROR_CODES.INVALID_INPUT,
+            parsed.error.issues[0]?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT
+          );
+        }
+
+        await this.assertIndustryActive(parsed.data.industryId);
+        await this.assertTemplateBelongsToIndustry(
+          parsed.data.businessTypeId,
+          parsed.data.industryId
+        );
+
+        const db = getDb();
+        await db
+          .update(business)
+          .set({
+            businessTypeId: parsed.data.businessTypeId,
+            updatedAt: new Date(),
+          })
+          .where(eq(business.id, context.businessId));
+
+        return this.markStepComplete(
+          context,
+          SETUP_STEPS.BUSINESS_CLASSIFICATION
+        );
+      }
+    );
   }
 
   /**
@@ -248,72 +344,77 @@ export class BusinessSetupService {
     context: CurrentBusinessContext,
     payload: CountryStepPayload
   ): Promise<SetupProgressView> {
-    await this.requireDraftBusiness(context.businessId);
+    return withSetupStepTiming("Step 4 - Save Country", async () => {
+      await this.requireDraftBusiness(context.businessId);
 
-    const parsed = countryStepSchema.safeParse(payload);
+      const parsed = countryStepSchema.safeParse(payload);
 
-    if (!parsed.success) {
-      throw new SetupError(
-        SETUP_ERROR_CODES.INVALID_INPUT,
-        parsed.error.issues[0]?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT
-      );
-    }
+      if (!parsed.success) {
+        throw new SetupError(
+          SETUP_ERROR_CODES.INVALID_INPUT,
+          parsed.error.issues[0]?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT
+        );
+      }
 
-    const countryRow = await this.loadActiveCountry(parsed.data.countryCode);
-    const db = getDb();
+      const countryRow = await this.loadActiveCountry(parsed.data.countryCode);
 
-    await db.transaction(async (tx) => {
-      await tx
-        .update(business)
-        .set({
-          countryCode: countryRow.code,
-          timezone: countryRow.timezoneCode,
-          updatedAt: new Date(),
-        })
-        .where(eq(business.id, context.businessId));
-
-      // Currency selections are reset so the country default can re-apply.
-      await tx
-        .delete(businessOperatingCurrency)
-        .where(eq(businessOperatingCurrency.businessId, context.businessId));
-
+      // Validate currency BEFORE opening the transaction. With pool max:1,
+      // querying via getDb() inside a held transaction deadlocks forever.
       await this.assertActiveCurrency(countryRow.currencyCode);
 
-      await tx.insert(businessOperatingCurrency).values({
-        businessId: context.businessId,
-        currencyCode: countryRow.currencyCode,
-        isBase: true,
+      const db = getDb();
+
+      await db.transaction(async (tx) => {
+        await tx
+          .update(business)
+          .set({
+            countryCode: countryRow.code,
+            timezone: countryRow.timezoneCode,
+            updatedAt: new Date(),
+          })
+          .where(eq(business.id, context.businessId));
+
+        // Currency selections are reset so the country default can re-apply.
+        await tx
+          .delete(businessOperatingCurrency)
+          .where(eq(businessOperatingCurrency.businessId, context.businessId));
+
+        await tx.insert(businessOperatingCurrency).values({
+          businessId: context.businessId,
+          currencyCode: countryRow.currencyCode,
+          isBase: true,
+        });
       });
+
+      const progress = await this.progressRepository.ensureProgress(
+        context.businessId
+      );
+      const priorSteps = uniqueSteps(
+        (progress.completedSteps as string[]).filter(
+          (step) =>
+            step !== SETUP_STEPS.BASE_CURRENCY &&
+            step !== SETUP_STEPS.ADDITIONAL_CURRENCIES &&
+            step !== SETUP_STEPS.REVIEW
+        )
+      );
+
+      if (!priorSteps.includes(SETUP_STEPS.COUNTRY)) {
+        priorSteps.push(SETUP_STEPS.COUNTRY);
+      }
+
+      const completedAt = new Date();
+
+      await this.progressRepository.replaceProgress({
+        businessId: context.businessId,
+        currentStep: SETUP_STEPS.BASE_CURRENCY,
+        completedSteps: priorSteps,
+        lastCompletedStep: SETUP_STEPS.COUNTRY,
+        completedBy: context.platformUserId,
+        completedAt,
+      });
+
+      return this.getSetupProgress(context);
     });
-
-    const progress = await this.progressRepository.ensureProgress(
-      context.businessId
-    );
-    const priorSteps = uniqueSteps(
-      (progress.completedSteps as string[]).filter(
-        (step) =>
-          step !== SETUP_STEPS.BASE_CURRENCY &&
-          step !== SETUP_STEPS.ADDITIONAL_CURRENCIES &&
-          step !== SETUP_STEPS.REVIEW
-      )
-    );
-
-    if (!priorSteps.includes(SETUP_STEPS.COUNTRY)) {
-      priorSteps.push(SETUP_STEPS.COUNTRY);
-    }
-
-    const completedAt = new Date();
-
-    await this.progressRepository.replaceProgress({
-      businessId: context.businessId,
-      currentStep: SETUP_STEPS.BASE_CURRENCY,
-      completedSteps: priorSteps,
-      lastCompletedStep: SETUP_STEPS.COUNTRY,
-      completedBy: context.platformUserId,
-      completedAt,
-    });
-
-    return this.getSetupProgress(context);
   }
 
   /**
@@ -324,74 +425,92 @@ export class BusinessSetupService {
     context: CurrentBusinessContext,
     payload: BaseCurrencyPayload
   ): Promise<SetupProgressView> {
-    await this.requireDraftBusiness(context.businessId);
-    await this.assertCountrySelected(context.businessId);
+    return withSetupStepTiming("Step 5 - Save Base Currency", async () => {
+      await this.requireDraftBusiness(context.businessId);
+      await this.assertCountrySelected(context.businessId);
 
-    const parsed = baseCurrencySchema.safeParse(payload);
+      const parsed = baseCurrencySchema.safeParse(payload);
 
-    if (!parsed.success) {
-      throw new SetupError(
-        SETUP_ERROR_CODES.INVALID_INPUT,
-        parsed.error.issues[0]?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT
-      );
-    }
-
-    await this.assertActiveCurrency(parsed.data.currencyCode);
-
-    const db = getDb();
-
-    await db.transaction(async (tx) => {
-      await tx
-        .delete(businessOperatingCurrency)
-        .where(
-          and(
-            eq(businessOperatingCurrency.businessId, context.businessId),
-            eq(businessOperatingCurrency.isBase, true)
-          )
+      if (!parsed.success) {
+        throw new SetupError(
+          SETUP_ERROR_CODES.INVALID_INPUT,
+          parsed.error.issues[0]?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT
         );
-
-      const [existing] = await tx
-        .select({ id: businessOperatingCurrency.id })
-        .from(businessOperatingCurrency)
-        .where(
-          and(
-            eq(businessOperatingCurrency.businessId, context.businessId),
-            eq(
-              businessOperatingCurrency.currencyCode,
-              parsed.data.currencyCode
-            )
-          )
-        )
-        .limit(1);
-
-      if (existing) {
-        await tx
-          .update(businessOperatingCurrency)
-          .set({ isBase: true, updatedAt: new Date() })
-          .where(eq(businessOperatingCurrency.id, existing.id));
-      } else {
-        await tx.insert(businessOperatingCurrency).values({
-          businessId: context.businessId,
-          currencyCode: parsed.data.currencyCode,
-          isBase: true,
-        });
       }
 
-      await tx
-        .update(businessOperatingCurrency)
-        .set({ isBase: false, updatedAt: new Date() })
-        .where(
-          and(
-            eq(businessOperatingCurrency.businessId, context.businessId),
-            ne(
-              businessOperatingCurrency.currencyCode,
-              parsed.data.currencyCode
+      const defaultCurrency = await this.getDefaultCurrencyForBusiness(
+        context.businessId
+      );
+
+      if (
+        !SETUP_ALLOW_BASE_CURRENCY_CHANGE &&
+        defaultCurrency &&
+        parsed.data.currencyCode.toUpperCase() !==
+          defaultCurrency.currencyCode.toUpperCase()
+      ) {
+        throw new SetupError(
+          SETUP_ERROR_CODES.INVALID_INPUT,
+          "Base currency is derived from the operating country and cannot be changed."
+        );
+      }
+
+      await this.assertActiveCurrency(parsed.data.currencyCode);
+
+      const db = getDb();
+
+      await db.transaction(async (tx) => {
+        await tx
+          .delete(businessOperatingCurrency)
+          .where(
+            and(
+              eq(businessOperatingCurrency.businessId, context.businessId),
+              eq(businessOperatingCurrency.isBase, true)
+            )
+          );
+
+        const [existing] = await tx
+          .select({ id: businessOperatingCurrency.id })
+          .from(businessOperatingCurrency)
+          .where(
+            and(
+              eq(businessOperatingCurrency.businessId, context.businessId),
+              eq(
+                businessOperatingCurrency.currencyCode,
+                parsed.data.currencyCode
+              )
             )
           )
-        );
-    });
+          .limit(1);
 
-    return this.markStepComplete(context, SETUP_STEPS.BASE_CURRENCY);
+        if (existing) {
+          await tx
+            .update(businessOperatingCurrency)
+            .set({ isBase: true, updatedAt: new Date() })
+            .where(eq(businessOperatingCurrency.id, existing.id));
+        } else {
+          await tx.insert(businessOperatingCurrency).values({
+            businessId: context.businessId,
+            currencyCode: parsed.data.currencyCode,
+            isBase: true,
+          });
+        }
+
+        await tx
+          .update(businessOperatingCurrency)
+          .set({ isBase: false, updatedAt: new Date() })
+          .where(
+            and(
+              eq(businessOperatingCurrency.businessId, context.businessId),
+              ne(
+                businessOperatingCurrency.currencyCode,
+                parsed.data.currencyCode
+              )
+            )
+          );
+      });
+
+      return this.markStepComplete(context, SETUP_STEPS.BASE_CURRENCY);
+    });
   }
 
   /**
@@ -402,135 +521,183 @@ export class BusinessSetupService {
     context: CurrentBusinessContext,
     payload: AdditionalCurrenciesPayload
   ): Promise<SetupProgressView> {
-    await this.requireDraftBusiness(context.businessId);
-    await this.assertCountrySelected(context.businessId);
+    return withSetupStepTiming(
+      "Step 6 - Save Additional Currencies",
+      async () => {
+        await this.requireDraftBusiness(context.businessId);
+        await this.assertCountrySelected(context.businessId);
 
-    const parsed = additionalCurrenciesSchema.safeParse(payload);
+        const parsed = additionalCurrenciesSchema.safeParse(payload);
 
-    if (!parsed.success) {
-      throw new SetupError(
-        SETUP_ERROR_CODES.INVALID_INPUT,
-        parsed.error.issues[0]?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT
-      );
-    }
+        if (!parsed.success) {
+          throw new SetupError(
+            SETUP_ERROR_CODES.INVALID_INPUT,
+            parsed.error.issues[0]?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT
+          );
+        }
 
-    const codes = [
-      ...new Set(parsed.data.currencyCodes.map((code) => code.toUpperCase())),
-    ];
-    const db = getDb();
+        const codes = [
+          ...new Set(
+            parsed.data.currencyCodes.map((code) => code.toUpperCase())
+          ),
+        ];
+        const db = getDb();
 
-    const [base] = await db
-      .select({ currencyCode: businessOperatingCurrency.currencyCode })
-      .from(businessOperatingCurrency)
-      .where(
-        and(
-          eq(businessOperatingCurrency.businessId, context.businessId),
-          eq(businessOperatingCurrency.isBase, true)
-        )
-      )
-      .limit(1);
-
-    if (!base) {
-      throw new SetupError(
-        SETUP_ERROR_CODES.BASE_CURRENCY_REQUIRED,
-        SETUP_USER_MESSAGES.BASE_CURRENCY_REQUIRED
-      );
-    }
-
-    if (hasDuplicateOperatingCurrency(base.currencyCode, codes)) {
-      throw new SetupError(
-        SETUP_ERROR_CODES.DUPLICATE_CURRENCY,
-        SETUP_USER_MESSAGES.DUPLICATE_CURRENCY
-      );
-    }
-
-    for (const code of codes) {
-      await this.assertActiveCurrency(code);
-    }
-
-    await db.transaction(async (tx) => {
-      await tx
-        .delete(businessOperatingCurrency)
-        .where(
-          and(
-            eq(businessOperatingCurrency.businessId, context.businessId),
-            eq(businessOperatingCurrency.isBase, false)
+        const [base] = await db
+          .select({ currencyCode: businessOperatingCurrency.currencyCode })
+          .from(businessOperatingCurrency)
+          .where(
+            and(
+              eq(businessOperatingCurrency.businessId, context.businessId),
+              eq(businessOperatingCurrency.isBase, true)
+            )
           )
-        );
+          .limit(1);
 
-      for (const code of codes) {
-        await tx.insert(businessOperatingCurrency).values({
-          businessId: context.businessId,
-          currencyCode: code,
-          isBase: false,
+        if (!base) {
+          throw new SetupError(
+            SETUP_ERROR_CODES.BASE_CURRENCY_REQUIRED,
+            SETUP_USER_MESSAGES.BASE_CURRENCY_REQUIRED
+          );
+        }
+
+        if (hasDuplicateOperatingCurrency(base.currencyCode, codes)) {
+          throw new SetupError(
+            SETUP_ERROR_CODES.DUPLICATE_CURRENCY,
+            SETUP_USER_MESSAGES.DUPLICATE_CURRENCY
+          );
+        }
+
+        for (const code of codes) {
+          await this.assertActiveCurrency(code);
+        }
+
+        await db.transaction(async (tx) => {
+          await tx
+            .delete(businessOperatingCurrency)
+            .where(
+              and(
+                eq(businessOperatingCurrency.businessId, context.businessId),
+                eq(businessOperatingCurrency.isBase, false)
+              )
+            );
+
+          for (const code of codes) {
+            await tx.insert(businessOperatingCurrency).values({
+              businessId: context.businessId,
+              currencyCode: code,
+              isBase: false,
+            });
+          }
         });
-      }
-    });
 
-    return this.markStepComplete(context, SETUP_STEPS.ADDITIONAL_CURRENCIES);
+        return this.markStepComplete(
+          context,
+          SETUP_STEPS.ADDITIONAL_CURRENCIES
+        );
+      }
+    );
   }
 
   async skipOptionalStep(
     context: CurrentBusinessContext,
     step: SetupStep
   ): Promise<SetupProgressView> {
-    await this.requireDraftBusiness(context.businessId);
+    return withSetupStepTiming(`Skip optional - ${step}`, async () => {
+      await this.requireDraftBusiness(context.businessId);
 
-    if (!OPTIONAL_SETUP_STEPS.includes(step)) {
-      throw new SetupError(
-        SETUP_ERROR_CODES.STEP_NOT_ALLOWED,
-        "Only optional setup steps may be skipped."
-      );
-    }
+      if (!OPTIONAL_SETUP_STEPS.includes(step)) {
+        throw new SetupError(
+          SETUP_ERROR_CODES.STEP_NOT_ALLOWED,
+          "Only optional setup steps may be skipped."
+        );
+      }
 
-    // BR-007 — optional steps may be skipped and completed later.
-    return this.markStepComplete(context, step);
+      return this.markStepComplete(context, step);
+    });
   }
 
+  /**
+   * WHAT: Persist payment, receipt, AI, and loyalty settings together.
+   * WHY: Business Operations groups related configuration into one step.
+   */
+  async saveBusinessOperations(
+    context: CurrentBusinessContext,
+    payload: BusinessOperationsPayload
+  ): Promise<SetupProgressView> {
+    return withSetupStepTiming("Step 7 - Save Business Operations", async () => {
+      await this.requireDraftBusiness(context.businessId);
+
+      const parsed = businessOperationsSchema.safeParse(payload);
+
+      if (!parsed.success) {
+        throw new SetupError(
+          SETUP_ERROR_CODES.INVALID_INPUT,
+          parsed.error.issues[0]?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT
+        );
+      }
+
+      if (
+        parsed.data.receipt.taxEnabled &&
+        Number(parsed.data.receipt.defaultTaxRate) <= 0
+      ) {
+        throw new SetupError(
+          SETUP_ERROR_CODES.INVALID_INPUT,
+          "Enter a default tax rate greater than zero when tax is enabled."
+        );
+      }
+
+      await this.patchConfigurationSettings(context.businessId, {
+        paymentMethods: parsed.data.paymentMethods,
+        receipt: {
+          receiptPrefix: parsed.data.receipt.receiptPrefix,
+          receiptFooter: parsed.data.receipt.receiptFooter,
+          showLogoOnReceipt: parsed.data.receipt.showLogoOnReceipt,
+        },
+        tax: {
+          taxEnabled: parsed.data.receipt.taxEnabled,
+          defaultTaxRate: parsed.data.receipt.defaultTaxRate,
+        },
+        features: {
+          aiAssistantEnabled: parsed.data.aiAssistantEnabled,
+          loyaltyProgrammeEnabled: parsed.data.loyaltyProgrammeEnabled,
+        },
+      });
+
+      return this.markStepComplete(context, SETUP_STEPS.BUSINESS_OPERATIONS);
+    });
+  }
+
+  /** @deprecated Prefer saveBusinessOperations — retained for compatibility. */
   async savePaymentMethods(
     context: CurrentBusinessContext,
     payload: PaymentMethodsPayload
   ): Promise<SetupProgressView> {
-    await this.requireDraftBusiness(context.businessId);
-
     const parsed = paymentMethodsSchema.safeParse(payload);
-
     if (!parsed.success) {
       throw new SetupError(
         SETUP_ERROR_CODES.INVALID_INPUT,
         parsed.error.issues[0]?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT
       );
     }
-
     await this.patchConfigurationSettings(context.businessId, {
       paymentMethods: parsed.data,
     });
-
-    return this.markStepComplete(context, SETUP_STEPS.PAYMENT_METHODS);
+    return this.markStepComplete(context, SETUP_STEPS.BUSINESS_OPERATIONS);
   }
 
+  /** @deprecated Prefer saveBusinessOperations — retained for compatibility. */
   async saveReceiptConfiguration(
     context: CurrentBusinessContext,
     payload: ReceiptConfigurationPayload
   ): Promise<SetupProgressView> {
-    await this.requireDraftBusiness(context.businessId);
-
     const parsed = receiptConfigurationSchema.safeParse(payload);
-
     if (!parsed.success) {
       throw new SetupError(
         SETUP_ERROR_CODES.INVALID_INPUT,
         parsed.error.issues[0]?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT
       );
     }
-
-    if (parsed.data.taxEnabled && Number(parsed.data.defaultTaxRate) <= 0) {
-      throw new SetupError(
-        SETUP_ERROR_CODES.INVALID_INPUT,
-        "Enter a default tax rate greater than zero when tax is enabled."
-      );
-    }
-
     await this.patchConfigurationSettings(context.businessId, {
       receipt: {
         receiptPrefix: parsed.data.receiptPrefix,
@@ -542,95 +709,370 @@ export class BusinessSetupService {
         defaultTaxRate: parsed.data.defaultTaxRate,
       },
     });
-
-    return this.markStepComplete(context, SETUP_STEPS.RECEIPT_CONFIGURATION);
+    return this.markStepComplete(context, SETUP_STEPS.BUSINESS_OPERATIONS);
   }
 
+  /** @deprecated Prefer saveBusinessOperations — retained for compatibility. */
   async saveAiToggle(
     context: CurrentBusinessContext,
     payload: FeatureTogglePayload
   ): Promise<SetupProgressView> {
-    await this.requireDraftBusiness(context.businessId);
-
     const parsed = featureToggleSchema.safeParse(payload);
-
     if (!parsed.success) {
       throw new SetupError(
         SETUP_ERROR_CODES.INVALID_INPUT,
         parsed.error.issues[0]?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT
       );
     }
-
     const current =
       (await this.configurationRepository.findSettingsByBusinessId(
         context.businessId
       )) ?? createDefaultConfigurationSettings();
-
     await this.patchConfigurationSettings(context.businessId, {
       features: {
         aiAssistantEnabled: parsed.data.enabled,
         loyaltyProgrammeEnabled: current.features.loyaltyProgrammeEnabled,
       },
     });
-
-    return this.markStepComplete(context, SETUP_STEPS.AI_TOGGLE);
+    return this.markStepComplete(context, SETUP_STEPS.BUSINESS_OPERATIONS);
   }
 
+  /** @deprecated Prefer saveBusinessOperations — retained for compatibility. */
   async saveLoyaltyToggle(
     context: CurrentBusinessContext,
     payload: FeatureTogglePayload
   ): Promise<SetupProgressView> {
-    await this.requireDraftBusiness(context.businessId);
-
     const parsed = featureToggleSchema.safeParse(payload);
-
     if (!parsed.success) {
       throw new SetupError(
         SETUP_ERROR_CODES.INVALID_INPUT,
         parsed.error.issues[0]?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT
       );
     }
-
     const current =
       (await this.configurationRepository.findSettingsByBusinessId(
         context.businessId
       )) ?? createDefaultConfigurationSettings();
-
     await this.patchConfigurationSettings(context.businessId, {
       features: {
         aiAssistantEnabled: current.features.aiAssistantEnabled,
         loyaltyProgrammeEnabled: parsed.data.enabled,
       },
     });
+    return this.markStepComplete(context, SETUP_STEPS.BUSINESS_OPERATIONS);
+  }
 
-    return this.markStepComplete(context, SETUP_STEPS.LOYALTY_TOGGLE);
+  /**
+   * WHAT: Persist branch structure (default Head Office or multiple branches).
+   * WHY: FR-005 — every business needs at least one operating location.
+   */
+  async saveBranchSetup(
+    context: CurrentBusinessContext,
+    payload: BranchSetupPayload
+  ): Promise<SetupProgressView> {
+    return withSetupStepTiming("Step 8 - Save Branch Setup", async () => {
+      const businessRow = await this.requireDraftBusiness(context.businessId);
+      const parsed = branchSetupSchema.safeParse(payload);
+
+      if (!parsed.success) {
+        throw new SetupError(
+          SETUP_ERROR_CODES.INVALID_INPUT,
+          parsed.error.issues[0]?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT
+        );
+      }
+
+      const profile = await this.getProfile(context.businessId);
+      const db = getDb();
+
+      let branchRows = parsed.data.branches;
+
+      if (!parsed.data.hasMultipleBranches) {
+        const defaultName = "Head Office";
+        branchRows = [
+          {
+            name: defaultName,
+            code: buildBranchCodeCandidate(defaultName),
+            branchType: BRANCH_TYPES.HEAD_OFFICE,
+            physicalAddress:
+              profile?.physicalAddress ?? `${businessRow.name} Head Office`,
+            county: profile?.county ?? "Nairobi",
+            city: profile?.city ?? "Nairobi",
+            contactPhone: businessRow.phoneNumber,
+            email: profile?.email ?? "",
+            gpsLatitude: profile?.gpsLatitude
+              ? String(profile.gpsLatitude)
+              : "",
+            gpsLongitude: profile?.gpsLongitude
+              ? String(profile.gpsLongitude)
+              : "",
+            openingDate: "",
+            isHeadOffice: true,
+            isDefault: true,
+          },
+        ];
+      }
+
+      if (branchRows.length === 0) {
+        throw new SetupError(
+          SETUP_ERROR_CODES.BRANCH_REQUIRED,
+          SETUP_USER_MESSAGES.BRANCH_REQUIRED
+        );
+      }
+
+      const codes = new Set<string>();
+      const normalized = [];
+
+      for (let index = 0; index < branchRows.length; index += 1) {
+        const item = branchRows[index];
+        let code = item.code.trim().toUpperCase();
+
+        if (!code) {
+          code = buildBranchCodeCandidate(item.name);
+        }
+
+        if (codes.has(code)) {
+          code = `${code.slice(0, 24)}-${randomBytes(2).toString("hex").toUpperCase()}`;
+        }
+
+        codes.add(code);
+
+        let phoneE164: string;
+        try {
+          phoneE164 = normalizeMobileNumber(
+            item.contactPhone,
+            businessRow.countryCode
+          );
+        } catch {
+          throw new SetupError(
+            SETUP_ERROR_CODES.INVALID_INPUT,
+            "Enter a valid branch contact phone for the operating country."
+          );
+        }
+
+        normalized.push({
+          businessId: context.businessId,
+          code,
+          name: item.name.trim(),
+          branchType: item.branchType,
+          physicalAddress: item.physicalAddress.trim(),
+          county: item.county.trim(),
+          city: item.city.trim(),
+          contactPhone: phoneE164,
+          email: item.email?.trim() || null,
+          gpsLatitude: item.gpsLatitude || null,
+          gpsLongitude: item.gpsLongitude || null,
+          openingDate: item.openingDate || null,
+          isActive: true,
+          isHeadOffice:
+            item.isHeadOffice === true ||
+            (!parsed.data.hasMultipleBranches && index === 0) ||
+            (parsed.data.hasMultipleBranches &&
+              index === 0 &&
+              !branchRows.some((row) => row.isHeadOffice)),
+          isDefault:
+            item.isDefault === true ||
+            (!parsed.data.hasMultipleBranches && index === 0) ||
+            (parsed.data.hasMultipleBranches &&
+              index === 0 &&
+              !branchRows.some((row) => row.isDefault)),
+        });
+      }
+
+      // Ensure exactly one head office / default when multiple flags set.
+      const headIndex = normalized.findIndex((row) => row.isHeadOffice);
+      const defaultIndex = normalized.findIndex((row) => row.isDefault);
+      normalized.forEach((row, index) => {
+        row.isHeadOffice = index === (headIndex >= 0 ? headIndex : 0);
+        row.isDefault = index === (defaultIndex >= 0 ? defaultIndex : 0);
+      });
+
+      await this.branchRepository.replaceBusinessBranches(
+        context.businessId,
+        normalized,
+        db
+      );
+
+      return this.markStepComplete(context, SETUP_STEPS.BRANCH_SETUP);
+    });
+  }
+
+  /**
+   * WHAT: Optionally provision employees with roles and temporary passwords.
+   * WHY: FR-006 — owners may hire during onboarding; first-login is reused.
+   */
+  async saveEmployeeSetup(
+    context: CurrentBusinessContext,
+    payload: EmployeeSetupPayload
+  ): Promise<{
+    progress: SetupProgressView;
+    credentials: CreatedEmployeeCredential[];
+  }> {
+    return withSetupStepTiming("Step 9 - Save Employee Setup", async () => {
+      const businessRow = await this.requireDraftBusiness(context.businessId);
+      const parsed = employeeSetupSchema.safeParse(payload);
+
+      if (!parsed.success) {
+        throw new SetupError(
+          SETUP_ERROR_CODES.INVALID_INPUT,
+          parsed.error.issues[0]?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT
+        );
+      }
+
+      if (parsed.data.skip) {
+        const progress = await this.markStepComplete(
+          context,
+          SETUP_STEPS.EMPLOYEE_SETUP
+        );
+        return { progress, credentials: [] };
+      }
+
+      const branches = await this.branchRepository.listByBusinessId(
+        context.businessId
+      );
+
+      if (branches.length === 0) {
+        throw new SetupError(
+          SETUP_ERROR_CODES.BRANCH_REQUIRED,
+          SETUP_USER_MESSAGES.BRANCH_REQUIRED
+        );
+      }
+
+      const branchIds = new Set(branches.map((row) => row.id));
+      const credentials: CreatedEmployeeCredential[] = [];
+      const roleAssignmentService = createRoleAssignmentService();
+      const db = getDb();
+
+      for (const employee of parsed.data.employees) {
+        if (!branchIds.has(employee.branchId)) {
+          throw new SetupError(
+            SETUP_ERROR_CODES.INVALID_INPUT,
+            "Select a valid branch for each employee."
+          );
+        }
+
+        if (
+          !EMPLOYEE_SETUP_ROLE_CODES.includes(employee.platformRoleCode)
+        ) {
+          throw new SetupError(
+            SETUP_ERROR_CODES.INVALID_INPUT,
+            "Select a valid platform role."
+          );
+        }
+
+        let phoneE164: string;
+        try {
+          phoneE164 = normalizeMobileNumber(
+            employee.mobileNumber,
+            businessRow.countryCode
+          );
+        } catch {
+          throw new SetupError(
+            SETUP_ERROR_CODES.INVALID_INPUT,
+            "Enter a valid mobile number for each employee."
+          );
+        }
+
+        await this.assertPhoneAvailable(phoneE164, db);
+
+        const temporaryPassword = generateTemporaryPassword();
+        const passwordHash = await hashPassword(temporaryPassword);
+
+        const created = await db.transaction(async (tx) => {
+          const [user] = await tx
+            .insert(platformUser)
+            .values({
+              firstName: employee.firstName.trim(),
+              lastName: employee.lastName.trim(),
+              displayName: `${employee.firstName.trim()} ${employee.lastName.trim()}`,
+              email: employee.email?.trim() || null,
+              phoneNumber: phoneE164,
+              isActive: true,
+            })
+            .returning({ id: platformUser.id });
+
+          await tx.insert(userSecurityProfile).values({
+            platformUserId: user.id,
+            passwordHash,
+            mustChangePassword: true,
+          });
+
+          const [membership] = await tx
+            .insert(businessMembership)
+            .values({
+              businessId: context.businessId,
+              platformUserId: user.id,
+              status: BUSINESS_MEMBERSHIP_STATUS.ACTIVE,
+              isPrimary: false,
+            })
+            .returning({ id: businessMembership.id });
+
+          await roleAssignmentService.assignPlatformRole(
+            membership.id,
+            employee.platformRoleCode,
+            context.platformUserId,
+            "Business Setup — Employee provisioning",
+            tx
+          );
+
+          const employeeId = await this.employeeRepository.insert(
+            {
+              businessId: context.businessId,
+              platformUserId: user.id,
+              businessMembershipId: membership.id,
+              branchId: employee.branchId,
+              jobTitle: employee.jobTitle.trim(),
+              isActive: true,
+            },
+            tx
+          );
+
+          return {
+            employeeId,
+            fullName: `${employee.firstName.trim()} ${employee.lastName.trim()}`,
+            mobileNumber: phoneE164,
+            temporaryPassword,
+          };
+        });
+
+        credentials.push(created);
+      }
+
+      const progress = await this.markStepComplete(
+        context,
+        SETUP_STEPS.EMPLOYEE_SETUP
+      );
+
+      return { progress, credentials };
+    });
   }
 
   async completeReview(
     context: CurrentBusinessContext
   ): Promise<SetupProgressView> {
-    await this.requireDraftBusiness(context.businessId);
+    return withSetupStepTiming("Step 10 - Complete Review", async () => {
+      await this.requireDraftBusiness(context.businessId);
 
-    const progress = await this.progressRepository.ensureProgress(
-      context.businessId
-    );
-    const completedSteps = uniqueSteps(progress.completedSteps as string[]);
-
-    const mandatoryExceptReview = MANDATORY_SETUP_STEPS.filter(
-      (step) => step !== SETUP_STEPS.REVIEW
-    );
-    const missing = mandatoryExceptReview.filter(
-      (step) => !completedSteps.includes(step)
-    );
-
-    if (missing.length > 0) {
-      throw new SetupError(
-        SETUP_ERROR_CODES.MANDATORY_INCOMPLETE,
-        SETUP_USER_MESSAGES.MANDATORY_INCOMPLETE
+      const progress = await this.progressRepository.ensureProgress(
+        context.businessId
       );
-    }
+      const completedSteps = uniqueSteps(progress.completedSteps as string[]);
 
-    return this.markStepComplete(context, SETUP_STEPS.REVIEW);
+      const mandatoryExceptReview = MANDATORY_SETUP_STEPS.filter(
+        (step) => step !== SETUP_STEPS.REVIEW
+      );
+      const missing = mandatoryExceptReview.filter(
+        (step) => !completedSteps.includes(step)
+      );
+
+      if (missing.length > 0) {
+        throw new SetupError(
+          SETUP_ERROR_CODES.MANDATORY_INCOMPLETE,
+          SETUP_USER_MESSAGES.MANDATORY_INCOMPLETE
+        );
+      }
+
+      return this.markStepComplete(context, SETUP_STEPS.REVIEW);
+    });
   }
 
   /**
@@ -640,47 +1082,60 @@ export class BusinessSetupService {
   async activateBusiness(
     context: CurrentBusinessContext
   ): Promise<{ businessName: string }> {
-    const businessRow = await this.requireDraftBusiness(context.businessId);
-    const progress = await this.progressRepository.ensureProgress(
-      context.businessId
-    );
-    const completedSteps = uniqueSteps(progress.completedSteps as string[]);
-
-    if (!areMandatoryStepsComplete(completedSteps)) {
-      throw new SetupError(
-        SETUP_ERROR_CODES.MANDATORY_INCOMPLETE,
-        SETUP_USER_MESSAGES.MANDATORY_INCOMPLETE
+    return withSetupStepTiming("Step 10 - Activate Business", async () => {
+      const businessRow = await this.requireDraftBusiness(context.businessId);
+      const progress = await this.progressRepository.ensureProgress(
+        context.businessId
       );
-    }
+      const completedSteps = uniqueSteps(progress.completedSteps as string[]);
 
-    if (!completedSteps.includes(SETUP_STEPS.BASE_CURRENCY)) {
-      throw new SetupError(
-        SETUP_ERROR_CODES.BASE_CURRENCY_REQUIRED,
-        SETUP_USER_MESSAGES.BASE_CURRENCY_REQUIRED
+      if (!areMandatoryStepsComplete(completedSteps)) {
+        throw new SetupError(
+          SETUP_ERROR_CODES.MANDATORY_INCOMPLETE,
+          SETUP_USER_MESSAGES.MANDATORY_INCOMPLETE
+        );
+      }
+
+      if (!completedSteps.includes(SETUP_STEPS.BASE_CURRENCY)) {
+        throw new SetupError(
+          SETUP_ERROR_CODES.BASE_CURRENCY_REQUIRED,
+          SETUP_USER_MESSAGES.BASE_CURRENCY_REQUIRED
+        );
+      }
+
+      const branches = await this.branchRepository.listByBusinessId(
+        context.businessId
       );
-    }
 
-    const db = getDb();
-    const activatedAt = new Date();
+      if (branches.length === 0) {
+        throw new SetupError(
+          SETUP_ERROR_CODES.BRANCH_REQUIRED,
+          SETUP_USER_MESSAGES.BRANCH_REQUIRED
+        );
+      }
 
-    await db.transaction(async (tx) => {
-      await tx
-        .update(business)
-        .set({
-          statusCode: BUSINESS_STATUS.ACTIVE,
-          updatedAt: new Date(),
-        })
-        .where(eq(business.id, context.businessId));
+      const db = getDb();
+      const activatedAt = new Date();
+
+      await db.transaction(async (tx) => {
+        await tx
+          .update(business)
+          .set({
+            statusCode: BUSINESS_STATUS.ACTIVE,
+            updatedAt: new Date(),
+          })
+          .where(eq(business.id, context.businessId));
+      });
+
+      await this.progressRepository.markActivated({
+        businessId: context.businessId,
+        completedSteps: [...SETUP_STEP_ORDER],
+        completedBy: context.platformUserId,
+        activatedAt,
+      });
+
+      return { businessName: businessRow.name };
     });
-
-    await this.progressRepository.markActivated({
-      businessId: context.businessId,
-      completedSteps: [...SETUP_STEP_ORDER],
-      completedBy: context.platformUserId,
-      activatedAt,
-    });
-
-    return { businessName: businessRow.name };
   }
 
   async getReviewSummary(
@@ -693,9 +1148,13 @@ export class BusinessSetupService {
         name: business.name,
         countryCode: business.countryCode,
         countryName: country.name,
+        industryName: industry.name,
+        businessTypeName: businessType.name,
       })
       .from(business)
       .innerJoin(country, eq(business.countryCode, country.code))
+      .innerJoin(businessType, eq(business.businessTypeId, businessType.id))
+      .innerJoin(industry, eq(businessType.industryId, industry.id))
       .where(eq(business.id, context.businessId))
       .limit(1);
 
@@ -713,12 +1172,21 @@ export class BusinessSetupService {
       .from(businessOperatingCurrency)
       .where(eq(businessOperatingCurrency.businessId, context.businessId));
 
+    const branches = await this.branchRepository.listByBusinessId(
+      context.businessId
+    );
+    const employees = await this.employeeRepository.listReviewRows(
+      context.businessId
+    );
+
     const view = await this.getConfiguration(context.businessId);
     const base = currencies.find((row) => row.isBase);
 
     return {
       businessName: businessRow.name,
       tradingName: profile?.tradingName ?? businessRow.name,
+      industryName: businessRow.industryName,
+      businessTypeName: businessRow.businessTypeName,
       email: profile?.email ?? "",
       physicalAddress: profile?.physicalAddress ?? "",
       county: profile?.county ?? "",
@@ -729,6 +1197,19 @@ export class BusinessSetupService {
       additionalCurrencyCodes: currencies
         .filter((row) => !row.isBase)
         .map((row) => row.currencyCode),
+      branches: branches.map((row) => ({
+        name: row.name,
+        code: row.code,
+        branchType: row.branchType,
+        city: row.city,
+        isHeadOffice: row.isHeadOffice,
+      })),
+      employees: employees.map((row) => ({
+        fullName: `${row.firstName} ${row.lastName}`,
+        jobTitle: row.jobTitle,
+        branchName: row.branchName,
+        roleName: row.roleName,
+      })),
       paymentMethods: {
         cashEnabled: view?.cashEnabled ?? true,
         mobileMoneyEnabled: view?.mobileMoneyEnabled ?? true,
@@ -758,7 +1239,6 @@ export class BusinessSetupService {
   } | null> {
     const db = getDb();
 
-    // Country owns the default currency pointer; currency catalogue owns ISO attrs.
     const [row] = await db
       .select({
         currencyCode: country.currencyCode,
@@ -804,6 +1284,28 @@ export class BusinessSetupService {
       .limit(1);
 
     return row ?? null;
+  }
+
+  async getClassification(businessId: string) {
+    const db = getDb();
+    const [row] = await db
+      .select({
+        industryId: industry.id,
+        industryName: industry.name,
+        businessTypeId: businessType.id,
+        businessTypeName: businessType.name,
+      })
+      .from(business)
+      .innerJoin(businessType, eq(business.businessTypeId, businessType.id))
+      .innerJoin(industry, eq(businessType.industryId, industry.id))
+      .where(eq(business.id, businessId))
+      .limit(1);
+
+    return row ?? null;
+  }
+
+  async listBranches(businessId: string) {
+    return this.branchRepository.listByBusinessId(businessId);
   }
 
   /**
@@ -869,10 +1371,6 @@ export class BusinessSetupService {
     };
   }
 
-  /**
-   * WHAT: Merge a settings group patch into the metadata document.
-   * WHY: Each wizard step updates only its group without wiping siblings.
-   */
   private async patchConfigurationSettings(
     businessId: string,
     patch: Partial<BusinessConfigurationSettings>
@@ -907,6 +1405,7 @@ export class BusinessSetupService {
         name: business.name,
         statusCode: business.statusCode,
         countryCode: business.countryCode,
+        phoneNumber: business.phoneNumber,
       })
       .from(business)
       .where(eq(business.id, businessId))
@@ -961,9 +1460,15 @@ export class BusinessSetupService {
     return row;
   }
 
-  private async assertActiveCurrency(currencyCode: string) {
-    const db = getDb();
-    const [row] = await db
+  /**
+   * WHAT: Confirm a currency exists and is active.
+   * WHY: Must never run nested getDb() queries inside an open max:1 transaction.
+   */
+  private async assertActiveCurrency(
+    currencyCode: string,
+    dbClient: DbClient = getDb()
+  ) {
+    const [row] = await dbClient
       .select({ code: currency.code })
       .from(currency)
       .where(and(eq(currency.code, currencyCode), eq(currency.isActive, true)))
@@ -973,6 +1478,65 @@ export class BusinessSetupService {
       throw new SetupError(
         SETUP_ERROR_CODES.INVALID_INPUT,
         "Select a valid currency."
+      );
+    }
+  }
+
+  private async assertIndustryActive(industryId: string) {
+    const db = getDb();
+    const [row] = await db
+      .select({ id: industry.id })
+      .from(industry)
+      .where(and(eq(industry.id, industryId), eq(industry.isActive, true)))
+      .limit(1);
+
+    if (!row) {
+      throw new SetupError(
+        SETUP_ERROR_CODES.INVALID_INPUT,
+        "Select a valid industry."
+      );
+    }
+  }
+
+  private async assertTemplateBelongsToIndustry(
+    businessTypeId: string,
+    industryId: string
+  ) {
+    const db = getDb();
+    const [row] = await db
+      .select({ id: businessType.id })
+      .from(businessType)
+      .where(
+        and(
+          eq(businessType.id, businessTypeId),
+          eq(businessType.industryId, industryId),
+          eq(businessType.isActive, true)
+        )
+      )
+      .limit(1);
+
+    if (!row) {
+      throw new SetupError(
+        SETUP_ERROR_CODES.INVALID_INPUT,
+        "Select a business type that belongs to the selected industry."
+      );
+    }
+  }
+
+  private async assertPhoneAvailable(
+    phoneNumberE164: string,
+    dbClient: DbClient = getDb()
+  ) {
+    const [existing] = await dbClient
+      .select({ id: platformUser.id })
+      .from(platformUser)
+      .where(eq(platformUser.phoneNumber, phoneNumberE164))
+      .limit(1);
+
+    if (existing) {
+      throw new SetupError(
+        SETUP_ERROR_CODES.DUPLICATE_PHONE,
+        SETUP_USER_MESSAGES.DUPLICATE_PHONE
       );
     }
   }

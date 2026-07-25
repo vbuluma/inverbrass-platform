@@ -6,6 +6,8 @@ export { businessConfiguration } from "./business-configuration";
 export { businessSetupProgress } from "./business-setup-progress";
 export { businessMembershipStatus } from "./business-membership-status";
 export { businessMembership } from "./business-membership";
+export { branch } from "./branch";
+export { businessEmployee } from "./business-employee";
 export { country } from "./country";
 export { currency } from "./currency";
 export { industry } from "./industry";

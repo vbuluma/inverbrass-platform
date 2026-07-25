@@ -42,7 +42,7 @@ export default async function FirstLoginPage() {
 
   if (!contextResult.success) {
     if (contextResult.error.code === "FIRST_LOGIN_NOT_REQUIRED") {
-      redirect("/dashboard");
+      redirect("/home");
     }
 
     redirect("/login");

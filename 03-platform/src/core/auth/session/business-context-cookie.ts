@@ -83,6 +83,11 @@ export async function getBusinessContextFromCookie(): Promise<CurrentBusinessCon
   return decodeContext(rawValue);
 }
 
+/**
+ * CONSTRAINT:
+ * Call only from a Server Action or Route Handler. Must never run during
+ * page/layout rendering (Next.js cookies().set restriction).
+ */
 export async function setBusinessContextCookie(
   context: CurrentBusinessContext
 ): Promise<void> {
@@ -94,6 +99,10 @@ export async function setBusinessContextCookie(
   );
 }
 
+/**
+ * CONSTRAINT:
+ * Call only from a Server Action or Route Handler (login/logout/select).
+ */
 export async function clearBusinessContextCookie(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete(BUSINESS_CONTEXT_COOKIE);

@@ -17,6 +17,8 @@ export const SETUP_ERROR_CODES = {
   BASE_CURRENCY_REQUIRED: "BASE_CURRENCY_REQUIRED",
   COUNTRY_REQUIRED: "COUNTRY_REQUIRED",
   BUSINESS_NOT_DRAFT: "BUSINESS_NOT_DRAFT",
+  BRANCH_REQUIRED: "BRANCH_REQUIRED",
+  DUPLICATE_PHONE: "DUPLICATE_PHONE",
   PROVIDER_ERROR: "PROVIDER_ERROR",
 } as const;
 
@@ -47,5 +49,7 @@ export const SETUP_USER_MESSAGES = {
   BASE_CURRENCY_REQUIRED: "Select a base currency to continue.",
   COUNTRY_REQUIRED: "Select a country before configuring currency.",
   BUSINESS_NOT_DRAFT: "Only draft businesses can be configured in setup.",
+  BRANCH_REQUIRED: "Configure at least one branch before continuing.",
+  DUPLICATE_PHONE: "That mobile number is already registered.",
   PROVIDER_ERROR: "We could not save your setup progress. Please try again.",
 } as const;
