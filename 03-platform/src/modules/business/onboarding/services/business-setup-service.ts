@@ -123,6 +123,7 @@ import type {
   BusinessClassificationPayload,
   BusinessConfigurationSettings,
   BusinessConfigurationView,
+  BusinessDashboardView,
   BusinessDetailsPayload,
   BusinessOperationsPayload,
   CountryStepPayload,
@@ -1252,6 +1253,123 @@ export class BusinessSetupService {
       },
       aiAssistantEnabled: view?.aiAssistantEnabled ?? false,
       loyaltyProgrammeEnabled: view?.loyaltyProgrammeEnabled ?? false,
+    };
+  }
+
+  /**
+   * WHAT: Assemble the operational Business Dashboard for an ACTIVE business.
+   * WHY: /dashboard is where owners run the business — not the activation welcome.
+   */
+  async getBusinessDashboard(
+    context: CurrentBusinessContext,
+    options: {
+      currentUserName: string;
+      roleLabel: string;
+      canSwitchBusiness: boolean;
+    }
+  ): Promise<BusinessDashboardView> {
+    const progress = await this.getSetupProgress(context);
+    const review = await this.getReviewSummary(context);
+    const profile = await this.getProfile(context.businessId);
+
+    const completedMilestones = [
+      { id: "profile", label: "Business profile" },
+      { id: "classification", label: "Industry & business type" },
+      { id: "country", label: "Operating country" },
+      { id: "currency", label: "Base currency" },
+      { id: "operations", label: "Business operations" },
+      { id: "branches", label: "Branch setup" },
+      { id: "activation", label: "Business activated" },
+    ];
+
+    const optionalRemaining: Array<{ id: string; label: string }> = [];
+
+    if (review.additionalCurrencyCodes.length === 0) {
+      optionalRemaining.push({
+        id: "additional-currencies",
+        label: "Add additional currencies (optional)",
+      });
+    }
+
+    if (review.employees.length === 0) {
+      optionalRemaining.push({
+        id: "employees",
+        label: "Add employees (optional)",
+      });
+    }
+
+    if (!review.aiAssistantEnabled) {
+      optionalRemaining.push({
+        id: "ai",
+        label: "Configure AI assistant (optional — future Build Pack)",
+      });
+    }
+
+    if (!review.loyaltyProgrammeEnabled) {
+      optionalRemaining.push({
+        id: "loyalty",
+        label: "Configure loyalty programme (optional — future Build Pack)",
+      });
+    }
+
+    // Business Health — BP-001 setup completeness for the operational dashboard.
+    const healthCompleted = [
+      { id: "profile", label: "Business Profile" },
+      { id: "country", label: "Country" },
+      { id: "currency", label: "Currency" },
+      { id: "branches", label: "Branches" },
+      { id: "activation", label: "Activation" },
+    ];
+
+    const healthRemaining: Array<{ id: string; label: string }> = [];
+    const hasLogo = Boolean(profile?.logoUrl?.trim());
+    const hasReceiptBranding = Boolean(
+      review.receipt.receiptFooter?.trim() ||
+        (review.receipt.receiptPrefix &&
+          review.receipt.receiptPrefix !== "RCPT")
+    );
+
+    if (!hasLogo) {
+      healthRemaining.push({ id: "logo", label: "Business Logo" });
+    }
+    if (!hasReceiptBranding) {
+      healthRemaining.push({ id: "receipt", label: "Receipt Branding" });
+    }
+
+    const healthTotal = healthCompleted.length + healthRemaining.length;
+    const profileCompletionPercent = Math.round(
+      (healthCompleted.length / Math.max(healthTotal, 1)) * 100
+    );
+
+    return {
+      businessName: review.businessName || progress.businessName,
+      businessStatusCode: progress.businessStatusCode,
+      currentUserName: options.currentUserName,
+      roleLabel: options.roleLabel,
+      canSwitchBusiness: options.canSwitchBusiness,
+      industryName: review.industryName,
+      businessTypeName: review.businessTypeName,
+      countryName: review.countryName,
+      baseCurrencyCode: review.baseCurrencyCode || "—",
+      branchCount: review.branches.length,
+      employeeCount: review.employees.length,
+      profileCompletionPercent,
+      healthCompleted,
+      healthRemaining,
+      completedMilestones,
+      optionalRemaining,
+      notifications: [
+        {
+          id: "welcome",
+          title: `Welcome to ${review.businessName || progress.businessName}`,
+          body: "Your business is active. Use this dashboard to run day-to-day operations. Manage your businesses from Platform Home.",
+        },
+        {
+          id: "future-notifications",
+          title: "Platform notifications",
+          body: "Operational alerts and announcements will appear here in future Build Packs.",
+        },
+      ],
     };
   }
 

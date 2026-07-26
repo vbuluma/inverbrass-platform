@@ -1,40 +1,38 @@
 /**
  * Purpose:
- * Display the activated business welcome message on the dashboard.
+ * Render the BP-001 Business Dashboard — operational landing for ACTIVE businesses.
  *
- * Business Context:
- * FR-010 — existing/activated businesses see "Welcome to {Business Name}".
+ * Design rationale:
+ * Platform Home manages businesses; this page runs the selected ACTIVE business.
+ * Activation welcome copy stays on /setup/activated — not here.
  *
  * Architecture Dependency:
  * AD-009 Authentication & Business Onboarding
  *
  * Implementation Package:
- * IP-006 – Business Setup Wizard, Configuration & Activation
+ * BP-001 – Business Dashboard
  *
  * Responsibilities:
- * - Load current business name through setup/catalog action boundary
+ * - Load dashboard data through the action → service boundary
+ * - Render operational summary, quick actions, setup progress, notifications
  *
  * Non-Responsibilities:
- * - Setup orchestration
+ * - Activation / routing guards (handled by (app) layout)
+ * - Operational modules (future Build Packs)
  */
 
-import { getDashboardWelcomeAction } from "@/modules/business/onboarding/actions/setup-actions";
+import { redirect } from "next/navigation";
+
+import { BusinessDashboard } from "@/app/(authenticated)/(app)/dashboard/business-dashboard";
+import { getBusinessDashboardAction } from "@/modules/business/onboarding/actions/setup-actions";
 
 export default async function DashboardPage() {
-  const welcome = await getDashboardWelcomeAction();
-  const businessName =
-    welcome.success && welcome.data.businessName
-      ? welcome.data.businessName
-      : "your business";
+  const result = await getBusinessDashboardAction();
 
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-3 px-4">
-      <h1 className="text-center text-3xl font-semibold tracking-tight">
-        Welcome to {businessName}
-      </h1>
-      <p className="text-sm text-muted-foreground">
-        Your business is active and ready to operate.
-      </p>
-    </main>
-  );
+  if (!result.success) {
+    // Context / session failures — return to Platform Home; do not show activation copy.
+    redirect("/home");
+  }
+
+  return <BusinessDashboard data={result.data} />;
 }

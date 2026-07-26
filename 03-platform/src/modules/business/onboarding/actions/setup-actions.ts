@@ -39,6 +39,7 @@ import type { AuthActionResult } from "@/core/auth/actions/auth-actions";
 import { AuthError } from "@/core/auth/errors";
 import { createAuthService } from "@/core/auth/services/auth-service";
 import { createBusinessContextService } from "@/core/auth/services/business-context-service";
+import type { AuthSessionUser } from "@/core/auth/types";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 import {
   SETUP_ALLOW_BASE_CURRENCY_CHANGE,
@@ -52,6 +53,7 @@ import type {
   BaseCurrencyPayload,
   BranchSetupPayload,
   BusinessClassificationPayload,
+  BusinessDashboardView,
   BusinessDetailsPayload,
   BusinessOperationsPayload,
   CountryStepPayload,
@@ -85,6 +87,37 @@ async function requireSetupContext() {
   }
 
   return context;
+}
+
+/**
+ * WHAT: Resolve a personal greeting name for the Business Dashboard.
+ * WHY: BP-001 registration may derive first/last from proposed business name
+ * ("InverMeU2" + "User"). Prefer the platform username (mobile) in that case.
+ */
+function resolveDashboardGreetingName(
+  user: AuthSessionUser,
+  businessName: string
+): string {
+  const fullName = `${user.firstName} ${user.lastName}`.trim();
+  const first = user.firstName.trim();
+  const last = user.lastName.trim();
+  const business = businessName.trim().toLowerCase();
+  const syntheticBusinessUserLabel =
+    last.toLowerCase() === "user" &&
+    first.length > 0 &&
+    (business === first.toLowerCase() ||
+      business.startsWith(`${first.toLowerCase()} `) ||
+      business.startsWith(first.toLowerCase()));
+
+  if (syntheticBusinessUserLabel) {
+    return user.phoneNumber || user.email || fullName || "there";
+  }
+
+  if (fullName && fullName.toLowerCase() !== "platform user") {
+    return fullName;
+  }
+
+  return user.phoneNumber || user.email || "there";
 }
 
 function toActionError(error: unknown): AuthActionResult<never> {
@@ -383,6 +416,50 @@ export async function getDashboardWelcomeAction(): Promise<
       success: true,
       data: { businessName: progress.businessName },
     };
+  } catch (error) {
+    return toActionError(error);
+  }
+}
+
+/**
+ * WHAT: Load the operational Business Dashboard for the active business context.
+ * WHY: /dashboard is the business run surface — distinct from Platform Home.
+ */
+export async function getBusinessDashboardAction(): Promise<
+  AuthActionResult<BusinessDashboardView>
+> {
+  try {
+    const authService = createAuthService();
+    const user = await authService.getAuthenticatedUser();
+
+    if (!user) {
+      throw new SetupError(
+        "SESSION_REQUIRED",
+        "Your session has expired. Please sign in again.",
+        401
+      );
+    }
+
+    const context = await requireSetupContext();
+    const businessContextService = createBusinessContextService();
+    const businesses = await businessContextService.getSelectableBusinesses(
+      user.platformUserId
+    );
+    const setupService = createBusinessSetupService();
+    const currentBusiness = businesses.find(
+      (item) => item.businessId === context.businessId
+    );
+    const businessName = currentBusiness?.businessName ?? "";
+    const displayName = resolveDashboardGreetingName(user, businessName);
+    const roleLabel = currentBusiness?.isOwner ? "Owner" : "Administrator";
+
+    const data = await setupService.getBusinessDashboard(context, {
+      currentUserName: displayName,
+      roleLabel,
+      canSwitchBusiness: businesses.length >= 2,
+    });
+
+    return { success: true, data };
   } catch (error) {
     return toActionError(error);
   }

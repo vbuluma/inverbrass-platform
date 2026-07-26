@@ -189,3 +189,27 @@ export type CreatedEmployeeCredential = {
   mobileNumber: string;
   temporaryPassword: string;
 };
+
+/**
+ * Operational Business Dashboard payload for ACTIVE businesses.
+ * Platform Home manages businesses; this view runs the selected business.
+ */
+export type BusinessDashboardView = {
+  businessName: string;
+  businessStatusCode: string;
+  currentUserName: string;
+  roleLabel: string;
+  canSwitchBusiness: boolean;
+  industryName: string;
+  businessTypeName: string;
+  countryName: string;
+  baseCurrencyCode: string;
+  branchCount: number;
+  employeeCount: number;
+  profileCompletionPercent: number;
+  healthCompleted: Array<{ id: string; label: string }>;
+  healthRemaining: Array<{ id: string; label: string }>;
+  completedMilestones: Array<{ id: string; label: string }>;
+  optionalRemaining: Array<{ id: string; label: string }>;
+  notifications: Array<{ id: string; title: string; body: string }>;
+};
