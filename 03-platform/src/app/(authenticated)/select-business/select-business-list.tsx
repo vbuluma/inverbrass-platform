@@ -62,9 +62,17 @@ export function SelectBusinessList({ businesses }: SelectBusinessListProps) {
     startTransition(async () => {
       const result = await selectBusinessAction(membershipId);
 
-      if (result && !result.success) {
-        setErrorMessage(result.error.message);
+      if (!result || !result.success) {
+        setErrorMessage(
+          result && !result.success
+            ? result.error.message
+            : "We could not switch to that business."
+        );
+        return;
       }
+
+      // Hard navigation after Set-Cookie — keeps Switch Business on the next screen.
+      window.location.assign(result.data.nextPath);
     });
   }
 

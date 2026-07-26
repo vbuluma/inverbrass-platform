@@ -602,8 +602,8 @@ export function SetupWizard(props: SetupWizardProps) {
           >
             <h2 className="text-xl font-medium">Operating country</h2>
             <p className="text-sm text-muted-foreground">
-              Populated from business registration. Change only if required.
-              Changing country resets currency selections.
+              Auto-populated from Platform Registration / Create Business. Change
+              only if required. Changing country resets currency selections.
             </p>
             {props.countries.length === 0 ? (
               <CatalogEmptyNotice message={CATALOG_EMPTY_MESSAGES.countries} />

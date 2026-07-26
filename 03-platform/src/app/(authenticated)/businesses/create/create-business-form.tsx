@@ -177,6 +177,10 @@ export function CreateBusinessForm({
             </option>
           ))}
         </select>
+        <p className="text-xs text-muted-foreground">
+          Prefills from Platform Registration. Base currency is derived from this
+          country in Business Setup.
+        </p>
       </div>
 
       {errorMessage ? (

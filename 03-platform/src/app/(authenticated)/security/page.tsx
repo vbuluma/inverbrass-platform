@@ -1,6 +1,6 @@
 /**
  * Purpose:
- * Security section of Manage Profile — Platform User security only.
+ * Security section of My Account — Platform User security only.
  *
  * Why this exists:
  * BP-001 — security belongs to the Platform User, not an active business.
@@ -62,7 +62,7 @@ export default async function SecuritySettingsPage() {
           href="/profile"
           className={cn(buttonVariants({ variant: "outline" }), "w-full")}
         >
-          Back to Manage Profile
+          Back to My Account
         </Link>
       </div>
     </AuthPageShell>

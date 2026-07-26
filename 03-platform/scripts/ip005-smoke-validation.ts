@@ -46,6 +46,7 @@ const REQUIRED_FILES = [
   "src/app/(authenticated)/businesses/create/page.tsx",
   "src/app/(authenticated)/businesses/create/create-business-form.tsx",
   "src/app/(authenticated)/profile/page.tsx",
+  "src/app/(authenticated)/profile/notifications/page.tsx",
   "src/app/(authenticated)/security/page.tsx",
   "src/app/(authenticated)/account/page.tsx",
   "src/app/(authenticated)/select-business/page.tsx",
@@ -56,7 +57,9 @@ const REQUIRED_FILES = [
   "src/core/auth/actions/onboarding-actions.ts",
   "src/core/auth/actions/business-registration-actions.ts",
   "src/core/auth/actions/auth-actions.ts",
+  "src/core/auth/actions/select-business-actions.ts",
   "src/core/auth/actions/catalog-actions.ts",
+  "next.config.ts",
   "src/core/auth/validators/registration-ui-validators.ts",
   "src/core/auth/validators/create-business-validators.ts",
   "src/core/auth/utils/password-strength.ts",
@@ -90,6 +93,7 @@ function checkRequiredFiles(): CheckResult[] {
 
 function checkPlatformRegistrationValidators(): CheckResult[] {
   const success = ownerRegistrationUiSchema.safeParse({
+    businessName: "Vincent Motors",
     countryCode: "KE",
     mobileNumber: "712345678",
     password: "Secure1!",
@@ -110,6 +114,7 @@ function checkPlatformRegistrationValidators(): CheckResult[] {
   });
 
   const optionalEmailEmpty = ownerRegistrationUiSchema.safeParse({
+    businessName: "Vincent Motors",
     countryCode: "KE",
     mobileNumber: "712345678",
     email: "",
@@ -119,7 +124,18 @@ function checkPlatformRegistrationValidators(): CheckResult[] {
     securityAnswer: "Nairobi",
   });
 
+  const missingBusinessName = ownerRegistrationUiSchema.safeParse({
+    businessName: "",
+    countryCode: "KE",
+    mobileNumber: "712345678",
+    password: "Secure1!",
+    confirmPassword: "Secure1!",
+    securityQuestionId: "00000000-0000-4000-8000-000000000002",
+    securityAnswer: "Nairobi",
+  });
+
   const passwordMismatch = ownerRegistrationUiSchema.safeParse({
+    businessName: "Vincent Motors",
     countryCode: "KE",
     mobileNumber: "712345678",
     password: "Secure1!",
@@ -143,6 +159,10 @@ function checkPlatformRegistrationValidators(): CheckResult[] {
     {
       name: "validator:platformRegistrationOptionalEmailEmpty",
       ok: optionalEmailEmpty.success,
+    },
+    {
+      name: "validator:platformRegistrationRequiresBusinessName",
+      ok: !missingBusinessName.success,
     },
     {
       name: "validator:platformRegistrationFailurePasswordMismatch",
@@ -264,6 +284,34 @@ function checkArchitectureSourceGuarantees(): CheckResult[] {
   const ip006aPath = path.join(ROOT, "scripts/ip006a-smoke-validation.ts");
   const ip006aSource = readFileSync(ip006aPath, "utf8");
 
+  const openListPath = path.join(
+    ROOT,
+    "src/app/(authenticated)/home/platform-home-business-list.tsx"
+  );
+  const openListSource = readFileSync(openListPath, "utf8");
+  const selectListPath = path.join(
+    ROOT,
+    "src/app/(authenticated)/select-business/select-business-list.tsx"
+  );
+  const selectListSource = readFileSync(selectListPath, "utf8");
+  const selectActionsPath = path.join(
+    ROOT,
+    "src/core/auth/actions/select-business-actions.ts"
+  );
+  const selectActionsSource = readFileSync(selectActionsPath, "utf8");
+  const nextConfigSource = readFileSync(
+    path.join(ROOT, "next.config.ts"),
+    "utf8"
+  );
+  const onboardingActionsSource = readFileSync(
+    path.join(ROOT, "src/core/auth/actions/onboarding-actions.ts"),
+    "utf8"
+  );
+  const createActionsSource = readFileSync(
+    path.join(ROOT, "src/core/auth/actions/business-registration-actions.ts"),
+    "utf8"
+  );
+
   return [
     {
       name: "architecture:platformRegistrationDoesNotInsertBusiness",
@@ -292,19 +340,111 @@ function checkArchitectureSourceGuarantees(): CheckResult[] {
       ok: authActionsSource.includes("isNextRedirectError"),
     },
     {
-      name: "platformHome:welcomeWithoutBusiness",
-      ok:
-        homeSource.includes("Welcome") &&
-        homeSource.includes("Create Business") &&
-        homeSource.includes("Manage Profile") &&
-        homeSource.includes("Security Settings"),
+      name: "transition:registerRedirectsToPlatformHome",
+      ok: onboardingActionsSource.includes('redirect("/home")'),
     },
     {
-      name: "platformHome:withBusinessActions",
+      name: "transition:createBusinessRedirectsToSetup",
+      ok: createActionsSource.includes('redirect("/setup")'),
+    },
+    {
+      name: "transition:openBusinessReturnsNextPath",
       ok:
+        selectActionsSource.includes('"/setup"') &&
+        selectActionsSource.includes('"/dashboard"') &&
+        selectActionsSource.includes("nextPath") &&
+        !selectActionsSource.includes('redirect("/setup")') &&
+        !selectActionsSource.includes('redirect("/dashboard")'),
+    },
+    {
+      name: "transition:openBusinessHardNavigates",
+      ok:
+        openListSource.includes("window.location.assign") &&
+        openListSource.includes("result.data.nextPath") &&
+        openListSource.includes("Open Business"),
+    },
+    {
+      name: "transition:switchBusinessHardNavigates",
+      ok:
+        selectListSource.includes("window.location.assign") &&
+        selectListSource.includes("result.data.nextPath"),
+    },
+    {
+      name: "passwordUx:registerEnablesOnPolicyAndMatch",
+      ok:
+        registerFormSource.includes("isPasswordPolicySatisfied") &&
+        registerFormSource.includes("getPasswordMatchState") &&
+        registerFormSource.includes("passwordsReady") &&
+        registerFormSource.includes('type="submit"') &&
+        registerFormSource.includes("Create Your Account"),
+    },
+    {
+      name: "passwordUx:registerRequiresBusinessNameField",
+      ok:
+        registerFormSource.includes('name="businessName"') &&
+        registerFormSource.includes("required") &&
+        !registerFormSource.includes("Proposed business name (optional)"),
+    },
+    {
+      name: "platformHome:welcomeAndZeroBusinessCopy",
+      ok:
+        homeSource.includes("Welcome") &&
+        homeSource.includes("You have:") &&
         homeSource.includes("My Businesses") &&
-        homeSource.includes("Switch Business") &&
-        homeSource.includes("Account Settings"),
+        homeSource.includes("Create Business") &&
+        homeSource.includes("My Account"),
+    },
+    {
+      name: "platformHome:switchOnlyWhenMultiple",
+      ok:
+        homeSource.includes("canSwitchBusiness") &&
+        homeSource.includes("businessCount >= 2") &&
+        homeSource.includes("Switch Business"),
+    },
+    {
+      name: "platformHome:accountSeparateFromBusinesses",
+      ok:
+        homeSource.includes('id="my-businesses-heading"') &&
+        homeSource.includes('id="my-account-heading"') &&
+        !homeSource.includes("Manage Profile"),
+    },
+    {
+      name: "myAccount:hubRenamedAndStructured",
+      ok: (() => {
+        const profileSource = readFileSync(
+          path.join(ROOT, "src/app/(authenticated)/profile/page.tsx"),
+          "utf8"
+        );
+        return (
+          profileSource.includes('title="My Account"') &&
+          profileSource.includes("Personal Information") &&
+          profileSource.includes('label: "Security"') &&
+          profileSource.includes("Preferences") &&
+          profileSource.includes("Notifications") &&
+          profileSource.includes("Account Information") &&
+          !profileSource.includes('title="Manage Profile"') &&
+          !profileSource.includes('label: "My Businesses"')
+        );
+      })(),
+    },
+    {
+      name: "createBusiness:countryPrefillsFromRegistrationPhone",
+      ok: (() => {
+        const createPageSource = readFileSync(
+          path.join(ROOT, "src/app/(authenticated)/businesses/create/page.tsx"),
+          "utf8"
+        );
+        return (
+          createPageSource.includes("inferCountryCodeFromE164") &&
+          createFormSource.includes("Prefills from Platform Registration")
+        );
+      })(),
+    },
+    {
+      name: "devConfig:allowedDevOriginsPresent",
+      ok:
+        nextConfigSource.includes("allowedDevOrigins") &&
+        nextConfigSource.includes("192.168.100.70"),
     },
     {
       name: "businessRegistration:industryThenFilteredTemplate",

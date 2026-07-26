@@ -41,6 +41,7 @@ const REQUIRED_FILES = [
   "drizzle/0005_ip006a_platform_foundation.sql",
   "drizzle/0006_bp001_platform_registration.sql",
   "drizzle/0007_bp001_platform_auth.sql",
+  "drizzle/0008_bp001_restore_business_foundation.sql",
 ] as const;
 
 type CheckResult = {

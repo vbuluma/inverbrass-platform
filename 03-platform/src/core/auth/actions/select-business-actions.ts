@@ -12,14 +12,12 @@
  */
 
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 
 import type { AuthActionResult } from "@/core/auth/actions/auth-actions";
 import { AuthError } from "@/core/auth/errors";
 import { createAuthService } from "@/core/auth/services/auth-service";
 import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { getClientContextFromHeaders } from "@/core/auth/utils/helpers";
-import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 
 export async function getSelectableBusinessesAction(): Promise<
   AuthActionResult<
@@ -68,9 +66,15 @@ export async function getSelectableBusinessesAction(): Promise<
   }
 }
 
+/**
+ * WHAT: Set the current business context and return the next route.
+ * WHY: Client performs hard navigation after the Set-Cookie response so Open /
+ * Switch Business cannot snap back to Platform Home (Next.js redirect +
+ * startTransition race on App Router).
+ */
 export async function selectBusinessAction(
   membershipId: string
-): Promise<AuthActionResult<{ selected: true }>> {
+): Promise<AuthActionResult<{ nextPath: "/setup" | "/dashboard" }>> {
   try {
     const requestHeaders = await headers();
     const businessContextService = createBusinessContextService();
@@ -87,16 +91,11 @@ export async function selectBusinessAction(
       (membership) => membership.membershipId === membershipId
     );
 
-    if (selected?.businessStatusCode === "DRAFT") {
-      redirect("/setup");
-    }
+    const nextPath =
+      selected?.businessStatusCode === "DRAFT" ? "/setup" : "/dashboard";
 
-    redirect("/dashboard");
+    return { success: true, data: { nextPath } };
   } catch (error) {
-    if (isNextRedirectError(error)) {
-      throw error;
-    }
-
     if (error instanceof AuthError) {
       return {
         success: false,

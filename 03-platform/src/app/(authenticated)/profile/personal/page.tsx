@@ -1,6 +1,6 @@
 /**
  * Purpose:
- * Personal Information section of Manage Profile.
+ * Personal Information section of My Account.
  *
  * Why this exists:
  * BP-001 — Platform User identity details without business configuration fields.
@@ -54,7 +54,7 @@ export default async function PersonalInformationPage() {
           "mt-6 w-full"
         )}
       >
-        Back to Manage Profile
+        Back to My Account
       </Link>
     </AuthPageShell>
   );

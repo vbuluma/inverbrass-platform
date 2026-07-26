@@ -3,9 +3,9 @@
  * Collect Platform Registration inputs and submit through registerOwnerUiAction.
  *
  * Design rationale:
- * Creates a Platform User only. Email and proposed business name are optional.
- * Live password validation disables Register until policy and match checks pass.
- * Country remains for E.164 mobile normalization (username = mobile number).
+ * Creates a Platform User only. Business name (proposed) is required per BP-001
+ * journey; email is optional. Live password validation enables Register when
+ * policy and confirm-password checks pass.
  *
  * Why this exists:
  * BP-001 Stage 1 platform-owned authentication registration UX.
@@ -18,7 +18,7 @@ import { useMemo, useState, useTransition } from "react";
 
 import { CatalogEmptyNotice } from "@/components/auth/catalog-empty-notice";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CATALOG_EMPTY_MESSAGES } from "@/core/auth/catalog-messages";
@@ -67,23 +67,32 @@ export function RegisterForm({
     () => evaluatePasswordStrength(password),
     [password]
   );
-  const passwordPolicyMet = useMemo(
-    () => isPasswordPolicySatisfied(password),
-    [password]
-  );
-  const matchState = useMemo(
-    () => getPasswordMatchState(password, confirmPassword),
-    [password, confirmPassword]
-  );
+  const passwordPolicyMet = isPasswordPolicySatisfied(password);
+  const matchState = getPasswordMatchState(password, confirmPassword);
+  const passwordsReady = passwordPolicyMet && matchState === "match";
 
-  const canSubmit =
-    catalogsReady &&
-    passwordPolicyMet &&
-    matchState === "match" &&
-    !isPending;
+  const canSubmit = catalogsReady && passwordsReady && !isPending;
 
   function handleSubmit(formData: FormData) {
     setErrorMessage(null);
+
+    if (!catalogsReady) {
+      setErrorMessage(
+        countries.length === 0
+          ? CATALOG_EMPTY_MESSAGES.countries
+          : CATALOG_EMPTY_MESSAGES.securityQuestions
+      );
+      return;
+    }
+
+    if (!passwordsReady) {
+      setErrorMessage(
+        matchState === "mismatch"
+          ? "Passwords do not match."
+          : "Password does not meet the required strength rules."
+      );
+      return;
+    }
 
     startTransition(async () => {
       const result = await registerOwnerUiAction({
@@ -118,18 +127,16 @@ export function RegisterForm({
       ) : null}
 
       <div className="space-y-2">
-        <Label htmlFor="mobileNumber">Mobile number</Label>
+        <Label htmlFor="businessName">Business name</Label>
         <Input
-          id="mobileNumber"
-          name="mobileNumber"
-          type="tel"
-          autoComplete="tel"
-          inputMode="tel"
+          id="businessName"
+          name="businessName"
           required
-          placeholder="712345678"
+          autoComplete="organization"
+          placeholder="Proposed business name"
         />
         <p className="text-xs text-muted-foreground">
-          Your mobile number is your username.
+          Temporary / proposed name. No business is created at registration.
         </p>
       </div>
 
@@ -148,8 +155,21 @@ export function RegisterForm({
             </option>
           ))}
         </select>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="mobileNumber">Mobile number</Label>
+        <Input
+          id="mobileNumber"
+          name="mobileNumber"
+          type="tel"
+          autoComplete="tel"
+          inputMode="tel"
+          required
+          placeholder="712345678"
+        />
         <p className="text-xs text-muted-foreground">
-          Used to normalize your mobile number to international format.
+          Your mobile number is your username.
         </p>
       </div>
 
@@ -211,7 +231,9 @@ export function RegisterForm({
             className="absolute top-1/2 right-1 -translate-y-1/2"
             onClick={() => setShowConfirmPassword((current) => !current)}
             aria-label={
-              showConfirmPassword ? "Hide confirm password" : "Show confirm password"
+              showConfirmPassword
+                ? "Hide confirm password"
+                : "Show confirm password"
             }
           >
             {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
@@ -286,23 +308,32 @@ export function RegisterForm({
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="businessName">Proposed business name (optional)</Label>
-        <Input id="businessName" name="businessName" />
-        <p className="text-xs text-muted-foreground">
-          Prefills Business Creation later. No business is created at registration.
-        </p>
-      </div>
-
       {errorMessage ? (
         <Alert variant="destructive">
           <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       ) : null}
 
-      <Button type="submit" disabled={!canSubmit} className="w-full">
-        {isPending ? "Creating account..." : "Register"}
-      </Button>
+      {/* Native submit button — avoids Base UI disabled-state regressions. */}
+      <button
+        type="submit"
+        disabled={!canSubmit}
+        className={cn(buttonVariants(), "w-full")}
+      >
+        {isPending ? "Creating account..." : "Create Your Account"}
+      </button>
+
+      {!canSubmit && catalogsReady && !isPending ? (
+        <p className="text-xs text-muted-foreground" aria-live="polite">
+          {!passwordPolicyMet
+            ? "Meet all password rules to enable Create Your Account."
+            : matchState === "empty"
+              ? "Confirm your password to enable Create Your Account."
+              : matchState === "mismatch"
+                ? "Passwords must match before you can continue."
+                : null}
+        </p>
+      ) : null}
     </form>
   );
 }

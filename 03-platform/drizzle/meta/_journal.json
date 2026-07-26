@@ -57,6 +57,20 @@
       "when": 1784564588808,
       "tag": "0007_bp001_platform_auth",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1784564588809,
+      "tag": "0008_bp001_restore_business_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1784564588810,
+      "tag": "0009_bp001_branch_employee_setup",
+      "breakpoints": true
     }
   ]
 }

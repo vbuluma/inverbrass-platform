@@ -21,10 +21,9 @@ export default async function RegisterPage() {
   const referenceDataService = createReferenceDataService();
   const securityQuestionService = createSecurityQuestionService();
 
-  const [countries, securityQuestions] = await Promise.all([
-    referenceDataService.getActiveCountries(),
-    securityQuestionService.getActiveCatalog(),
-  ]);
+  // Sequential reads — session pooler max:1 must not fan out concurrent queries.
+  const countries = await referenceDataService.getActiveCountries();
+  const securityQuestions = await securityQuestionService.getActiveCatalog();
 
   return (
     <AuthPageShell

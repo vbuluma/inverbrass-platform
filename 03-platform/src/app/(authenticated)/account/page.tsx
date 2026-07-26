@@ -1,6 +1,6 @@
 /**
  * Purpose:
- * Platform Account section — Platform User account identity only.
+ * Account Information section of My Account — Platform User identity only.
  *
  * Why this exists:
  * BP-001 — account hub is platform-scoped; business settings live under the
@@ -31,7 +31,7 @@ export default async function PlatformAccountPage() {
 
   return (
     <AuthPageShell
-      title="Platform Account"
+      title="Account Information"
       description="Your InverBrass Platform User account."
       className="max-w-lg"
     >
@@ -65,7 +65,7 @@ export default async function PlatformAccountPage() {
           href="/profile"
           className={cn(buttonVariants({ variant: "outline" }), "w-full")}
         >
-          Back to Manage Profile
+          Back to My Account
         </Link>
         <Link
           href="/home"

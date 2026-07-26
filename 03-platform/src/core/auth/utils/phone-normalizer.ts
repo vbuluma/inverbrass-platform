@@ -77,3 +77,25 @@ export function toAuthEmailAlias(phoneNumberE164: string): string {
   const normalized = phoneNumberE164.replace("+", "");
   return `${normalized}@mobile.inverbrass.internal`;
 }
+
+/**
+ * WHAT: Infer ISO country code from an E.164 mobile stored at Platform Registration.
+ * WHY: Prefill Create Business / Setup country without a separate persisted country column.
+ */
+export function inferCountryCodeFromE164(
+  phoneNumberE164: string | null | undefined
+): string | null {
+  if (!phoneNumberE164) {
+    return null;
+  }
+
+  const digits = phoneNumberE164.trim().replace(/^\+/, "");
+
+  for (const rule of Object.values(COUNTRY_PHONE_RULES)) {
+    if (digits.startsWith(rule.dialCode)) {
+      return rule.countryCode;
+    }
+  }
+
+  return null;
+}

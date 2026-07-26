@@ -3,8 +3,8 @@
  * Validate Platform Registration UI payload before mapping to OnboardingService.
  *
  * Design rationale:
- * Required: mobile, password, confirm password, security Q&A, country (for E.164).
- * Optional: email, proposed business name.
+ * Required (BP-001 journey): business name (proposed), country, mobile, password,
+ * confirm password, security Q&A. Optional: email. No Business row is created here.
  */
 
 import { z } from "zod";
@@ -16,9 +16,8 @@ export const ownerRegistrationUiSchema = z
     businessName: z
       .string()
       .trim()
-      .max(200, "Business name is too long.")
-      .optional()
-      .or(z.literal("")),
+      .min(2, "Business name is required.")
+      .max(200, "Business name is too long."),
     countryCode: z
       .string()
       .length(2, "Country code must be a 2-letter ISO code."),

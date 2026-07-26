@@ -20,6 +20,7 @@ import {
   getIndustriesAction,
 } from "@/core/auth/actions/catalog-actions";
 import { createAuthService } from "@/core/auth/services/auth-service";
+import { inferCountryCodeFromE164 } from "@/core/auth/utils/phone-normalizer";
 
 export default async function CreateBusinessPage() {
   const authService = createAuthService();
@@ -33,23 +34,30 @@ export default async function CreateBusinessPage() {
     redirect("/first-login");
   }
 
-  const [industriesResult, templatesResult, countriesResult] =
-    await Promise.all([
-      getIndustriesAction(),
-      getBusinessTypesAction(),
-      getCountriesAction(),
-    ]);
+  // Sequential catalogue reads — session pooler max:1.
+  const industriesResult = await getIndustriesAction();
+  const templatesResult = await getBusinessTypesAction();
+  const countriesResult = await getCountriesAction();
 
   const industries = industriesResult.success ? industriesResult.data : [];
   const templates = templatesResult.success ? templatesResult.data : [];
   const countries = countriesResult.success ? countriesResult.data : [];
 
-  const defaultCountryCode = countries[0]?.code ?? "KE";
+  // Prefill from Platform Registration country (inferred from stored E.164 mobile).
+  const registrationCountry =
+    inferCountryCodeFromE164(user.phoneNumber) ??
+    countries[0]?.code ??
+    "KE";
+  const defaultCountryCode = countries.some(
+    (country) => country.code === registrationCountry
+  )
+    ? registrationCountry
+    : (countries[0]?.code ?? "KE");
 
   return (
     <AuthPageShell
       title="Create Business"
-      description="Enter business name, Industry Solution, Business Template, and country. Currency and remaining setup continue in the Business Setup Wizard."
+      description="Country is prefilled from Platform Registration. Base currency is derived in setup from the selected country."
       className="max-w-lg"
     >
       <CreateBusinessForm

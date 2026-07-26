@@ -1,18 +1,16 @@
 /**
  * Purpose:
- * Render Platform Home — the post-authentication entry point for Industry Solutions.
+ * Render Platform Home — post-auth landing for the BP-001 customer journey.
  *
  * Design rationale:
- * CTA matrix is membership-count driven:
- * - 0 businesses → Create Business only (no Switch Business)
- * - 1 business → Open Business; hide Switch Business
- * - 2+ businesses → Open list + Switch Business
+ * Two clear sections keep platform and business concerns separate:
+ * - My Businesses — Open / Switch (if >1) / Create Business
+ * - My Account — platform identity settings (not business configuration)
  *
- * Cookie writes are forbidden during page render. Session/business cookies are
- * set only by Server Actions (login, register, open/switch business, logout).
+ * Cookie writes are forbidden during page render.
  *
  * Why this exists:
- * BP-001 UX correction — never prompt to switch before a second business exists.
+ * BP-001 Final UX Alignment to the approved customer journey.
  */
 
 import Link from "next/link";
@@ -67,13 +65,13 @@ export default async function PlatformHomePage() {
 
   return (
     <AuthPageShell
-      title={businessCount > 0 ? "Platform Home" : `Welcome ${displayName}`}
+      title={`Welcome ${displayName}`}
       description={
         businessCount === 0
-          ? "You do not have a business yet. Create one to start setup."
+          ? "You have: 0 Businesses"
           : businessCount === 1
-            ? "Open your business to continue, or manage your platform profile."
-            : "Choose a business to continue, create another, or switch businesses."
+            ? "You have: 1 Business"
+            : `You have: ${businessCount} Businesses`
       }
       className="max-w-lg"
       footer={
@@ -84,33 +82,60 @@ export default async function PlatformHomePage() {
         </form>
       }
     >
-      <div className="space-y-3">
-        {businessCount > 0 ? (
-          <PlatformHomeBusinessList businesses={businesses} />
-        ) : null}
+      <div className="space-y-8">
+        <section className="space-y-3" aria-labelledby="my-businesses-heading">
+          <div className="space-y-1">
+            <h2 id="my-businesses-heading" className="text-base font-semibold">
+              My Businesses
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Open a business to operate, or create a new one. Business setup and
+              configuration happen inside each business.
+            </p>
+          </div>
 
-        <Link
-          href="/businesses/create"
-          className={cn(buttonVariants(), "w-full")}
-        >
-          Create Business
-        </Link>
+          {businessCount > 0 ? (
+            <PlatformHomeBusinessList businesses={businesses} />
+          ) : (
+            <p className="rounded-lg border border-dashed border-border px-3 py-4 text-sm text-muted-foreground">
+              No businesses yet. Create your first business to start setup.
+            </p>
+          )}
 
-        {canSwitchBusiness ? (
           <Link
-            href="/select-business"
+            href="/businesses/create"
+            className={cn(buttonVariants(), "w-full")}
+          >
+            Create Business
+          </Link>
+
+          {canSwitchBusiness ? (
+            <Link
+              href="/select-business"
+              className={cn(buttonVariants({ variant: "outline" }), "w-full")}
+            >
+              Switch Business
+            </Link>
+          ) : null}
+        </section>
+
+        <section className="space-y-3" aria-labelledby="my-account-heading">
+          <div className="space-y-1">
+            <h2 id="my-account-heading" className="text-base font-semibold">
+              My Account
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Platform account settings only. Separate from business management.
+            </p>
+          </div>
+
+          <Link
+            href="/profile"
             className={cn(buttonVariants({ variant: "outline" }), "w-full")}
           >
-            Switch Business
+            My Account
           </Link>
-        ) : null}
-
-        <Link
-          href="/profile"
-          className={cn(buttonVariants({ variant: "outline" }), "w-full")}
-        >
-          Manage Profile
-        </Link>
+        </section>
       </div>
     </AuthPageShell>
   );

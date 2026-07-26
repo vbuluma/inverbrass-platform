@@ -1,9 +1,10 @@
 /**
  * Purpose:
- * Preferences section of My Account (platform-level only).
+ * Notifications section of My Account (platform-level only).
  *
  * Why this exists:
- * BP-001 — preferences belong to the Platform User, not an active business.
+ * BP-001 Final UX Alignment — My Account lists Notifications separately from
+ * Preferences. Controls remain placeholders until notification options exist.
  */
 
 import Link from "next/link";
@@ -14,7 +15,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { createAuthService } from "@/core/auth/services/auth-service";
 import { cn } from "@/lib/utils";
 
-export default async function PreferencesPage() {
+export default async function NotificationsPage() {
   const authService = createAuthService();
   const user = await authService.getAuthenticatedUser();
 
@@ -24,13 +25,13 @@ export default async function PreferencesPage() {
 
   return (
     <AuthPageShell
-      title="Preferences"
-      description="Language, theme, date format, and time zone for your platform account."
+      title="Notifications"
+      description="Platform notification preferences for your account."
       className="max-w-lg"
     >
       <p className="text-sm text-muted-foreground">
-        Preference controls will appear here as platform configuration options
-        become available. Business-specific settings remain inside each business.
+        Notification controls will appear here as platform options become
+        available. Business-specific alerts remain inside each business.
       </p>
 
       <Link

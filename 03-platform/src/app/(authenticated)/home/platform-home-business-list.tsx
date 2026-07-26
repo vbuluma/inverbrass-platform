@@ -3,8 +3,8 @@
  * Client list of businesses on Platform Home with Open → selectBusinessAction.
  *
  * Design rationale:
- * Opening a business must set the signed business-context cookie before navigating
- * to setup or dashboard.
+ * Opening a business must set the signed business-context cookie, then hard-navigate
+ * to setup (DRAFT) or dashboard (ACTIVE) so the App Router cannot snap back to /home.
  *
  * Why this exists:
  * BP-001 Platform Home — My Businesses entry into Industry Solutions.
@@ -37,10 +37,18 @@ export function PlatformHomeBusinessList({
     startTransition(async () => {
       const result = await selectBusinessAction(membershipId);
 
-      if (result && !result.success) {
-        setErrorMessage(result.error.message);
+      if (!result || !result.success) {
+        setErrorMessage(
+          result && !result.success
+            ? result.error.message
+            : "We could not open that business."
+        );
         setPendingId(null);
+        return;
       }
+
+      // Hard navigation after Set-Cookie — avoids redirect snap-back to /home.
+      window.location.assign(result.data.nextPath);
     });
   }
 
@@ -55,10 +63,13 @@ export function PlatformHomeBusinessList({
             <div>
               <p className="font-medium">{business.businessName}</p>
               <p className="text-muted-foreground">
-                {business.businessTypeName} · {business.countryName}
                 {business.businessStatusCode === "DRAFT"
-                  ? " · Setup in progress"
-                  : ""}
+                  ? "Setup in progress"
+                  : business.businessStatusCode === "ACTIVE"
+                    ? "Active"
+                    : business.businessStatusCode}
+                {" · "}
+                {business.businessTypeName} · {business.countryName}
               </p>
             </div>
             <Button
