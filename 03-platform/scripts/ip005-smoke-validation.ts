@@ -348,26 +348,26 @@ function checkArchitectureSourceGuarantees(): CheckResult[] {
       ok: createActionsSource.includes('redirect("/setup")'),
     },
     {
-      name: "transition:openBusinessReturnsNextPath",
+      name: "transition:openBusinessServerRedirects",
       ok:
         selectActionsSource.includes('"/setup"') &&
         selectActionsSource.includes('"/dashboard"') &&
         selectActionsSource.includes("nextPath") &&
-        !selectActionsSource.includes('redirect("/setup")') &&
-        !selectActionsSource.includes('redirect("/dashboard")'),
+        selectActionsSource.includes("redirect(nextPath)") &&
+        selectActionsSource.includes("selectBusinessFormAction"),
     },
     {
-      name: "transition:openBusinessHardNavigates",
+      name: "transition:openBusinessFormAction",
       ok:
-        openListSource.includes("window.location.assign") &&
-        openListSource.includes("result.data.nextPath") &&
+        openListSource.includes("selectBusinessFormAction") &&
+        openListSource.includes('name="membershipId"') &&
         openListSource.includes("Open Business"),
     },
     {
-      name: "transition:switchBusinessHardNavigates",
+      name: "transition:switchBusinessFormAction",
       ok:
-        selectListSource.includes("window.location.assign") &&
-        selectListSource.includes("result.data.nextPath"),
+        selectListSource.includes("selectBusinessFormAction") &&
+        selectListSource.includes('name="membershipId"'),
     },
     {
       name: "passwordUx:registerEnablesOnPolicyAndMatch",
@@ -392,6 +392,8 @@ function checkArchitectureSourceGuarantees(): CheckResult[] {
         homeSource.includes("You have:") &&
         homeSource.includes("My Businesses") &&
         homeSource.includes("Create Business") &&
+        homeSource.includes("Create Another Business") &&
+        homeSource.includes('businessCount >= 1') &&
         homeSource.includes("My Account"),
     },
     {

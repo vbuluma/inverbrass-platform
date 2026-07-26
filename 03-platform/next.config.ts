@@ -18,8 +18,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Allow network-host HMR in local development (e.g. phone/LAN testing).
-  allowedDevOrigins: ["192.168.100.70", "localhost"],
+  // Allow network-host HMR in local development (LAN / phone testing).
+  // Hostnames only — never empty-string deploymentId (breaks Turbopack hydration).
+  allowedDevOrigins: ["192.168.100.70", "127.0.0.1", "localhost"],
 };
 
 export default nextConfig;

@@ -46,6 +46,8 @@ export type BusinessConfigurationSettingsJson = {
   };
   tax: {
     taxEnabled: boolean;
+    /** Simple BP-001 default tax label — not a tax-type catalogue. */
+    defaultTaxName: string;
     defaultTaxRate: string;
   };
   features: {

@@ -55,6 +55,8 @@ export type ReceiptConfigurationPayload = {
   receiptFooter: string;
   showLogoOnReceipt: boolean;
   taxEnabled: boolean;
+  /** BP-001: single default tax name (e.g. VAT) — no tax types/rules yet. */
+  defaultTaxName: string;
   defaultTaxRate: string;
 };
 
@@ -126,6 +128,7 @@ export type BusinessConfigurationView = {
   receiptFooter: string;
   showLogoOnReceipt: boolean;
   taxEnabled: boolean;
+  defaultTaxName: string;
   defaultTaxRate: string;
   aiAssistantEnabled: boolean;
   loyaltyProgrammeEnabled: boolean;

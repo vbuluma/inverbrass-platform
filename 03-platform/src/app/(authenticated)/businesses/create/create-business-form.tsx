@@ -5,6 +5,7 @@
  * Design rationale:
  * Business Templates are filtered by Industry Solution. No global unscoped
  * business-type dropdown is used as the primary selection path.
+ * Failed validation preserves all entered values (platform UX standard).
  *
  * Why this exists:
  * BP-001 foundation correction — Industry Solutions drive template catalogues.
@@ -27,6 +28,7 @@ import type {
   CountryOption,
   IndustryOption,
 } from "@/core/auth/types";
+import { usePreservedFormValues } from "@/lib/forms/preserve-form-values";
 import { cn } from "@/lib/utils";
 
 type CreateBusinessFormProps = {
@@ -55,6 +57,13 @@ export function CreateBusinessForm({
   const [businessTypeId, setBusinessTypeId] = useState("");
   const [isPending, startTransition] = useTransition();
 
+  const preserved = usePreservedFormValues({
+    initial: {
+      businessName: defaultBusinessName,
+      countryCode: defaultCountryCode,
+    },
+  });
+
   const filteredTemplates = useMemo(
     () =>
       industryId
@@ -74,24 +83,35 @@ export function CreateBusinessForm({
 
   function handleSubmit(formData: FormData) {
     setErrorMessage(null);
+    preserved.clearInvalidField();
+
+    // Keep dropdown selections in React state across failed submits.
+    const nextIndustryId = String(formData.get("industryId") ?? "");
+    const nextBusinessTypeId = String(formData.get("businessTypeId") ?? "");
+    setIndustryId(nextIndustryId);
+    setBusinessTypeId(nextBusinessTypeId);
 
     startTransition(async () => {
       const result = await createBusinessUiAction({
         businessName: String(formData.get("businessName") ?? ""),
-        industryId: String(formData.get("industryId") ?? ""),
-        businessTypeId: String(formData.get("businessTypeId") ?? ""),
+        industryId: nextIndustryId,
+        businessTypeId: nextBusinessTypeId,
         countryCode: String(formData.get("countryCode") ?? defaultCountryCode),
         mobileNumber: defaultMobileNumber || undefined,
       });
 
       if (result && !result.success) {
+        preserved.recoverAfterValidationFailure(
+          formData,
+          result.error.field
+        );
         setErrorMessage(result.error.message);
       }
     });
   }
 
   return (
-    <form action={handleSubmit} className="space-y-4">
+    <form key={preserved.formKey} action={handleSubmit} className="space-y-4">
       {!catalogsReady ? (
         <CatalogEmptyNotice
           message={
@@ -108,7 +128,9 @@ export function CreateBusinessForm({
           id="businessName"
           name="businessName"
           required
-          defaultValue={defaultBusinessName}
+          defaultValue={preserved.textValue("businessName")}
+          className={preserved.fieldClassName("businessName")}
+          aria-invalid={preserved.invalidField === "businessName"}
         />
       </div>
 
@@ -120,7 +142,12 @@ export function CreateBusinessForm({
           required
           value={industryId}
           onChange={(event) => handleIndustryChange(event.target.value)}
-          className={selectClassName}
+          className={cn(
+            selectClassName,
+            preserved.invalidField === "industryId" &&
+              "border-destructive ring-2 ring-destructive/30"
+          )}
+          aria-invalid={preserved.invalidField === "industryId"}
         >
           <option value="" disabled>
             Select an industry solution
@@ -142,7 +169,12 @@ export function CreateBusinessForm({
           value={businessTypeId}
           onChange={(event) => setBusinessTypeId(event.target.value)}
           disabled={!industryId || filteredTemplates.length === 0}
-          className={selectClassName}
+          className={cn(
+            selectClassName,
+            preserved.invalidField === "businessTypeId" &&
+              "border-destructive ring-2 ring-destructive/30"
+          )}
+          aria-invalid={preserved.invalidField === "businessTypeId"}
         >
           <option value="" disabled>
             {industryId
@@ -168,8 +200,15 @@ export function CreateBusinessForm({
           id="countryCode"
           name="countryCode"
           required
-          defaultValue={defaultCountryCode}
-          className={selectClassName}
+          defaultValue={
+            preserved.textValue("countryCode") || defaultCountryCode
+          }
+          className={cn(
+            selectClassName,
+            preserved.invalidField === "countryCode" &&
+              "border-destructive ring-2 ring-destructive/30"
+          )}
+          aria-invalid={preserved.invalidField === "countryCode"}
         >
           {countries.map((country) => (
             <option key={country.code} value={country.code}>

@@ -149,6 +149,7 @@ function checkValidators(): CheckResult[] {
     receiptFooter: "Thank you",
     showLogoOnReceipt: true,
     taxEnabled: true,
+    defaultTaxName: "VAT",
     defaultTaxRate: "16",
   });
   const operations = businessOperationsSchema.safeParse({
@@ -164,6 +165,7 @@ function checkValidators(): CheckResult[] {
       receiptFooter: "Thank you",
       showLogoOnReceipt: true,
       taxEnabled: false,
+      defaultTaxName: "VAT",
       defaultTaxRate: "0",
     },
     aiAssistantEnabled: false,

@@ -109,20 +109,46 @@ export const paymentMethodsSchema = z
     }
   );
 
-export const receiptConfigurationSchema = z.object({
-  receiptPrefix: z
-    .string()
-    .trim()
-    .min(1, "Receipt prefix is required.")
-    .max(20),
-  receiptFooter: z.string().trim().max(500),
-  showLogoOnReceipt: z.boolean(),
-  taxEnabled: z.boolean(),
-  defaultTaxRate: z
-    .string()
-    .trim()
-    .regex(/^\d+(\.\d{1,4})?$/, "Enter a valid tax rate."),
-});
+export const receiptConfigurationSchema = z
+  .object({
+    receiptPrefix: z
+      .string()
+      .trim()
+      .min(1, "Receipt prefix is required.")
+      .max(20),
+    receiptFooter: z.string().trim().max(500),
+    showLogoOnReceipt: z.boolean(),
+    taxEnabled: z.boolean(),
+    defaultTaxName: z
+      .string()
+      .trim()
+      .max(50, "Tax name must be 50 characters or fewer."),
+    defaultTaxRate: z
+      .string()
+      .trim()
+      .regex(/^\d+(\.\d{1,4})?$/, "Enter a valid tax rate."),
+  })
+  .superRefine((value, ctx) => {
+    if (!value.taxEnabled) {
+      return;
+    }
+
+    if (!value.defaultTaxName) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["defaultTaxName"],
+        message: "Enter a default tax name when tax is enabled.",
+      });
+    }
+
+    if (Number(value.defaultTaxRate) <= 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["defaultTaxRate"],
+        message: "Enter a default tax rate greater than zero when tax is enabled.",
+      });
+    }
+  });
 
 export const featureToggleSchema = z.object({
   enabled: z.boolean(),

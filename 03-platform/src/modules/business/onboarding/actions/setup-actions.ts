@@ -39,8 +39,10 @@ import type { AuthActionResult } from "@/core/auth/actions/auth-actions";
 import { AuthError } from "@/core/auth/errors";
 import { createAuthService } from "@/core/auth/services/auth-service";
 import { createBusinessContextService } from "@/core/auth/services/business-context-service";
+import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 import {
   SETUP_ALLOW_BASE_CURRENCY_CHANGE,
+  SETUP_STEPS,
   type SetupStep,
 } from "@/modules/business/onboarding/constants";
 import { SetupError } from "@/modules/business/onboarding/errors";
@@ -86,7 +88,18 @@ async function requireSetupContext() {
 }
 
 function toActionError(error: unknown): AuthActionResult<never> {
-  if (error instanceof SetupError || error instanceof AuthError) {
+  if (error instanceof SetupError) {
+    return {
+      success: false,
+      error: {
+        code: error.code,
+        message: error.message,
+        ...(error.field ? { field: error.field } : {}),
+      },
+    };
+  }
+
+  if (error instanceof AuthError) {
     return {
       success: false,
       error: { code: error.code, message: error.message },
@@ -97,9 +110,26 @@ function toActionError(error: unknown): AuthActionResult<never> {
     success: false,
     error: {
       code: "PROVIDER_ERROR",
-      message: "We could not save your setup progress. Please try again.",
+      message: "We could not load setup. Please try again.",
     },
   };
+}
+
+/**
+ * WHAT: Load an optional setup catalog slice; never abort the wizard for it.
+ * WHY: Missing branches/config/currencies/profile are valid early-setup states.
+ */
+async function loadOptionalCatalogSlice<T>(
+  label: string,
+  load: () => Promise<T>,
+  fallback: T
+): Promise<T> {
+  try {
+    return await load();
+  } catch (error) {
+    console.error(`[setup.catalog] optional.${label}.fail`, error);
+    return fallback;
+  }
 }
 
 export async function getSetupProgressAction(): Promise<
@@ -128,15 +158,54 @@ export async function getSetupReviewAction(): Promise<
   }
 }
 
+/**
+ * WHAT: Complete Welcome and server-redirect to Business Profile.
+ * WHY: Client router.push + router.refresh raced and bounced back to /welcome,
+ * leaving the Start Setup button stuck on "Starting...".
+ */
 export async function completeWelcomeAction(): Promise<
   AuthActionResult<SetupProgressView>
 > {
+  console.info("[setup] action.start", { action: "completeWelcome" });
+
   try {
     const context = await requireSetupContext();
     const setupService = createBusinessSetupService();
     const data = await setupService.completeWelcome(context);
-    return { success: true, data };
+
+    const nextStep =
+      data.resumeStep === SETUP_STEPS.COMPLETED
+        ? SETUP_STEPS.REVIEW
+        : data.resumeStep === SETUP_STEPS.BUSINESS_DETAILS
+          ? SETUP_STEPS.BUSINESS_PROFILE
+          : data.resumeStep;
+
+    console.info("[setup] redirect.business-details", {
+      nextStep,
+      resumeStep: data.resumeStep,
+      progressPercent: data.progressPercent,
+      completedSteps: data.completedSteps,
+    });
+
+    redirect(`/setup/${nextStep}`);
   } catch (error) {
+    if (isNextRedirectError(error)) {
+      throw error;
+    }
+
+    console.error("[setup] action.failed", {
+      action: "completeWelcome",
+      error,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      query:
+        error &&
+        typeof error === "object" &&
+        "query" in error
+          ? (error as { query?: unknown }).query
+          : undefined,
+    });
+
     return toActionError(error);
   }
 }
@@ -356,12 +425,12 @@ export async function getSetupCatalogAction(): Promise<
       ReturnType<
         ReturnType<typeof createBusinessSetupService>["getProfile"]
       >
-    >;
+    > | null;
     classification: Awaited<
       ReturnType<
         ReturnType<typeof createBusinessSetupService>["getClassification"]
       >
-    >;
+    > | null;
     configuration: Awaited<
       ReturnType<
         ReturnType<typeof createBusinessSetupService>["getConfiguration"]
@@ -388,27 +457,55 @@ export async function getSetupCatalogAction(): Promise<
     const referenceDataService = createReferenceDataService();
     const setupService = createBusinessSetupService();
 
+    // Required: session/context already validated; progress + catalogs gate the wizard.
     // Sequential reads avoid contention on the shared max:1 DB pool.
     const countries = await referenceDataService.getActiveCountries();
     const currencies = await referenceDataService.getActiveCurrencies();
     const industries = await referenceDataService.getActiveIndustries();
     const businessTypes = await referenceDataService.getActiveBusinessTypes();
     const progress = await setupService.getSetupProgress(context);
-    const profile = await setupService.getProfile(context.businessId);
-    const classification = await setupService.getClassification(
+    const businessCountryCode = await setupService.getBusinessCountryCode(
       context.businessId
     );
-    const configuration = await setupService.getConfiguration(
-      context.businessId
+
+    // Optional early-setup slices: empty/null defaults — never fail Open → Wizard.
+    const profile = await loadOptionalCatalogSlice(
+      "profile",
+      () => setupService.getProfile(context.businessId),
+      null
     );
-    const operatingCurrencies = await setupService.getBusinessCurrencies(
-      context.businessId
+    const classification = await loadOptionalCatalogSlice(
+      "classification",
+      () => setupService.getClassification(context.businessId),
+      null
     );
-    const defaultCurrency = await setupService.getDefaultCurrencyForBusiness(
-      context.businessId
+    const configuration = await loadOptionalCatalogSlice(
+      "configuration",
+      () => setupService.getConfiguration(context.businessId),
+      null
     );
-    const branches = await setupService.listBranches(context.businessId);
-    const review = await setupService.getReviewSummary(context);
+    const operatingCurrencies = await loadOptionalCatalogSlice(
+      "operatingCurrencies",
+      () => setupService.getBusinessCurrencies(context.businessId),
+      []
+    );
+    const defaultCurrency = await loadOptionalCatalogSlice(
+      "defaultCurrency",
+      () => setupService.getDefaultCurrencyForBusiness(context.businessId),
+      null
+    );
+    const branches = await loadOptionalCatalogSlice(
+      "branches",
+      () => setupService.listBranches(context.businessId),
+      []
+    );
+
+    console.info("[open-business] stage=setup.catalog.ok", {
+      businessId: context.businessId,
+      businessCountryCode,
+      businessName: progress.businessName,
+      branchCount: branches.length,
+    });
 
     return {
       success: true,
@@ -417,7 +514,7 @@ export async function getSetupCatalogAction(): Promise<
         currencies,
         industries,
         businessTypes,
-        businessCountryCode: review.countryCode,
+        businessCountryCode,
         defaultCurrencyCode: defaultCurrency?.currencyCode ?? null,
         allowBaseCurrencyChange: SETUP_ALLOW_BASE_CURRENCY_CHANGE,
         profile,
@@ -429,6 +526,7 @@ export async function getSetupCatalogAction(): Promise<
       },
     };
   } catch (error) {
+    console.error("[open-business] stage=setup.catalog.fail", error);
     return toActionError(error);
   }
 }

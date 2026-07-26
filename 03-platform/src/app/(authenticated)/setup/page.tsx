@@ -18,7 +18,9 @@ export default async function SetupIndexPage() {
   const progressResult = await getSetupProgressAction();
 
   if (!progressResult.success) {
-    // No valid business context — return to Platform Home (never switch with 0 businesses).
+    console.error("[open-business] stage=setup.index.redirectHome", {
+      error: progressResult.error,
+    });
     redirect("/home");
   }
 

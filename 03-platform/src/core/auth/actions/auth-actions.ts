@@ -26,7 +26,15 @@ import { loginCredentialsSchema } from "@/core/auth/validators/auth-validators";
 
 export type AuthActionResult<T> =
   | { success: true; data: T }
-  | { success: false; error: { code: string; message: string } };
+  | {
+      success: false;
+      error: {
+        code: string;
+        message: string;
+        /** Optional form field name to highlight after validation failure. */
+        field?: string;
+      };
+    };
 
 export async function loginAction(
   credentials: LoginCredentials

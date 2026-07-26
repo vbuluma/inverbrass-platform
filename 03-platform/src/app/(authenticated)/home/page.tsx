@@ -4,7 +4,7 @@
  *
  * Design rationale:
  * Two clear sections keep platform and business concerns separate:
- * - My Businesses — Open / Switch (if >1) / Create Business
+ * - My Businesses — Open / Switch (if >1) / Create Business (or Create Another Business)
  * - My Account — platform identity settings (not business configuration)
  *
  * Cookie writes are forbidden during page render.
@@ -40,7 +40,13 @@ async function signOutAction() {
   }
 }
 
-export default async function PlatformHomePage() {
+type PlatformHomePageProps = {
+  searchParams: Promise<{ openError?: string }>;
+};
+
+export default async function PlatformHomePage({
+  searchParams,
+}: PlatformHomePageProps) {
   const authService = createAuthService();
   const user = await authService.getAuthenticatedUser();
 
@@ -58,10 +64,15 @@ export default async function PlatformHomePage() {
     user.platformUserId
   );
 
+  const params = await searchParams;
+  const openError = params.openError?.trim() || null;
+
   const displayName =
     `${user.firstName} ${user.lastName}`.trim() || user.email || "User";
   const businessCount = businesses.length;
   const canSwitchBusiness = businessCount >= 2;
+  const createBusinessLabel =
+    businessCount >= 1 ? "Create Another Business" : "Create Business";
 
   return (
     <AuthPageShell
@@ -94,6 +105,15 @@ export default async function PlatformHomePage() {
             </p>
           </div>
 
+          {openError ? (
+            <p
+              role="alert"
+              className="rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive"
+            >
+              {openError}
+            </p>
+          ) : null}
+
           {businessCount > 0 ? (
             <PlatformHomeBusinessList businesses={businesses} />
           ) : (
@@ -104,14 +124,16 @@ export default async function PlatformHomePage() {
 
           <Link
             href="/businesses/create"
+            prefetch={false}
             className={cn(buttonVariants(), "w-full")}
           >
-            Create Business
+            {createBusinessLabel}
           </Link>
 
           {canSwitchBusiness ? (
             <Link
               href="/select-business"
+              prefetch={false}
               className={cn(buttonVariants({ variant: "outline" }), "w-full")}
             >
               Switch Business
@@ -131,6 +153,7 @@ export default async function PlatformHomePage() {
 
           <Link
             href="/profile"
+            prefetch={false}
             className={cn(buttonVariants({ variant: "outline" }), "w-full")}
           >
             My Account

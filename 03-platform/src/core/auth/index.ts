@@ -27,7 +27,8 @@ export {
 } from "@/core/auth/actions/recovery-actions";
 export {
   getSelectableBusinessesAction,
-  selectBusinessAction,
+  selectBusinessFormAction,
+  selectBusinessAndRedirect,
 } from "@/core/auth/actions/select-business-actions";
 export { createAuthService } from "@/core/auth/services/auth-service";
 export { createBusinessContextService } from "@/core/auth/services/business-context-service";

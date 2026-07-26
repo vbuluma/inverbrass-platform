@@ -1,10 +1,10 @@
 /**
  * Purpose:
- * Client list of businesses on Platform Home with Open → selectBusinessAction.
+ * Client list of businesses on Platform Home with Open → selectBusinessFormAction.
  *
  * Design rationale:
- * Opening a business must set the signed business-context cookie, then hard-navigate
- * to setup (DRAFT) or dashboard (ACTIVE) so the App Router cannot snap back to /home.
+ * Native form submit + server redirect() sets the business-context cookie and
+ * navigates to /setup (DRAFT) or /dashboard (ACTIVE) without App Router races.
  *
  * Why this exists:
  * BP-001 Platform Home — My Businesses entry into Industry Solutions.
@@ -12,46 +12,29 @@
 
 "use client";
 
-import { useState, useTransition } from "react";
+import { useFormStatus } from "react-dom";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { selectBusinessAction } from "@/core/auth/actions/select-business-actions";
+import { selectBusinessFormAction } from "@/core/auth/actions/select-business-actions";
 import type { SelectableBusiness } from "@/core/auth/types";
 
 type PlatformHomeBusinessListProps = {
   businesses: SelectableBusiness[];
 };
 
+function OpenBusinessSubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button type="submit" size="sm" variant="outline" disabled={pending}>
+      {pending ? "Opening..." : "Open Business"}
+    </Button>
+  );
+}
+
 export function PlatformHomeBusinessList({
   businesses,
 }: PlatformHomeBusinessListProps) {
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [pendingId, setPendingId] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
-
-  function openBusiness(membershipId: string) {
-    setErrorMessage(null);
-    setPendingId(membershipId);
-
-    startTransition(async () => {
-      const result = await selectBusinessAction(membershipId);
-
-      if (!result || !result.success) {
-        setErrorMessage(
-          result && !result.success
-            ? result.error.message
-            : "We could not open that business."
-        );
-        setPendingId(null);
-        return;
-      }
-
-      // Hard navigation after Set-Cookie — avoids redirect snap-back to /home.
-      window.location.assign(result.data.nextPath);
-    });
-  }
-
   return (
     <div className="space-y-2">
       <ul className="space-y-2 rounded-lg border border-border p-3">
@@ -72,26 +55,17 @@ export function PlatformHomeBusinessList({
                 {business.businessTypeName} · {business.countryName}
               </p>
             </div>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={isPending}
-              onClick={() => openBusiness(business.membershipId)}
-            >
-              {pendingId === business.membershipId
-                ? "Opening..."
-                : "Open Business"}
-            </Button>
+            <form action={selectBusinessFormAction}>
+              <input
+                type="hidden"
+                name="membershipId"
+                value={business.membershipId}
+              />
+              <OpenBusinessSubmitButton />
+            </form>
           </li>
         ))}
       </ul>
-
-      {errorMessage ? (
-        <Alert variant="destructive">
-          <AlertDescription>{errorMessage}</AlertDescription>
-        </Alert>
-      ) : null}
     </div>
   );
 }

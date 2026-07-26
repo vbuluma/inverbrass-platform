@@ -631,19 +631,21 @@ export class BusinessSetupService {
       const parsed = businessOperationsSchema.safeParse(payload);
 
       if (!parsed.success) {
-        throw new SetupError(
-          SETUP_ERROR_CODES.INVALID_INPUT,
-          parsed.error.issues[0]?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT
-        );
-      }
+        const issue = parsed.error.issues[0];
+        const fieldPath = issue?.path?.map(String) ?? [];
+        // Map nested zod paths onto form field names for UI highlighting.
+        const field =
+          fieldPath[0] === "receipt" && fieldPath[1]
+            ? fieldPath[1]
+            : fieldPath[0] === "paymentMethods"
+              ? "paymentMethods"
+              : fieldPath[fieldPath.length - 1];
 
-      if (
-        parsed.data.receipt.taxEnabled &&
-        Number(parsed.data.receipt.defaultTaxRate) <= 0
-      ) {
         throw new SetupError(
           SETUP_ERROR_CODES.INVALID_INPUT,
-          "Enter a default tax rate greater than zero when tax is enabled."
+          issue?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT,
+          400,
+          field
         );
       }
 
@@ -656,7 +658,10 @@ export class BusinessSetupService {
         },
         tax: {
           taxEnabled: parsed.data.receipt.taxEnabled,
-          defaultTaxRate: parsed.data.receipt.defaultTaxRate,
+          defaultTaxName: parsed.data.receipt.defaultTaxName.trim() || "VAT",
+          defaultTaxRate: parsed.data.receipt.taxEnabled
+            ? parsed.data.receipt.defaultTaxRate
+            : "0",
         },
         features: {
           aiAssistantEnabled: parsed.data.aiAssistantEnabled,
@@ -706,7 +711,10 @@ export class BusinessSetupService {
       },
       tax: {
         taxEnabled: parsed.data.taxEnabled,
-        defaultTaxRate: parsed.data.defaultTaxRate,
+        defaultTaxName: parsed.data.defaultTaxName.trim() || "VAT",
+        defaultTaxRate: parsed.data.taxEnabled
+          ? parsed.data.defaultTaxRate
+          : "0",
       },
     });
     return this.markStepComplete(context, SETUP_STEPS.BUSINESS_OPERATIONS);
@@ -1138,6 +1146,15 @@ export class BusinessSetupService {
     });
   }
 
+  /**
+   * WHAT: Lightweight country read for setup catalog (every wizard step).
+   * WHY: Avoid getReviewSummary joins on every step load — those failures bounced Open Business to /home.
+   */
+  async getBusinessCountryCode(businessId: string): Promise<string> {
+    const row = await this.requireDraftOrActiveBusiness(businessId);
+    return row.countryCode ?? "";
+  }
+
   async getReviewSummary(
     context: CurrentBusinessContext
   ): Promise<SetupReviewSummary> {
@@ -1157,6 +1174,14 @@ export class BusinessSetupService {
       .innerJoin(industry, eq(businessType.industryId, industry.id))
       .where(eq(business.id, context.businessId))
       .limit(1);
+
+    if (!businessRow) {
+      throw new SetupError(
+        SETUP_ERROR_CODES.BUSINESS_CONTEXT_REQUIRED,
+        SETUP_USER_MESSAGES.BUSINESS_CONTEXT_REQUIRED,
+        403
+      );
+    }
 
     const [profile] = await db
       .select()
@@ -1222,6 +1247,7 @@ export class BusinessSetupService {
         receiptFooter: view?.receiptFooter ?? "",
         showLogoOnReceipt: view?.showLogoOnReceipt ?? true,
         taxEnabled: view?.taxEnabled ?? false,
+        defaultTaxName: view?.defaultTaxName ?? "VAT",
         defaultTaxRate: view?.defaultTaxRate ?? "0",
       },
       aiAssistantEnabled: view?.aiAssistantEnabled ?? false,
@@ -1332,19 +1358,54 @@ export class BusinessSetupService {
     const progress = await this.progressRepository.ensureProgress(
       context.businessId
     );
+    console.info("[setup] progress.loaded", {
+      businessId: context.businessId,
+      step,
+      completedSteps: progress.completedSteps,
+      currentStep: progress.currentStep,
+    });
+
     const applied = applyCompletedStep(
       progress.completedSteps as string[],
       step
     );
     const completedAt = new Date();
 
-    await this.progressRepository.saveStepProgress({
+    console.info("[setup] transaction.start", {
       businessId: context.businessId,
-      currentStep: applied.resumeStep,
-      lastCompletedStep: applied.lastCompletedStep,
-      completedSteps: applied.completedSteps,
-      completedBy: context.platformUserId,
-      completedAt,
+      step,
+      nextResumeStep: applied.resumeStep,
+      nextCompletedSteps: applied.completedSteps,
+    });
+
+    try {
+      await this.progressRepository.saveStepProgress({
+        businessId: context.businessId,
+        currentStep: applied.resumeStep,
+        lastCompletedStep: applied.lastCompletedStep,
+        completedSteps: applied.completedSteps,
+        completedBy: context.platformUserId,
+        completedAt,
+      });
+    } catch (error) {
+      console.error("[setup] transaction.failed", {
+        businessId: context.businessId,
+        step,
+        error,
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        query:
+          error && typeof error === "object" && "query" in error
+            ? (error as { query?: unknown }).query
+            : undefined,
+      });
+      throw error;
+    }
+
+    console.info("[setup] transaction.complete", {
+      businessId: context.businessId,
+      step,
+      resumeStep: applied.resumeStep,
     });
 
     const [businessRow] = await getDb()
@@ -1356,6 +1417,14 @@ export class BusinessSetupService {
       .from(business)
       .where(eq(business.id, context.businessId))
       .limit(1);
+
+    if (!businessRow) {
+      throw new SetupError(
+        SETUP_ERROR_CODES.BUSINESS_CONTEXT_REQUIRED,
+        SETUP_USER_MESSAGES.BUSINESS_CONTEXT_REQUIRED,
+        403
+      );
+    }
 
     return {
       businessId: businessRow.id,

@@ -2,42 +2,25 @@
  * Purpose:
  * Present selectable businesses and submit the user's business context choice.
  *
- * Business Context:
- * Multi-business users pick their active business before dashboard access. Owner and
- * last-active badges help distinguish memberships at a glance.
+ * Design rationale:
+ * Native form + selectBusinessFormAction + server redirect() matches Open Business
+ * and Create Business navigation reliability.
  *
  * Architecture Dependency:
  * AD-009 Authentication & Business Onboarding (ADR-012)
  *
  * Implementation Package:
- * IP-005 – Authentication UI
- *
- * Responsibilities:
- * - Render selectable businesses with owner and primary badges
- * - Invoke selectBusinessAction on user selection
- *
- * Non-Responsibilities:
- * - Business context cookie signing (BusinessContextService)
- * - Membership eligibility checks (BusinessContextService)
- *
- * Dependencies:
- * - selectBusinessAction, shadcn/ui components
- *
- * Business Rules Implemented:
- * - ADR-012 — explicit business selection for multi-membership users
- *
- * Extension Points:
- * - Business search or recent activity sorting may be added later
+ * BP-001 Final Stabilization
  */
 
 "use client";
 
 import { Building2Icon } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useState } from "react";
+import { useFormStatus } from "react-dom";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { selectBusinessAction } from "@/core/auth/actions/select-business-actions";
+import { selectBusinessFormAction } from "@/core/auth/actions/select-business-actions";
 import type { SelectableBusiness } from "@/core/auth/types";
 import { cn } from "@/lib/utils";
 
@@ -45,39 +28,25 @@ type SelectBusinessListProps = {
   businesses: SelectableBusiness[];
 };
 
+function ContinueSubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button type="submit" disabled={pending} className="w-full">
+      {pending ? "Switching..." : "Continue"}
+    </Button>
+  );
+}
+
 export function SelectBusinessList({ businesses }: SelectBusinessListProps) {
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [selectedMembershipId, setSelectedMembershipId] = useState<string | null>(
     businesses.find((business) => business.isPrimary)?.membershipId ??
       businesses[0]?.membershipId ??
       null
   );
-  const [isPending, startTransition] = useTransition();
-
-  function handleSubmit(formData: FormData) {
-    setErrorMessage(null);
-
-    const membershipId = String(formData.get("membershipId") ?? "");
-
-    startTransition(async () => {
-      const result = await selectBusinessAction(membershipId);
-
-      if (!result || !result.success) {
-        setErrorMessage(
-          result && !result.success
-            ? result.error.message
-            : "We could not switch to that business."
-        );
-        return;
-      }
-
-      // Hard navigation after Set-Cookie — keeps Switch Business on the next screen.
-      window.location.assign(result.data.nextPath);
-    });
-  }
 
   return (
-    <form action={handleSubmit} className="space-y-4">
+    <form action={selectBusinessFormAction} className="space-y-4">
       <div className="space-y-2">
         {businesses.map((business) => {
           const isSelected = selectedMembershipId === business.membershipId;
@@ -124,15 +93,7 @@ export function SelectBusinessList({ businesses }: SelectBusinessListProps) {
         })}
       </div>
 
-      {errorMessage ? (
-        <Alert variant="destructive">
-          <AlertDescription>{errorMessage}</AlertDescription>
-        </Alert>
-      ) : null}
-
-      <Button type="submit" disabled={isPending || !selectedMembershipId} className="w-full">
-        {isPending ? "Switching..." : "Continue"}
-      </Button>
+      <ContinueSubmitButton />
     </form>
   );
 }

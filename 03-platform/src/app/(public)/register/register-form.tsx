@@ -6,6 +6,7 @@
  * Creates a Platform User only. Business name (proposed) is required per BP-001
  * journey; email is optional. Live password validation enables Register when
  * policy and confirm-password checks pass.
+ * Failed validation preserves all entered values (platform UX standard).
  *
  * Why this exists:
  * BP-001 Stage 1 platform-owned authentication registration UX.
@@ -29,6 +30,7 @@ import {
   getPasswordMatchState,
   isPasswordPolicySatisfied,
 } from "@/core/auth/utils/password-strength";
+import { usePreservedFormValues } from "@/lib/forms/preserve-form-values";
 import { cn } from "@/lib/utils";
 
 type SecurityQuestionOption = {
@@ -63,6 +65,17 @@ export function RegisterForm({
   const catalogsReady =
     countries.length > 0 && securityQuestions.length > 0;
 
+  const preserved = usePreservedFormValues({
+    initial: {
+      businessName: "",
+      countryCode: defaultCountryCode,
+      mobileNumber: "",
+      email: "",
+      securityQuestionId: "",
+      securityAnswer: "",
+    },
+  });
+
   const passwordRules = useMemo(
     () => evaluatePasswordStrength(password),
     [password]
@@ -75,6 +88,7 @@ export function RegisterForm({
 
   function handleSubmit(formData: FormData) {
     setErrorMessage(null);
+    preserved.clearInvalidField();
 
     if (!catalogsReady) {
       setErrorMessage(
@@ -86,6 +100,10 @@ export function RegisterForm({
     }
 
     if (!passwordsReady) {
+      preserved.recoverAfterValidationFailure(
+        formData,
+        matchState === "mismatch" ? "confirmPassword" : "password"
+      );
       setErrorMessage(
         matchState === "mismatch"
           ? "Passwords do not match."
@@ -107,13 +125,17 @@ export function RegisterForm({
       });
 
       if (result && !result.success) {
+        preserved.recoverAfterValidationFailure(
+          formData,
+          result.error.field
+        );
         setErrorMessage(result.error.message);
       }
     });
   }
 
   return (
-    <form action={handleSubmit} className="space-y-4">
+    <form key={preserved.formKey} action={handleSubmit} className="space-y-4">
       {!catalogsReady ? (
         <CatalogEmptyNotice
           message={
@@ -134,6 +156,9 @@ export function RegisterForm({
           required
           autoComplete="organization"
           placeholder="Proposed business name"
+          defaultValue={preserved.textValue("businessName")}
+          className={preserved.fieldClassName("businessName")}
+          aria-invalid={preserved.invalidField === "businessName"}
         />
         <p className="text-xs text-muted-foreground">
           Temporary / proposed name. No business is created at registration.
@@ -146,8 +171,15 @@ export function RegisterForm({
           id="countryCode"
           name="countryCode"
           required
-          defaultValue={defaultCountryCode}
-          className={selectClassName}
+          defaultValue={
+            preserved.textValue("countryCode") || defaultCountryCode
+          }
+          className={cn(
+            selectClassName,
+            preserved.invalidField === "countryCode" &&
+              "border-destructive ring-2 ring-destructive/30"
+          )}
+          aria-invalid={preserved.invalidField === "countryCode"}
         >
           {countries.map((country) => (
             <option key={country.code} value={country.code}>
@@ -167,6 +199,9 @@ export function RegisterForm({
           inputMode="tel"
           required
           placeholder="712345678"
+          defaultValue={preserved.textValue("mobileNumber")}
+          className={preserved.fieldClassName("mobileNumber")}
+          aria-invalid={preserved.invalidField === "mobileNumber"}
         />
         <p className="text-xs text-muted-foreground">
           Your mobile number is your username.
@@ -182,9 +217,14 @@ export function RegisterForm({
             type={showPassword ? "text" : "password"}
             autoComplete="new-password"
             required
-            className="pr-10"
+            className={cn(
+              "pr-10",
+              preserved.invalidField === "password" &&
+                "border-destructive ring-2 ring-destructive/30"
+            )}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
+            aria-invalid={preserved.invalidField === "password"}
           />
           <Button
             type="button"
@@ -220,9 +260,14 @@ export function RegisterForm({
             type={showConfirmPassword ? "text" : "password"}
             autoComplete="new-password"
             required
-            className="pr-10"
+            className={cn(
+              "pr-10",
+              preserved.invalidField === "confirmPassword" &&
+                "border-destructive ring-2 ring-destructive/30"
+            )}
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}
+            aria-invalid={preserved.invalidField === "confirmPassword"}
           />
           <Button
             type="button"
@@ -257,8 +302,13 @@ export function RegisterForm({
           id="securityQuestionId"
           name="securityQuestionId"
           required
-          defaultValue=""
-          className={selectClassName}
+          defaultValue={preserved.textValue("securityQuestionId")}
+          className={cn(
+            selectClassName,
+            preserved.invalidField === "securityQuestionId" &&
+              "border-destructive ring-2 ring-destructive/30"
+          )}
+          aria-invalid={preserved.invalidField === "securityQuestionId"}
         >
           <option value="" disabled>
             Select a question
@@ -280,7 +330,12 @@ export function RegisterForm({
             type={showSecurityAnswer ? "text" : "password"}
             autoComplete="off"
             required
-            className="pr-10"
+            className={cn(
+              "pr-10",
+              preserved.fieldClassName("securityAnswer")
+            )}
+            defaultValue={preserved.textValue("securityAnswer")}
+            aria-invalid={preserved.invalidField === "securityAnswer"}
           />
           <Button
             type="button"
@@ -305,6 +360,9 @@ export function RegisterForm({
           type="email"
           autoComplete="email"
           placeholder="you@example.com"
+          defaultValue={preserved.textValue("email")}
+          className={preserved.fieldClassName("email")}
+          aria-invalid={preserved.invalidField === "email"}
         />
       </div>
 

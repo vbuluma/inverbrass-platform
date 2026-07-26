@@ -200,6 +200,7 @@ export function createDefaultConfigurationSettings(): BusinessConfigurationSetti
     },
     tax: {
       taxEnabled: false,
+      defaultTaxName: "VAT",
       defaultTaxRate: "0",
     },
     features: {
@@ -248,6 +249,7 @@ export function toConfigurationView(
     receiptFooter: settings.receipt.receiptFooter,
     showLogoOnReceipt: settings.receipt.showLogoOnReceipt,
     taxEnabled: settings.tax.taxEnabled,
+    defaultTaxName: settings.tax.defaultTaxName || "VAT",
     defaultTaxRate: settings.tax.defaultTaxRate,
     aiAssistantEnabled: settings.features.aiAssistantEnabled,
     loyaltyProgrammeEnabled: settings.features.loyaltyProgrammeEnabled,

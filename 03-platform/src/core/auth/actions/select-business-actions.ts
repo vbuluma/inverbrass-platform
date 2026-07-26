@@ -2,22 +2,37 @@
 
 /**
  * Purpose:
- * Expose business selection server actions for multi-business users.
+ * Expose business selection server actions for Open Business / Switch Business.
+ *
+ * Design rationale:
+ * Uses server-side redirect() after setting the business-context cookie — the same
+ * pattern as Create Business. Client startTransition + window.location.assign was
+ * racing the App Router and leaving users on "Opening..." or bouncing to /home.
  *
  * Architecture Dependency:
  * AD-009 Authentication & Business Onboarding (ADR-012)
  *
  * Implementation Package:
- * IP-005 – Authentication UI
+ * BP-001 Final Stabilization
  */
 
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 import type { AuthActionResult } from "@/core/auth/actions/auth-actions";
 import { AuthError } from "@/core/auth/errors";
 import { createAuthService } from "@/core/auth/services/auth-service";
 import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { getClientContextFromHeaders } from "@/core/auth/utils/helpers";
+import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
+
+function logOpenBusiness(
+  stage: string,
+  detail?: Record<string, unknown>
+): void {
+  // Temporary diagnostics for BP-001 Open Business P1.
+  console.info(`[open-business] stage=${stage}`, detail ?? {});
+}
 
 export async function getSelectableBusinessesAction(): Promise<
   AuthActionResult<
@@ -67,23 +82,52 @@ export async function getSelectableBusinessesAction(): Promise<
 }
 
 /**
- * WHAT: Set the current business context and return the next route.
- * WHY: Client performs hard navigation after the Set-Cookie response so Open /
- * Switch Business cannot snap back to Platform Home (Next.js redirect +
- * startTransition race on App Router).
+ * WHAT: Form entry for Open / Switch Business (hidden membershipId field).
+ * WHY: Native form actions + redirect() reliably apply Set-Cookie then navigate.
  */
-export async function selectBusinessAction(
+export async function selectBusinessFormAction(
+  formData: FormData
+): Promise<void> {
+  const membershipId = String(formData.get("membershipId") ?? "").trim();
+  logOpenBusiness("ui.formSubmit", { membershipId });
+  await selectBusinessAndRedirect(membershipId);
+}
+
+/**
+ * WHAT: Set active business context cookie, then redirect to setup or dashboard.
+ * WHY: Completes UI → Action → Context Service → Session → Redirect → Destination.
+ */
+export async function selectBusinessAndRedirect(
   membershipId: string
-): Promise<AuthActionResult<{ nextPath: "/setup" | "/dashboard" }>> {
+): Promise<void> {
+  logOpenBusiness("action.start", { membershipId });
+
   try {
+    if (!membershipId) {
+      throw new AuthError(
+        "INVALID_INPUT" as never,
+        "Select a business to continue.",
+        400
+      );
+    }
+
     const requestHeaders = await headers();
     const businessContextService = createBusinessContextService();
+
+    logOpenBusiness("context.set.start", { membershipId });
     const context = await businessContextService.setCurrentBusiness(
       membershipId,
       getClientContextFromHeaders(requestHeaders)
     );
+    logOpenBusiness("context.set.done", {
+      platformUserId: context.platformUserId,
+      businessId: context.businessId,
+      businessMembershipId: context.businessMembershipId,
+    });
+    logOpenBusiness("session.cookie.set", {
+      cookie: "inverbrass-business-context",
+    });
 
-    // IP-006 — DRAFT businesses continue into setup; ACTIVE go to dashboard.
     const memberships = await businessContextService.getActiveMemberships(
       context.platformUserId
     );
@@ -91,29 +135,39 @@ export async function selectBusinessAction(
       (membership) => membership.membershipId === membershipId
     );
 
+    // DRAFT → finish setup; ACTIVE → Business Dashboard.
     const nextPath =
       selected?.businessStatusCode === "DRAFT" ? "/setup" : "/dashboard";
 
-    return { success: true, data: { nextPath } };
+    logOpenBusiness("redirect.execute", {
+      nextPath,
+      businessStatusCode: selected?.businessStatusCode ?? null,
+    });
+
+    redirect(nextPath);
   } catch (error) {
+    if (isNextRedirectError(error)) {
+      logOpenBusiness("redirect.propagated");
+      throw error;
+    }
+
     if (error instanceof AuthError) {
-      return {
-        success: false,
-        error: { code: error.code, message: error.message },
-      };
+      logOpenBusiness("action.authError", {
+        code: error.code,
+        message: error.message,
+      });
+      // Surface failure on Platform Home via query — form actions cannot return JSON.
+      redirect(
+        `/home?openError=${encodeURIComponent(error.message)}`
+      );
     }
 
     console.error(
-      "[select-business-actions] selectBusinessAction failed.",
+      "[open-business] stage=action.failed",
       error
     );
-
-    return {
-      success: false,
-      error: {
-        code: "PROVIDER_ERROR",
-        message: "We could not select that business.",
-      },
-    };
+    redirect(
+      `/home?openError=${encodeURIComponent("We could not open that business.")}`
+    );
   }
 }

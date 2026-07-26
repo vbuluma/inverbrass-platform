@@ -18,6 +18,7 @@ import {
 } from "@/modules/business/onboarding/actions/setup-actions";
 import { SetupWizard } from "@/modules/business/onboarding/components/setup-wizard";
 import {
+  SETUP_ALLOW_BASE_CURRENCY_CHANGE,
   SETUP_STEP_ORDER,
   SETUP_STEPS,
   type SetupStep,
@@ -28,8 +29,26 @@ type SetupStepPageProps = {
   params: Promise<{ step: string }>;
 };
 
+/** Redirect to Platform Home only for session / business-context failures. */
+const UNRECOVERABLE_SETUP_CODES = new Set([
+  "SESSION_REQUIRED",
+  "BUSINESS_CONTEXT_REQUIRED",
+  "NO_BUSINESS_ACCESS",
+]);
+
 function isRoutableSetupStep(value: string): value is SetupStep {
   return SETUP_STEP_ORDER.includes(value as SetupStep);
+}
+
+function isUnrecoverableSetupFailure(result: {
+  success: boolean;
+  error?: { code: string; message: string };
+}): boolean {
+  return (
+    !result.success &&
+    !!result.error &&
+    UNRECOVERABLE_SETUP_CODES.has(result.error.code)
+  );
 }
 
 export default async function SetupStepPage({ params }: SetupStepPageProps) {
@@ -49,8 +68,35 @@ export default async function SetupStepPage({ params }: SetupStepPageProps) {
   const catalogResult = await getSetupCatalogAction();
 
   if (!progressResult.success || !catalogResult.success) {
-    // No valid business context — return to Platform Home.
+    console.error({
+      progressResult,
+      catalogResult,
+    });
+  }
+
+  // Progress is required to drive the wizard. Auth/context failures → home.
+  if (!progressResult.success) {
+    if (isUnrecoverableSetupFailure(progressResult)) {
+      redirect("/home");
+    }
+    // Non-auth progress failure: still cannot render steps without progress.
+    console.error(
+      "[setup.step] progress failed (non-auth); returning to Platform Home",
+      progressResult
+    );
     redirect("/home");
+  }
+
+  // Catalog: only bounce home for missing session/business context.
+  // Optional slices (branches, config, currencies, …) use defaults in the action.
+  if (!catalogResult.success) {
+    if (isUnrecoverableSetupFailure(catalogResult)) {
+      redirect("/home");
+    }
+    console.error(
+      "[setup.step] catalog failed but continuing with empty defaults",
+      catalogResult
+    );
   }
 
   if (progressResult.data.isActivated) {
@@ -62,22 +108,40 @@ export default async function SetupStepPage({ params }: SetupStepPageProps) {
       ? await getSetupReviewAction()
       : null;
 
-  const profile = catalogResult.data.profile;
-  const configuration = catalogResult.data.configuration;
-  const classification = catalogResult.data.classification;
+  const catalog = catalogResult.success
+    ? catalogResult.data
+    : {
+        countries: [],
+        currencies: [],
+        industries: [],
+        businessTypes: [],
+        businessCountryCode: "",
+        defaultCurrencyCode: null,
+        allowBaseCurrencyChange: SETUP_ALLOW_BASE_CURRENCY_CHANGE,
+        profile: null,
+        classification: null,
+        configuration: null,
+        operatingCurrencies: [],
+        branches: [],
+        businessName: progressResult.data.businessName,
+      };
+
+  const profile = catalog.profile;
+  const configuration = catalog.configuration;
+  const classification = catalog.classification;
 
   return (
     <SetupWizard
       step={rawStep}
       progress={progressResult.data}
-      countries={catalogResult.data.countries}
-      currencies={catalogResult.data.currencies}
-      industries={catalogResult.data.industries}
-      businessTypes={catalogResult.data.businessTypes}
-      businessCountryCode={catalogResult.data.businessCountryCode}
-      defaultCurrencyCode={catalogResult.data.defaultCurrencyCode}
-      allowBaseCurrencyChange={catalogResult.data.allowBaseCurrencyChange}
-      businessName={catalogResult.data.businessName}
+      countries={catalog.countries}
+      currencies={catalog.currencies}
+      industries={catalog.industries}
+      businessTypes={catalog.businessTypes}
+      businessCountryCode={catalog.businessCountryCode}
+      defaultCurrencyCode={catalog.defaultCurrencyCode}
+      allowBaseCurrencyChange={catalog.allowBaseCurrencyChange}
+      businessName={catalog.businessName}
       classification={
         classification
           ? {
@@ -107,8 +171,8 @@ export default async function SetupStepPage({ params }: SetupStepPageProps) {
           : null
       }
       configuration={configuration}
-      operatingCurrencies={catalogResult.data.operatingCurrencies}
-      branches={catalogResult.data.branches.map((branch) => ({
+      operatingCurrencies={catalog.operatingCurrencies}
+      branches={catalog.branches.map((branch) => ({
         id: branch.id,
         name: branch.name,
         code: branch.code,

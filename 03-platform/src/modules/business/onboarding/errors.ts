@@ -28,12 +28,20 @@ export type SetupErrorCode =
 export class SetupError extends Error {
   readonly code: SetupErrorCode;
   readonly statusCode: number;
+  /** Optional form field to highlight; does not change workflow routing. */
+  readonly field?: string;
 
-  constructor(code: SetupErrorCode, message: string, statusCode = 400) {
+  constructor(
+    code: SetupErrorCode,
+    message: string,
+    statusCode = 400,
+    field?: string
+  ) {
     super(message);
     this.name = "SetupError";
     this.code = code;
     this.statusCode = statusCode;
+    this.field = field;
   }
 }
 

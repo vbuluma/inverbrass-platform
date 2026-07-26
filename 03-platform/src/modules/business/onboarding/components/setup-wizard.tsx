@@ -15,8 +15,10 @@
 
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
+import { useFormStatus } from "react-dom";
+
+import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 
 import { CatalogEmptyNotice } from "@/components/auth/catalog-empty-notice";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -31,6 +33,7 @@ import type {
   CurrencyOption,
   IndustryOption,
 } from "@/core/auth/types";
+import { usePreservedFormValues } from "@/lib/forms/preserve-form-values";
 import { cn } from "@/lib/utils";
 import {
   activateBusinessAction,
@@ -71,6 +74,16 @@ const selectClassName = cn(
   "flex h-9 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
 );
 
+function WelcomeStartSubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button type="submit" className="w-full" disabled={pending}>
+      {pending ? "Starting..." : "Start setup"}
+    </Button>
+  );
+}
+
 type SetupWizardProps = {
   step: SetupStep;
   progress: SetupProgressView;
@@ -108,6 +121,7 @@ type SetupWizardProps = {
     receiptFooter: string;
     showLogoOnReceipt: boolean;
     taxEnabled: boolean;
+    defaultTaxName: string;
     defaultTaxRate: string;
     aiAssistantEnabled: boolean;
     loyaltyProgrammeEnabled: boolean;
@@ -157,12 +171,27 @@ type SetupWizardProps = {
       receiptFooter: string;
       showLogoOnReceipt: boolean;
       taxEnabled: boolean;
+      defaultTaxName: string;
       defaultTaxRate: string;
     };
     aiAssistantEnabled: boolean;
     loyaltyProgrammeEnabled: boolean;
   } | null;
 };
+
+const BUSINESS_PROFILE_CHECKBOXES: string[] = [];
+
+const BUSINESS_OPERATIONS_CHECKBOXES = [
+  "cashEnabled",
+  "mobileMoneyEnabled",
+  "bankTransferEnabled",
+  "cardEnabled",
+  "creditSalesEnabled",
+  "showLogoOnReceipt",
+  "taxEnabled",
+  "aiAssistantEnabled",
+  "loyaltyProgrammeEnabled",
+] as const;
 
 function previousStep(step: SetupStep): SetupStep | null {
   const index = SETUP_STEP_ORDER.indexOf(step);
@@ -192,10 +221,48 @@ function emptyBranchDraft(seed?: Partial<BranchSetupItemPayload>): BranchSetupIt
 }
 
 export function SetupWizard(props: SetupWizardProps) {
-  const router = useRouter();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [logoUrl, setLogoUrl] = useState(props.profile?.logoUrl ?? "");
+  const [taxEnabledUi, setTaxEnabledUi] = useState(
+    props.configuration?.taxEnabled ?? false
+  );
+
+  const profileForm = usePreservedFormValues({
+    initial: {
+      businessName: props.businessName,
+      tradingName: props.profile?.tradingName ?? "",
+      email: props.profile?.email ?? "",
+      physicalAddress: props.profile?.physicalAddress ?? "",
+      county: props.profile?.county ?? "",
+      city: props.profile?.city ?? "",
+      website: props.profile?.website ?? "",
+      description: props.profile?.description ?? "",
+      gpsLatitude: props.profile?.gpsLatitude ?? "",
+      gpsLongitude: props.profile?.gpsLongitude ?? "",
+    },
+    checkboxFields: BUSINESS_PROFILE_CHECKBOXES,
+  });
+
+  const operationsForm = usePreservedFormValues({
+    initial: {
+      cashEnabled: props.configuration?.cashEnabled ?? true,
+      mobileMoneyEnabled: props.configuration?.mobileMoneyEnabled ?? true,
+      bankTransferEnabled: props.configuration?.bankTransferEnabled ?? false,
+      cardEnabled: props.configuration?.cardEnabled ?? false,
+      creditSalesEnabled: props.configuration?.creditSalesEnabled ?? false,
+      receiptPrefix: props.configuration?.receiptPrefix ?? "RCPT",
+      receiptFooter: props.configuration?.receiptFooter ?? "",
+      showLogoOnReceipt: props.configuration?.showLogoOnReceipt ?? true,
+      taxEnabled: props.configuration?.taxEnabled ?? false,
+      defaultTaxName: props.configuration?.defaultTaxName ?? "VAT",
+      defaultTaxRate: String(props.configuration?.defaultTaxRate ?? "0"),
+      aiAssistantEnabled: props.configuration?.aiAssistantEnabled ?? false,
+      loyaltyProgrammeEnabled:
+        props.configuration?.loyaltyProgrammeEnabled ?? false,
+    },
+    checkboxFields: [...BUSINESS_OPERATIONS_CHECKBOXES],
+  });
   const [selectedAdditional, setSelectedAdditional] = useState<string[]>(
     props.operatingCurrencies
       .filter((row) => !row.isBase)
@@ -259,14 +326,15 @@ export function SetupWizard(props: SetupWizardProps) {
   }, [industryId, props.businessTypes]);
 
   function goTo(step: SetupStep) {
-    router.push(`/setup/${step}`);
-    router.refresh();
+    // Hard navigation — router.push + router.refresh() raced and bounced
+    // Welcome → Business Profile → Welcome, leaving buttons stuck pending.
+    window.location.assign(`/setup/${step}`);
   }
 
   function handleResult(
     result:
       | { success: true; data: SetupProgressView }
-      | { success: false; error: { message: string } }
+      | { success: false; error: { message: string; field?: string } }
       | undefined
   ) {
     if (!result) {
@@ -281,7 +349,9 @@ export function SetupWizard(props: SetupWizardProps) {
     goTo(
       result.data.resumeStep === SETUP_STEPS.COMPLETED
         ? SETUP_STEPS.REVIEW
-        : result.data.resumeStep
+        : result.data.resumeStep === SETUP_STEPS.BUSINESS_DETAILS
+          ? SETUP_STEPS.BUSINESS_PROFILE
+          : result.data.resumeStep
     );
   }
 
@@ -350,28 +420,40 @@ export function SetupWizard(props: SetupWizardProps) {
             <p className="text-sm text-muted-foreground">
               {formatSetupWelcomeMessage(props.businessName)}
             </p>
-            <Button
-              className="w-full"
-              disabled={isPending}
-              onClick={() => {
+            <form
+              action={async () => {
                 setErrorMessage(null);
-                startTransition(async () => {
+                try {
                   const result = await completeWelcomeAction();
-                  handleResult(result);
-                });
+                  // Success path server-redirects; only failures return here.
+                  if (!result.success) {
+                    setErrorMessage(result.error.message);
+                  }
+                } catch (error) {
+                  // NEXT_REDIRECT is expected on success — do not surface it.
+                  if (isNextRedirectError(error)) {
+                    return;
+                  }
+                  console.error("[setup] welcome.ui.failed", error);
+                  setErrorMessage(
+                    "We could not start setup. Please try again."
+                  );
+                }
               }}
             >
-              {isPending ? "Starting..." : "Start setup"}
-            </Button>
+              <WelcomeStartSubmitButton />
+            </form>
           </div>
         ) : null}
 
         {props.step === SETUP_STEPS.BUSINESS_PROFILE ||
         props.step === SETUP_STEPS.BUSINESS_DETAILS ? (
           <form
+            key={profileForm.formKey}
             className="space-y-4"
             action={(formData) => {
               setErrorMessage(null);
+              profileForm.clearInvalidField();
               startTransition(async () => {
                 const result = await saveBusinessDetailsAction({
                   businessName: String(formData.get("businessName") ?? ""),
@@ -386,6 +468,14 @@ export function SetupWizard(props: SetupWizardProps) {
                   gpsLatitude: String(formData.get("gpsLatitude") ?? ""),
                   gpsLongitude: String(formData.get("gpsLongitude") ?? ""),
                 });
+                if (!result.success) {
+                  profileForm.recoverAfterValidationFailure(
+                    formData,
+                    result.error.field
+                  );
+                  setErrorMessage(result.error.message);
+                  return;
+                }
                 handleResult(result);
               });
             }}
@@ -397,7 +487,9 @@ export function SetupWizard(props: SetupWizardProps) {
                 id="businessName"
                 name="businessName"
                 required
-                defaultValue={props.businessName}
+                defaultValue={profileForm.textValue("businessName")}
+                className={profileForm.fieldClassName("businessName")}
+                aria-invalid={profileForm.invalidField === "businessName"}
               />
             </div>
             <div className="space-y-2">
@@ -405,8 +497,10 @@ export function SetupWizard(props: SetupWizardProps) {
               <Input
                 id="tradingName"
                 name="tradingName"
-                defaultValue={props.profile?.tradingName ?? ""}
+                defaultValue={profileForm.textValue("tradingName")}
                 placeholder={`Same as ${props.businessName} if left blank`}
+                className={profileForm.fieldClassName("tradingName")}
+                aria-invalid={profileForm.invalidField === "tradingName"}
               />
             </div>
             <div className="space-y-2">
@@ -435,7 +529,9 @@ export function SetupWizard(props: SetupWizardProps) {
                 name="email"
                 type="email"
                 required
-                defaultValue={props.profile?.email ?? ""}
+                defaultValue={profileForm.textValue("email")}
+                className={profileForm.fieldClassName("email")}
+                aria-invalid={profileForm.invalidField === "email"}
               />
             </div>
             <div className="space-y-2">
@@ -444,7 +540,9 @@ export function SetupWizard(props: SetupWizardProps) {
                 id="physicalAddress"
                 name="physicalAddress"
                 required
-                defaultValue={props.profile?.physicalAddress ?? ""}
+                defaultValue={profileForm.textValue("physicalAddress")}
+                className={profileForm.fieldClassName("physicalAddress")}
+                aria-invalid={profileForm.invalidField === "physicalAddress"}
               />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -454,7 +552,9 @@ export function SetupWizard(props: SetupWizardProps) {
                   id="county"
                   name="county"
                   required
-                  defaultValue={props.profile?.county ?? ""}
+                  defaultValue={profileForm.textValue("county")}
+                  className={profileForm.fieldClassName("county")}
+                  aria-invalid={profileForm.invalidField === "county"}
                 />
               </div>
               <div className="space-y-2">
@@ -463,7 +563,9 @@ export function SetupWizard(props: SetupWizardProps) {
                   id="city"
                   name="city"
                   required
-                  defaultValue={props.profile?.city ?? ""}
+                  defaultValue={profileForm.textValue("city")}
+                  className={profileForm.fieldClassName("city")}
+                  aria-invalid={profileForm.invalidField === "city"}
                 />
               </div>
             </div>
@@ -472,7 +574,7 @@ export function SetupWizard(props: SetupWizardProps) {
               <Input
                 id="website"
                 name="website"
-                defaultValue={props.profile?.website ?? ""}
+                defaultValue={profileForm.textValue("website")}
               />
             </div>
             <div className="space-y-2">
@@ -480,7 +582,7 @@ export function SetupWizard(props: SetupWizardProps) {
               <Input
                 id="description"
                 name="description"
-                defaultValue={props.profile?.description ?? ""}
+                defaultValue={profileForm.textValue("description")}
               />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -489,7 +591,7 @@ export function SetupWizard(props: SetupWizardProps) {
                 <Input
                   id="gpsLatitude"
                   name="gpsLatitude"
-                  defaultValue={props.profile?.gpsLatitude ?? ""}
+                  defaultValue={profileForm.textValue("gpsLatitude")}
                 />
               </div>
               <div className="space-y-2">
@@ -497,7 +599,7 @@ export function SetupWizard(props: SetupWizardProps) {
                 <Input
                   id="gpsLongitude"
                   name="gpsLongitude"
-                  defaultValue={props.profile?.gpsLongitude ?? ""}
+                  defaultValue={profileForm.textValue("gpsLongitude")}
                 />
               </div>
             </div>
@@ -747,9 +849,11 @@ export function SetupWizard(props: SetupWizardProps) {
 
         {props.step === SETUP_STEPS.BUSINESS_OPERATIONS ? (
           <form
+            key={operationsForm.formKey}
             className="space-y-6"
             action={(formData) => {
               setErrorMessage(null);
+              operationsForm.clearInvalidField();
               startTransition(async () => {
                 const result = await saveBusinessOperationsAction({
                   paymentMethods: {
@@ -768,6 +872,9 @@ export function SetupWizard(props: SetupWizardProps) {
                     showLogoOnReceipt:
                       formData.get("showLogoOnReceipt") === "on",
                     taxEnabled: formData.get("taxEnabled") === "on",
+                    defaultTaxName: String(
+                      formData.get("defaultTaxName") ?? "VAT"
+                    ),
                     defaultTaxRate: String(
                       formData.get("defaultTaxRate") ?? "0"
                     ),
@@ -776,39 +883,38 @@ export function SetupWizard(props: SetupWizardProps) {
                   loyaltyProgrammeEnabled:
                     formData.get("loyaltyProgrammeEnabled") === "on",
                 });
+                if (!result.success) {
+                  operationsForm.recoverAfterValidationFailure(
+                    formData,
+                    result.error.field
+                  );
+                  setTaxEnabledUi(formData.get("taxEnabled") === "on");
+                  setErrorMessage(result.error.message);
+                  return;
+                }
                 handleResult(result);
               });
             }}
           >
             <h2 className="text-xl font-medium">Business operations</h2>
 
-            <div className="space-y-3">
+            <div
+              className={cn(
+                "space-y-3",
+                operationsForm.invalidField === "paymentMethods" &&
+                  "rounded-lg ring-2 ring-destructive/30"
+              )}
+            >
               <h3 className="text-sm font-medium">Payment methods</h3>
               {(
                 [
-                  ["cashEnabled", "Cash", props.configuration?.cashEnabled ?? true],
-                  [
-                    "mobileMoneyEnabled",
-                    "Mobile Money",
-                    props.configuration?.mobileMoneyEnabled ?? true,
-                  ],
-                  [
-                    "bankTransferEnabled",
-                    "Bank Transfer",
-                    props.configuration?.bankTransferEnabled ?? false,
-                  ],
-                  [
-                    "cardEnabled",
-                    "Card",
-                    props.configuration?.cardEnabled ?? false,
-                  ],
-                  [
-                    "creditSalesEnabled",
-                    "Credit Sales",
-                    props.configuration?.creditSalesEnabled ?? false,
-                  ],
+                  ["cashEnabled", "Cash"],
+                  ["mobileMoneyEnabled", "Mobile Money"],
+                  ["bankTransferEnabled", "Bank Transfer"],
+                  ["cardEnabled", "Card"],
+                  ["creditSalesEnabled", "Credit Sales"],
                 ] as const
-              ).map(([name, label, defaultChecked]) => (
+              ).map(([name, label]) => (
                 <label
                   key={name}
                   className="flex items-center gap-3 rounded-lg border p-3"
@@ -816,7 +922,7 @@ export function SetupWizard(props: SetupWizardProps) {
                   <input
                     type="checkbox"
                     name={name}
-                    defaultChecked={defaultChecked}
+                    defaultChecked={operationsForm.checkedValue(name)}
                     className="size-4"
                   />
                   <span className="text-sm">{label}</span>
@@ -832,7 +938,11 @@ export function SetupWizard(props: SetupWizardProps) {
                   id="receiptPrefix"
                   name="receiptPrefix"
                   required
-                  defaultValue={props.configuration?.receiptPrefix ?? "RCPT"}
+                  defaultValue={operationsForm.textValue("receiptPrefix")}
+                  className={operationsForm.fieldClassName("receiptPrefix")}
+                  aria-invalid={
+                    operationsForm.invalidField === "receiptPrefix"
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -840,39 +950,77 @@ export function SetupWizard(props: SetupWizardProps) {
                 <Input
                   id="receiptFooter"
                   name="receiptFooter"
-                  defaultValue={props.configuration?.receiptFooter ?? ""}
+                  defaultValue={operationsForm.textValue("receiptFooter")}
                 />
               </div>
               <label className="flex items-center gap-3 rounded-lg border p-3">
                 <input
                   type="checkbox"
                   name="showLogoOnReceipt"
-                  defaultChecked={
-                    props.configuration?.showLogoOnReceipt ?? true
-                  }
+                  defaultChecked={operationsForm.checkedValue(
+                    "showLogoOnReceipt"
+                  )}
                   className="size-4"
                 />
                 <span className="text-sm">Show logo on receipt</span>
               </label>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium">Tax</h3>
+              <p className="text-xs text-muted-foreground">
+                Keep taxation simple for now. Advanced tax types and rules come
+                later in Tax Management.
+              </p>
               <label className="flex items-center gap-3 rounded-lg border p-3">
                 <input
                   type="checkbox"
                   name="taxEnabled"
-                  defaultChecked={props.configuration?.taxEnabled ?? false}
+                  defaultChecked={operationsForm.checkedValue("taxEnabled")}
                   className="size-4"
+                  onChange={(event) => setTaxEnabledUi(event.target.checked)}
                 />
                 <span className="text-sm">Enable tax</span>
               </label>
-              <div className="space-y-2">
-                <Label htmlFor="defaultTaxRate">Default tax rate (%)</Label>
-                <Input
-                  id="defaultTaxRate"
-                  name="defaultTaxRate"
-                  defaultValue={String(
-                    props.configuration?.defaultTaxRate ?? "0"
-                  )}
-                />
-              </div>
+              {taxEnabledUi ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="defaultTaxName">Default tax name</Label>
+                    <Input
+                      id="defaultTaxName"
+                      name="defaultTaxName"
+                      defaultValue={
+                        operationsForm.textValue("defaultTaxName") || "VAT"
+                      }
+                      className={operationsForm.fieldClassName(
+                        "defaultTaxName"
+                      )}
+                      aria-invalid={
+                        operationsForm.invalidField === "defaultTaxName"
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="defaultTaxRate">Default tax rate (%)</Label>
+                    <Input
+                      id="defaultTaxRate"
+                      name="defaultTaxRate"
+                      defaultValue={operationsForm.textValue("defaultTaxRate")}
+                      className={operationsForm.fieldClassName(
+                        "defaultTaxRate"
+                      )}
+                      aria-invalid={
+                        operationsForm.invalidField === "defaultTaxRate"
+                      }
+                    />
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <input type="hidden" name="defaultTaxName" value="VAT" />
+                  <input type="hidden" name="defaultTaxRate" value="0" />
+                </>
+              )}
             </div>
 
             <div className="space-y-3">
@@ -881,9 +1029,9 @@ export function SetupWizard(props: SetupWizardProps) {
                 <input
                   type="checkbox"
                   name="aiAssistantEnabled"
-                  defaultChecked={
-                    props.configuration?.aiAssistantEnabled ?? false
-                  }
+                  defaultChecked={operationsForm.checkedValue(
+                    "aiAssistantEnabled"
+                  )}
                   className="size-4"
                 />
                 <span className="text-sm">Enable AI Assistant</span>
@@ -896,9 +1044,9 @@ export function SetupWizard(props: SetupWizardProps) {
                 <input
                   type="checkbox"
                   name="loyaltyProgrammeEnabled"
-                  defaultChecked={
-                    props.configuration?.loyaltyProgrammeEnabled ?? false
-                  }
+                  defaultChecked={operationsForm.checkedValue(
+                    "loyaltyProgrammeEnabled"
+                  )}
                   className="size-4"
                 />
                 <span className="text-sm">Enable Loyalty Programme</span>
@@ -1557,6 +1705,16 @@ export function SetupWizard(props: SetupWizardProps) {
                   value={`${props.review.receipt.receiptPrefix} · Logo ${
                     props.review.receipt.showLogoOnReceipt ? "on" : "off"
                   }`}
+                />
+                <ReviewRow
+                  label="Tax"
+                  value={
+                    props.review.receipt.taxEnabled
+                      ? `${props.review.receipt.defaultTaxName || "VAT"} · ${
+                          props.review.receipt.defaultTaxRate
+                        }%`
+                      : "Disabled"
+                  }
                 />
                 <ReviewRow
                   label="AI"
