@@ -1472,3 +1472,472 @@ It now provides an end-to-end blueprint covering:
 •	AI development guidance
 This becomes the reference implementation for every future Build Pack, ensuring consistency across Retail, Schools, Property Management, Healthcare, Hospitality, Professional Services, and any additional verticals you introduce.
 
+
+BUILD PAC-001 CUSTOMER JOURNEY
+
+BP-001 User Journey
+1. Platform Registration (Create Your Account)
+
+Purpose: Create a Platform User only.
+
+Landing Page
+      │
+      ▼
+Create Your Account
+
+Fields
+
+Required
+
+Business Name (temporary/proposed name)
+Country
+Mobile Number (Username)
+Password
+Confirm Password
+Security Question
+Security Answer
+
+Optional
+
+Email
+
+Browser validation
+
+✔ Mobile number format
+✔ Password strength
+✔ Passwords match
+✔ Required fields completed
+
+Backend
+
+Check duplicate mobile
+Hash password
+Hash security answer
+Create Platform User
+Create Security Profile
+Create Session
+Redirect to Platform Home
+
+No Business is created here.
+
+2. Platform Home
+
+Purpose:
+
+The user's landing page after login.
+
+Platform Home
+
+Should show
+
+Welcome Vincent
+
+You have:
+
+0 Businesses
+
+Buttons
+
+Create Business
+
+No Switch Business
+
+No Dashboard
+
+If one business exists
+
+My Businesses
+
+C2C Car Wash
+
+Active
+
+Buttons
+
+Open Business
+
+No Switch Business
+
+If multiple businesses exist
+
+My Businesses
+
+C2C Car Wash
+
+ABC Retail
+
+XYZ School
+
+Buttons
+
+Open
+Switch Business
+Create Business
+3. Create Business
+
+Selecting
+
+Create Business
+
+opens
+
+Business Registration Wizard
+Step 1
+
+Business Profile
+
+Required
+
+Business Name
+Trading Name
+Industry
+Business Template
+
+Industry filters Business Templates
+
+Example
+
+Retail
+
+↓
+
+Shop
+
+Restaurant
+
+Pharmacy
+
+Supermarket
+
+Education
+
+↓
+
+School
+
+College
+
+University
+
+TVET
+
+Hospital
+
+↓
+
+Clinic
+
+Hospital
+
+Dental
+
+Optical
+
+Step 2
+
+Business Details
+
+Logo
+Business Email
+Phone
+Physical Address
+County
+City
+GPS
+Website
+Description
+
+Country already known.
+
+Autopopulate
+
+Country
+
+Step 3
+
+Currencies
+
+Country
+
+↓
+
+Base Currency
+
+Automatically selected
+
+Example
+
+Kenya
+
+↓
+
+KES
+
+User may add
+
+USD
+
+EUR
+
+GBP
+
+Step 4
+
+Payments
+
+Cash
+Mobile Money
+Card
+Bank
+Credit
+Step 5
+
+Taxes
+
+VAT
+GST
+Service Tax
+Step 6
+
+Receipts
+
+Receipt format
+
+Invoice numbering
+
+Logo
+
+Footer
+
+Step 7
+
+AI
+
+Optional
+
+Step 8
+
+Loyalty
+
+Optional
+
+Step 9
+
+Branches
+
+Question
+
+Does this business have multiple branches?
+
+○ No
+
+○ Yes
+
+If No
+
+Automatically create
+
+Head Office
+
+If Yes
+
+Collect
+
+For each branch
+
+Branch Name
+Branch Code
+Branch Type
+Address
+County
+City
+Phone
+Email
+Manager (optional)
+Step 10
+
+Employees
+
+Question
+
+Create employees now?
+
+○ No
+
+○ Yes
+
+If Yes
+
+For each employee
+
+First Name
+Last Name
+Mobile
+Email (optional)
+Branch
+Role
+
+System generates
+
+Temporary Password
+
+Must Change Password
+
+First Login
+
+Role determines permissions.
+
+Step 11
+
+Review
+
+Summary
+
+Activate Business
+
+4. Open Business
+
+Platform Home
+
+↓
+
+Open Business
+
+System
+
+Sets
+
+Current Business Context
+
+Loads
+
+Business Dashboard
+5. Switch Business
+
+Only visible when
+
+Business Count > 1
+
+Flow
+
+Platform Home
+
+↓
+
+Switch Business
+
+↓
+
+Select Business
+
+↓
+
+Set Active Business
+
+↓
+
+Dashboard
+
+Never show this for one business.
+
+6. Manage Profile
+
+This is Platform Profile, not Business Profile.
+
+Personal Information
+First Name
+Last Name
+Mobile Number
+Email
+Profile Photo
+Security
+Change Password
+Change Security Question
+Change Security Answer
+Active Sessions (future)
+Two-Factor Authentication (future)
+Preferences
+Language
+Theme
+Date Format
+Time Zone
+Notifications
+Platform Account
+Member Since
+Last Login
+Account Status
+My Businesses
+
+List
+
+C2C Car Wash
+
+Owner
+
+Active
+ABC School
+
+Administrator
+
+Active
+
+Actions
+
+Open
+Create Business
+
+No business configuration here.
+
+7. Business Dashboard
+
+Only after
+
+Open Business
+
+or
+
+Switch Business
+
+Business menus begin
+
+Sales
+Customers
+Inventory
+Suppliers
+Employees
+Branches
+Finance
+Reports
+AI
+Settings
+Overall Flow
+Landing Page
+        │
+        ▼
+Create Platform Account
+        │
+        ▼
+Platform Home
+        │
+        ├──────────────► My Account
+        │
+        ├──────────────► Create Business
+        │                      │
+        │                      ▼
+        │              Business Setup Wizard
+        │                      │
+        │                      ▼
+        │              Activate Business
+        │                      │
+        │                      ▼
+        ├──────────────► Open Business
+        │                      │
+        │                      ▼
+        │              Business Dashboard
+        │
+        └──────────────► Switch Business (only if >1)
+                               │
+                               ▼
+                      Business Dashboard
+
+This as the canonical BP-001 user journey. Every screen, route, server action, and business rule should map to this flow. Future Build Packs (CRM, Inventory, POS, Finance, etc.) should start only after the user reaches the Business Dashboard, because that is where business operations begin. This separation keeps platform-level concerns (identity, profile, business selection) cleanly distinct from business-level operations.
