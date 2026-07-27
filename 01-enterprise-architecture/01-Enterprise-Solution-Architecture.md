@@ -155,7 +155,93 @@ Feature	Kenya	Uganda	Tanzania
 eTIMS	✅	❌	❌
 Multi Currency	✅	✅	✅
 Embedded Finance	✅	✅	❌)
+...............ENG-003b – Localization & Regulatory Engine
 
+Purpose
+
+Provides centralized country-, region-, and jurisdiction-specific localization, regulatory compliance, and feature policy management through configuration rather than application code, enabling the InverBrass Platform to operate consistently across multiple countries from a single codebase.
+
+Core Responsibilities
+1. Geographic Configuration
+Countries
+States / Counties / Provinces
+Cities / Towns
+Regions
+Postal codes
+GPS standards
+Time zones
+2. Localization
+Languages
+Date formats
+Time formats
+Number formats
+Currency formats
+Address formats
+Name formats
+3. Financial & Tax Configuration
+Base currencies
+Additional currencies
+Exchange rate sources
+Tax regimes
+VAT / GST / Sales Tax
+Withholding tax
+Tax calculation rules
+Financial year definitions
+4. Regulatory Compliance
+Business registration requirements
+Identity document types
+Industry licensing requirements
+Receipt and invoice regulations
+Fiscal device integrations
+Government reporting requirements
+Country-specific validation rules
+5. Government & External Integrations
+Revenue authorities (e.g., KRA, URA, TRA)
+Tax platforms (e.g., eTIMS)
+Company registries
+National identity services
+Regulatory APIs
+6. Feature Policies
+
+Enable or disable features based on:
+
+Country
+Region
+Industry
+Business Type
+Subscription Plan
+Individual Business
+
+Examples:
+
+Multi-currency
+Embedded Finance
+Embedded Insurance
+AI Services
+Payroll
+Fiscal Receipts
+Inventory
+Loyalty
+7. Calendars
+Public holidays
+Working days
+Weekend definitions
+Financial periods
+Tax periods
+8. Country Profiles
+
+Maintain reusable profiles that define how a business operates within a particular jurisdiction.
+
+Design Principles
+One platform, one codebase.
+No country-specific application forks.
+Regulatory behaviour is configuration-driven.
+Country rules are reusable across all Build Packs.
+New countries should primarily require configuration rather than development.
+
+Localization First Principle: All country-, region-, and jurisdiction-specific behaviour shall be implemented through the Localization & Regulatory Engine wherever possible. New country support should primarily require configuration and integration, not changes to core business logic.
+
+This single principle will stop future developers (or AI assistants) from introducing code like if country == "KE" throughout the application. Instead, they'll naturally look to the engine for policies and configuration, keeping the platform scalable as you expand into new markets.
 ENG-004	Rules Engine	Executes deterministic business rules
 ENG-005	Workflow Engine	Maker-Checker, approvals
 ENG-006	Payment Engine	Cash, M-Pesa, Cards, Credit, Split Payments
@@ -174,6 +260,8 @@ ENG-017 Localization & Regulatory Engine: Handles-Country-, region-, and jurisdi
 | Principle |          Description                                                                  |
 ------------------------------------------------------------------------------------- |
 | **Cross-Platform First** | InverBrass shall be delivered as a mobile-first Progressive Web Application (PWA) providing a consistent user experience across Android, iOS, and modern desktop browsers from a single codebase. |
+
+EDS-003 – All telephone numbers shall be stored in canonical E.164 format. User input may be entered in local or international formats, but the platform shall normalize before validation, duplicate detection, integration, and persistence.
 
 Technology Baseline (Version 1.0)
 This is the official approved technology stack
