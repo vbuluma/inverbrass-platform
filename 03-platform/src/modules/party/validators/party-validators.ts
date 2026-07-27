@@ -44,6 +44,12 @@ export const registerIndividualSchema = z.object({
     .trim()
     .min(2, "Select a preferred language.")
     .max(10),
+  mobile: z
+    .string()
+    .trim()
+    .min(7, "Enter a mobile number.")
+    .max(30)
+    .regex(/^[+]?[\d\s()-]{7,30}$/, "Enter a valid mobile number."),
   notes: optionalTrimmed,
 });
 
@@ -62,6 +68,20 @@ export const registerOrganizationSchema = z.object({
     .min(1, "Select an organization type.")
     .max(50),
   website: z.string().trim().max(500).optional().or(z.literal("")),
+  mobile: z
+    .string()
+    .trim()
+    .max(30)
+    .regex(/^[+]?[\d\s()-]{7,30}$/, "Enter a valid mobile number.")
+    .optional()
+    .or(z.literal("")),
+  email: z
+    .string()
+    .trim()
+    .email("Enter a valid email address.")
+    .max(255)
+    .optional()
+    .or(z.literal("")),
   notes: optionalTrimmed,
 });
 

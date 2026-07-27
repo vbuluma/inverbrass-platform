@@ -26,6 +26,8 @@ import { seedLanguages } from "@/db/seeds/languages-seed";
 import { seedOrganizationTypes } from "@/db/seeds/organization-types-seed";
 import { seedPartyStatuses } from "@/db/seeds/party-statuses-seed";
 import { seedPartyTypes } from "@/db/seeds/party-types-seed";
+import { seedRoleTypes } from "@/db/seeds/role-types-seed";
+import { seedContactTypes } from "@/db/seeds/contact-types-seed";
 import { seedSecurityQuestions } from "@/db/seeds/security-questions-seed";
 
 async function runSeed() {
@@ -104,6 +106,18 @@ async function runSeed() {
     const languageResults = await seedLanguages(db);
     console.log(
       `languages: inserted=${languageResults.inserted}, updated=${languageResults.updated}, skipped=${languageResults.skipped}`
+    );
+
+    console.log("Seeding party role types...");
+    const roleTypeResults = await seedRoleTypes(db);
+    console.log(
+      `roleTypes: inserted=${roleTypeResults.inserted}, updated=${roleTypeResults.updated}, skipped=${roleTypeResults.skipped}`
+    );
+
+    console.log("Seeding contact types...");
+    const contactTypeResults = await seedContactTypes(db);
+    console.log(
+      `contactTypes: inserted=${contactTypeResults.inserted}, updated=${contactTypeResults.updated}, skipped=${contactTypeResults.skipped}`
     );
 
     console.log("✅ Seed completed.");

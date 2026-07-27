@@ -1,12 +1,16 @@
 /**
  * Purpose:
- * Shared Party Foundation type contracts for UI, actions, and services.
+ * Shared Party Foundation, Roles, and Contacts type contracts.
  *
  * Implementation Package:
  * BP-002 / IP-001 – Party Foundation
+ * BP-002 / IP-002 – Party Roles
+ * BP-002 / IP-003 – Contacts & Communication
  */
 
 import type {
+  PartyContactStatusCode,
+  PartyRoleStatusCode,
   PartyStatusCode,
   PartyTypeCode,
 } from "@/modules/party/constants";
@@ -21,6 +25,7 @@ export type RegisterIndividualPayload = {
   dateOfBirth: string;
   gender: string;
   preferredLanguageCode: string;
+  mobile: string;
   notes?: string;
 };
 
@@ -31,6 +36,8 @@ export type RegisterOrganizationPayload = {
   industryCode: string;
   organizationTypeCode: string;
   website?: string;
+  mobile?: string;
+  email?: string;
   notes?: string;
 };
 
@@ -85,12 +92,19 @@ export type PartyDetailView = PartySummaryView & {
   organization: OrganizationProfileView | null;
 };
 
+export type PartyRoleCountView = {
+  roleTypeCode: string;
+  roleTypeName: string;
+  count: number;
+};
+
 export type PartyDashboardView = {
   totalParties: number;
   individuals: number;
   organizations: number;
   activeParties: number;
   recentlyRegistered: PartySummaryView[];
+  roleCounts: PartyRoleCountView[];
 };
 
 export type PartyRegistrationCatalogues = {
@@ -99,4 +113,63 @@ export type PartyRegistrationCatalogues = {
   industries: ReferenceOption[];
   languages: ReferenceOption[];
   genders: ReferenceOption[];
+};
+
+export type AssignPartyRolePayload = {
+  roleTypeCode: string;
+  effectiveDate?: string;
+  isPrimary?: boolean;
+};
+
+export type UpdatePartyRolePayload = {
+  isPrimary?: boolean;
+  effectiveDate?: string;
+  endDate?: string | null;
+  reactivate?: boolean;
+};
+
+export type PartyRoleView = {
+  id: string;
+  partyId: string;
+  roleTypeCode: string;
+  roleTypeName: string;
+  statusCode: PartyRoleStatusCode;
+  isPrimary: boolean;
+  effectiveDate: string;
+  endDate: string | null;
+};
+
+export type PartyRolesPanelView = {
+  activeRoles: PartyRoleView[];
+  historyRoles: PartyRoleView[];
+  availableRoleTypes: ReferenceOption[];
+};
+
+export type AddPartyContactPayload = {
+  contactTypeCode: string;
+  contactValue: string;
+  isPreferred?: boolean;
+  notes?: string;
+};
+
+export type UpdatePartyContactPayload = {
+  contactValue?: string;
+  notes?: string | null;
+};
+
+export type PartyContactView = {
+  id: string;
+  partyId: string;
+  contactTypeCode: string;
+  contactTypeName: string;
+  contactValue: string;
+  isPreferred: boolean;
+  isVerified: boolean;
+  statusCode: PartyContactStatusCode;
+  notes: string | null;
+};
+
+export type PartyContactsPanelView = {
+  contacts: PartyContactView[];
+  availableContactTypes: ReferenceOption[];
 };

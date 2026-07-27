@@ -231,7 +231,8 @@ function checkRules(): SmokeResult[] {
     {
       name: "rule:workspace placeholders configured",
       ok:
-        PARTY_WORKSPACE_TABS.filter((tab) => !tab.available).length >= 10 &&
+        PARTY_WORKSPACE_TABS.filter((tab) => !tab.available).length >= 9 &&
+        PARTY_WORKSPACE_TABS.some((tab) => tab.id === "roles" && tab.available) &&
         FUTURE_TAB_MESSAGE.includes("future Implementation Package"),
     },
   ];

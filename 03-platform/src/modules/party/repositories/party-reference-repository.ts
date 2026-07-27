@@ -11,11 +11,15 @@ import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 
 import { getDb } from "@/db/client";
 import * as schema from "@/db/schema";
+import { contactType } from "@/db/schema/contact-type";
+import { business } from "@/db/schema/business";
+import { country } from "@/db/schema/country";
 import { industry } from "@/db/schema/industry";
 import { language } from "@/db/schema/language";
 import { organizationType } from "@/db/schema/organization-type";
 import { partyStatus } from "@/db/schema/party-status";
 import { partyType } from "@/db/schema/party-type";
+import { roleType } from "@/db/schema/role-type";
 
 type DbClient = PostgresJsDatabase<typeof schema>;
 
@@ -75,6 +79,17 @@ export class PartyReferenceRepository {
       .orderBy(asc(language.displayOrder), asc(language.name));
   }
 
+  async listActiveRoleTypes(dbClient: DbClient = getDb()) {
+    return dbClient
+      .select({
+        code: roleType.code,
+        name: roleType.name,
+      })
+      .from(roleType)
+      .where(eq(roleType.isActive, true))
+      .orderBy(asc(roleType.displayOrder), asc(roleType.name));
+  }
+
   async findPartyTypeByCode(code: string, dbClient: DbClient = getDb()) {
     const [row] = await dbClient
       .select({ code: partyType.code, name: partyType.name })
@@ -128,6 +143,58 @@ export class PartyReferenceRepository {
       .select({ code: language.code, name: language.name })
       .from(language)
       .where(and(eq(language.code, code), eq(language.isActive, true)))
+      .limit(1);
+
+    return row ?? null;
+  }
+
+  async findRoleTypeByCode(code: string, dbClient: DbClient = getDb()) {
+    const [row] = await dbClient
+      .select({ code: roleType.code, name: roleType.name })
+      .from(roleType)
+      .where(and(eq(roleType.code, code), eq(roleType.isActive, true)))
+      .limit(1);
+
+    return row ?? null;
+  }
+
+  async listActiveContactTypes(dbClient: DbClient = getDb()) {
+    return dbClient
+      .select({
+        code: contactType.code,
+        name: contactType.name,
+      })
+      .from(contactType)
+      .where(eq(contactType.isActive, true))
+      .orderBy(asc(contactType.displayOrder), asc(contactType.name));
+  }
+
+  async findContactTypeByCode(code: string, dbClient: DbClient = getDb()) {
+    const [row] = await dbClient
+      .select({ code: contactType.code, name: contactType.name })
+      .from(contactType)
+      .where(and(eq(contactType.code, code), eq(contactType.isActive, true)))
+      .limit(1);
+
+    return row ?? null;
+  }
+
+  /**
+   * WHAT: Load Business operating country + Localization dialing code.
+   * WHY: EDS-003 — Party phone normalization uses tenant country dialing code.
+   */
+  async findBusinessPhoneContext(
+    businessId: string,
+    dbClient: DbClient = getDb()
+  ) {
+    const [row] = await dbClient
+      .select({
+        countryCode: business.countryCode,
+        dialCode: country.phoneCode,
+      })
+      .from(business)
+      .innerJoin(country, eq(country.code, business.countryCode))
+      .where(eq(business.id, businessId))
       .limit(1);
 
     return row ?? null;

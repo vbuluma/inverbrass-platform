@@ -37,6 +37,7 @@ The platform shall:
 - Scale horizontally where appropriate.
 - Minimize technical debt.
 - Avoid orphan code.
+- Store telephone numbers in canonical E.164 (EDS-003) via the shared phone normalizer.
 
 ---
 
@@ -251,8 +252,6 @@ AI-assisted development shall:
 - Recommend improvements separately from requested functionality.
 
 ---
-
-
 
 # Definition of Success
 

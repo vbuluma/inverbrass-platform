@@ -7,16 +7,20 @@
  *
  * Implementation Package:
  * BP-002 / IP-001 – Party Foundation
+ * BP-002 / IP-003 – Contacts & Communication
  */
 
 import type { CurrentBusinessContext } from "@/core/auth/types";
 import { getDb } from "@/db/client";
 import {
+  CONTACT_TYPE_CODES,
+  PARTY_CONTACT_STATUS_CODES,
   PARTY_STATUS_CODES,
   PARTY_TYPE_CODES,
 } from "@/modules/party/constants";
 import { PartyError, PARTY_USER_MESSAGES } from "@/modules/party/errors";
 import { createIndividualProfileRepository } from "@/modules/party/repositories/individual-profile-repository";
+import { createPartyContactRepository } from "@/modules/party/repositories/party-contact-repository";
 import { createPartyReferenceRepository } from "@/modules/party/repositories/party-reference-repository";
 import { createPartyRepository } from "@/modules/party/repositories/party-repository";
 import {
@@ -28,17 +32,23 @@ import type {
   RegisterIndividualPayload,
 } from "@/modules/party/types";
 import { registerIndividualSchema } from "@/modules/party/validators/party-validators";
+import { validateContactValueForType } from "@/modules/party/validators/party-contact-validators";
+import {
+  normalizeRegistrationMobile,
+  requireBusinessPhoneContext,
+} from "@/modules/party/services/party-phone";
 
 export class IndividualProfileService {
   constructor(
     private readonly partyRepository = createPartyRepository(),
     private readonly individualProfileRepository = createIndividualProfileRepository(),
+    private readonly partyContactRepository = createPartyContactRepository(),
     private readonly referenceRepository = createPartyReferenceRepository()
   ) {}
 
   /**
-   * WHAT: Register an Individual Party with one master Party record + profile.
-   * WHY: FR-001 / BR-IP001-001 / BR-IP001-007 — registration without roles/contacts.
+   * WHAT: Register an Individual Party with master Party + profile + Mobile contact.
+   * WHY: FR-001 / BR-IP001-001 / IP-003 — Individuals require at least one Mobile.
    */
   async registerIndividual(
     context: CurrentBusinessContext,
@@ -55,6 +65,29 @@ export class IndividualProfileService {
       );
     }
 
+    const mobileCheck = validateContactValueForType(
+      CONTACT_TYPE_CODES.MOBILE,
+      parsed.data.mobile
+    );
+    if (!mobileCheck.ok) {
+      throw new PartyError(
+        "MOBILE_REQUIRED",
+        mobileCheck.message,
+        400,
+        "mobile"
+      );
+    }
+
+    const phoneContext = await requireBusinessPhoneContext(
+      this.referenceRepository,
+      context.businessId
+    );
+    const mobileE164 = normalizeRegistrationMobile(
+      parsed.data.mobile,
+      phoneContext,
+      "mobile"
+    );
+
     const partyType = await this.referenceRepository.findPartyTypeByCode(
       PARTY_TYPE_CODES.INDIVIDUAL
     );
@@ -62,6 +95,17 @@ export class IndividualProfileService {
       throw new PartyError(
         "REFERENCE_DATA_MISSING",
         "Party Type INDIVIDUAL is missing. Seed Party catalogues before continuing.",
+        503
+      );
+    }
+
+    const mobileType = await this.referenceRepository.findContactTypeByCode(
+      CONTACT_TYPE_CODES.MOBILE
+    );
+    if (!mobileType) {
+      throw new PartyError(
+        "REFERENCE_DATA_MISSING",
+        "Contact Type MOBILE is missing. Seed Party Contact catalogues before continuing.",
         503
       );
     }
@@ -126,6 +170,22 @@ export class IndividualProfileService {
           dateOfBirth: parsed.data.dateOfBirth,
           gender: parsed.data.gender,
           preferredLanguageCode: parsed.data.preferredLanguageCode,
+        },
+        tx
+      );
+
+      await this.partyContactRepository.insert(
+        {
+          businessId: context.businessId,
+          partyId: partyRow.id,
+          contactTypeCode: CONTACT_TYPE_CODES.MOBILE,
+          contactValue: mobileE164,
+          isPreferred: true,
+          isVerified: false,
+          statusCode: PARTY_CONTACT_STATUS_CODES.ACTIVE,
+          notes: null,
+          createdBy: context.platformUserId,
+          updatedBy: context.platformUserId,
         },
         tx
       );

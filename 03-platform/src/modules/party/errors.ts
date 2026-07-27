@@ -15,6 +15,16 @@ export const PARTY_ERROR_CODES = {
   INVALID_PARTY_TYPE: "INVALID_PARTY_TYPE",
   INVALID_STATUS_TRANSITION: "INVALID_STATUS_TRANSITION",
   REFERENCE_DATA_MISSING: "REFERENCE_DATA_MISSING",
+  PARTY_ROLE_NOT_FOUND: "PARTY_ROLE_NOT_FOUND",
+  DUPLICATE_ACTIVE_ROLE: "DUPLICATE_ACTIVE_ROLE",
+  INVALID_ROLE_TRANSITION: "INVALID_ROLE_TRANSITION",
+  PARTY_CONTACT_NOT_FOUND: "PARTY_CONTACT_NOT_FOUND",
+  DUPLICATE_PREFERRED_CONTACT: "DUPLICATE_PREFERRED_CONTACT",
+  DUPLICATE_CONTACT_VALUE: "DUPLICATE_CONTACT_VALUE",
+  INVALID_CONTACT_TRANSITION: "INVALID_CONTACT_TRANSITION",
+  PREFERRED_CONTACT_INACTIVE: "PREFERRED_CONTACT_INACTIVE",
+  WEBSITE_NOT_ALLOWED: "WEBSITE_NOT_ALLOWED",
+  MOBILE_REQUIRED: "MOBILE_REQUIRED",
   PROVIDER_ERROR: "PROVIDER_ERROR",
 } as const;
 
@@ -50,5 +60,18 @@ export const PARTY_USER_MESSAGES = {
   INVALID_STATUS_TRANSITION: "That status change is not allowed.",
   REFERENCE_DATA_MISSING:
     "Required Party reference data is missing. Seed Party catalogues before continuing.",
+  PARTY_ROLE_NOT_FOUND: "That party role could not be found.",
+  DUPLICATE_ACTIVE_ROLE: "That role is already active for this party.",
+  INVALID_ROLE_TRANSITION: "That role status change is not allowed.",
+  PARTY_CONTACT_NOT_FOUND: "That contact could not be found.",
+  DUPLICATE_PREFERRED_CONTACT:
+    "Only one preferred contact is allowed per contact type.",
+  DUPLICATE_CONTACT_VALUE:
+    "That phone number is already registered for this party.",
+  INVALID_CONTACT_TRANSITION: "That contact status change is not allowed.",
+  PREFERRED_CONTACT_INACTIVE: "A preferred contact must remain active.",
+  WEBSITE_NOT_ALLOWED:
+    "Website contacts are only available for Organization parties.",
+  MOBILE_REQUIRED: "Enter a mobile number for this Individual.",
   PROVIDER_ERROR: "We could not complete that Party action. Please try again.",
 } as const;

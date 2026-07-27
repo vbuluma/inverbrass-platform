@@ -113,6 +113,34 @@ Engine & Module Separation	Core Engines own reusable processing logic. Domain Mo
 Capability Reuse Before Creation	Reuse existing entities and capabilities before introducing new ones.
 Enterprise Intelligence Ready	All domains should support Business Rules, Machine Learning and Generative AI where applicable.
 ________________________________________
+13. Enterprise Data Standards (EDS)
+
+| Standard | Statement |
+|---|---|
+| EDS-001 | Tenant-owned business entities shall include the Standard Base Entity fields (Section 3), including soft delete and audit columns where applicable. |
+| EDS-002 | Each business concept shall have one authoritative entity (Single Source of Truth). Industry Solutions consume shared entities through APIs rather than duplicating tables. |
+| EDS-003 | All telephone numbers shall be stored in canonical E.164 format. User input may be entered in local or international formats, but the platform shall normalize before validation, duplicate detection, integration, and persistence. |
+
+### EDS-003 – Telephone Number Canonicalization
+
+**Canonical storage:** `+[country calling code][national significant number]` (example: `+254722134343`).
+
+**Accepted user input (examples for Kenya / +254):**
+- Local with trunk prefix: `0722134343`
+- Local without trunk prefix: `722134343`
+- International without plus: `254722134343`
+- E.164: `+254722134343`
+- Formatted variants: `(0722) 134-343`, `0722 134 343`
+
+**Rules:**
+1. Normalization shall use the Party/Business operating country dialing code from the Localization & Regulatory Engine when available.
+2. Normalization shall occur centrally in the shared phone validation/normalization utility — not ad hoc in UI components or repositories.
+3. Duplicate detection shall compare normalized E.164 values so equivalent numbers cannot be registered twice.
+4. Platform Registration, Party Contacts, Employees, Branches, Customers, Suppliers, and all future Build Packs shall reuse the same utility.
+
+**Implementation location:** `03-platform/src/core/shared/phone` (compatibility re-export: `core/auth/utils/phone-normalizer`).
+
+________________________________________
 Architect's Recommendation
 This document should be treated as the enterprise data standard, not as the implementation database design.
 When we begin development, we'll create domain-specific ERDs (for example, Business Operations ERD, Property Management ERD, and School Management ERD) that conform to these standards.

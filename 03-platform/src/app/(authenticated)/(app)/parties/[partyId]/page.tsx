@@ -1,9 +1,11 @@
 /**
  * Purpose:
- * Party Workspace page (Overview tab + future placeholders).
+ * Party Workspace page — Overview, Roles, and Contacts tabs.
  *
  * Implementation Package:
  * BP-002 / IP-001 – Party Foundation
+ * BP-002 / IP-002 – Party Roles
+ * BP-002 / IP-003 – Contacts & Communication
  */
 
 import { redirect } from "next/navigation";
@@ -12,6 +14,8 @@ import {
   getPartyAction,
   getPartyRegistrationCataloguesAction,
 } from "@/modules/party/actions/party-actions";
+import { listPartyContactsAction } from "@/modules/party/actions/party-contact-actions";
+import { listPartyRolesAction } from "@/modules/party/actions/party-role-actions";
 import { PartyWorkspace } from "@/modules/party/components/party-workspace";
 
 type PageProps = {
@@ -20,10 +24,13 @@ type PageProps = {
 
 export default async function PartyWorkspacePage({ params }: PageProps) {
   const { partyId } = await params;
-  const [partyResult, cataloguesResult] = await Promise.all([
-    getPartyAction(partyId),
-    getPartyRegistrationCataloguesAction(),
-  ]);
+  const [partyResult, cataloguesResult, rolesResult, contactsResult] =
+    await Promise.all([
+      getPartyAction(partyId),
+      getPartyRegistrationCataloguesAction(),
+      listPartyRolesAction(partyId),
+      listPartyContactsAction(partyId),
+    ]);
 
   if (!partyResult.success) {
     if (
@@ -54,10 +61,34 @@ export default async function PartyWorkspacePage({ params }: PageProps) {
     );
   }
 
+  if (!rolesResult.success) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <h1 className="text-xl font-semibold">Party Workspace</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {rolesResult.error.message}
+        </p>
+      </main>
+    );
+  }
+
+  if (!contactsResult.success) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <h1 className="text-xl font-semibold">Party Workspace</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {contactsResult.error.message}
+        </p>
+      </main>
+    );
+  }
+
   return (
     <PartyWorkspace
       party={partyResult.data}
       catalogues={cataloguesResult.data}
+      roles={rolesResult.data}
+      contacts={contactsResult.data}
     />
   );
 }

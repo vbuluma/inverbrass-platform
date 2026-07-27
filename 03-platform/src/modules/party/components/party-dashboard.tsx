@@ -105,6 +105,44 @@ export function PartyDashboard({ data }: PartyDashboardProps) {
         <KpiCard label="Active Parties" value={data.activeParties} />
       </section>
 
+      <section aria-labelledby="party-roles-heading" className="space-y-3">
+        <h2
+          id="party-roles-heading"
+          className="text-lg font-semibold tracking-tight"
+        >
+          Roles
+        </h2>
+        {data.roleCounts.length === 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">No active roles yet</CardTitle>
+              <CardDescription>
+                Assign Customer, Supplier, Farmer, and other roles from a Party
+                Workspace to populate this widget.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="grid gap-3 px-4 py-4 sm:grid-cols-2 lg:grid-cols-3">
+              {data.roleCounts.map((role) => (
+                <div
+                  key={role.roleTypeCode}
+                  className="flex items-center justify-between gap-3 border-b border-border/50 pb-2 last:border-0 last:pb-0 sm:border-0 sm:pb-0"
+                >
+                  <span className="text-sm text-muted-foreground">
+                    {role.roleTypeName}
+                  </span>
+                  <span className="text-lg font-semibold tracking-tight">
+                    {role.count}
+                  </span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+      </section>
+
       <section aria-labelledby="recent-parties-heading" className="space-y-3">
         <div className="flex items-center justify-between gap-3">
           <h2

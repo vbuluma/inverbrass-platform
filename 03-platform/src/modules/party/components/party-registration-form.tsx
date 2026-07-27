@@ -11,7 +11,7 @@
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -47,13 +47,14 @@ export function PartyRegistrationForm({
   );
   const [error, setError] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function onSubmit(formData: FormData) {
+  async function onSubmit(formData: FormData) {
     setError(null);
     setFieldError(null);
+    setIsSubmitting(true);
 
-    startTransition(async () => {
+    try {
       if (partyType === PARTY_TYPE_CODES.INDIVIDUAL) {
         const result = await createIndividualPartyAction({
           fullName: String(formData.get("fullName") ?? ""),
@@ -62,17 +63,20 @@ export function PartyRegistrationForm({
           preferredLanguageCode: String(
             formData.get("preferredLanguageCode") ?? ""
           ),
+          mobile: String(formData.get("mobile") ?? ""),
           notes: String(formData.get("notes") ?? ""),
         });
 
         if (!result.success) {
           setError(result.error.message);
           setFieldError(result.error.field ?? null);
+          setIsSubmitting(false);
           return;
         }
 
+        // Navigate only — do not call router.refresh() inside/after the same
+        // submit flow (it races soft-nav and keeps the form mounted on "Saving…").
         router.push(`/parties/${result.data.id}`);
-        router.refresh();
         return;
       }
 
@@ -85,18 +89,23 @@ export function PartyRegistrationForm({
           formData.get("organizationTypeCode") ?? ""
         ),
         website: String(formData.get("website") ?? ""),
+        mobile: String(formData.get("mobile") ?? ""),
+        email: String(formData.get("email") ?? ""),
         notes: String(formData.get("notes") ?? ""),
       });
 
       if (!result.success) {
         setError(result.error.message);
         setFieldError(result.error.field ?? null);
+        setIsSubmitting(false);
         return;
       }
 
       router.push(`/parties/${result.data.id}`);
-      router.refresh();
-    });
+    } catch {
+      setError("We could not save this Party. Please try again.");
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -217,6 +226,15 @@ export function PartyRegistrationForm({
                     ))}
                   </select>
                 </Field>
+                <Field label="Mobile" htmlFor="mobile" required>
+                  <Input
+                    id="mobile"
+                    name="mobile"
+                    required
+                    maxLength={30}
+                    placeholder="+254..."
+                  />
+                </Field>
               </>
             ) : (
               <>
@@ -279,6 +297,22 @@ export function PartyRegistrationForm({
                     ))}
                   </select>
                 </Field>
+                <Field label="Mobile (optional)" htmlFor="mobile">
+                  <Input
+                    id="mobile"
+                    name="mobile"
+                    maxLength={30}
+                    placeholder="+254..."
+                  />
+                </Field>
+                <Field label="Email (optional)" htmlFor="email">
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    maxLength={255}
+                  />
+                </Field>
                 <Field label="Website (optional)" htmlFor="website">
                   <Input
                     id="website"
@@ -300,8 +334,12 @@ export function PartyRegistrationForm({
               />
             </Field>
 
-            <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
-              {isPending ? "Saving…" : "Save Party"}
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full sm:w-auto"
+            >
+              {isSubmitting ? "Saving…" : "Save Party"}
             </Button>
           </form>
         </CardContent>

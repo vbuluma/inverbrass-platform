@@ -85,6 +85,20 @@
       "when": 1784564588812,
       "tag": "0011_bp002_ip001_language_catalogue",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1784564588813,
+      "tag": "0012_bp002_ip002_party_roles",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1784564588814,
+      "tag": "0013_bp002_ip003_party_contacts",
+      "breakpoints": true
     }
   ]
 }

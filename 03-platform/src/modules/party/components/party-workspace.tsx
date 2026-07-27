@@ -1,9 +1,11 @@
 /**
  * Purpose:
- * Party Workspace — Overview tab functional; other tabs are placeholders.
+ * Party Workspace — Overview, Roles, and Contacts tabs; other tabs placeholders.
  *
  * Implementation Package:
  * BP-002 / IP-001 – Party Foundation
+ * BP-002 / IP-002 – Party Roles
+ * BP-002 / IP-003 – Contacts & Communication
  */
 
 "use client";
@@ -31,6 +33,8 @@ import {
   suspendPartyAction,
   updatePartyAction,
 } from "@/modules/party/actions/party-actions";
+import { PartyContactsPanel } from "@/modules/party/components/party-contacts-panel";
+import { PartyRolesPanel } from "@/modules/party/components/party-roles-panel";
 import {
   FUTURE_TAB_MESSAGE,
   PARTY_STATUS_CODES,
@@ -38,13 +42,17 @@ import {
   PARTY_WORKSPACE_TABS,
 } from "@/modules/party/constants";
 import type {
+  PartyContactsPanelView,
   PartyDetailView,
   PartyRegistrationCatalogues,
+  PartyRolesPanelView,
 } from "@/modules/party/types";
 
 type PartyWorkspaceProps = {
   party: PartyDetailView;
   catalogues: PartyRegistrationCatalogues;
+  roles: PartyRolesPanelView;
+  contacts: PartyContactsPanelView;
 };
 
 function formatDate(iso: string | null): string {
@@ -60,7 +68,12 @@ function formatDate(iso: string | null): string {
   }
 }
 
-export function PartyWorkspace({ party, catalogues }: PartyWorkspaceProps) {
+export function PartyWorkspace({
+  party,
+  catalogues,
+  roles,
+  contacts,
+}: PartyWorkspaceProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("overview");
   const [error, setError] = useState<string | null>(null);
@@ -457,6 +470,10 @@ export function PartyWorkspace({ party, catalogues }: PartyWorkspaceProps) {
             </CardContent>
           </Card>
         </div>
+      ) : activeTab === "roles" ? (
+        <PartyRolesPanel partyId={party.id} initialData={roles} />
+      ) : activeTab === "contacts" ? (
+        <PartyContactsPanel partyId={party.id} initialData={contacts} />
       ) : (
         <Card>
           <CardHeader>

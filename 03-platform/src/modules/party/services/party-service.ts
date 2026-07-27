@@ -27,6 +27,7 @@ import {
   isPartyStatusCode,
   isPartyTypeCode,
 } from "@/modules/party/services/party-rules";
+import { createPartyRoleService } from "@/modules/party/services/party-role-service";
 import type {
   PartyDashboardView,
   PartyDetailView,
@@ -41,7 +42,8 @@ export class PartyService {
     private readonly partyRepository = createPartyRepository(),
     private readonly individualProfileRepository = createIndividualProfileRepository(),
     private readonly organizationProfileRepository = createOrganizationProfileRepository(),
-    private readonly referenceRepository = createPartyReferenceRepository()
+    private readonly referenceRepository = createPartyReferenceRepository(),
+    private readonly partyRoleService = createPartyRoleService()
   ) {}
 
   async getRegistrationCatalogues(): Promise<PartyRegistrationCatalogues> {
@@ -111,6 +113,7 @@ export class PartyService {
       organizations,
       activeParties,
       recentRows,
+      roleCounts,
     ] = await Promise.all([
       this.partyRepository.countByBusinessId(context.businessId),
       this.partyRepository.countByType(
@@ -126,6 +129,7 @@ export class PartyService {
         PARTY_STATUS_CODES.ACTIVE
       ),
       this.partyRepository.listRecentByBusinessId(context.businessId, 8),
+      this.partyRoleService.getRoleCountsForBusiness(context),
     ]);
 
     const recentlyRegistered = await Promise.all(
@@ -138,6 +142,7 @@ export class PartyService {
       organizations,
       activeParties,
       recentlyRegistered,
+      roleCounts,
     };
   }
 
