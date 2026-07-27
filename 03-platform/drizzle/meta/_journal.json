@@ -71,6 +71,20 @@
       "when": 1784564588810,
       "tag": "0009_bp001_branch_employee_setup",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1784564588811,
+      "tag": "0010_bp002_ip001_party_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1784564588812,
+      "tag": "0011_bp002_ip001_language_catalogue",
+      "breakpoints": true
     }
   ]
 }

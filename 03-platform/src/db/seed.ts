@@ -22,6 +22,10 @@ import { seedBusinessTypes } from "@/db/seeds/business-types-seed";
 import { seedCountries } from "@/db/seeds/countries-seed";
 import { seedCurrencies } from "@/db/seeds/currencies-seed";
 import { seedIndustries } from "@/db/seeds/industries-seed";
+import { seedLanguages } from "@/db/seeds/languages-seed";
+import { seedOrganizationTypes } from "@/db/seeds/organization-types-seed";
+import { seedPartyStatuses } from "@/db/seeds/party-statuses-seed";
+import { seedPartyTypes } from "@/db/seeds/party-types-seed";
 import { seedSecurityQuestions } from "@/db/seeds/security-questions-seed";
 
 async function runSeed() {
@@ -76,6 +80,30 @@ async function runSeed() {
     const currencyResults = await seedCurrencies(db);
     console.log(
       `currencies: inserted=${currencyResults.inserted}, updated=${currencyResults.updated}, skipped=${currencyResults.skipped}`
+    );
+
+    console.log("Seeding party types...");
+    const partyTypeResults = await seedPartyTypes(db);
+    console.log(
+      `partyTypes: inserted=${partyTypeResults.inserted}, updated=${partyTypeResults.updated}, skipped=${partyTypeResults.skipped}`
+    );
+
+    console.log("Seeding party statuses...");
+    const partyStatusResults = await seedPartyStatuses(db);
+    console.log(
+      `partyStatuses: inserted=${partyStatusResults.inserted}, updated=${partyStatusResults.updated}, skipped=${partyStatusResults.skipped}`
+    );
+
+    console.log("Seeding organization types...");
+    const organizationTypeResults = await seedOrganizationTypes(db);
+    console.log(
+      `organizationTypes: inserted=${organizationTypeResults.inserted}, updated=${organizationTypeResults.updated}, skipped=${organizationTypeResults.skipped}`
+    );
+
+    console.log("Seeding languages...");
+    const languageResults = await seedLanguages(db);
+    console.log(
+      `languages: inserted=${languageResults.inserted}, updated=${languageResults.updated}, skipped=${languageResults.skipped}`
     );
 
     console.log("✅ Seed completed.");
