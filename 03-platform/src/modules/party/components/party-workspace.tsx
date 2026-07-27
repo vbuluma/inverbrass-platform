@@ -6,6 +6,8 @@
  * BP-002 / IP-001 – Party Foundation
  * BP-002 / IP-002 – Party Roles
  * BP-002 / IP-003 – Contacts & Communication
+ * BP-002 / IP-004 – Address Management
+ * BP-002 / IP-005 – Party Relationships
  */
 
 "use client";
@@ -33,7 +35,9 @@ import {
   suspendPartyAction,
   updatePartyAction,
 } from "@/modules/party/actions/party-actions";
+import { PartyAddressesPanel } from "@/modules/party/components/party-addresses-panel";
 import { PartyContactsPanel } from "@/modules/party/components/party-contacts-panel";
+import { PartyRelationshipsPanel } from "@/modules/party/components/party-relationships-panel";
 import { PartyRolesPanel } from "@/modules/party/components/party-roles-panel";
 import {
   FUTURE_TAB_MESSAGE,
@@ -42,9 +46,11 @@ import {
   PARTY_WORKSPACE_TABS,
 } from "@/modules/party/constants";
 import type {
+  PartyAddressesPanelView,
   PartyContactsPanelView,
   PartyDetailView,
   PartyRegistrationCatalogues,
+  PartyRelationshipsPanelView,
   PartyRolesPanelView,
 } from "@/modules/party/types";
 
@@ -53,6 +59,8 @@ type PartyWorkspaceProps = {
   catalogues: PartyRegistrationCatalogues;
   roles: PartyRolesPanelView;
   contacts: PartyContactsPanelView;
+  addresses: PartyAddressesPanelView;
+  relationships: PartyRelationshipsPanelView;
 };
 
 function formatDate(iso: string | null): string {
@@ -73,6 +81,8 @@ export function PartyWorkspace({
   catalogues,
   roles,
   contacts,
+  addresses,
+  relationships,
 }: PartyWorkspaceProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("overview");
@@ -474,6 +484,13 @@ export function PartyWorkspace({
         <PartyRolesPanel partyId={party.id} initialData={roles} />
       ) : activeTab === "contacts" ? (
         <PartyContactsPanel partyId={party.id} initialData={contacts} />
+      ) : activeTab === "addresses" ? (
+        <PartyAddressesPanel partyId={party.id} initialData={addresses} />
+      ) : activeTab === "relationships" ? (
+        <PartyRelationshipsPanel
+          partyId={party.id}
+          initialData={relationships}
+        />
       ) : (
         <Card>
           <CardHeader>

@@ -32,10 +32,12 @@ import type {
   PartyDashboardView,
   PartyDetailView,
   PartyRegistrationCatalogues,
+  PartySearchResultView,
   PartySummaryView,
   UpdatePartyOverviewPayload,
 } from "@/modules/party/types";
 import { updatePartyOverviewSchema } from "@/modules/party/validators/party-validators";
+import { partySearchQuerySchema } from "@/modules/party/validators/party-relationship-validators";
 
 export class PartyService {
   constructor(
@@ -82,6 +84,44 @@ export class PartyService {
       context.businessId
     );
     return Promise.all(rows.map((row) => this.toSummaryView(row)));
+  }
+
+  /**
+   * WHAT: Search existing parties for relationship linking.
+   * WHY: IP-005 — relationships connect existing parties; no duplicate creation.
+   */
+  async searchParties(
+    context: CurrentBusinessContext,
+    query: string,
+    excludePartyId?: string
+  ): Promise<PartySearchResultView[]> {
+    const parsed = partySearchQuerySchema.safeParse({ query });
+    if (!parsed.success) {
+      const first = parsed.error.issues[0];
+      throw new PartyError(
+        "INVALID_INPUT",
+        first?.message ?? PARTY_USER_MESSAGES.INVALID_INPUT,
+        400,
+        first?.path[0] ? String(first.path[0]) : undefined
+      );
+    }
+
+    const rows = await this.partyRepository.searchByQuery(
+      context.businessId,
+      parsed.data.query,
+      excludePartyId
+    );
+
+    const partyTypes = await this.referenceRepository.listActivePartyTypes();
+    const typeNameByCode = new Map(partyTypes.map((t) => [t.code, t.name]));
+
+    return rows.map((row) => ({
+      id: row.id,
+      partyNumber: row.partyNumber,
+      displayName: row.displayName,
+      partyTypeCode: row.partyTypeCode as PartySearchResultView["partyTypeCode"],
+      partyTypeName: typeNameByCode.get(row.partyTypeCode) ?? row.partyTypeCode,
+    }));
   }
 
   async getParty(

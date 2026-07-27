@@ -11,6 +11,8 @@ import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 
 import { getDb } from "@/db/client";
 import * as schema from "@/db/schema";
+import { relationshipType } from "@/db/schema/relationship-type";
+import { addressType } from "@/db/schema/address-type";
 import { contactType } from "@/db/schema/contact-type";
 import { business } from "@/db/schema/business";
 import { country } from "@/db/schema/country";
@@ -195,6 +197,71 @@ export class PartyReferenceRepository {
       .from(business)
       .innerJoin(country, eq(country.code, business.countryCode))
       .where(eq(business.id, businessId))
+      .limit(1);
+
+    return row ?? null;
+  }
+
+  async listActiveCountries(dbClient: DbClient = getDb()) {
+    return dbClient
+      .select({
+        code: country.code,
+        name: country.name,
+      })
+      .from(country)
+      .where(eq(country.isActive, true))
+      .orderBy(asc(country.displayOrder), asc(country.name));
+  }
+
+  async findCountryByCode(code: string, dbClient: DbClient = getDb()) {
+    const [row] = await dbClient
+      .select({ code: country.code, name: country.name })
+      .from(country)
+      .where(and(eq(country.code, code.toUpperCase()), eq(country.isActive, true)))
+      .limit(1);
+
+    return row ?? null;
+  }
+
+  async listActiveAddressTypes(dbClient: DbClient = getDb()) {
+    return dbClient
+      .select({
+        code: addressType.code,
+        name: addressType.name,
+      })
+      .from(addressType)
+      .where(eq(addressType.isActive, true))
+      .orderBy(asc(addressType.displayOrder), asc(addressType.name));
+  }
+
+  async findAddressTypeByCode(code: string, dbClient: DbClient = getDb()) {
+    const [row] = await dbClient
+      .select({ code: addressType.code, name: addressType.name })
+      .from(addressType)
+      .where(and(eq(addressType.code, code), eq(addressType.isActive, true)))
+      .limit(1);
+
+    return row ?? null;
+  }
+
+  async listActiveRelationshipTypes(dbClient: DbClient = getDb()) {
+    return dbClient
+      .select({
+        code: relationshipType.code,
+        name: relationshipType.name,
+      })
+      .from(relationshipType)
+      .where(eq(relationshipType.isActive, true))
+      .orderBy(asc(relationshipType.displayOrder), asc(relationshipType.name));
+  }
+
+  async findRelationshipTypeByCode(code: string, dbClient: DbClient = getDb()) {
+    const [row] = await dbClient
+      .select({ code: relationshipType.code, name: relationshipType.name })
+      .from(relationshipType)
+      .where(
+        and(eq(relationshipType.code, code), eq(relationshipType.isActive, true))
+      )
       .limit(1);
 
     return row ?? null;

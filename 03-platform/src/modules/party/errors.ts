@@ -25,6 +25,14 @@ export const PARTY_ERROR_CODES = {
   PREFERRED_CONTACT_INACTIVE: "PREFERRED_CONTACT_INACTIVE",
   WEBSITE_NOT_ALLOWED: "WEBSITE_NOT_ALLOWED",
   MOBILE_REQUIRED: "MOBILE_REQUIRED",
+  PARTY_ADDRESS_NOT_FOUND: "PARTY_ADDRESS_NOT_FOUND",
+  DEFAULT_ADDRESS_INACTIVE: "DEFAULT_ADDRESS_INACTIVE",
+  INVALID_ADDRESS_TRANSITION: "INVALID_ADDRESS_TRANSITION",
+  ADDRESS_TYPE_NOT_ALLOWED: "ADDRESS_TYPE_NOT_ALLOWED",
+  PARTY_RELATIONSHIP_NOT_FOUND: "PARTY_RELATIONSHIP_NOT_FOUND",
+  DUPLICATE_ACTIVE_RELATIONSHIP: "DUPLICATE_ACTIVE_RELATIONSHIP",
+  SELF_RELATIONSHIP_NOT_ALLOWED: "SELF_RELATIONSHIP_NOT_ALLOWED",
+  INVALID_RELATIONSHIP_TRANSITION: "INVALID_RELATIONSHIP_TRANSITION",
   PROVIDER_ERROR: "PROVIDER_ERROR",
 } as const;
 
@@ -73,5 +81,15 @@ export const PARTY_USER_MESSAGES = {
   WEBSITE_NOT_ALLOWED:
     "Website contacts are only available for Organization parties.",
   MOBILE_REQUIRED: "Enter a mobile number for this Individual.",
+  PARTY_ADDRESS_NOT_FOUND: "That address could not be found.",
+  DEFAULT_ADDRESS_INACTIVE: "A default address must remain active.",
+  INVALID_ADDRESS_TRANSITION: "That address status change is not allowed.",
+  ADDRESS_TYPE_NOT_ALLOWED:
+    "That address type is not available for this party type.",
+  PARTY_RELATIONSHIP_NOT_FOUND: "That relationship could not be found.",
+  DUPLICATE_ACTIVE_RELATIONSHIP:
+    "An active relationship of that type already exists between these parties.",
+  SELF_RELATIONSHIP_NOT_ALLOWED: "A party cannot have a relationship with itself.",
+  INVALID_RELATIONSHIP_TRANSITION: "That relationship status change is not allowed.",
   PROVIDER_ERROR: "We could not complete that Party action. Please try again.",
 } as const;

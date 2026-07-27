@@ -6,10 +6,14 @@
  * BP-002 / IP-001 – Party Foundation
  * BP-002 / IP-002 – Party Roles
  * BP-002 / IP-003 – Contacts & Communication
+ * BP-002 / IP-004 – Address Management
+ * BP-002 / IP-005 – Party Relationships
  */
 
 import type {
+  PartyAddressStatusCode,
   PartyContactStatusCode,
+  PartyRelationshipStatusCode,
   PartyRoleStatusCode,
   PartyStatusCode,
   PartyTypeCode,
@@ -172,4 +176,108 @@ export type PartyContactView = {
 export type PartyContactsPanelView = {
   contacts: PartyContactView[];
   availableContactTypes: ReferenceOption[];
+};
+
+export type AddPartyAddressPayload = {
+  addressTypeCode: string;
+  countryCode: string;
+  stateProvince?: string;
+  countyDistrict?: string;
+  cityTown?: string;
+  wardLocality?: string;
+  postalCode?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  landmark?: string;
+  gpsLatitude?: string | number | null;
+  gpsLongitude?: string | number | null;
+  isDefault?: boolean;
+  notes?: string;
+};
+
+export type UpdatePartyAddressPayload = {
+  countryCode?: string;
+  stateProvince?: string | null;
+  countyDistrict?: string | null;
+  cityTown?: string | null;
+  wardLocality?: string | null;
+  postalCode?: string | null;
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  landmark?: string | null;
+  gpsLatitude?: string | number | null;
+  gpsLongitude?: string | number | null;
+  notes?: string | null;
+};
+
+export type PartyAddressView = {
+  id: string;
+  partyId: string;
+  addressTypeCode: string;
+  addressTypeName: string;
+  countryCode: string;
+  countryName: string;
+  stateProvince: string | null;
+  countyDistrict: string | null;
+  cityTown: string | null;
+  wardLocality: string | null;
+  postalCode: string | null;
+  addressLine1: string | null;
+  addressLine2: string | null;
+  landmark: string | null;
+  gpsLatitude: string | null;
+  gpsLongitude: string | null;
+  isDefault: boolean;
+  statusCode: PartyAddressStatusCode;
+  notes: string | null;
+  countyOrStateDisplay: string;
+};
+
+export type PartyAddressesPanelView = {
+  addresses: PartyAddressView[];
+  availableAddressTypes: ReferenceOption[];
+  countries: ReferenceOption[];
+};
+
+export type PartySearchResultView = {
+  id: string;
+  partyNumber: string;
+  displayName: string;
+  partyTypeCode: PartyTypeCode;
+  partyTypeName: string;
+};
+
+export type AddPartyRelationshipPayload = {
+  toPartyId: string;
+  relationshipTypeCode: string;
+  startDate?: string;
+  endDate?: string | null;
+  notes?: string;
+};
+
+export type UpdatePartyRelationshipPayload = {
+  startDate?: string;
+  endDate?: string | null;
+  notes?: string | null;
+};
+
+export type PartyRelationshipView = {
+  id: string;
+  fromPartyId: string;
+  toPartyId: string;
+  relatedPartyId: string;
+  relatedPartyNumber: string;
+  relatedPartyName: string;
+  relationshipTypeCode: string;
+  relationshipTypeName: string;
+  direction: "OUTGOING" | "INCOMING";
+  startDate: string;
+  endDate: string | null;
+  statusCode: PartyRelationshipStatusCode;
+  notes: string | null;
+};
+
+export type PartyRelationshipsPanelView = {
+  relationships: PartyRelationshipView[];
+  availableRelationshipTypes: ReferenceOption[];
 };

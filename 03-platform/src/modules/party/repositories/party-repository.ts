@@ -9,11 +9,14 @@
  * BP-002 / IP-001 – Party Foundation
  */
 
-import { and, asc, count, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, isNull, ne, or, sql } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 
 import { getDb } from "@/db/client";
 import * as schema from "@/db/schema";
+import { individualProfile } from "@/db/schema/individual-profile";
+import { organizationProfile } from "@/db/schema/organization-profile";
+import { partyContact } from "@/db/schema/party-contact";
 import { party } from "@/db/schema/party";
 import type { PartyStatusCode, PartyTypeCode } from "@/modules/party/constants";
 
@@ -211,6 +214,62 @@ export class PartyRepository {
       .limit(1);
 
     return Boolean(row);
+  }
+
+  /**
+   * WHAT: Search parties by display name, party number, org name, or contact value.
+   * WHY: IP-005 relationship creation — connect existing parties only.
+   */
+  async searchByQuery(
+    businessId: string,
+    query: string,
+    excludePartyId?: string,
+    limit = 20,
+    dbClient: DbClient = getDb()
+  ) {
+    const term = query.trim();
+    if (term.length < 2) {
+      return [];
+    }
+
+    const pattern = `%${term}%`;
+
+    const conditions = [
+      eq(party.businessId, businessId),
+      isNull(party.deletedAt),
+      or(
+        ilike(party.displayName, pattern),
+        ilike(party.partyNumber, pattern),
+        ilike(individualProfile.fullName, pattern),
+        ilike(organizationProfile.organizationName, pattern),
+        ilike(partyContact.contactValue, pattern)
+      ),
+    ];
+
+    if (excludePartyId) {
+      conditions.push(ne(party.id, excludePartyId));
+    }
+
+    return dbClient
+      .selectDistinct({
+        id: party.id,
+        partyNumber: party.partyNumber,
+        displayName: party.displayName,
+        partyTypeCode: party.partyTypeCode,
+      })
+      .from(party)
+      .leftJoin(individualProfile, eq(individualProfile.partyId, party.id))
+      .leftJoin(organizationProfile, eq(organizationProfile.partyId, party.id))
+      .leftJoin(
+        partyContact,
+        and(
+          eq(partyContact.partyId, party.id),
+          isNull(partyContact.deletedAt)
+        )
+      )
+      .where(and(...conditions))
+      .orderBy(asc(party.displayName))
+      .limit(limit);
   }
 }
 

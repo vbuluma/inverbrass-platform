@@ -55,6 +55,37 @@ export const PARTY_CONTACT_STATUS_CODES = {
 export type PartyContactStatusCode =
   (typeof PARTY_CONTACT_STATUS_CODES)[keyof typeof PARTY_CONTACT_STATUS_CODES];
 
+export const ADDRESS_TYPE_CODES = {
+  PHYSICAL: "PHYSICAL",
+  POSTAL: "POSTAL",
+  BILLING: "BILLING",
+  DELIVERY: "DELIVERY",
+  HEAD_OFFICE: "HEAD_OFFICE",
+  BRANCH: "BRANCH",
+  RESIDENTIAL: "RESIDENTIAL",
+  OFFICE: "OFFICE",
+  GPS: "GPS",
+} as const;
+
+export type AddressTypeCode =
+  (typeof ADDRESS_TYPE_CODES)[keyof typeof ADDRESS_TYPE_CODES];
+
+export const PARTY_ADDRESS_STATUS_CODES = {
+  ACTIVE: "ACTIVE",
+  INACTIVE: "INACTIVE",
+} as const;
+
+export type PartyAddressStatusCode =
+  (typeof PARTY_ADDRESS_STATUS_CODES)[keyof typeof PARTY_ADDRESS_STATUS_CODES];
+
+export const PARTY_RELATIONSHIP_STATUS_CODES = {
+  ACTIVE: "ACTIVE",
+  INACTIVE: "INACTIVE",
+} as const;
+
+export type PartyRelationshipStatusCode =
+  (typeof PARTY_RELATIONSHIP_STATUS_CODES)[keyof typeof PARTY_RELATIONSHIP_STATUS_CODES];
+
 export const GENDER_OPTIONS = [
   { code: "FEMALE", name: "Female" },
   { code: "MALE", name: "Male" },
@@ -66,9 +97,9 @@ export const PARTY_WORKSPACE_TABS = [
   { id: "overview", label: "Overview", available: true },
   { id: "roles", label: "Roles", available: true },
   { id: "contacts", label: "Contacts", available: true },
-  { id: "addresses", label: "Addresses", available: false },
+  { id: "addresses", label: "Addresses", available: true },
   { id: "branches", label: "Branches", available: false },
-  { id: "relationships", label: "Relationships", available: false },
+  { id: "relationships", label: "Relationships", available: true },
   { id: "documents", label: "Documents", available: false },
   { id: "groups", label: "Groups", available: false },
   { id: "timeline", label: "Timeline", available: false },

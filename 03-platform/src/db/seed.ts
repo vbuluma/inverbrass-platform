@@ -28,6 +28,8 @@ import { seedPartyStatuses } from "@/db/seeds/party-statuses-seed";
 import { seedPartyTypes } from "@/db/seeds/party-types-seed";
 import { seedRoleTypes } from "@/db/seeds/role-types-seed";
 import { seedContactTypes } from "@/db/seeds/contact-types-seed";
+import { seedAddressTypes } from "@/db/seeds/address-types-seed";
+import { seedRelationshipTypes } from "@/db/seeds/relationship-types-seed";
 import { seedSecurityQuestions } from "@/db/seeds/security-questions-seed";
 
 async function runSeed() {
@@ -118,6 +120,18 @@ async function runSeed() {
     const contactTypeResults = await seedContactTypes(db);
     console.log(
       `contactTypes: inserted=${contactTypeResults.inserted}, updated=${contactTypeResults.updated}, skipped=${contactTypeResults.skipped}`
+    );
+
+    console.log("Seeding address types...");
+    const addressTypeResults = await seedAddressTypes(db);
+    console.log(
+      `addressTypes: inserted=${addressTypeResults.inserted}, updated=${addressTypeResults.updated}, skipped=${addressTypeResults.skipped}`
+    );
+
+    console.log("Seeding relationship types...");
+    const relationshipTypeResults = await seedRelationshipTypes(db);
+    console.log(
+      `relationshipTypes: inserted=${relationshipTypeResults.inserted}, updated=${relationshipTypeResults.updated}, skipped=${relationshipTypeResults.skipped}`
     );
 
     console.log("✅ Seed completed.");

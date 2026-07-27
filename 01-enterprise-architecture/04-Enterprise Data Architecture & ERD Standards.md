@@ -120,6 +120,7 @@ ________________________________________
 | EDS-001 | Tenant-owned business entities shall include the Standard Base Entity fields (Section 3), including soft delete and audit columns where applicable. |
 | EDS-002 | Each business concept shall have one authoritative entity (Single Source of Truth). Industry Solutions consume shared entities through APIs rather than duplicating tables. |
 | EDS-003 | All telephone numbers shall be stored in canonical E.164 format. User input may be entered in local or international formats, but the platform shall normalize before validation, duplicate detection, integration, and persistence. |
+| EDS-009 | Addresses shall use a generic administrative hierarchy model. Country-specific labels and hierarchy levels shall come from the Localization & Regulatory Engine (ENG-003b), not hardcoded field names. |
 
 ### EDS-003 – Telephone Number Canonicalization
 
@@ -139,6 +140,18 @@ ________________________________________
 4. Platform Registration, Party Contacts, Employees, Branches, Customers, Suppliers, and all future Build Packs shall reuse the same utility.
 
 **Implementation location:** `03-platform/src/core/shared/phone` (compatibility re-export: `core/auth/utils/phone-normalizer`).
+
+### EDS-009 – Address Standardization
+
+**Storage model:** Generic hierarchy fields — `country_code`, `state_province`, `county_district`, `city_town`, `ward_locality`, plus lines, postal code, landmark, and optional GPS coordinates.
+
+**Rules:**
+1. Do not hardcode country-specific administrative level names (e.g. "County" for Kenya only) in the persistence model.
+2. UI labels and hierarchy order shall be resolved from the Localization & Regulatory Engine when available.
+3. Country is mandatory; GPS coordinates are optional.
+4. Party Address, Business Branch, Customer, Supplier, and all future Build Packs shall reuse the same address field model.
+
+**Implementation location:** `03-platform/src/core/shared/address` (generic labels until ENG-003b supplies country-specific hierarchy).
 
 ________________________________________
 Architect's Recommendation
