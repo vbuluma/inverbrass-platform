@@ -5,9 +5,7 @@
  * Design rationale:
  * Platform Home answers "Where do I manage my businesses?"
  * Business Dashboard answers "Where do I run this business?"
- *
- * Why this exists:
- * UX refinement — personalized header, health, KPIs, and clickable module cards.
+ * Separates Business Operations from Business Configuration.
  */
 
 "use client";
@@ -30,6 +28,7 @@ import {
   ShoppingBagIcon,
   UsersIcon,
   WalletCardsIcon,
+  WarehouseIcon,
   XIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -57,7 +56,18 @@ type FutureModule = {
   icon: typeof PackageIcon;
 };
 
-const FUTURE_MODULES: FutureModule[] = [
+const AVAILABLE_OPERATION_MODULES = [
+  {
+    id: "parties",
+    title: "Parties",
+    description:
+      "Individuals and organizations in the master Party repository.",
+    icon: UsersIcon,
+    href: "/parties",
+  },
+] as const;
+
+const OPERATION_MODULES: FutureModule[] = [
   {
     id: "products",
     title: "Products & Services",
@@ -65,16 +75,16 @@ const FUTURE_MODULES: FutureModule[] = [
     icon: PackageIcon,
   },
   {
-    id: "customers",
-    title: "Customers",
-    description: "Customer records and relationships.",
-    icon: UsersIcon,
-  },
-  {
     id: "sales",
-    title: "Sales & Checkout",
+    title: "Sales",
     description: "Record sales and take payments.",
     icon: ShoppingBagIcon,
+  },
+  {
+    id: "inventory",
+    title: "Inventory",
+    description: "Stock levels and movements.",
+    icon: WarehouseIcon,
   },
   {
     id: "reports",
@@ -209,15 +219,42 @@ function FutureModuleDialog({
   );
 }
 
+function ConfigLinkRow({
+  item,
+  done,
+}: {
+  item: { id: string; label: string; href: string };
+  done: boolean;
+}) {
+  return (
+    <li>
+      <Link
+        href={item.href}
+        prefetch={false}
+        className="flex items-start gap-2 rounded-md px-1 py-1 text-sm transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <span
+          className={done ? "text-emerald-700" : "text-muted-foreground"}
+          aria-hidden
+        >
+          {done ? "✓" : "○"}
+        </span>
+        <span className="underline-offset-2 hover:underline">{item.label}</span>
+      </Link>
+    </li>
+  );
+}
+
 export function BusinessDashboard({ data }: BusinessDashboardProps) {
   const [futureModule, setFutureModule] = useState<FutureModule | null>(null);
-  // Client-local time for Good Morning / Afternoon / Evening.
   const greeting = timeGreeting(new Date());
 
   const salesPlaceholder = useMemo(
     () => formatMoney(data.baseCurrencyCode, 0),
     [data.baseCurrencyCode]
   );
+
+  const productsModule = OPERATION_MODULES.find((m) => m.id === "products")!;
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-8 sm:px-6">
@@ -279,6 +316,36 @@ export function BusinessDashboard({ data }: BusinessDashboardProps) {
         </p>
       </header>
 
+      {data.postActivationCta === "products" ? (
+        <section aria-labelledby="express-cta-heading">
+          <button
+            type="button"
+            onClick={() => setFutureModule(productsModule)}
+            className="w-full rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <Card className="gap-3 border-emerald-200 bg-emerald-50/60 py-5 transition-colors hover:bg-emerald-50">
+              <CardHeader className="px-5">
+                <div className="mb-2 flex size-11 items-center justify-center rounded-lg bg-emerald-100 text-emerald-900 ring-1 ring-emerald-200">
+                  <PackageIcon className="size-5" aria-hidden />
+                </div>
+                <CardTitle id="express-cta-heading" className="text-lg">
+                  Add Products & Services
+                </CardTitle>
+                <CardDescription>
+                  You are ready to operate. Start by adding what you sell —
+                  advanced configuration can wait.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="px-5">
+                <p className="text-xs font-medium text-emerald-900">
+                  Open Products & Services
+                </p>
+              </CardContent>
+            </Card>
+          </button>
+        </section>
+      ) : null}
+
       <section aria-labelledby="kpi-heading" className="space-y-3">
         <div className="flex items-center gap-2">
           <ActivityIcon className="size-5 text-foreground" aria-hidden />
@@ -309,7 +376,7 @@ export function BusinessDashboard({ data }: BusinessDashboardProps) {
           <CardContent className="grid gap-3 pt-6 sm:grid-cols-2 lg:grid-cols-3">
             <SummaryItem
               icon={FactoryIcon}
-              label="Industry"
+              label="Industry Type"
               value={data.industryName}
             />
             <SummaryItem
@@ -341,38 +408,41 @@ export function BusinessDashboard({ data }: BusinessDashboardProps) {
         </Card>
       </section>
 
-      <section aria-labelledby="quick-actions-heading" className="space-y-3">
+      <section aria-labelledby="operations-heading" className="space-y-3">
         <div className="flex items-center gap-2">
-          <LayoutDashboardIcon className="size-5" aria-hidden />
-          <h2 id="quick-actions-heading" className="text-lg font-semibold">
-            Quick Actions
+          <ShoppingBagIcon className="size-5" aria-hidden />
+          <h2 id="operations-heading" className="text-lg font-semibold">
+            Business Operations
           </h2>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <Link
-            href="/settings"
-            prefetch={false}
-            className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <Card className="h-full gap-3 py-4 transition-colors hover:bg-muted/30">
-              <CardHeader className="px-4">
-                <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200">
-                  <Settings2Icon className="size-5" aria-hidden />
-                </div>
-                <CardTitle className="text-base">Business Settings</CardTitle>
-                <CardDescription>
-                  Configure how this business operates.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="px-4">
-                <p className="text-xs font-medium text-emerald-800">
-                  Open settings
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
-
-          {FUTURE_MODULES.map((action) => {
+          {AVAILABLE_OPERATION_MODULES.map((action) => {
+            const Icon = action.icon;
+            return (
+              <Link
+                key={action.id}
+                href={action.href}
+                prefetch={false}
+                className="rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <Card className="h-full gap-3 py-4 transition-colors hover:bg-muted/30">
+                  <CardHeader className="px-4">
+                    <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200">
+                      <Icon className="size-5" aria-hidden />
+                    </div>
+                    <CardTitle className="text-base">{action.title}</CardTitle>
+                    <CardDescription>{action.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="px-4">
+                    <p className="text-xs font-medium text-emerald-800">
+                      Open Parties
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
+          {OPERATION_MODULES.map((action) => {
             const Icon = action.icon;
             return (
               <button
@@ -391,7 +461,7 @@ export function BusinessDashboard({ data }: BusinessDashboardProps) {
                   </CardHeader>
                   <CardContent className="px-4">
                     <p className="text-xs font-medium text-muted-foreground">
-                      Tap to learn more
+                      Tap to open
                     </p>
                   </CardContent>
                 </Card>
@@ -401,124 +471,108 @@ export function BusinessDashboard({ data }: BusinessDashboardProps) {
         </div>
       </section>
 
-      <section aria-labelledby="business-health-heading" className="space-y-3">
+      <section aria-labelledby="configuration-heading" className="space-y-3">
         <div className="flex items-center gap-2">
-          <ActivityIcon className="size-5" aria-hidden />
-          <h2 id="business-health-heading" className="text-lg font-semibold">
-            Business Health
+          <Settings2Icon className="size-5" aria-hidden />
+          <h2 id="configuration-heading" className="text-lg font-semibold">
+            Business Configuration
           </h2>
         </div>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Profile Completion</CardTitle>
-            <CardDescription>
-              {data.profileCompletionPercent}% complete based on BP-001 setup
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="h-2 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-emerald-600 transition-all"
-                style={{ width: `${data.profileCompletionPercent}%` }}
-              />
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Completed</p>
-                <ul className="space-y-2 text-sm">
-                  {data.healthCompleted.map((item) => (
-                    <li key={item.id} className="flex items-start gap-2">
-                      <span className="text-emerald-700" aria-hidden>
-                        ✓
-                      </span>
-                      <span>{item.label}</span>
-                    </li>
-                  ))}
-                </ul>
+
+        <div className="grid gap-3 lg:grid-cols-2">
+          <Link
+            href="/settings"
+            prefetch={false}
+            className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <Card className="h-full gap-3 py-4 transition-colors hover:bg-muted/30">
+              <CardHeader className="px-4">
+                <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200">
+                  <Settings2Icon className="size-5" aria-hidden />
+                </div>
+                <CardTitle className="text-base">Business Settings</CardTitle>
+                <CardDescription>
+                  Edit everything captured during onboarding.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="px-4">
+                <p className="text-xs font-medium text-emerald-800">
+                  Open Business Settings
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Card className="gap-3 py-4">
+            <CardHeader className="px-4">
+              <CardTitle className="text-base">Configuration Progress</CardTitle>
+              <CardDescription>
+                {data.profileCompletionPercent}% complete
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4 px-4">
+              <div className="h-2 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-emerald-600 transition-all"
+                  style={{ width: `${data.profileCompletionPercent}%` }}
+                />
               </div>
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Remaining</p>
-                {data.healthRemaining.length > 0 ? (
-                  <ul className="space-y-2 text-sm">
-                    {data.healthRemaining.map((item) => (
-                      <li key={item.id} className="flex items-start gap-2">
-                        <span className="text-muted-foreground" aria-hidden>
-                          ○
-                        </span>
-                        <span>{item.label}</span>
-                      </li>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Completed</p>
+                  <ul className="space-y-1">
+                    {data.configurationCompleted.map((item) => (
+                      <ConfigLinkRow key={item.id} item={item} done />
                     ))}
                   </ul>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    Nothing remaining — looking healthy.
-                  </p>
-                )}
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Remaining</p>
+                  {data.configurationRemaining.length > 0 ? (
+                    <ul className="space-y-1">
+                      {data.configurationRemaining.map((item) => (
+                        <ConfigLinkRow key={item.id} item={item} done={false} />
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Nothing remaining — looking healthy.
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
+            </CardContent>
+          </Card>
+        </div>
 
-      <section
-        aria-labelledby="setup-progress-heading"
-        className="grid gap-4 lg:grid-cols-2"
-      >
-        <div className="space-y-3">
-          <h2 id="setup-progress-heading" className="text-lg font-semibold">
-            Setup Progress
-          </h2>
+        {data.configurationRemaining.length > 0 ? (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Completed milestones</CardTitle>
+              <CardTitle className="text-base">Pending Configuration</CardTitle>
               <CardDescription>
-                Onboarding steps already finished for this business.
+                Open any item to configure it now.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-2 text-sm">
-                {data.completedMilestones.map((item) => (
-                  <li key={item.id} className="flex items-start gap-2">
-                    <span className="text-emerald-700" aria-hidden>
-                      ✓
-                    </span>
-                    <span>{item.label}</span>
+              <ul className="grid gap-2 sm:grid-cols-2">
+                {data.configurationRemaining.map((item) => (
+                  <li key={`pending-${item.id}`}>
+                    <Link
+                      href={item.href}
+                      prefetch={false}
+                      className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm transition-colors hover:bg-muted/40"
+                    >
+                      <span>{item.label}</span>
+                      <span className="text-xs text-muted-foreground">
+                        Configure
+                      </span>
+                    </Link>
                   </li>
                 ))}
               </ul>
             </CardContent>
           </Card>
-        </div>
-
-        <div className="space-y-3">
-          <h2 className="text-lg font-semibold">Optional remaining</h2>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Recommended next steps</CardTitle>
-              <CardDescription>
-                Optional setup you can complete later without blocking operations.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {data.optionalRemaining.length > 0 ? (
-                <ul className="space-y-2 text-sm">
-                  {data.optionalRemaining.map((item) => (
-                    <li key={item.id} className="flex items-start gap-2">
-                      <span className="text-muted-foreground" aria-hidden>
-                        ○
-                      </span>
-                      <span>{item.label}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  All recommended optional setup is complete.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        ) : null}
       </section>
 
       <section aria-labelledby="notifications-heading" className="space-y-3">

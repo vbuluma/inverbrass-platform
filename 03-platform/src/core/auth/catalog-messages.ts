@@ -18,11 +18,11 @@ export const CATALOG_EMPTY_MESSAGES = {
   countries:
     "Country options are not available right now. Please try again later or contact support.",
   industries:
-    "Industry solutions are not available right now. Please try again later or contact support.",
+    "Industry Types are not available right now. Please try again later or contact support.",
   businessTypes:
     "Business template options are not available right now. Please try again later or contact support.",
   businessTemplatesForIndustry:
-    "No business templates are available for the selected industry solution. Choose another industry or contact support.",
+    "No business templates are available for the selected Industry Type. Choose another industry or contact support.",
   securityQuestions:
     "Security questions are not available right now. Please try again later or contact support.",
   currencies:

@@ -1,24 +1,18 @@
 /**
  * Purpose:
- * Business Settings — view BP-001 configuration for the active business.
+ * Business Settings — permanent home for onboarding configuration.
  *
  * Design rationale:
- * Operational settings live inside the business context (not Platform Home).
- * This page surfaces configuration already captured during setup.
- *
- * Why this exists:
- * Dashboard Quick Action "Business Settings" needs an existing BP-001 destination.
+ * Every setup step remains editable after activation via manage mode.
+ * Forms are not duplicated — sections deep-link into `/setup/[step]?manage=1`.
  */
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   ArrowLeftIcon,
-  Building2Icon,
-  Globe2Icon,
-  ReceiptIcon,
+  ArrowRightIcon,
   Settings2Icon,
-  WalletCardsIcon,
 } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
@@ -29,35 +23,43 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getSetupReviewAction } from "@/modules/business/onboarding/actions/setup-actions";
 import { cn } from "@/lib/utils";
+import {
+  getSetupProgressAction,
+  getSetupReviewAction,
+} from "@/modules/business/onboarding/actions/setup-actions";
+import { BUSINESS_SETTINGS_SECTIONS } from "@/modules/business/onboarding/configuration-catalog";
+import { ONBOARDING_PROFILE_LABELS } from "@/modules/business/onboarding/onboarding-profiles";
+import { OnboardingProfileForm } from "./onboarding-profile-form";
 
-function SettingRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex flex-col gap-1 border-b border-border py-3 last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
-      <dt className="text-sm text-muted-foreground">{label}</dt>
-      <dd className="text-sm font-medium text-foreground">{value}</dd>
-    </div>
-  );
-}
+const SECTION_DESCRIPTIONS: Record<string, string> = {
+  profile: "Legal name, trading name, contact, and address.",
+  classification: "Industry Type and Business Type.",
+  "country-currency": "Operating country and base currency.",
+  operations: "Payments and related operating preferences.",
+  branches: "Head office and additional locations.",
+  employees: "Team members and roles.",
+  tax: "Enable tax, default tax name, and rate.",
+  receipts: "Receipt prefix, footer, and logo display.",
+  ai: "AI Assistant preference for this business.",
+  loyalty: "Loyalty programme preference.",
+  integrations: "External integrations arrive in later Build Packs.",
+  security: "Security controls arrive in later Build Packs.",
+  "onboarding-profile": "Express, Standard, or Enterprise setup path.",
+};
 
 export default async function BusinessSettingsPage() {
-  const review = await getSetupReviewAction();
+  const [review, progress] = await Promise.all([
+    getSetupReviewAction(),
+    getSetupProgressAction(),
+  ]);
 
-  if (!review.success) {
+  if (!review.success || !progress.success) {
     redirect("/dashboard");
   }
 
   const data = review.data;
-  const paymentMethods = [
-    data.paymentMethods.cashEnabled ? "Cash" : null,
-    data.paymentMethods.mobileMoneyEnabled ? "Mobile Money" : null,
-    data.paymentMethods.bankTransferEnabled ? "Bank Transfer" : null,
-    data.paymentMethods.cardEnabled ? "Card" : null,
-    data.paymentMethods.creditSalesEnabled ? "Credit Sales" : null,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  const onboardingProfile = progress.data.onboardingProfile ?? "enterprise";
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
@@ -82,123 +84,84 @@ export default async function BusinessSettingsPage() {
               Business Settings
             </h1>
             <p className="text-sm text-muted-foreground">
-              Configuration for {data.businessName}. Advanced editing arrives in
-              later Build Packs.
+              Permanent configuration for {data.businessName}. Edits reuse the
+              same forms as Business Setup.
             </p>
           </div>
         </div>
       </div>
 
-      <Card>
+      <Card id="onboarding-profile">
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <Building2Icon className="size-4" aria-hidden />
-            <CardTitle className="text-base">Business profile</CardTitle>
-          </div>
-          <CardDescription>Identity and classification</CardDescription>
+          <CardTitle className="text-base">Onboarding Profile</CardTitle>
+          <CardDescription>
+            Current profile: {ONBOARDING_PROFILE_LABELS[onboardingProfile]}.
+            Changing the profile updates mandatory vs optional configuration
+            guidance — it does not restart onboarding.
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <dl>
-            <SettingRow label="Business name" value={data.businessName} />
-            <SettingRow label="Trading name" value={data.tradingName} />
-            <SettingRow label="Industry" value={data.industryName} />
-            <SettingRow label="Business type" value={data.businessTypeName} />
-            <SettingRow label="Email" value={data.email || "—"} />
-            <SettingRow
-              label="Address"
-              value={[data.physicalAddress, data.city, data.county]
-                .filter(Boolean)
-                .join(", ") || "—"}
-            />
-          </dl>
+          <OnboardingProfileForm currentProfile={onboardingProfile} />
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Globe2Icon className="size-4" aria-hidden />
-            <CardTitle className="text-base">Operating context</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <dl>
-            <SettingRow label="Country" value={data.countryName} />
-            <SettingRow
-              label="Base currency"
-              value={data.baseCurrencyCode || "—"}
-            />
-            <SettingRow
-              label="Additional currencies"
-              value={
-                data.additionalCurrencyCodes.length > 0
-                  ? data.additionalCurrencyCodes.join(", ")
-                  : "None"
-              }
-            />
-            <SettingRow
-              label="Branches"
-              value={
-                data.branches.length > 0
-                  ? data.branches.map((branch) => branch.name).join(", ")
-                  : "None"
-              }
-            />
-          </dl>
-        </CardContent>
-      </Card>
+      <section aria-labelledby="settings-sections-heading" className="space-y-3">
+        <h2 id="settings-sections-heading" className="text-lg font-semibold">
+          Configuration
+        </h2>
+        <div className="grid gap-3">
+          {BUSINESS_SETTINGS_SECTIONS.filter(
+            (section) => section.id !== "onboarding-profile"
+          ).map((section) => {
+            const isPlaceholder =
+              section.id === "integrations" || section.id === "security";
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <WalletCardsIcon className="size-4" aria-hidden />
-            <CardTitle className="text-base">Payments & tax</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <dl>
-            <SettingRow
-              label="Payment methods"
-              value={paymentMethods || "None"}
-            />
-            <SettingRow
-              label="Tax"
-              value={
-                data.receipt.taxEnabled
-                  ? `${data.receipt.defaultTaxName || "VAT"} · ${
-                      data.receipt.defaultTaxRate
-                    }%`
-                  : "Disabled"
-              }
-            />
-          </dl>
-        </CardContent>
-      </Card>
+            if (isPlaceholder) {
+              return (
+                <Card
+                  key={section.id}
+                  id={section.id}
+                  className="opacity-90"
+                >
+                  <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
+                    <div>
+                      <CardTitle className="text-base">{section.label}</CardTitle>
+                      <CardDescription>
+                        {SECTION_DESCRIPTIONS[section.id]}
+                      </CardDescription>
+                    </div>
+                    <span className="text-xs text-muted-foreground">Soon</span>
+                  </CardHeader>
+                </Card>
+              );
+            }
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <ReceiptIcon className="size-4" aria-hidden />
-            <CardTitle className="text-base">Receipt branding</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <dl>
-            <SettingRow
-              label="Receipt prefix"
-              value={data.receipt.receiptPrefix}
-            />
-            <SettingRow
-              label="Receipt footer"
-              value={data.receipt.receiptFooter || "—"}
-            />
-            <SettingRow
-              label="Show logo on receipt"
-              value={data.receipt.showLogoOnReceipt ? "Yes" : "No"}
-            />
-          </dl>
-        </CardContent>
-      </Card>
+            return (
+              <Link
+                key={section.id}
+                href={section.href}
+                prefetch={false}
+                className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <Card className="transition-colors hover:bg-muted/30">
+                  <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
+                    <div>
+                      <CardTitle className="text-base">{section.label}</CardTitle>
+                      <CardDescription>
+                        {SECTION_DESCRIPTIONS[section.id]}
+                      </CardDescription>
+                    </div>
+                    <ArrowRightIcon
+                      className="size-4 shrink-0 text-muted-foreground"
+                      aria-hidden
+                    />
+                  </CardHeader>
+                </Card>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
     </main>
   );
 }

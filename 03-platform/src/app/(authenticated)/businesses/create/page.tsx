@@ -1,6 +1,6 @@
 /**
  * Purpose:
- * Start Business Registration: Industry Solution → Business Template → Create.
+ * Start Business Registration: Industry Type → Business Template → Create.
  *
  * Design rationale:
  * Prefills proposed business name from Platform Registration. Templates are

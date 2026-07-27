@@ -111,7 +111,51 @@ Layer 1 – Core Platform ServicesS
 Engine ID	Core Engine	Purpose
 ENG-001	Authentication Engine	Identity, Login, PIN, MFA
 ENG-002	Authorization Engine	Roles & Permissions
-ENG-003	Configuration Engine	Stores configurable behaviour
+ENG-003a	Configuration Engine	Stores configurable behaviour
+ENG-003b Localization & Regulatory Engine: Handles-Country-, region-, and jurisdiction-specific configuration and regulatory behavior(It would centrally manage:
+
+Localization
+Countries
+States / Counties / Provinces
+Cities
+Languages
+Time zones
+Date & time formats
+Number formats
+Currency formats
+Regulatory
+Tax policies
+Invoice policies
+Receipt numbering
+Business registration rules
+Identity document types
+Financial year definitions
+Public holidays
+Compliance requirements
+Country Integrations
+Kenya eTIMS
+KRA PIN validation
+Uganda URA
+Tanzania TRA
+Zambia ZRA
+Future government APIs
+Feature Policies
+
+Enable/disable features by:
+
+Country
+Industry
+Business Type
+Subscription
+Individual Business
+
+For example:
+
+Feature	Kenya	Uganda	Tanzania
+eTIMS	✅	❌	❌
+Multi Currency	✅	✅	✅
+Embedded Finance	✅	✅	❌)
+
 ENG-004	Rules Engine	Executes deterministic business rules
 ENG-005	Workflow Engine	Maker-Checker, approvals
 ENG-006	Payment Engine	Cash, M-Pesa, Cards, Credit, Split Payments
@@ -125,6 +169,7 @@ ENG-013	Audit Engine	Immutable audit trail
 ENG-014	Offline Sync Engine	Offline-first synchronization
 ENG-015	Document Engine	PDF, Attachments, Contracts
 ENG-016	Search Engine	Global search
+ENG-017 Localization & Regulatory Engine: Handles-Country-, region-, and jurisdiction-specific configuration and regulatory behavior
 
 | Principle |          Description                                                                  |
 ------------------------------------------------------------------------------------- |

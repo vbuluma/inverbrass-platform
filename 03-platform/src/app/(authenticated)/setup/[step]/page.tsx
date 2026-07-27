@@ -7,6 +7,9 @@
  *
  * Implementation Package:
  * BP-001 / IP-006 – Business Setup Wizard, Configuration & Activation
+ *
+ * Manage mode (`?manage=1`) reuses the same step forms for Business Settings
+ * after activation — no duplicate settings screens.
  */
 
 import { notFound, redirect } from "next/navigation";
@@ -27,6 +30,7 @@ import { normalizeSetupStep } from "@/modules/business/onboarding/services/setup
 
 type SetupStepPageProps = {
   params: Promise<{ step: string }>;
+  searchParams: Promise<{ manage?: string }>;
 };
 
 /** Redirect to Platform Home only for session / business-context failures. */
@@ -51,13 +55,20 @@ function isUnrecoverableSetupFailure(result: {
   );
 }
 
-export default async function SetupStepPage({ params }: SetupStepPageProps) {
+export default async function SetupStepPage({
+  params,
+  searchParams,
+}: SetupStepPageProps) {
   const { step: rawStep } = await params;
+  const query = await searchParams;
+  const manageMode = query.manage === "1";
 
   // Legacy URLs (business-details, payment-methods, …) map to current steps.
   const normalized = normalizeSetupStep(rawStep);
   if (normalized && normalized !== rawStep && isRoutableSetupStep(normalized)) {
-    redirect(`/setup/${normalized}`);
+    redirect(
+      manageMode ? `/setup/${normalized}?manage=1` : `/setup/${normalized}`
+    );
   }
 
   if (!isRoutableSetupStep(rawStep)) {
@@ -99,8 +110,16 @@ export default async function SetupStepPage({ params }: SetupStepPageProps) {
     );
   }
 
-  if (progressResult.data.isActivated) {
+  if (progressResult.data.isActivated && !manageMode) {
     redirect("/dashboard");
+  }
+
+  // Welcome / Review belong to first-time activation, not Settings maintenance.
+  if (
+    manageMode &&
+    (rawStep === SETUP_STEPS.WELCOME || rawStep === SETUP_STEPS.REVIEW)
+  ) {
+    redirect("/settings");
   }
 
   const reviewResult =
@@ -133,6 +152,7 @@ export default async function SetupStepPage({ params }: SetupStepPageProps) {
   return (
     <SetupWizard
       step={rawStep}
+      manageMode={manageMode}
       progress={progressResult.data}
       countries={catalog.countries}
       currencies={catalog.currencies}

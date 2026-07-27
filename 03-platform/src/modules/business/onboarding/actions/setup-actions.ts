@@ -47,6 +47,7 @@ import {
   type SetupStep,
 } from "@/modules/business/onboarding/constants";
 import { SetupError } from "@/modules/business/onboarding/errors";
+import { isOnboardingProfileCode } from "@/modules/business/onboarding/onboarding-profiles";
 import { createBusinessSetupService } from "@/modules/business/onboarding/services/business-setup-service";
 import type {
   AdditionalCurrenciesPayload,
@@ -460,6 +461,30 @@ export async function getBusinessDashboardAction(): Promise<
     });
 
     return { success: true, data };
+  } catch (error) {
+    return toActionError(error);
+  }
+}
+
+/**
+ * WHAT: Persist Express / Standard / Enterprise onboarding profile.
+ * WHY: Owners may change profile under Business Settings without re-onboarding.
+ */
+export async function setOnboardingProfileAction(
+  profile: "express" | "standard" | "enterprise"
+): Promise<AuthActionResult<{ onboardingProfile: string }>> {
+  try {
+    if (!isOnboardingProfileCode(profile)) {
+      throw new SetupError(
+        "INVALID_INPUT",
+        "Select a valid onboarding profile."
+      );
+    }
+
+    const context = await requireSetupContext();
+    const setupService = createBusinessSetupService();
+    await setupService.setOnboardingProfile(context, profile);
+    return { success: true, data: { onboardingProfile: profile } };
   } catch (error) {
     return toActionError(error);
   }

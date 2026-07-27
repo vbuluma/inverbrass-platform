@@ -32,6 +32,11 @@ import { business } from "./business";
  * Kept in the schema module so `src/db` does not depend on `src/modules`.
  */
 export type BusinessConfigurationSettingsJson = {
+  /**
+   * Onboarding profile for the single setup engine (express | standard | enterprise).
+   * Optional for legacy rows — defaults to enterprise behaviour when absent.
+   */
+  onboardingProfile?: "express" | "standard" | "enterprise";
   paymentMethods: {
     cashEnabled: boolean;
     mobileMoneyEnabled: boolean;

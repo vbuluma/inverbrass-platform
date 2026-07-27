@@ -29,6 +29,11 @@ import {
   SETUP_STEPS,
   SETUP_WIZARD_VERSION,
 } from "@/modules/business/onboarding/constants";
+import {
+  ONBOARDING_PROFILES,
+  getMandatoryStepsForProfile,
+  resolveDefaultOnboardingProfile,
+} from "@/modules/business/onboarding/onboarding-profiles";
 import { createBusinessSetupService } from "@/modules/business/onboarding/services/business-setup-service";
 import {
   applyCompletedStep,
@@ -67,6 +72,8 @@ const REQUIRED_FILES = [
   "src/modules/business/onboarding/validators/setup-validators.ts",
   "src/modules/business/onboarding/constants.ts",
   "src/modules/business/onboarding/constants/branch-types.ts",
+  "src/modules/business/onboarding/onboarding-profiles.ts",
+  "src/modules/business/onboarding/configuration-catalog.ts",
   "src/modules/business/onboarding/utils/setup-step-timing.ts",
   "src/modules/business/onboarding/components/setup-wizard.tsx",
   "src/modules/business/onboarding/components/setup-progress-indicator.tsx",
@@ -78,6 +85,8 @@ const REQUIRED_FILES = [
   "src/app/(authenticated)/setup/layout.tsx",
   "src/app/(authenticated)/setup/[step]/page.tsx",
   "src/app/(authenticated)/setup/activated/page.tsx",
+  "src/app/(authenticated)/(app)/settings/page.tsx",
+  "src/app/(authenticated)/(app)/dashboard/business-dashboard.tsx",
   "src/db/schema/business-profile.ts",
   "src/db/schema/business-operating-currency.ts",
   "src/db/schema/business-configuration.ts",
@@ -267,6 +276,22 @@ function checkStepCatalogue(): CheckResult[] {
     {
       name: "catalogue:wizardVersion",
       ok: SETUP_WIZARD_VERSION === "2.0.0",
+    },
+    {
+      name: "catalogue:expressSkipsBaseCurrencyMandatory",
+      ok: !getMandatoryStepsForProfile(ONBOARDING_PROFILES.EXPRESS).includes(
+        SETUP_STEPS.BASE_CURRENCY
+      ),
+    },
+    {
+      name: "catalogue:retailDefaultsToExpress",
+      ok: resolveDefaultOnboardingProfile("RETAIL") === ONBOARDING_PROFILES.EXPRESS,
+    },
+    {
+      name: "catalogue:enterpriseMatchesLegacyMandatory",
+      ok: getMandatoryStepsForProfile(ONBOARDING_PROFILES.ENTERPRISE).every(
+        (step) => MANDATORY_SETUP_STEPS.includes(step)
+      ),
     },
     {
       name: "catalogue:legacyBusinessDetailsMapsToProfile",

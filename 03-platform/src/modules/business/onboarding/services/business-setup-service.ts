@@ -78,7 +78,6 @@ import {
   SETUP_STEPS,
   SETUP_WIZARD_VERSION,
   type SetupStep,
-  MANDATORY_SETUP_STEPS,
   OPTIONAL_SETUP_STEPS,
 } from "@/modules/business/onboarding/constants";
 import { BRANCH_TYPES } from "@/modules/business/onboarding/constants/branch-types";
@@ -87,6 +86,16 @@ import {
   SETUP_USER_MESSAGES,
   SetupError,
 } from "@/modules/business/onboarding/errors";
+import { DASHBOARD_CONFIGURATION_ITEMS } from "@/modules/business/onboarding/configuration-catalog";
+import {
+  ONBOARDING_PROFILES,
+  getMandatoryStepsForProfile,
+  getOnboardingProfileDefinition,
+  getOptionalStepsForProfile,
+  isOnboardingProfileCode,
+  isStepOptionalForProfile,
+  type OnboardingProfileCode,
+} from "@/modules/business/onboarding/onboarding-profiles";
 import {
   createBranchRepository,
   type BranchRepository,
@@ -112,6 +121,7 @@ import {
   hasDuplicateOperatingCurrency,
   isSetupStep,
   mergeConfigurationSettings,
+  normalizeOnboardingProfile,
   resolveResumeStep,
   toConfigurationView,
   uniqueSteps,
@@ -168,6 +178,7 @@ export class BusinessSetupService {
     context: CurrentBusinessContext
   ): Promise<SetupProgressView> {
     const businessRow = await this.requireDraftOrActiveBusiness(context.businessId);
+    const profile = await this.getOnboardingProfile(context.businessId);
 
     if (businessRow.statusCode === BUSINESS_STATUS.ACTIVE) {
       return {
@@ -181,6 +192,7 @@ export class BusinessSetupService {
         progressPercent: 100,
         isActivated: true,
         wizardVersion: SETUP_WIZARD_VERSION,
+        onboardingProfile: profile,
       };
     }
 
@@ -188,7 +200,7 @@ export class BusinessSetupService {
       context.businessId
     );
     const completedSteps = uniqueSteps(progress.completedSteps as string[]);
-    const resumeStep = resolveResumeStep(completedSteps);
+    const resumeStep = resolveResumeStep(completedSteps, profile);
 
     return {
       businessId: businessRow.id,
@@ -203,10 +215,45 @@ export class BusinessSetupService {
           : null,
       completedSteps,
       resumeStep,
-      progressPercent: calculateProgressPercent(completedSteps),
+      progressPercent: calculateProgressPercent(completedSteps, profile),
       isActivated: false,
       wizardVersion: progress.wizardVersion || SETUP_WIZARD_VERSION,
+      onboardingProfile: profile,
     };
+  }
+
+  /**
+   * WHAT: Resolve the business onboarding profile from configuration metadata.
+   * WHY: One setup engine — profiles only change mandatory/optional step sets.
+   */
+  async getOnboardingProfile(
+    businessId: string
+  ): Promise<OnboardingProfileCode> {
+    const settings =
+      await this.configurationRepository.findSettingsByBusinessId(businessId);
+    return normalizeOnboardingProfile(settings?.onboardingProfile);
+  }
+
+  /**
+   * WHAT: Persist onboarding profile (Business Settings + create-time default).
+   * WHY: Owners may change Express/Standard/Enterprise without re-onboarding.
+   */
+  async setOnboardingProfile(
+    context: CurrentBusinessContext,
+    profile: OnboardingProfileCode
+  ): Promise<void> {
+    await this.requireEditableBusiness(context.businessId);
+
+    if (!isOnboardingProfileCode(profile)) {
+      throw new SetupError(
+        SETUP_ERROR_CODES.INVALID_INPUT,
+        "Select a valid onboarding profile."
+      );
+    }
+
+    await this.patchConfigurationSettings(context.businessId, {
+      onboardingProfile: profile,
+    });
   }
 
   async completeWelcome(
@@ -227,7 +274,7 @@ export class BusinessSetupService {
     payload: BusinessDetailsPayload
   ): Promise<SetupProgressView> {
     return withSetupStepTiming("Step 2 - Save Business Profile", async () => {
-      await this.requireDraftBusiness(context.businessId);
+      await this.requireEditableBusiness(context.businessId);
 
       const parsed = businessDetailsSchema.safeParse(payload);
 
@@ -293,7 +340,7 @@ export class BusinessSetupService {
   }
 
   /**
-   * WHAT: Persist Industry Solution and Business Type (template).
+   * WHAT: Persist Industry Type and Business Type (template).
    * WHY: Business Types are filtered by Industry; template = selected type.
    */
   async saveBusinessClassification(
@@ -303,7 +350,7 @@ export class BusinessSetupService {
     return withSetupStepTiming(
       "Step 3 - Save Business Classification",
       async () => {
-        await this.requireDraftBusiness(context.businessId);
+        await this.requireEditableBusiness(context.businessId);
 
         const parsed = businessClassificationSchema.safeParse(payload);
 
@@ -346,7 +393,7 @@ export class BusinessSetupService {
     payload: CountryStepPayload
   ): Promise<SetupProgressView> {
     return withSetupStepTiming("Step 4 - Save Country", async () => {
-      await this.requireDraftBusiness(context.businessId);
+      const businessRow = await this.requireEditableBusiness(context.businessId);
 
       const parsed = countryStepSchema.safeParse(payload);
 
@@ -387,6 +434,12 @@ export class BusinessSetupService {
         });
       });
 
+      // Maintenance saves on ACTIVE businesses must not mutate wizard progress.
+      if (businessRow.statusCode === BUSINESS_STATUS.ACTIVE) {
+        return this.getSetupProgress(context);
+      }
+
+      const profile = await this.getOnboardingProfile(context.businessId);
       const progress = await this.progressRepository.ensureProgress(
         context.businessId
       );
@@ -403,11 +456,20 @@ export class BusinessSetupService {
         priorSteps.push(SETUP_STEPS.COUNTRY);
       }
 
+      // Express: country seeds base currency — auto-complete currency step.
+      if (
+        profile === ONBOARDING_PROFILES.EXPRESS &&
+        !priorSteps.includes(SETUP_STEPS.BASE_CURRENCY)
+      ) {
+        priorSteps.push(SETUP_STEPS.BASE_CURRENCY);
+      }
+
       const completedAt = new Date();
+      const resumeStep = resolveResumeStep(priorSteps, profile);
 
       await this.progressRepository.replaceProgress({
         businessId: context.businessId,
-        currentStep: SETUP_STEPS.BASE_CURRENCY,
+        currentStep: resumeStep,
         completedSteps: priorSteps,
         lastCompletedStep: SETUP_STEPS.COUNTRY,
         completedBy: context.platformUserId,
@@ -427,7 +489,7 @@ export class BusinessSetupService {
     payload: BaseCurrencyPayload
   ): Promise<SetupProgressView> {
     return withSetupStepTiming("Step 5 - Save Base Currency", async () => {
-      await this.requireDraftBusiness(context.businessId);
+      await this.requireEditableBusiness(context.businessId);
       await this.assertCountrySelected(context.businessId);
 
       const parsed = baseCurrencySchema.safeParse(payload);
@@ -525,7 +587,7 @@ export class BusinessSetupService {
     return withSetupStepTiming(
       "Step 6 - Save Additional Currencies",
       async () => {
-        await this.requireDraftBusiness(context.businessId);
+        await this.requireEditableBusiness(context.businessId);
         await this.assertCountrySelected(context.businessId);
 
         const parsed = additionalCurrenciesSchema.safeParse(payload);
@@ -607,7 +669,16 @@ export class BusinessSetupService {
     return withSetupStepTiming(`Skip optional - ${step}`, async () => {
       await this.requireDraftBusiness(context.businessId);
 
-      if (!OPTIONAL_SETUP_STEPS.includes(step)) {
+      const profile = await this.getOnboardingProfile(context.businessId);
+      const optionalForProfile = new Set([
+        ...OPTIONAL_SETUP_STEPS,
+        ...getOptionalStepsForProfile(profile),
+      ]);
+
+      if (
+        !optionalForProfile.has(step) ||
+        !isStepOptionalForProfile(profile, step)
+      ) {
         throw new SetupError(
           SETUP_ERROR_CODES.STEP_NOT_ALLOWED,
           "Only optional setup steps may be skipped."
@@ -627,7 +698,7 @@ export class BusinessSetupService {
     payload: BusinessOperationsPayload
   ): Promise<SetupProgressView> {
     return withSetupStepTiming("Step 7 - Save Business Operations", async () => {
-      await this.requireDraftBusiness(context.businessId);
+      await this.requireEditableBusiness(context.businessId);
 
       const parsed = businessOperationsSchema.safeParse(payload);
 
@@ -780,7 +851,7 @@ export class BusinessSetupService {
     payload: BranchSetupPayload
   ): Promise<SetupProgressView> {
     return withSetupStepTiming("Step 8 - Save Branch Setup", async () => {
-      const businessRow = await this.requireDraftBusiness(context.businessId);
+      const businessRow = await this.requireEditableBusiness(context.businessId);
       const parsed = branchSetupSchema.safeParse(payload);
 
       if (!parsed.success) {
@@ -917,7 +988,7 @@ export class BusinessSetupService {
     credentials: CreatedEmployeeCredential[];
   }> {
     return withSetupStepTiming("Step 9 - Save Employee Setup", async () => {
-      const businessRow = await this.requireDraftBusiness(context.businessId);
+      const businessRow = await this.requireEditableBusiness(context.businessId);
       const parsed = employeeSetupSchema.safeParse(payload);
 
       if (!parsed.success) {
@@ -1061,12 +1132,13 @@ export class BusinessSetupService {
     return withSetupStepTiming("Step 10 - Complete Review", async () => {
       await this.requireDraftBusiness(context.businessId);
 
+      const profile = await this.getOnboardingProfile(context.businessId);
       const progress = await this.progressRepository.ensureProgress(
         context.businessId
       );
       const completedSteps = uniqueSteps(progress.completedSteps as string[]);
 
-      const mandatoryExceptReview = MANDATORY_SETUP_STEPS.filter(
+      const mandatoryExceptReview = getMandatoryStepsForProfile(profile).filter(
         (step) => step !== SETUP_STEPS.REVIEW
       );
       const missing = mandatoryExceptReview.filter(
@@ -1096,16 +1168,22 @@ export class BusinessSetupService {
       const progress = await this.progressRepository.ensureProgress(
         context.businessId
       );
+      const profile = await this.getOnboardingProfile(context.businessId);
       const completedSteps = uniqueSteps(progress.completedSteps as string[]);
 
-      if (!areMandatoryStepsComplete(completedSteps)) {
+      if (!areMandatoryStepsComplete(completedSteps, profile)) {
         throw new SetupError(
           SETUP_ERROR_CODES.MANDATORY_INCOMPLETE,
           SETUP_USER_MESSAGES.MANDATORY_INCOMPLETE
         );
       }
 
-      if (!completedSteps.includes(SETUP_STEPS.BASE_CURRENCY)) {
+      // Enterprise/Standard require explicit base-currency completion;
+      // Express seeds currency from country and may auto-mark the step.
+      if (
+        profile !== ONBOARDING_PROFILES.EXPRESS &&
+        !completedSteps.includes(SETUP_STEPS.BASE_CURRENCY)
+      ) {
         throw new SetupError(
           SETUP_ERROR_CODES.BASE_CURRENCY_REQUIRED,
           SETUP_USER_MESSAGES.BASE_CURRENCY_REQUIRED
@@ -1270,76 +1348,54 @@ export class BusinessSetupService {
   ): Promise<BusinessDashboardView> {
     const progress = await this.getSetupProgress(context);
     const review = await this.getReviewSummary(context);
-    const profile = await this.getProfile(context.businessId);
+    const onboardingProfile = await this.getOnboardingProfile(
+      context.businessId
+    );
+    const profileDefinition = getOnboardingProfileDefinition(onboardingProfile);
 
-    const completedMilestones = [
-      { id: "profile", label: "Business profile" },
-      { id: "classification", label: "Industry & business type" },
-      { id: "country", label: "Operating country" },
-      { id: "currency", label: "Base currency" },
-      { id: "operations", label: "Business operations" },
-      { id: "branches", label: "Branch setup" },
-      { id: "activation", label: "Business activated" },
-    ];
-
-    const optionalRemaining: Array<{ id: string; label: string }> = [];
-
-    if (review.additionalCurrencyCodes.length === 0) {
-      optionalRemaining.push({
-        id: "additional-currencies",
-        label: "Add additional currencies (optional)",
-      });
-    }
-
-    if (review.employees.length === 0) {
-      optionalRemaining.push({
-        id: "employees",
-        label: "Add employees (optional)",
-      });
-    }
-
-    if (!review.aiAssistantEnabled) {
-      optionalRemaining.push({
-        id: "ai",
-        label: "Configure AI assistant (optional — future Build Pack)",
-      });
-    }
-
-    if (!review.loyaltyProgrammeEnabled) {
-      optionalRemaining.push({
-        id: "loyalty",
-        label: "Configure loyalty programme (optional — future Build Pack)",
-      });
-    }
-
-    // Business Health — BP-001 setup completeness for the operational dashboard.
-    const healthCompleted = [
-      { id: "profile", label: "Business Profile" },
-      { id: "country", label: "Country" },
-      { id: "currency", label: "Currency" },
-      { id: "branches", label: "Branches" },
-      { id: "activation", label: "Activation" },
-    ];
-
-    const healthRemaining: Array<{ id: string; label: string }> = [];
-    const hasLogo = Boolean(profile?.logoUrl?.trim());
     const hasReceiptBranding = Boolean(
       review.receipt.receiptFooter?.trim() ||
         (review.receipt.receiptPrefix &&
           review.receipt.receiptPrefix !== "RCPT")
     );
 
-    if (!hasLogo) {
-      healthRemaining.push({ id: "logo", label: "Business Logo" });
-    }
-    if (!hasReceiptBranding) {
-      healthRemaining.push({ id: "receipt", label: "Receipt Branding" });
+    const completionById: Record<string, boolean> = {
+      profile: Boolean(review.tradingName?.trim() || review.businessName.trim()),
+      classification: Boolean(review.industryName && review.businessTypeName),
+      country: Boolean(review.countryName),
+      currency: Boolean(review.baseCurrencyCode),
+      branches: review.branches.length > 0,
+      employees: review.employees.length > 0,
+      tax: review.receipt.taxEnabled,
+      receipts: hasReceiptBranding,
+      ai: review.aiAssistantEnabled,
+      loyalty: review.loyaltyProgrammeEnabled,
+    };
+
+    const configurationCompleted: BusinessDashboardView["configurationCompleted"] =
+      [];
+    const configurationRemaining: BusinessDashboardView["configurationRemaining"] =
+      [];
+
+    for (const item of DASHBOARD_CONFIGURATION_ITEMS) {
+      const done = completionById[item.id] ?? false;
+      if (done) {
+        configurationCompleted.push(item);
+      } else {
+        configurationRemaining.push(item);
+      }
     }
 
-    const healthTotal = healthCompleted.length + healthRemaining.length;
     const profileCompletionPercent = Math.round(
-      (healthCompleted.length / Math.max(healthTotal, 1)) * 100
+      (configurationCompleted.length /
+        Math.max(DASHBOARD_CONFIGURATION_ITEMS.length, 1)) *
+        100
     );
+
+    const expressProductsHint =
+      profileDefinition.postActivationCta === "products"
+        ? " Add Products & Services next to start selling."
+        : "";
 
     return {
       businessName: review.businessName || progress.businessName,
@@ -1353,16 +1409,16 @@ export class BusinessSetupService {
       baseCurrencyCode: review.baseCurrencyCode || "—",
       branchCount: review.branches.length,
       employeeCount: review.employees.length,
+      onboardingProfile,
+      postActivationCta: profileDefinition.postActivationCta,
       profileCompletionPercent,
-      healthCompleted,
-      healthRemaining,
-      completedMilestones,
-      optionalRemaining,
+      configurationCompleted,
+      configurationRemaining,
       notifications: [
         {
           id: "welcome",
           title: `Welcome to ${review.businessName || progress.businessName}`,
-          body: "Your business is active. Use this dashboard to run day-to-day operations. Manage your businesses from Platform Home.",
+          body: `Your business is active. Use this dashboard to run day-to-day operations.${expressProductsHint} Manage your businesses from Platform Home.`,
         },
         {
           id: "future-notifications",
@@ -1473,6 +1529,15 @@ export class BusinessSetupService {
     context: CurrentBusinessContext,
     step: SetupStep
   ): Promise<SetupProgressView> {
+    const businessStatus = await this.requireDraftOrActiveBusiness(
+      context.businessId
+    );
+
+    // Maintenance saves on ACTIVE businesses must not mutate wizard progress.
+    if (businessStatus.statusCode === BUSINESS_STATUS.ACTIVE) {
+      return this.getSetupProgress(context);
+    }
+
     const progress = await this.progressRepository.ensureProgress(
       context.businessId
     );
@@ -1483,15 +1548,18 @@ export class BusinessSetupService {
       currentStep: progress.currentStep,
     });
 
+    const profile = await this.getOnboardingProfile(context.businessId);
     const applied = applyCompletedStep(
       progress.completedSteps as string[],
-      step
+      step,
+      profile
     );
     const completedAt = new Date();
 
     console.info("[setup] transaction.start", {
       businessId: context.businessId,
       step,
+      profile,
       nextResumeStep: applied.resumeStep,
       nextCompletedSteps: applied.completedSteps,
     });
@@ -1555,6 +1623,7 @@ export class BusinessSetupService {
       progressPercent: applied.progressPercent,
       isActivated: false,
       wizardVersion: SETUP_WIZARD_VERSION,
+      onboardingProfile: profile,
     };
   }
 
@@ -1575,6 +1644,26 @@ export class BusinessSetupService {
     const row = await this.requireDraftOrActiveBusiness(businessId);
 
     if (row.statusCode !== BUSINESS_STATUS.DRAFT) {
+      throw new SetupError(
+        SETUP_ERROR_CODES.BUSINESS_NOT_DRAFT,
+        SETUP_USER_MESSAGES.BUSINESS_NOT_DRAFT
+      );
+    }
+
+    return row;
+  }
+
+  /**
+   * WHAT: Allow setup step saves during DRAFT onboarding or ACTIVE maintenance.
+   * WHY: Business Settings reuses the same setup forms after activation.
+   */
+  private async requireEditableBusiness(businessId: string) {
+    const row = await this.requireDraftOrActiveBusiness(businessId);
+
+    if (
+      row.statusCode !== BUSINESS_STATUS.DRAFT &&
+      row.statusCode !== BUSINESS_STATUS.ACTIVE
+    ) {
       throw new SetupError(
         SETUP_ERROR_CODES.BUSINESS_NOT_DRAFT,
         SETUP_USER_MESSAGES.BUSINESS_NOT_DRAFT

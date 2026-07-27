@@ -77,7 +77,7 @@ export async function getIndustriesAction(): Promise<
       success: false,
       error: {
         code: "PROVIDER_ERROR",
-        message: "We could not load industry solutions.",
+        message: "We could not load Industry Types.",
       },
     };
   }

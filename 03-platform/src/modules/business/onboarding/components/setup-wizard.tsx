@@ -52,7 +52,6 @@ import {
 import { SetupProgressIndicator } from "@/modules/business/onboarding/components/setup-progress-indicator";
 import {
   EMPLOYEE_SETUP_ROLE_CODES,
-  OPTIONAL_SETUP_STEPS,
   SETUP_STEP_ORDER,
   SETUP_STEPS,
   formatSetupWelcomeMessage,
@@ -62,6 +61,12 @@ import {
   BRANCH_TYPES,
   BRANCH_TYPE_OPTIONS,
 } from "@/modules/business/onboarding/constants/branch-types";
+import {
+  ONBOARDING_PROFILES,
+  getOnboardingProfileDefinition,
+  getOptionalStepsForProfile,
+  type OnboardingProfileCode,
+} from "@/modules/business/onboarding/onboarding-profiles";
 import { buildBranchCodeCandidate } from "@/modules/business/onboarding/services/setup-rules";
 import type {
   BranchSetupItemPayload,
@@ -86,6 +91,8 @@ function WelcomeStartSubmitButton() {
 
 type SetupWizardProps = {
   step: SetupStep;
+  /** When true, forms serve Business Settings maintenance (ACTIVE businesses). */
+  manageMode?: boolean;
   progress: SetupProgressView;
   countries: CountryOption[];
   currencies: CurrencyOption[];
@@ -325,10 +332,21 @@ export function SetupWizard(props: SetupWizardProps) {
     );
   }, [industryId, props.businessTypes]);
 
+  const manageMode = Boolean(props.manageMode);
+  const onboardingProfile: OnboardingProfileCode =
+    props.progress.onboardingProfile ?? ONBOARDING_PROFILES.ENTERPRISE;
+  const profileDefinition = getOnboardingProfileDefinition(onboardingProfile);
+  const optionalSteps = getOptionalStepsForProfile(onboardingProfile);
+
   function goTo(step: SetupStep) {
     // Hard navigation — router.push + router.refresh() raced and bounced
     // Welcome → Business Profile → Welcome, leaving buttons stuck pending.
-    window.location.assign(`/setup/${step}`);
+    const suffix = manageMode ? "?manage=1" : "";
+    window.location.assign(`/setup/${step}${suffix}`);
+  }
+
+  function returnToSettings() {
+    window.location.assign("/settings");
   }
 
   function handleResult(
@@ -346,6 +364,11 @@ export function SetupWizard(props: SetupWizardProps) {
       return;
     }
 
+    if (manageMode) {
+      returnToSettings();
+      return;
+    }
+
     goTo(
       result.data.resumeStep === SETUP_STEPS.COMPLETED
         ? SETUP_STEPS.REVIEW
@@ -356,6 +379,11 @@ export function SetupWizard(props: SetupWizardProps) {
   }
 
   function onBack() {
+    if (manageMode) {
+      returnToSettings();
+      return;
+    }
+
     const prior = previousStep(props.step);
     if (prior) {
       goTo(prior);
@@ -363,7 +391,7 @@ export function SetupWizard(props: SetupWizardProps) {
   }
 
   function onSkip() {
-    if (!OPTIONAL_SETUP_STEPS.includes(props.step)) {
+    if (manageMode || !optionalSteps.includes(props.step)) {
       return;
     }
 
@@ -396,15 +424,23 @@ export function SetupWizard(props: SetupWizardProps) {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-2xl flex-col gap-6 px-4 py-8">
       <header className="space-y-2">
-        <p className="text-sm text-muted-foreground">Business setup</p>
+        <p className="text-sm text-muted-foreground">
+          {manageMode ? "Business Settings" : "Business setup"}
+        </p>
         <h1 className="text-2xl font-semibold tracking-tight">
           {props.businessName}
         </h1>
-        <SetupProgressIndicator
-          currentStep={props.step}
-          completedSteps={props.progress.completedSteps}
-          progressPercent={props.progress.progressPercent}
-        />
+        {manageMode ? (
+          <p className="text-sm text-muted-foreground">
+            Editing configuration — changes return you to Business Settings.
+          </p>
+        ) : (
+          <SetupProgressIndicator
+            currentStep={props.step}
+            completedSteps={props.progress.completedSteps}
+            progressPercent={props.progress.progressPercent}
+          />
+        )}
       </header>
 
       <section className="space-y-4 rounded-xl border border-border bg-card p-5 shadow-sm">
@@ -418,7 +454,10 @@ export function SetupWizard(props: SetupWizardProps) {
           <div className="space-y-4">
             <h2 className="text-xl font-medium">Welcome</h2>
             <p className="text-sm text-muted-foreground">
-              {formatSetupWelcomeMessage(props.businessName)}
+              {formatSetupWelcomeMessage(
+                props.businessName,
+                profileDefinition.estimatedMinutes
+              )}
             </p>
             <form
               action={async () => {
@@ -603,7 +642,12 @@ export function SetupWizard(props: SetupWizardProps) {
                 />
               </div>
             </div>
-            <WizardNav onBack={onBack} isPending={isPending} canSkip={false} />
+            <WizardNav
+              manageMode={manageMode}
+              onBack={onBack}
+              isPending={isPending}
+              canSkip={false}
+            />
           </form>
         ) : null}
 
@@ -630,7 +674,7 @@ export function SetupWizard(props: SetupWizardProps) {
               <CatalogEmptyNotice message={CATALOG_EMPTY_MESSAGES.industries} />
             ) : null}
             <div className="space-y-2">
-              <Label htmlFor="industryId">Industry</Label>
+              <Label htmlFor="industryId">Industry Type</Label>
               <select
                 id="industryId"
                 required
@@ -679,6 +723,7 @@ export function SetupWizard(props: SetupWizardProps) {
               </p>
             ) : null}
             <WizardNav
+              manageMode={manageMode}
               onBack={onBack}
               isPending={isPending}
               canSkip={false}
@@ -728,6 +773,7 @@ export function SetupWizard(props: SetupWizardProps) {
               </select>
             </div>
             <WizardNav
+              manageMode={manageMode}
               onBack={onBack}
               isPending={isPending}
               canSkip={false}
@@ -784,9 +830,11 @@ export function SetupWizard(props: SetupWizardProps) {
               </select>
             </div>
             <WizardNav
+              manageMode={manageMode}
               onBack={onBack}
               isPending={isPending}
-              canSkip={false}
+              canSkip={optionalSteps.includes(SETUP_STEPS.BASE_CURRENCY)}
+              onSkip={onSkip}
               disableContinue={props.currencies.length === 0}
             />
           </form>
@@ -830,6 +878,7 @@ export function SetupWizard(props: SetupWizardProps) {
                 })}
             </div>
             <WizardNav
+              manageMode={manageMode}
               onBack={onBack}
               isPending={isPending}
               canSkip
@@ -1053,7 +1102,15 @@ export function SetupWizard(props: SetupWizardProps) {
               </label>
             </div>
 
-            <WizardNav onBack={onBack} isPending={isPending} canSkip={false} />
+            <WizardNav
+              manageMode={manageMode}
+              onBack={onBack}
+              isPending={isPending}
+              canSkip={optionalSteps.includes(
+                SETUP_STEPS.BUSINESS_OPERATIONS
+              )}
+              onSkip={onSkip}
+            />
           </form>
         ) : null}
 
@@ -1322,6 +1379,7 @@ export function SetupWizard(props: SetupWizardProps) {
             )}
 
             <WizardNav
+              manageMode={manageMode}
               onBack={onBack}
               isPending={isPending}
               canSkip={false}
@@ -1568,6 +1626,7 @@ export function SetupWizard(props: SetupWizardProps) {
             ) : null}
 
             <WizardNav
+              manageMode={manageMode}
               onBack={onBack}
               isPending={isPending}
               canSkip={!addEmployees}
@@ -1638,7 +1697,10 @@ export function SetupWizard(props: SetupWizardProps) {
             {props.review ? (
               <dl className="space-y-2 text-sm">
                 <ReviewRow label="Business" value={props.businessName} />
-                <ReviewRow label="Industry" value={props.review.industryName} />
+                <ReviewRow
+                  label="Industry Type"
+                  value={props.review.industryName}
+                />
                 <ReviewRow
                   label="Business type"
                   value={props.review.businessTypeName}
@@ -1778,6 +1840,7 @@ function WizardNav({
   isPending,
   canSkip,
   disableContinue = false,
+  manageMode = false,
 }: {
   onBack: () => void;
   onSkip?: () => void;
@@ -1785,8 +1848,10 @@ function WizardNav({
   isPending: boolean;
   canSkip: boolean;
   disableContinue?: boolean;
+  manageMode?: boolean;
 }) {
   const continueDisabled = isPending || disableContinue;
+  const showSkip = canSkip && !manageMode;
 
   return (
     <div className="flex flex-col gap-2 sm:flex-row">
@@ -1797,9 +1862,9 @@ function WizardNav({
         onClick={onBack}
         disabled={isPending}
       >
-        Back
+        {manageMode ? "Back to settings" : "Back"}
       </Button>
-      {canSkip ? (
+      {showSkip ? (
         <Button
           type="button"
           variant="secondary"
@@ -1817,11 +1882,11 @@ function WizardNav({
           onClick={onContinue}
           disabled={continueDisabled}
         >
-          {isPending ? "Saving..." : "Continue"}
+          {isPending ? "Saving..." : manageMode ? "Save" : "Continue"}
         </Button>
       ) : (
         <Button type="submit" className="flex-1" disabled={continueDisabled}>
-          {isPending ? "Saving..." : "Save & continue"}
+          {isPending ? "Saving..." : manageMode ? "Save" : "Save & continue"}
         </Button>
       )}
     </div>

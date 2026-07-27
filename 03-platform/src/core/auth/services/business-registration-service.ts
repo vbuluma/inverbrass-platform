@@ -3,7 +3,7 @@
  * Create a Tenant Business for an authenticated Platform User (Business Registration).
  *
  * Design rationale:
- * Business Registration starts only after Platform Registration. Industry Solution
+ * Business Registration starts only after Platform Registration. Industry Type
  * selection filters Business Templates (business_type). The Owner role is assigned
  * on the new membership — Single Owner capability preserved.
  *
@@ -53,11 +53,14 @@ import { AUTHENTICATION_AUDIT_EVENT_TYPES } from "@/core/audit/types";
 import { getAuthenticationAuditEmitter } from "@/core/audit/authentication-audit-emitter";
 import { getDb } from "@/db/client";
 import { business } from "@/db/schema/business";
+import { businessConfiguration } from "@/db/schema/business-configuration";
 import { businessMembership } from "@/db/schema/business-membership";
 import { businessType } from "@/db/schema/business-type";
 import { country } from "@/db/schema/country";
 import { industry } from "@/db/schema/industry";
 import { platformUser } from "@/db/schema/platform-user";
+import { resolveDefaultOnboardingProfile } from "@/modules/business/onboarding/onboarding-profiles";
+import { createDefaultConfigurationSettings } from "@/modules/business/onboarding/services/setup-rules";
 
 export class BusinessRegistrationService {
   constructor(
@@ -101,6 +104,8 @@ export class BusinessRegistrationService {
       data.industryId
     );
 
+    const businessTypeCode = await this.loadBusinessTypeCode(data.businessTypeId);
+    const onboardingProfile = resolveDefaultOnboardingProfile(businessTypeCode);
     const countryRow = await this.loadCountry(data.countryCode);
 
     let businessPhoneE164: string;
@@ -183,6 +188,12 @@ export class BusinessRegistrationService {
             updatedAt: new Date(),
           })
           .where(eq(platformUser.id, user.platformUserId));
+
+        // Seed configuration with inferred onboarding profile (metadata-driven).
+        await tx.insert(businessConfiguration).values({
+          businessId,
+          settings: createDefaultConfigurationSettings(onboardingProfile),
+        });
       });
     } catch (error) {
       console.error("[business-registration] Failed to create business.", {
@@ -253,6 +264,17 @@ export class BusinessRegistrationService {
     };
   }
 
+  private async loadBusinessTypeCode(businessTypeId: string): Promise<string> {
+    const db = getDb();
+    const [row] = await db
+      .select({ code: businessType.code })
+      .from(businessType)
+      .where(eq(businessType.id, businessTypeId))
+      .limit(1);
+
+    return row?.code ?? "";
+  }
+
   private async assertIndustryActive(industryId: string): Promise<void> {
     const db = getDb();
 
@@ -265,13 +287,13 @@ export class BusinessRegistrationService {
     if (!row) {
       throw new AuthError(
         AUTH_ERROR_CODES.INVALID_INPUT,
-        "Select a valid industry solution."
+        "Select a valid Industry Type."
       );
     }
   }
 
   /**
-   * WHAT: Ensure the Business Template belongs to the selected Industry Solution.
+   * WHAT: Ensure the Business Template belongs to the selected Industry Type.
    * WHY: Templates must be filtered — never a global unscoped dropdown.
    */
   private async assertTemplateBelongsToIndustry(
@@ -295,7 +317,7 @@ export class BusinessRegistrationService {
     if (!row) {
       throw new AuthError(
         AUTH_ERROR_CODES.INVALID_INPUT,
-        "Select a valid business template for the chosen industry solution."
+        "Select a valid business template for the chosen Industry Type."
       );
     }
   }

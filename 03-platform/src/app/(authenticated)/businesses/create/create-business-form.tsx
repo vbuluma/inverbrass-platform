@@ -3,12 +3,12 @@
  * Client form for Business Registration: Industry → filtered Template → Create.
  *
  * Design rationale:
- * Business Templates are filtered by Industry Solution. No global unscoped
+ * Business Templates are filtered by Industry Type. No global unscoped
  * business-type dropdown is used as the primary selection path.
  * Failed validation preserves all entered values (platform UX standard).
  *
  * Why this exists:
- * BP-001 foundation correction — Industry Solutions drive template catalogues.
+ * BP-001 foundation correction — Industry Types drive template catalogues.
  */
 
 "use client";
@@ -135,7 +135,7 @@ export function CreateBusinessForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="industryId">Industry solution</Label>
+        <Label htmlFor="industryId">Industry Type</Label>
         <select
           id="industryId"
           name="industryId"
@@ -150,7 +150,7 @@ export function CreateBusinessForm({
           aria-invalid={preserved.invalidField === "industryId"}
         >
           <option value="" disabled>
-            Select an industry solution
+            Select an Industry Type
           </option>
           {industries.map((item) => (
             <option key={item.id} value={item.id}>

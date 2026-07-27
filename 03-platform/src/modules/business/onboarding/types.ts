@@ -145,6 +145,8 @@ export type SetupProgressView = {
   progressPercent: number;
   isActivated: boolean;
   wizardVersion: string;
+  /** Active onboarding profile for the single setup engine. */
+  onboardingProfile?: "express" | "standard" | "enterprise";
 };
 
 export type SetupBranchReviewItem = {
@@ -194,6 +196,12 @@ export type CreatedEmployeeCredential = {
  * Operational Business Dashboard payload for ACTIVE businesses.
  * Platform Home manages businesses; this view runs the selected business.
  */
+export type BusinessDashboardConfigItem = {
+  id: string;
+  label: string;
+  href: string;
+};
+
 export type BusinessDashboardView = {
   businessName: string;
   businessStatusCode: string;
@@ -206,10 +214,13 @@ export type BusinessDashboardView = {
   baseCurrencyCode: string;
   branchCount: number;
   employeeCount: number;
+  onboardingProfile: "express" | "standard" | "enterprise";
+  /** Express emphasizes Add Products; others lean on configuration. */
+  postActivationCta: "products" | "configuration";
   profileCompletionPercent: number;
-  healthCompleted: Array<{ id: string; label: string }>;
-  healthRemaining: Array<{ id: string; label: string }>;
-  completedMilestones: Array<{ id: string; label: string }>;
-  optionalRemaining: Array<{ id: string; label: string }>;
+  /** Business Configuration — completed (always clickable). */
+  configurationCompleted: BusinessDashboardConfigItem[];
+  /** Business Configuration — remaining (clickable to configure). */
+  configurationRemaining: BusinessDashboardConfigItem[];
   notifications: Array<{ id: string; title: string; body: string }>;
 };

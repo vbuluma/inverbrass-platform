@@ -1,21 +1,28 @@
-________________________________________
-PLATFORM_BLUEPRINT.md
-# InverBrass Platform Blueprint
-Version: 1.0
-Status: Approved
 ---
+
+PLATFORM_BLUEPRINT.md
+
+# InverBrass Platform Blueprint
+
+## Version: 1.0
+Status: Approved
+
 # Purpose
+
 This document defines the logical software structure of the InverBrass Platform.
 It provides the technical blueprint that guides where capabilities belong, how modules interact, and how the platform evolves over time.
 
-This document is the primary architectural reference for software implementation.
----
+## This document is the primary architectural reference for software implementation.
 
 # Platform Vision
-Build a configurable, enterprise-grade, multi-tenant business platform that serves multiple industries through reusable platform capabilities rather than industry-specific custom development.
+
+## Build a configurable, enterprise-grade, multi-tenant business platform that serves multiple industries through reusable platform capabilities rather than industry-specific custom development.
 The platform shall support cloud-native deployment while remaining deployable within customer-managed environments.
----
+
+
+
 # Guiding Principles
+
 The platform shall:
 
 - Build reusable platform capabilities first.
@@ -30,20 +37,31 @@ The platform shall:
 - Scale horizontally where appropriate.
 - Minimize technical debt.
 - Avoid orphan code.
+
 ---
+
+
+
 # Platform Layers
 
 The platform consists of five logical layers.
 
 ## Layer 1
+
 Presentation Layer
 Responsibilities
+
 - Web UI
 - Mobile PWA
 - Responsive Design
 - Accessibility
+
 ---
+
+
+
 ## Layer 2
+
 Application Layer
 Responsibilities
 
@@ -54,6 +72,8 @@ Responsibilities
 - API Endpoints
 
 ---
+
+
 
 ## Layer 3
 
@@ -78,6 +98,8 @@ Includes
 
 ---
 
+
+
 ## Layer 4
 
 Industry Modules
@@ -98,10 +120,14 @@ Industry modules consume Core Platform Services rather than duplicating them.
 
 ---
 
+
+
 ## Layer 5
+
 Infrastructure
 
 Includes
+
 - PostgreSQL
 - Authentication
 - Object Storage
@@ -110,11 +136,15 @@ Includes
 - Caching
 - External Integrations
 
-Infrastructure remains replaceable wherever practical.
----
+## Infrastructure remains replaceable wherever practical.
+
+
+
 # Platform Modules
+
 The platform is organized into reusable modules.
 Core modules include:
+
 - Identity & Access
 - Business Setup
 - Configuration
@@ -138,9 +168,12 @@ Core modules include:
 
 ---
 
+
+
 # Module Ownership Principles
 
 Each module shall:
+
 - Have a single primary responsibility.
 - Own its business logic.
 - Expose well-defined interfaces.
@@ -148,7 +181,11 @@ Each module shall:
 - Reuse shared platform services.
 
 ---
+
+
+
 # Dependency Rules
+
 Dependencies shall flow inward.
 
 Presentation
@@ -171,6 +208,8 @@ Circular dependencies are prohibited.
 
 ---
 
+
+
 # Cross-Cutting Concerns
 
 The following apply across the platform:
@@ -187,6 +226,8 @@ The following apply across the platform:
 
 ---
 
+
+
 # Build Pack Alignment
 
 Development follows approved Build Packs.
@@ -196,6 +237,8 @@ Each Build Pack contributes functionality to one or more platform modules.
 No functionality shall be implemented outside an approved Build Pack unless explicitly authorized.
 
 ---
+
+
 
 # AI Development Principles
 
@@ -209,6 +252,8 @@ AI-assisted development shall:
 
 ---
 
+
+
 # Definition of Success
 
 The platform is successful when:
@@ -218,5 +263,6 @@ The platform is successful when:
 - Platform quality improves with each release.
 - Technical debt remains controlled.
 - Enterprise customers can deploy the platform confidently.
-________________________________________
+
+---
 

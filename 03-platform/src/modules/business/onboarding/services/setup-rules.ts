@@ -21,6 +21,15 @@ import {
   SETUP_STEPS,
   type SetupStep,
 } from "@/modules/business/onboarding/constants";
+import {
+  ONBOARDING_PROFILES,
+  areMandatoryStepsCompleteForProfile,
+  getMandatoryStepsForProfile,
+  getOptionalStepsForProfile,
+  isOnboardingProfileCode,
+  resolveResumeStepForProfile,
+  type OnboardingProfileCode,
+} from "@/modules/business/onboarding/onboarding-profiles";
 import type {
   BusinessConfigurationSettings,
   BusinessConfigurationView,
@@ -82,23 +91,28 @@ export function uniqueSteps(steps: string[]): SetupStep[] {
  * WHAT: Resolve the next incomplete wizard step for resume.
  * WHY: BR-009 — returning users continue from the last incomplete step.
  */
-export function resolveResumeStep(completedSteps: SetupStep[]): SetupStep {
-  for (const step of SETUP_STEP_ORDER) {
-    if (!completedSteps.includes(step)) {
-      return step;
-    }
-  }
-
-  return SETUP_STEPS.REVIEW;
+export function resolveResumeStep(
+  completedSteps: SetupStep[],
+  profile: OnboardingProfileCode = ONBOARDING_PROFILES.ENTERPRISE
+): SetupStep {
+  return resolveResumeStepForProfile(profile, completedSteps, SETUP_STEP_ORDER);
 }
 
 /**
- * WHAT: Compute setup completion percentage.
- * WHY: FR-002 — progress indicator needs a stable ratio.
+ * WHAT: Compute setup completion percentage against the profile path.
+ * WHY: FR-002 — progress indicator needs a stable ratio per profile.
  */
-export function calculateProgressPercent(completedSteps: SetupStep[]): number {
-  const total = SETUP_STEP_ORDER.length;
-  const completed = SETUP_STEP_ORDER.filter((step) =>
+export function calculateProgressPercent(
+  completedSteps: SetupStep[],
+  profile: OnboardingProfileCode = ONBOARDING_PROFILES.ENTERPRISE
+): number {
+  const path = [
+    ...getMandatoryStepsForProfile(profile),
+    ...getOptionalStepsForProfile(profile),
+  ];
+  const uniquePath = [...new Set(path)];
+  const total = uniquePath.length || SETUP_STEP_ORDER.length;
+  const completed = uniquePath.filter((step) =>
     completedSteps.includes(step)
   ).length;
 
@@ -106,11 +120,22 @@ export function calculateProgressPercent(completedSteps: SetupStep[]): number {
 }
 
 /**
- * WHAT: Determine whether mandatory steps (including base currency) are done.
- * WHY: BR-008 — activation is blocked until mandatory steps complete.
+ * WHAT: Determine whether profile-mandatory steps are done.
+ * WHY: BR-008 — activation is blocked until the active profile's mandatory set completes.
  */
-export function areMandatoryStepsComplete(completedSteps: SetupStep[]): boolean {
-  return MANDATORY_SETUP_STEPS.every((step) => completedSteps.includes(step));
+export function areMandatoryStepsComplete(
+  completedSteps: SetupStep[],
+  profile: OnboardingProfileCode = ONBOARDING_PROFILES.ENTERPRISE
+): boolean {
+  return areMandatoryStepsCompleteForProfile(profile, completedSteps);
+}
+
+export function normalizeOnboardingProfile(
+  value: string | null | undefined
+): OnboardingProfileCode {
+  return isOnboardingProfileCode(value)
+    ? value
+    : ONBOARDING_PROFILES.ENTERPRISE;
 }
 
 /**
@@ -157,7 +182,8 @@ export function isOperationalAccessAllowed(businessStatusCode: string): boolean 
  */
 export function applyCompletedStep(
   existingCompletedSteps: string[],
-  step: SetupStep
+  step: SetupStep,
+  profile: OnboardingProfileCode = ONBOARDING_PROFILES.ENTERPRISE
 ): {
   completedSteps: SetupStep[];
   lastCompletedStep: SetupStep;
@@ -170,13 +196,13 @@ export function applyCompletedStep(
     completedSteps.push(step);
   }
 
-  const resumeStep = resolveResumeStep(completedSteps);
+  const resumeStep = resolveResumeStep(completedSteps, profile);
 
   return {
     completedSteps,
     lastCompletedStep: step,
     resumeStep,
-    progressPercent: calculateProgressPercent(completedSteps),
+    progressPercent: calculateProgressPercent(completedSteps, profile),
   };
 }
 
@@ -184,8 +210,11 @@ export function applyCompletedStep(
  * WHAT: Default configuration metadata document for a new business.
  * WHY: Optional groups need safe defaults before the owner saves each step.
  */
-export function createDefaultConfigurationSettings(): BusinessConfigurationSettings {
+export function createDefaultConfigurationSettings(
+  onboardingProfile: OnboardingProfileCode = ONBOARDING_PROFILES.ENTERPRISE
+): BusinessConfigurationSettings {
   return {
+    onboardingProfile,
     paymentMethods: {
       cashEnabled: true,
       mobileMoneyEnabled: true,
@@ -219,6 +248,7 @@ export function mergeConfigurationSettings(
   patch: Partial<BusinessConfigurationSettings>
 ): BusinessConfigurationSettings {
   return {
+    onboardingProfile: patch.onboardingProfile ?? current.onboardingProfile,
     paymentMethods: patch.paymentMethods ?? current.paymentMethods,
     receipt: patch.receipt ?? current.receipt,
     tax: patch.tax ?? current.tax,

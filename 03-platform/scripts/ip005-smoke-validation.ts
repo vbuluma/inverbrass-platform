@@ -451,7 +451,7 @@ function checkArchitectureSourceGuarantees(): CheckResult[] {
     {
       name: "businessRegistration:industryThenFilteredTemplate",
       ok:
-        createFormSource.includes("Industry solution") &&
+        createFormSource.includes("Industry Type") &&
         createFormSource.includes("Business template") &&
         createFormSource.includes("filteredTemplates") &&
         createFormSource.includes("industryId"),

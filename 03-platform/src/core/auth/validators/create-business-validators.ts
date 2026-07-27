@@ -19,7 +19,7 @@ export const createBusinessSchema = z.object({
     .trim()
     .min(1, "Business name is required.")
     .max(200, "Business name is too long."),
-  industryId: z.string().uuid("Select an industry solution."),
+  industryId: z.string().uuid("Select an Industry Type."),
   businessTypeId: z.string().uuid("Select a business template."),
   countryCode: z
     .string()

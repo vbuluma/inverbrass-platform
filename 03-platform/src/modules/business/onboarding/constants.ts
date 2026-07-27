@@ -31,15 +31,21 @@ export const SETUP_ALLOW_BASE_CURRENCY_CHANGE = true;
  * WHY: Startup validation and UI share one message so copy cannot drift.
  */
 export const SETUP_WELCOME_MESSAGE =
-  "Complete a short setup so {businessName} can start operating. You can pause anytime and resume later. Estimated time: about 10 minutes.";
+  "Complete a short setup so {businessName} can start operating. You can pause anytime and resume later. Estimated time: {estimatedTime}.";
 
 /**
- * WHAT: Resolve welcome copy for a named business.
- * WHY: Keeps UI presentation aligned with the validated template.
+ * WHAT: Resolve welcome copy for a named business and onboarding profile.
+ * WHY: Express/Standard/Enterprise share one engine with profile-specific timing.
  */
-export function formatSetupWelcomeMessage(businessName: string): string {
+export function formatSetupWelcomeMessage(
+  businessName: string,
+  estimatedTime = "about 10 minutes"
+): string {
   const name = businessName.trim() || "your business";
-  return SETUP_WELCOME_MESSAGE.replace("{businessName}", name);
+  return SETUP_WELCOME_MESSAGE.replace("{businessName}", name).replace(
+    "{estimatedTime}",
+    estimatedTime
+  );
 }
 
 export const SETUP_STEPS = {

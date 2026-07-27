@@ -18,7 +18,7 @@
 
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export type PreservedFormValues = Record<string, string | boolean>;
 
@@ -68,7 +68,10 @@ export function usePreservedFormValues({
   const [invalidField, setInvalidField] = useState<string | null>(null);
   const keysRef = useRef(Object.keys(initial));
   const checkboxFieldsRef = useRef(checkboxFields);
-  checkboxFieldsRef.current = checkboxFields;
+
+  useEffect(() => {
+    checkboxFieldsRef.current = checkboxFields;
+  }, [checkboxFields]);
 
   const recoverAfterValidationFailure = useCallback(
     (formData: FormData, field?: string | null) => {
