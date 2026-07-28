@@ -1,5 +1,9 @@
 🏛️ InverBrass Platform: Final Blueprint (v1.0 Architecture & Documentation)
 This is the frozen, enterprise-ready InverBrass v1.0 Architecture Blueprint. It maximizes your velocity as a solo developer by prioritizing extreme modular uniformity and configuration over one-off custom code. [1] 
+T**his & future architecture changes MUST support My core VISSION below**:
+****Platform Principle & Vission PP-001 – Digital Business Platform**
+
+     The InverBrass Platform is a configurable SME Digital Business Platform designed to digitize business operations and provide a foundation for value-added ecosystem services such as embedded finance, insurance, lending, analytics, AI, and partner integrations. Operational modules exist to generate trusted digital business data, not to replicate traditional ERP systems I want to introduce one rule that we'll follow throughout this project: Every capability must have one and only one owner. For example, Customer Management belongs to the Customer Domain. Property, School, Business Operations, Chama, and Academy all use it—they don't create their own customer management. This principle will prevent duplication across the platform.
 
 📂 Production Directory Layout
 Implement this identical structure in your workspace root. This clean hierarchy ensures Cursor can scan, index, and modify code blocks without losing relational context.
@@ -32,7 +36,9 @@ inverbrass-platform/
 ├── tests/                            # Unit and end-to-end integration workflows
 ├── public/                           # Static assets, fonts, icons, PWA manifest configurations
 └── .cursorrules                      # Main developer governance rule matrix
-________________________________________
+
+---
+
 📐 Structural Uniformity Rule for Modules
 Every folder inside src/modules/ and its nested domains must implement this exact folder blueprint. This makes feature code highly predictable for Cursor:
 [module-name]/
@@ -43,44 +49,65 @@ Every folder inside src/modules/ and its nested domains must implement this exac
 ├── types/        # TypeScript typing maps isolated to this module environment
 ├── hooks/        # React functional lifecycle bindings or local interaction state
 └── README.md     # Context summary describing the operational boundaries of this module
-________________________________________
+
+---
+
 📝 Final Production .cursorrules
 Copy and paste this configuration file directly into .cursorrules in the root of your application repository.
+
 # Configuration Directive
+
 - **Core Principle**: "Every feature must be configurable before it is customizable." Drive business variations through `src/config/` definitions instead of modifying underlying engine code.
 - **Framework Stack**: Next.js 15+ (App Router, React Server Components, TypeScript)
 - **Styling UI Elements**: Tailwind CSS + shadcn/ui (Radix primitives)
-- **Data & Security**: 
+- **Data & Security**:
 
 Supabase PostgreSQL
 
- + Supabase Auth
+- Supabase Auth
+
 - **Database Engine Access**: Drizzle ORM (Type-safe client query builder)
 - **Structural Blueprint**: Single-app Modular Monolith. Do not invent cross-app packages or monorepo configurations.
 
+
+
 # Code Architecture Boundaries
 
+
+
 ## 1. Directory Structure Enforcement
+
 - Layer enforcement is absolute: UI Elements (src/components/ or app/) ──> Server Actions/Route Handlers (src/app/api/) ──> Domain Module Logic (src/modules/) ──> Shared Platform Utilities (src/core/) ──> Drizzle Client Queries (src/db/).
 - Multi-industry code isolation lives inside `src/modules/`. Maintain identical internal module setups: `components/`, `services/`, `actions/`, `validators/`, `types/`, `hooks/`, `README.md`.
 - Shared foundation mechanics live within `src/core/` (auth, workflow, payments, billing, receipting, reconciliation, notifications, reporting, documents, integrations, audit, ai).
 - Each code block must be explained
 
+
+
 ## 2. Multi-Tenancy & Integrity Constraints
+
 - Every data mutation and read query must enforce isolation filtering using an explicit `organization_id` or `tenant_id`.
 - Never execute raw SQL text snippets anywhere inside the client interface files.
 - Secure API endpoints using valid server-side Supabase user identity state inspections.
 - Enforce structural **idempotency tracking checks** within payment processing databases to neutralize double-execution risks from external Safaricom Daraja API network callbacks.
 
+
+
 ## 3. UI, State, & Data Validation
+
 - Maximize **React Server Components (RSC)** to orchestrate layout assembly, rendering content securely from server memory where viable.
 - Use `"use client"` exclusively for files housing explicit active interactions, state loops, or local browser hooks.
 - Map and manage form data collections using `react-hook-form` validation rules parsed strictly by a custom `zod` object map.
 
+
+
 ## 4. Cursor Execution Rules
+
 - Prioritize reading contextual instructions located inside the database files (`src/db/schema/*`) and design guides (`docs/`) before building functions.
 - Do not write placeholder descriptors like `// TODO: handle later`. Generate operational pathways or catch block logging routines.
-________________________________________
+
+---
+
 🎯 First Steps to Initialize the Project
 To jumpstart development without hitting tool friction, run through these exact sequential actions inside your terminal:
 1.	Initialize the App Engine: Spin up your basic setup inside an empty directory:
@@ -97,6 +124,7 @@ npm install drizzle-orm @supabase/supabase-js zod react-hook-form @hookform/vali
 I can help you construct your foundational multi-tenant database blueprint inside src/db/schema/core.ts (CORE-001 & CORE-002), or we can write the unified configurations inside src/config/ for roles and menus. Which one would you like to handle first?
 
 Product Design Principles, containing the philosophies  defined below:
+
 1. Self-Service First
 2. Mobile-First Experience
 3. Simplicity Over Feature Count
@@ -163,7 +191,9 @@ Purpose
 Provides centralized country-, region-, and jurisdiction-specific localization, regulatory compliance, and feature policy management through configuration rather than application code, enabling the InverBrass Platform to operate consistently across multiple countries from a single codebase.
 
 Core Responsibilities
+
 1. Geographic Configuration
+
 Countries
 States / Counties / Provinces
 Cities / Towns
@@ -265,6 +295,44 @@ Provides a reusable internal hierarchy for Organization Parties — head offices
 
 **Implementation location:** `03-platform/src/modules/party` — Organization Structure tab in Party Workspace.
 
+
+
+
+|                                         |                                                                                                                                                                                                                                                                                                                                                                    |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **ENG-003d Event Ingestion Engine**     | Receives, validates, normalizes, and routes business events from internal and external sources (e.g., Gmail, Outlook, WhatsApp, SMS, APIs, webhooks, payment platforms, IoT devices) into the Workflow Engine and other platform services.                                                                                                                         |
+| **ENG-003e Partner Integration Engine** | Provides a centralized framework for integrating with external platforms and partners. Manages connectors, OAuth, API keys, webhooks, polling, rate limiting, retries, connector health monitoring, configuration, and lifecycle management. Connectors (e.g., Gmail, Outlook, Banks, Insurers, M-Pesa) publish standardized events to the Event Ingestion Engine. |
+
+
+### Architecture Flow
+
+```
+
+```
+
+```
+External Systems
+(Gmail, Outlook, WhatsApp, APIs, Banks, M-Pesa, IoT)
+                │
+                ▼
+ENG-003e Partner Integration Engine
+                │
+                ▼
+ENG-003d Event Ingestion Engine
+                │
+                ▼
+Workflow Engine
+                │
+                ▼
+Platform Services & Industry Solutions
+```
+
+
+| Engine                                   | Purpose                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **ENG-003f Product Intelligence Engine** | Provides product governance, roadmap management, product analytics, feature prioritization, AI-assisted product insights, and lifecycle management. Integrates with Workflow, Reporting, AI, Document Management, and Collaboration services to support end-to-end product management.(ideation to retirement). Capability to analyse the products through it's live, and propose when it is declining and how to manage(Re-invent, retire etc)-AI will shine here.Product │ ├── Vision ├── Objectives ├── Business Case ├── Personas ├── Roadmap ├── Releases │ ├── BP-001 │ ├── BP-002 │ └── BP-003 ├── KPIs ├── Go-to-Market ├── Customer Feedback ├── Product Analytics ├── AI Product Insights ├── Recommendations └── Lifecycle Decisions |
+
+
 ENG-004	Rules Engine	Executes deterministic business rules
 ENG-005	Workflow Engine	Maker-Checker, approvals
 ENG-006	Payment Engine	Cash, M-Pesa, Cards, Credit, Split Payments
@@ -286,8 +354,65 @@ ENG-017 Localization & Regulatory Engine: Handles-Country-, region-, and jurisdi
 
 EDS-003 – All telephone numbers shall be stored in canonical E.164 format. User input may be entered in local or international formats, but the platform shall normalize before validation, duplicate detection, integration, and persistence.
 
+
+
+
+
+# What we have designed that supports this vision
+
+The platform already has the core building blocks.
+
+### Enterprise Engines
+
+✔ Configuration Engine
+
+✔ Localization & Regulatory Engine
+
+✔ Organization Structure Engine
+
+✔ Event Ingestion Engine (planned)
+
+✔ Partner Integration Engine (planned)
+
+✔ Workflow Engine
+
+✔ AI Services
+
+✔ Notification Engine
+
+✔ Reporting Engine
+
+✔ Integration Engine
+
+These are exactly the kinds of engines a digital platform needs.
+
+---
+
+### Core Data Foundations
+
+✔ Party Management
+
+✔ Organization Structure
+
+✔ Documents
+
+✔ Products
+
+✔ Users
+
+✔ Workflow
+
+✔ Payments
+
+✔ Reporting
+
+These become the "digital memory" of the business.
+
+
+
 Technology Baseline (Version 1.0)
 This is the official approved technology stack
+
 1. Next.js
 2. TypeScript
 3. Supabase
@@ -312,5 +437,3 @@ ADR-004	Drizzle ORM	Approved
 ADR-005	PWA instead of Native Mobile	Approved
 ADR-006	GitHub as Source Control	Approved
 ADR-007	Cursor AI as Primary Development Tool	Approved
-
-

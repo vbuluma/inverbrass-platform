@@ -7,11 +7,30 @@
  */
 
 import {
+  ADDRESS_TYPE_CODES,
   ORGANIZATIONAL_UNIT_STATUS_CODES,
   PARTY_TYPE_CODES,
+  type AddressTypeCode,
   type OrganizationalUnitStatusCode,
   type PartyTypeCode,
 } from "@/modules/party/constants";
+
+export const UNIT_PHYSICAL_ADDRESS_TYPE_CODES = [
+  ADDRESS_TYPE_CODES.PHYSICAL,
+  ADDRESS_TYPE_CODES.BRANCH,
+  ADDRESS_TYPE_CODES.OFFICE,
+  ADDRESS_TYPE_CODES.HEAD_OFFICE,
+] as const satisfies readonly AddressTypeCode[];
+
+export function isUnitPhysicalAddressType(addressTypeCode: string): boolean {
+  return (UNIT_PHYSICAL_ADDRESS_TYPE_CODES as readonly string[]).includes(
+    addressTypeCode
+  );
+}
+
+export function defaultPhysicalAddressTypeForUnit(isHeadOffice: boolean): AddressTypeCode {
+  return isHeadOffice ? ADDRESS_TYPE_CODES.HEAD_OFFICE : ADDRESS_TYPE_CODES.BRANCH;
+}
 
 export function isOrganizationalUnitStatusCode(
   value: string

@@ -11,6 +11,8 @@
  * BP-002 / IP-001 – Party Foundation
  */
 
+import { revalidatePath } from "next/cache";
+
 import type { AuthActionResult } from "@/core/auth/actions/auth-actions";
 import { AuthError } from "@/core/auth/errors";
 import { createAuthService } from "@/core/auth/services/auth-service";
@@ -185,6 +187,7 @@ export async function updatePartyAction(
     const context = await requirePartyContext();
     const service = createPartyService();
     const data = await service.updateOverview(context, partyId, payload);
+    revalidatePath(`/parties/${partyId}`);
     return { success: true, data };
   } catch (error) {
     return toActionError(error);
@@ -198,6 +201,7 @@ export async function activatePartyAction(
     const context = await requirePartyContext();
     const service = createPartyService();
     const data = await service.activateParty(context, partyId);
+    revalidatePath(`/parties/${partyId}`);
     return { success: true, data };
   } catch (error) {
     return toActionError(error);
@@ -211,6 +215,7 @@ export async function suspendPartyAction(
     const context = await requirePartyContext();
     const service = createPartyService();
     const data = await service.suspendParty(context, partyId);
+    revalidatePath(`/parties/${partyId}`);
     return { success: true, data };
   } catch (error) {
     return toActionError(error);
@@ -224,6 +229,7 @@ export async function archivePartyAction(
     const context = await requirePartyContext();
     const service = createPartyService();
     const data = await service.archiveParty(context, partyId);
+    revalidatePath(`/parties/${partyId}`);
     return { success: true, data };
   } catch (error) {
     return toActionError(error);

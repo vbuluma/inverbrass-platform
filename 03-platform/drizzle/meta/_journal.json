@@ -127,6 +127,13 @@
       "when": 1784564588818,
       "tag": "0017_organization_structure_engine",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1784564588819,
+      "tag": "0018_bp002_ip007_party_documents",
+      "breakpoints": true
     }
   ]
 }

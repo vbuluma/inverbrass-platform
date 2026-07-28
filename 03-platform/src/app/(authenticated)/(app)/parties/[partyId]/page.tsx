@@ -15,6 +15,7 @@ import {
 import { listOrganizationStructureAction } from "@/modules/party/actions/organizational-unit-actions";
 import { listPartyAddressesAction } from "@/modules/party/actions/party-address-actions";
 import { listPartyContactsAction } from "@/modules/party/actions/party-contact-actions";
+import { listPartyDocumentsAction } from "@/modules/party/actions/party-document-actions";
 import { listPartyRelationshipsAction } from "@/modules/party/actions/party-relationship-actions";
 import { listPartyRolesAction } from "@/modules/party/actions/party-role-actions";
 import { PartyWorkspace } from "@/modules/party/components/party-workspace";
@@ -38,6 +39,7 @@ export default async function PartyWorkspacePage({
     addressesResult,
     structureResult,
     relationshipsResult,
+    documentsResult,
   ] = await Promise.all([
     getPartyAction(partyId),
     getPartyRegistrationCataloguesAction(),
@@ -46,6 +48,7 @@ export default async function PartyWorkspacePage({
     listPartyAddressesAction(partyId),
     listOrganizationStructureAction(partyId),
     listPartyRelationshipsAction(partyId),
+    listPartyDocumentsAction(partyId),
   ]);
 
   if (!partyResult.success) {
@@ -132,6 +135,17 @@ export default async function PartyWorkspacePage({
     );
   }
 
+  if (!documentsResult.success) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <h1 className="text-xl font-semibold">Party Workspace</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {documentsResult.error.message}
+        </p>
+      </main>
+    );
+  }
+
   const initialTab =
     tab === "organization-structure" ? "organization-structure" : tab ?? "overview";
 
@@ -144,6 +158,7 @@ export default async function PartyWorkspacePage({
       addresses={addressesResult.data}
       organizationStructure={structureResult.data}
       relationships={relationshipsResult.data}
+      documents={documentsResult.data}
       initialTab={initialTab}
       showAddOrganizationalUnit={add === "1"}
     />

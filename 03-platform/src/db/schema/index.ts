@@ -28,6 +28,8 @@ export { organizationalUnitType } from "./organizational-unit-type";
 export { organizationalUnit } from "./organizational-unit";
 export { relationshipType } from "./relationship-type";
 export { partyRelationship } from "./party-relationship";
+export { documentType } from "./document-type";
+export { partyDocument } from "./party-document";
 export { paymentChannel } from "./payment-channel";
 export { paymentMethod } from "./payment-method";
 export { paymentNetwork } from "./payment-network";

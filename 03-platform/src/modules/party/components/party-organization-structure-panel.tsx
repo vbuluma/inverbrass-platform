@@ -8,7 +8,6 @@
 
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -22,6 +21,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getAddressFieldLabels } from "@/core/shared/address";
 import {
   addOrganizationalUnitAction,
   deactivateOrganizationalUnitAction,
@@ -46,13 +46,27 @@ type PartyOrganizationStructurePanelProps = {
   showAddForm?: boolean;
 };
 
+type PhysicalAddressMode = "none" | "existing" | "new";
+
+function formatDate(iso: string | null): string {
+  if (!iso) {
+    return "—";
+  }
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      dateStyle: "medium",
+    }).format(new Date(iso));
+  } catch {
+    return iso;
+  }
+}
+
 export function PartyOrganizationStructurePanel({
   partyId,
   organizationName,
   initialData,
   showAddForm = false,
 }: PartyOrganizationStructurePanelProps) {
-  const router = useRouter();
   const addFormRef = useRef<HTMLDivElement>(null);
   const [panel, setPanel] = useState(initialData);
   const [syncedInitial, setSyncedInitial] = useState(initialData);
@@ -69,9 +83,16 @@ export function PartyOrganizationStructurePanel({
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [partyAddressId, setPartyAddressId] = useState("");
-  const [countryCode, setCountryCode] = useState("");
-  const [latitude, setLatitude] = useState("");
-  const [longitude, setLongitude] = useState("");
+  const [physicalAddressMode, setPhysicalAddressMode] =
+    useState<PhysicalAddressMode>("none");
+  const [physicalCountryCode, setPhysicalCountryCode] = useState(
+    initialData.countries[0]?.code ?? ""
+  );
+  const [physicalAddressLine1, setPhysicalAddressLine1] = useState("");
+  const [physicalCityTown, setPhysicalCityTown] = useState("");
+  const [physicalCountyDistrict, setPhysicalCountyDistrict] = useState("");
+  const [physicalGpsLatitude, setPhysicalGpsLatitude] = useState("");
+  const [physicalGpsLongitude, setPhysicalGpsLongitude] = useState("");
   const [openingDate, setOpeningDate] = useState("");
   const [notes, setNotes] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -85,9 +106,13 @@ export function PartyOrganizationStructurePanel({
   const [editPhone, setEditPhone] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editAddressId, setEditAddressId] = useState("");
-  const [editCountryCode, setEditCountryCode] = useState("");
-  const [editLatitude, setEditLatitude] = useState("");
-  const [editLongitude, setEditLongitude] = useState("");
+  const [editPhysicalAddressMode, setEditPhysicalAddressMode] =
+    useState<PhysicalAddressMode>("none");
+  const [editPhysicalCountryCode, setEditPhysicalCountryCode] = useState("");
+  const [editPhysicalAddressLine1, setEditPhysicalAddressLine1] = useState("");
+  const [editPhysicalCityTown, setEditPhysicalCityTown] = useState("");
+  const [editPhysicalCountyDistrict, setEditPhysicalCountyDistrict] =
+    useState("");
   const [editOpeningDate, setEditOpeningDate] = useState("");
   const [editNotes, setEditNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -129,9 +154,13 @@ export function PartyOrganizationStructurePanel({
     setPhone("");
     setEmail("");
     setPartyAddressId("");
-    setCountryCode("");
-    setLatitude("");
-    setLongitude("");
+    setPhysicalAddressMode("none");
+    setPhysicalCountryCode(panel.countries[0]?.code ?? "");
+    setPhysicalAddressLine1("");
+    setPhysicalCityTown("");
+    setPhysicalCountyDistrict("");
+    setPhysicalGpsLatitude("");
+    setPhysicalGpsLongitude("");
     setOpeningDate("");
     setNotes("");
   }
@@ -153,9 +182,12 @@ export function PartyOrganizationStructurePanel({
       result.data.availableUnitTypes[0]?.code ?? ""
     );
     resetAddForm();
+    setShowAdd(false);
     setEditingId(null);
     setViewingId(null);
-    router.refresh();
+    // Do not call router.refresh() here — it races the in-flight transition
+    // and keeps isPending on "Saving…" until a slow full RSC reload completes.
+    // The action already revalidatePath; setPanel has fresh data from the response.
   }
 
   function onSearch() {
@@ -180,6 +212,16 @@ export function PartyOrganizationStructurePanel({
       setError("Unit code, name, and type are required.");
       return;
     }
+    if (physicalAddressMode === "existing" && !partyAddressId) {
+      setError("Select an existing physical address.");
+      return;
+    }
+    if (physicalAddressMode === "new") {
+      if (!physicalCountryCode || !physicalAddressLine1.trim()) {
+        setError("Country and address line 1 are required for a new physical address.");
+        return;
+      }
+    }
     setError(null);
     setMessage(null);
     startTransition(async () => {
@@ -191,10 +233,19 @@ export function PartyOrganizationStructurePanel({
         isHeadOffice,
         phone,
         email,
-        partyAddressId: partyAddressId || undefined,
-        countryCode: countryCode || undefined,
-        latitude: latitude || undefined,
-        longitude: longitude || undefined,
+        partyAddressId:
+          physicalAddressMode === "existing" ? partyAddressId : undefined,
+        newPhysicalAddress:
+          physicalAddressMode === "new"
+            ? {
+                countryCode: physicalCountryCode,
+                addressLine1: physicalAddressLine1,
+                cityTown: physicalCityTown || undefined,
+                countyDistrict: physicalCountyDistrict || undefined,
+                gpsLatitude: physicalGpsLatitude || null,
+                gpsLongitude: physicalGpsLongitude || null,
+              }
+            : undefined,
         openingDate: openingDate || undefined,
         notes,
       });
@@ -211,9 +262,11 @@ export function PartyOrganizationStructurePanel({
     setEditPhone(node.phone ?? "");
     setEditEmail(node.email ?? "");
     setEditAddressId(node.partyAddressId ?? "");
-    setEditCountryCode(node.countryCode ?? "");
-    setEditLatitude(node.latitude ?? "");
-    setEditLongitude(node.longitude ?? "");
+    setEditPhysicalAddressMode(node.partyAddressId ? "existing" : "none");
+    setEditPhysicalCountryCode(panel.countries[0]?.code ?? "");
+    setEditPhysicalAddressLine1("");
+    setEditPhysicalCityTown("");
+    setEditPhysicalCountyDistrict("");
     setEditOpeningDate(node.openingDate ?? "");
     setEditNotes(node.notes ?? "");
     setError(null);
@@ -233,10 +286,21 @@ export function PartyOrganizationStructurePanel({
           parentOrganizationalUnitId: editParentId || null,
           phone: editPhone,
           email: editEmail,
-          partyAddressId: editAddressId || null,
-          countryCode: editCountryCode || null,
-          latitude: editLatitude || null,
-          longitude: editLongitude || null,
+          partyAddressId:
+            editPhysicalAddressMode === "existing"
+              ? editAddressId || null
+              : editPhysicalAddressMode === "none"
+                ? null
+                : undefined,
+          newPhysicalAddress:
+            editPhysicalAddressMode === "new"
+              ? {
+                  countryCode: editPhysicalCountryCode,
+                  addressLine1: editPhysicalAddressLine1,
+                  cityTown: editPhysicalCityTown || undefined,
+                  countyDistrict: editPhysicalCountyDistrict || undefined,
+                }
+              : undefined,
           openingDate: editOpeningDate || undefined,
           notes: editNotes,
         }
@@ -274,6 +338,8 @@ export function PartyOrganizationStructurePanel({
 
   const emptyState =
     panel.summary.hasOnlyHeadOffice || panel.units.length === 0;
+
+  const physicalFieldLabels = getAddressFieldLabels(physicalCountryCode);
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
@@ -422,9 +488,23 @@ export function PartyOrganizationStructurePanel({
                 )
               }
               renderViewDetails={(node) => (
-                <div className="space-y-1 pt-2 text-sm">
+                <div className="space-y-1 rounded-md border border-border/60 bg-muted/30 px-3 py-2 pt-2 text-sm">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Summary
+                  </p>
+                  <p>Status: {node.statusCode}</p>
+                  {node.openingDate ? (
+                    <p>Opening date: {formatDate(node.openingDate)}</p>
+                  ) : null}
+                  {node.statusCode === ORGANIZATIONAL_UNIT_STATUS_CODES.INACTIVE &&
+                  node.closingDate ? (
+                    <p>Date deactivated: {formatDate(node.closingDate)}</p>
+                  ) : null}
                   <p>Phone: {node.phone ?? "—"}</p>
                   <p>Email: {node.email ?? "—"}</p>
+                  <p>
+                    Physical address: {node.partyAddressLabel ?? "—"}
+                  </p>
                   <p>Location: {node.locationDisplay}</p>
                   <p>Notes: {node.notes ?? "—"}</p>
                 </div>
@@ -470,22 +550,76 @@ export function PartyOrganizationStructurePanel({
                     onChange={(event) => setEditEmail(event.target.value)}
                     placeholder="Email"
                   />
-                  <Input
-                    value={editCountryCode}
-                    onChange={(event) => setEditCountryCode(event.target.value)}
-                    placeholder="Country (ISO)"
-                    maxLength={2}
-                  />
-                  <Input
-                    value={editLatitude}
-                    onChange={(event) => setEditLatitude(event.target.value)}
-                    placeholder="Latitude"
-                  />
-                  <Input
-                    value={editLongitude}
-                    onChange={(event) => setEditLongitude(event.target.value)}
-                    placeholder="Longitude"
-                  />
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label>Physical Address</Label>
+                    <select
+                      value={editPhysicalAddressMode}
+                      onChange={(event) =>
+                        setEditPhysicalAddressMode(
+                          event.target.value as PhysicalAddressMode
+                        )
+                      }
+                      className="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-sm"
+                    >
+                      <option value="none">None</option>
+                      <option value="existing">Select existing</option>
+                      <option value="new">Capture new</option>
+                    </select>
+                    {editPhysicalAddressMode === "existing" ? (
+                      <select
+                        value={editAddressId}
+                        onChange={(event) => setEditAddressId(event.target.value)}
+                        className="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-sm"
+                      >
+                        <option value="">Select physical address</option>
+                        {panel.physicalAddressOptions.map((option) => (
+                          <option key={option.id} value={option.id}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : null}
+                    {editPhysicalAddressMode === "new" ? (
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <select
+                          value={editPhysicalCountryCode}
+                          onChange={(event) =>
+                            setEditPhysicalCountryCode(event.target.value)
+                          }
+                          className="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-sm sm:col-span-2"
+                        >
+                          <option value="">Country</option>
+                          {panel.countries.map((country) => (
+                            <option key={country.code} value={country.code}>
+                              {country.name}
+                            </option>
+                          ))}
+                        </select>
+                        <Input
+                          value={editPhysicalAddressLine1}
+                          onChange={(event) =>
+                            setEditPhysicalAddressLine1(event.target.value)
+                          }
+                          placeholder="Address line 1"
+                          className="sm:col-span-2"
+                        />
+                        <Input
+                          value={editPhysicalCityTown}
+                          onChange={(event) =>
+                            setEditPhysicalCityTown(event.target.value)
+                          }
+                          placeholder="City / Town"
+                        />
+                        <Input
+                          value={editPhysicalCountyDistrict}
+                          onChange={(event) =>
+                            setEditPhysicalCountyDistrict(event.target.value)
+                          }
+                          placeholder="County / District"
+                        />
+                      </div>
+                    ) : null}
+                  </div>
                   <div className="flex flex-wrap gap-2 sm:col-span-2">
                     <Button
                       type="button"
@@ -600,39 +734,79 @@ export function PartyOrganizationStructurePanel({
                 onChange={(event) => setEmail(event.target.value)}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="unitAddressId">Party Address (optional)</Label>
+            <div className="space-y-3 rounded-lg border border-border/60 p-3">
+              <Label>Physical Address (optional)</Label>
               <select
-                id="unitAddressId"
-                value={partyAddressId}
-                onChange={(event) => setPartyAddressId(event.target.value)}
+                value={physicalAddressMode}
+                onChange={(event) =>
+                  setPhysicalAddressMode(event.target.value as PhysicalAddressMode)
+                }
                 className="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-sm"
               >
-                <option value="">None</option>
-                {panel.availableAddresses.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.label}
-                  </option>
-                ))}
+                <option value="none">None</option>
+                <option value="existing">Select existing physical address</option>
+                <option value="new">Capture new physical address</option>
               </select>
-            </div>
-            <div className="grid gap-2 sm:grid-cols-3">
-              <Input
-                value={countryCode}
-                onChange={(event) => setCountryCode(event.target.value)}
-                placeholder="Country"
-                maxLength={2}
-              />
-              <Input
-                value={latitude}
-                onChange={(event) => setLatitude(event.target.value)}
-                placeholder="Latitude"
-              />
-              <Input
-                value={longitude}
-                onChange={(event) => setLongitude(event.target.value)}
-                placeholder="Longitude"
-              />
+              {physicalAddressMode === "existing" ? (
+                <select
+                  id="unitAddressId"
+                  value={partyAddressId}
+                  onChange={(event) => setPartyAddressId(event.target.value)}
+                  className="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-sm"
+                >
+                  <option value="">Select physical address</option>
+                  {panel.physicalAddressOptions.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
+              {physicalAddressMode === "new" ? (
+                <div className="grid gap-2">
+                  <select
+                    value={physicalCountryCode}
+                    onChange={(event) => setPhysicalCountryCode(event.target.value)}
+                    className="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="">Select country</option>
+                    {panel.countries.map((country) => (
+                      <option key={country.code} value={country.code}>
+                        {country.name}
+                      </option>
+                    ))}
+                  </select>
+                  <Input
+                    value={physicalAddressLine1}
+                    onChange={(event) => setPhysicalAddressLine1(event.target.value)}
+                    placeholder="Address line 1"
+                  />
+                  <Input
+                    value={physicalCityTown}
+                    onChange={(event) => setPhysicalCityTown(event.target.value)}
+                    placeholder={physicalFieldLabels.cityTown}
+                  />
+                  <Input
+                    value={physicalCountyDistrict}
+                    onChange={(event) =>
+                      setPhysicalCountyDistrict(event.target.value)
+                    }
+                    placeholder={physicalFieldLabels.countyDistrict}
+                  />
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <Input
+                      value={physicalGpsLatitude}
+                      onChange={(event) => setPhysicalGpsLatitude(event.target.value)}
+                      placeholder="GPS latitude (optional)"
+                    />
+                    <Input
+                      value={physicalGpsLongitude}
+                      onChange={(event) => setPhysicalGpsLongitude(event.target.value)}
+                      placeholder="GPS longitude (optional)"
+                    />
+                  </div>
+                </div>
+              ) : null}
             </div>
             <div className="space-y-2">
               <Label htmlFor="openingDate">Opening Date (optional)</Label>

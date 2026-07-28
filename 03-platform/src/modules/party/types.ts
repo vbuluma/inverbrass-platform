@@ -9,12 +9,14 @@
  * BP-002 / IP-004 – Address Management
  * BP-002 / IP-005 – Organization Branch Management
  * BP-002 / IP-006 – Party Relationships
+ * BP-002 / IP-007 – Party Documents
  */
 
 import type {
   OrganizationalUnitStatusCode,
   PartyAddressStatusCode,
   PartyContactStatusCode,
+  PartyDocumentStatusCode,
   PartyRelationshipStatusCode,
   PartyRoleStatusCode,
   PartyStatusCode,
@@ -233,6 +235,8 @@ export type PartyAddressView = {
   statusCode: PartyAddressStatusCode;
   notes: string | null;
   countyOrStateDisplay: string;
+  /** Set when status is INACTIVE — reflects last status change (deactivation). */
+  deactivatedAt: string | null;
 };
 
 export type PartyAddressesPanelView = {
@@ -284,6 +288,19 @@ export type PartyRelationshipsPanelView = {
   availableRelationshipTypes: ReferenceOption[];
 };
 
+export type InlinePhysicalAddressPayload = {
+  countryCode: string;
+  addressLine1: string;
+  cityTown?: string;
+  countyDistrict?: string;
+  stateProvince?: string;
+  wardLocality?: string;
+  postalCode?: string;
+  landmark?: string;
+  gpsLatitude?: string | number | null;
+  gpsLongitude?: string | number | null;
+};
+
 export type AddOrganizationalUnitPayload = {
   unitCode: string;
   unitName: string;
@@ -292,8 +309,10 @@ export type AddOrganizationalUnitPayload = {
   isHeadOffice?: boolean;
   phone?: string;
   email?: string;
+  /** Select an existing organization physical address. */
   partyAddressId?: string | null;
-  countryCode?: string;
+  /** Capture a new physical address on the organization party. */
+  newPhysicalAddress?: InlinePhysicalAddressPayload | null;
   latitude?: string | number | null;
   longitude?: string | number | null;
   openingDate?: string;
@@ -308,7 +327,7 @@ export type UpdateOrganizationalUnitPayload = {
   phone?: string | null;
   email?: string | null;
   partyAddressId?: string | null;
-  countryCode?: string | null;
+  newPhysicalAddress?: InlinePhysicalAddressPayload | null;
   latitude?: string | number | null;
   longitude?: string | number | null;
   openingDate?: string;
@@ -362,7 +381,9 @@ export type OrganizationStructurePanelView = {
   units: OrganizationalUnitView[];
   tree: OrganizationalUnitTreeNode[];
   availableUnitTypes: ReferenceOption[];
-  availableAddresses: OrganizationalUnitAddressOption[];
+  /** Existing physical/branch/office addresses selectable for a unit. */
+  physicalAddressOptions: OrganizationalUnitAddressOption[];
+  countries: ReferenceOption[];
   parentUnitOptions: ReferenceOption[];
   summary: OrganizationStructureSummaryView;
 };
@@ -377,3 +398,40 @@ export type SearchOrganizationalUnitsPayload = {
 export type AddOrganizationBranchPayload = AddOrganizationalUnitPayload;
 /** @deprecated Use OrganizationStructurePanelView */
 export type OrganizationBranchesPanelView = OrganizationStructurePanelView;
+
+export type PartyDocumentView = {
+  id: string;
+  partyId: string;
+  documentTypeCode: string;
+  documentTypeName: string;
+  originalFileName: string;
+  mimeType: string;
+  fileSizeBytes: number;
+  fileSizeDisplay: string;
+  issueDate: string | null;
+  expiryDate: string | null;
+  statusCode: PartyDocumentStatusCode;
+  isVerified: boolean;
+  verifiedAt: string | null;
+  notes: string | null;
+  createdAt: string;
+  supersedesDocumentId: string | null;
+};
+
+export type PartyDocumentsPanelView = {
+  documents: PartyDocumentView[];
+  availableDocumentTypes: ReferenceOption[];
+  maxUploadSizeBytes: number;
+  allowedMimeTypes: readonly string[];
+};
+
+export type UploadPartyDocumentMetadata = {
+  documentTypeCode: string;
+  issueDate?: string;
+  expiryDate?: string;
+  notes?: string;
+};
+
+export type VerifyPartyDocumentPayload = {
+  notes?: string;
+};

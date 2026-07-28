@@ -31,6 +31,7 @@ import { seedContactTypes } from "@/db/seeds/contact-types-seed";
 import { seedAddressTypes } from "@/db/seeds/address-types-seed";
 import { seedOrganizationalUnitTypes } from "@/db/seeds/organizational-unit-types-seed";
 import { seedRelationshipTypes } from "@/db/seeds/relationship-types-seed";
+import { seedDocumentTypes } from "@/db/seeds/document-types-seed";
 import { seedSecurityQuestions } from "@/db/seeds/security-questions-seed";
 
 async function runSeed() {
@@ -139,6 +140,12 @@ async function runSeed() {
     const organizationalUnitTypeResults = await seedOrganizationalUnitTypes(db);
     console.log(
       `organizationalUnitTypes: inserted=${organizationalUnitTypeResults.inserted}, updated=${organizationalUnitTypeResults.updated}, skipped=${organizationalUnitTypeResults.skipped}`
+    );
+
+    console.log("Seeding document types...");
+    const documentTypeResults = await seedDocumentTypes(db);
+    console.log(
+      `documentTypes: inserted=${documentTypeResults.inserted}, updated=${documentTypeResults.updated}, skipped=${documentTypeResults.skipped}`
     );
 
     console.log("✅ Seed completed.");

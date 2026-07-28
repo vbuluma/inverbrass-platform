@@ -1,3 +1,7 @@
+
+Platform Principle & Vission PP-001 – Digital Business Platform
+
+The InverBrass Platform is a configurable SME Digital Business Platform designed to digitize business operations and provide a foundation for value-added ecosystem services such as embedded finance, insurance, lending, analytics, AI, and partner integrations. Operational modules exist to generate trusted digital business data, not to replicate traditional ERP systems
 I want to introduce one rule that we'll follow throughout this project:
 Every capability must have one and only one owner.
 For example, Customer Management belongs to the Customer Domain. Property, School, Business Operations, Chama, and Academy all use it—they don't create their own customer management.

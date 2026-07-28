@@ -9,17 +9,19 @@
  * BP-002 / IP-004 – Address Management
  * BP-002 / IP-005 – Organization Structure Engine (ENG-003c)
  * BP-002 / IP-006 – Party Relationships
+ * BP-002 / IP-007 – Party Documents
  */
 
 "use client";
 
-import { ArrowLeftIcon, NetworkIcon } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { NetworkIcon } from "lucide-react";
+import { useMemo, useState, useTransition } from "react";
+
+import { PageBackLink } from "@/components/platform/page-back-link";
+import { SetBreadcrumbs } from "@/components/platform/breadcrumb-context";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -39,6 +41,7 @@ import {
 import { PartyAddressesPanel } from "@/modules/party/components/party-addresses-panel";
 import { PartyOrganizationStructurePanel } from "@/modules/party/components/party-organization-structure-panel";
 import { PartyContactsPanel } from "@/modules/party/components/party-contacts-panel";
+import { PartyDocumentsPanel } from "@/modules/party/components/party-documents-panel";
 import { PartyRelationshipsPanel } from "@/modules/party/components/party-relationships-panel";
 import { PartyRolesPanel } from "@/modules/party/components/party-roles-panel";
 import {
@@ -52,6 +55,7 @@ import type {
   OrganizationStructurePanelView,
   PartyContactsPanelView,
   PartyDetailView,
+  PartyDocumentsPanelView,
   PartyRegistrationCatalogues,
   PartyRelationshipsPanelView,
   PartyRolesPanelView,
@@ -65,6 +69,7 @@ type PartyWorkspaceProps = {
   addresses: PartyAddressesPanelView;
   organizationStructure: OrganizationStructurePanelView;
   relationships: PartyRelationshipsPanelView;
+  documents: PartyDocumentsPanelView;
   initialTab?: string;
   showAddOrganizationalUnit?: boolean;
 };
@@ -83,31 +88,42 @@ function formatDate(iso: string | null): string {
 }
 
 export function PartyWorkspace({
-  party,
+  party: initialParty,
   catalogues,
   roles,
   contacts,
   addresses,
   organizationStructure,
   relationships,
+  documents,
   initialTab = "overview",
   showAddOrganizationalUnit = false,
 }: PartyWorkspaceProps) {
-  const router = useRouter();
+  const [party, setParty] = useState(initialParty);
+  const [syncedInitialParty, setSyncedInitialParty] = useState(initialParty);
   const [activeTab, setActiveTab] = useState(initialTab);
   const [showAddUnit, setShowAddUnit] = useState(showAddOrganizationalUnit);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  function refreshAfter(result: { success: boolean; error?: { message: string } }) {
+  if (initialParty !== syncedInitialParty) {
+    setSyncedInitialParty(initialParty);
+    setParty(initialParty);
+  }
+
+  function refreshAfter(
+    result:
+      | { success: true; data: PartyDetailView }
+      | { success: false; error?: { message: string } }
+  ) {
     if (!result.success) {
       setError(result.error?.message ?? "Action failed.");
       return;
     }
     setError(null);
     setMessage("Party updated.");
-    router.refresh();
+    setParty(result.data);
   }
 
   function onSaveOverview(formData: FormData) {
@@ -146,20 +162,25 @@ export function PartyWorkspace({
     });
   }
 
+  const activeTabLabel =
+    PARTY_WORKSPACE_TABS.find((tab) => tab.id === activeTab)?.label ??
+    "Overview";
+
+  const breadcrumbs = useMemo(
+    () => [
+      { label: "Dashboard", href: "/dashboard" },
+      { label: "Parties", href: "/parties" },
+      { label: party.displayName, href: `/parties/${party.id}` },
+      { label: activeTabLabel },
+    ],
+    [party.displayName, party.id, activeTabLabel]
+  );
+
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6">
+      <SetBreadcrumbs items={breadcrumbs} />
       <div className="space-y-3">
-        <Link
-          href="/parties"
-          prefetch={false}
-          className={cn(
-            buttonVariants({ variant: "ghost" }),
-            "w-fit gap-2 px-0"
-          )}
-        >
-          <ArrowLeftIcon className="size-4" aria-hidden />
-          Back to Party Dashboard
-        </Link>
+        <PageBackLink href="/parties" label="Back to Party Dashboard" />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -249,7 +270,11 @@ export function PartyWorkspace({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form action={onSaveOverview} className="space-y-4">
+              <form
+                key={`overview-${party.id}-${party.statusCode}-${party.displayName}`}
+                action={onSaveOverview}
+                className="space-y-4"
+              >
                 <div className="grid gap-4 sm:grid-cols-2">
                   <ReadOnlyField label="Party ID" value={party.partyNumber} />
                   <ReadOnlyField label="Party Type" value={party.partyTypeName} />
@@ -525,6 +550,8 @@ export function PartyWorkspace({
           partyId={party.id}
           initialData={relationships}
         />
+      ) : activeTab === "documents" ? (
+        <PartyDocumentsPanel partyId={party.id} initialData={documents} />
       ) : (
         <Card>
           <CardHeader>

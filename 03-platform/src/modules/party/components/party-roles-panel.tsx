@@ -8,7 +8,6 @@
 
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -38,7 +37,6 @@ export function PartyRolesPanel({
   partyId,
   initialData,
 }: PartyRolesPanelProps) {
-  const router = useRouter();
   const [panel, setPanel] = useState(initialData);
   const [syncedInitial, setSyncedInitial] = useState(initialData);
   const [roleTypeCode, setRoleTypeCode] = useState(
@@ -69,7 +67,6 @@ export function PartyRolesPanel({
     setMessage(successMessage);
     setPanel(result.data);
     setRoleTypeCode(result.data.availableRoleTypes[0]?.code ?? "");
-    router.refresh();
   }
 
   function onAssign() {

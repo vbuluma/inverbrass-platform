@@ -13,6 +13,7 @@ import { normalizePhoneNumberToE164 } from "@/core/shared/phone";
 import type { CurrentBusinessContext } from "@/core/auth/types";
 import {
   ORGANIZATIONAL_UNIT_STATUS_CODES,
+  PARTY_ADDRESS_STATUS_CODES,
   PARTY_TYPE_CODES,
   type OrganizationalUnitStatusCode,
 } from "@/modules/party/constants";
@@ -21,12 +22,15 @@ import { createOrganizationalUnitRepository } from "@/modules/party/repositories
 import { createPartyAddressRepository } from "@/modules/party/repositories/party-address-repository";
 import { createPartyReferenceRepository } from "@/modules/party/repositories/party-reference-repository";
 import { createPartyRepository } from "@/modules/party/repositories/party-repository";
+import { createPartyAddressService } from "@/modules/party/services/party-address-service";
 import {
   canDeactivateOrganizationalUnit,
   canReactivateOrganizationalUnit,
   canSetHeadOffice,
+  defaultPhysicalAddressTypeForUnit,
   formatLocationDisplay,
   isOrganizationalUnitStatusCode,
+  isUnitPhysicalAddressType,
   isValidParentOrganizationalUnit,
   normalizeUnitCode,
   todayIsoDate,
@@ -38,6 +42,7 @@ import {
 } from "@/modules/party/services/party-phone";
 import type {
   AddOrganizationalUnitPayload,
+  InlinePhysicalAddressPayload,
   OrganizationStructurePanelView,
   OrganizationalUnitView,
   SearchOrganizationalUnitsPayload,
@@ -45,6 +50,7 @@ import type {
 } from "@/modules/party/types";
 import {
   addOrganizationalUnitSchema,
+  inlinePhysicalAddressSchema,
   nullableTrimmed,
   parseOptionalGps,
   searchOrganizationalUnitsSchema,
@@ -56,6 +62,7 @@ export class OrganizationalUnitService {
     private readonly partyRepository = createPartyRepository(),
     private readonly organizationalUnitRepository = createOrganizationalUnitRepository(),
     private readonly partyAddressRepository = createPartyAddressRepository(),
+    private readonly partyAddressService = createPartyAddressService(),
     private readonly referenceRepository = createPartyReferenceRepository()
   ) {}
 
@@ -92,12 +99,13 @@ export class OrganizationalUnitService {
       );
     }
 
-    const [unitTypes, addressRows] = await Promise.all([
+    const [unitTypes, addressRows, countries] = await Promise.all([
       this.referenceRepository.listActiveOrganizationalUnitTypes(),
       this.partyAddressRepository.listByPartyId(
         context.businessId,
         organizationPartyId
       ),
+      this.referenceRepository.listActiveCountries(),
     ]);
 
     if (unitTypes.length === 0) {
@@ -126,10 +134,15 @@ export class OrganizationalUnitService {
 
     const typeNameByCode = new Map(unitTypes.map((t) => [t.code, t.name]));
     const unitNameById = new Map(rows.map((row) => [row.id, row.unitName]));
+    const linkableAddresses = addressRows.filter(
+      (row) =>
+        isUnitPhysicalAddressType(row.addressTypeCode) &&
+        row.statusCode === PARTY_ADDRESS_STATUS_CODES.ACTIVE
+    );
     const addressLabelById = new Map(
-      addressRows.map((row) => [
+      linkableAddresses.map((row) => [
         row.id,
-        this.formatAddressLabel(row.addressTypeCode, row.cityTown, row.addressLine1),
+        this.formatPhysicalAddressLabel(row.addressTypeCode, row.cityTown, row.addressLine1),
       ])
     );
 
@@ -142,14 +155,15 @@ export class OrganizationalUnitService {
       units,
       tree: buildOrganizationalUnitTree(units),
       availableUnitTypes: unitTypes,
-      availableAddresses: addressRows.map((row) => ({
+      physicalAddressOptions: linkableAddresses.map((row) => ({
         id: row.id,
-        label: this.formatAddressLabel(
+        label: this.formatPhysicalAddressLabel(
           row.addressTypeCode,
           row.cityTown,
           row.addressLine1
         ),
       })),
+      countries,
       parentUnitOptions: rows.map((row) => ({
         code: row.id,
         name: `${row.unitCode} — ${row.unitName}`,
@@ -184,10 +198,15 @@ export class OrganizationalUnitService {
 
     const typeNameByCode = new Map(unitTypes.map((t) => [t.code, t.name]));
     const unitNameById = new Map(rows.map((row) => [row.id, row.unitName]));
+    const linkableAddresses = addressRows.filter(
+      (row) =>
+        isUnitPhysicalAddressType(row.addressTypeCode) &&
+        row.statusCode === PARTY_ADDRESS_STATUS_CODES.ACTIVE
+    );
     const addressLabelById = new Map(
-      addressRows.map((row) => [
+      linkableAddresses.map((row) => [
         row.id,
-        this.formatAddressLabel(row.addressTypeCode, row.cityTown, row.addressLine1),
+        this.formatPhysicalAddressLabel(row.addressTypeCode, row.cityTown, row.addressLine1),
       ])
     );
 
@@ -253,16 +272,17 @@ export class OrganizationalUnitService {
       );
     }
 
-    const partyAddressId = nullableTrimmed(parsed.data.partyAddressId ?? null);
-    if (partyAddressId) {
-      await this.validatePartyAddress(
-        context,
-        organizationPartyId,
-        partyAddressId
-      );
-    }
-
     const isHeadOffice = parsed.data.isHeadOffice === true;
+
+    const partyAddressId = await this.resolvePhysicalAddressId(
+      context,
+      organizationPartyId,
+      {
+        partyAddressId: nullableTrimmed(parsed.data.partyAddressId ?? null),
+        newPhysicalAddress: parsed.data.newPhysicalAddress ?? null,
+        isHeadOffice,
+      }
+    );
     if (isHeadOffice) {
       await this.assertNoExistingHeadOffice(context, organizationPartyId);
     }
@@ -299,7 +319,7 @@ export class OrganizationalUnitService {
       ),
       email: nullableTrimmed(parsed.data.email ?? null),
       partyAddressId,
-      countryCode: nullableTrimmed(parsed.data.countryCode ?? null)?.toUpperCase() ?? null,
+      countryCode: null,
       latitude: gps.latitude,
       longitude: gps.longitude,
       statusCode: ORGANIZATIONAL_UNIT_STATUS_CODES.ACTIVE,
@@ -366,16 +386,23 @@ export class OrganizationalUnitService {
     }
 
     const partyAddressId =
-      parsed.data.partyAddressId !== undefined
-        ? nullableTrimmed(parsed.data.partyAddressId)
+      parsed.data.partyAddressId !== undefined ||
+      parsed.data.newPhysicalAddress !== undefined
+        ? await this.resolvePhysicalAddressId(context, organizationPartyId, {
+            partyAddressId:
+              parsed.data.partyAddressId !== undefined
+                ? nullableTrimmed(parsed.data.partyAddressId)
+                : null,
+            newPhysicalAddress: parsed.data.newPhysicalAddress ?? null,
+            isHeadOffice: (
+              await this.requireUnitForOrganization(
+                context,
+                organizationPartyId,
+                organizationalUnitId
+              )
+            ).isHeadOffice,
+          })
         : undefined;
-    if (partyAddressId) {
-      await this.validatePartyAddress(
-        context,
-        organizationPartyId,
-        partyAddressId
-      );
-    }
 
     let gps: { latitude: string | null; longitude: string | null } | undefined;
     if (
@@ -428,12 +455,6 @@ export class OrganizationalUnitService {
           ? { email: nullableTrimmed(parsed.data.email) }
           : {}),
         ...(partyAddressId !== undefined ? { partyAddressId } : {}),
-        ...(parsed.data.countryCode !== undefined
-          ? {
-              countryCode:
-                nullableTrimmed(parsed.data.countryCode)?.toUpperCase() ?? null,
-            }
-          : {}),
         ...(gps !== undefined
           ? { latitude: gps.latitude, longitude: gps.longitude }
           : {}),
@@ -651,7 +672,8 @@ export class OrganizationalUnitService {
       units: [],
       tree: [],
       availableUnitTypes: [],
-      availableAddresses: [],
+      physicalAddressOptions: [],
+      countries: [],
       parentUnitOptions: [],
       summary: {
         total: 0,
@@ -766,11 +788,94 @@ export class OrganizationalUnitService {
     if (!address || address.partyId !== organizationPartyId) {
       throw new PartyError(
         "PARTY_ADDRESS_NOT_FOUND",
-        "Select an existing address for this organization.",
+        "Select an existing physical address for this organization.",
         404,
         "partyAddressId"
       );
     }
+    if (address.statusCode !== PARTY_ADDRESS_STATUS_CODES.ACTIVE) {
+      throw new PartyError(
+        "INVALID_INPUT",
+        "Select an active physical address.",
+        400,
+        "partyAddressId"
+      );
+    }
+    if (!isUnitPhysicalAddressType(address.addressTypeCode)) {
+      throw new PartyError(
+        "ADDRESS_TYPE_NOT_ALLOWED",
+        "Select a physical, branch, office, or head office address.",
+        400,
+        "partyAddressId"
+      );
+    }
+  }
+
+  private async resolvePhysicalAddressId(
+    context: CurrentBusinessContext,
+    organizationPartyId: string,
+    input: {
+      partyAddressId: string | null;
+      newPhysicalAddress: InlinePhysicalAddressPayload | null;
+      isHeadOffice: boolean;
+    }
+  ): Promise<string | null> {
+    const hasNewAddress =
+      input.newPhysicalAddress !== null &&
+      input.newPhysicalAddress !== undefined &&
+      Object.keys(input.newPhysicalAddress).length > 0;
+
+    if (hasNewAddress && input.partyAddressId) {
+      throw new PartyError(
+        "INVALID_INPUT",
+        "Select an existing physical address or capture a new one — not both.",
+        400,
+        "partyAddressId"
+      );
+    }
+
+    if (hasNewAddress) {
+      const parsed = inlinePhysicalAddressSchema.safeParse(input.newPhysicalAddress);
+      if (!parsed.success) {
+        const first = parsed.error.issues[0];
+        throw new PartyError(
+          "INVALID_INPUT",
+          first?.message ?? PARTY_USER_MESSAGES.INVALID_INPUT,
+          400,
+          first?.path[0] ? String(first.path[0]) : undefined
+        );
+      }
+
+      return this.partyAddressService.createAddressRecord(
+        context,
+        organizationPartyId,
+        {
+          addressTypeCode: defaultPhysicalAddressTypeForUnit(input.isHeadOffice),
+          countryCode: parsed.data.countryCode,
+          addressLine1: parsed.data.addressLine1,
+          cityTown: parsed.data.cityTown,
+          countyDistrict: parsed.data.countyDistrict,
+          stateProvince: parsed.data.stateProvince,
+          wardLocality: parsed.data.wardLocality,
+          postalCode: parsed.data.postalCode,
+          landmark: parsed.data.landmark,
+          gpsLatitude: parsed.data.gpsLatitude,
+          gpsLongitude: parsed.data.gpsLongitude,
+          isDefault: false,
+        }
+      );
+    }
+
+    if (input.partyAddressId) {
+      await this.validatePartyAddress(
+        context,
+        organizationPartyId,
+        input.partyAddressId
+      );
+      return input.partyAddressId;
+    }
+
+    return null;
   }
 
   private normalizeOptionalPhone(
@@ -797,7 +902,7 @@ export class OrganizationalUnitService {
     }
   }
 
-  private formatAddressLabel(
+  private formatPhysicalAddressLabel(
     addressTypeCode: string,
     cityTown: string | null,
     addressLine1: string | null

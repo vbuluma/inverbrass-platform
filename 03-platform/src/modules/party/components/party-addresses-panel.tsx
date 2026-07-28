@@ -8,7 +8,6 @@
 
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -42,11 +41,56 @@ type PartyAddressesPanelProps = {
   initialData: PartyAddressesPanelView;
 };
 
+function formatDate(iso: string | null): string {
+  if (!iso) {
+    return "—";
+  }
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      dateStyle: "medium",
+    }).format(new Date(iso));
+  } catch {
+    return iso;
+  }
+}
+
+function AddressViewSummary({ address }: { address: PartyAddressView }) {
+  return (
+    <div className="space-y-1 rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-sm">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        Summary
+      </p>
+      <p>Type: {address.addressTypeName}</p>
+      <p>Status: {address.statusCode}</p>
+      {address.isDefault ? <p>Default for this type</p> : null}
+      <p>Country: {address.countryName}</p>
+      {address.addressLine1 ? <p>Line 1: {address.addressLine1}</p> : null}
+      {address.addressLine2 ? <p>Line 2: {address.addressLine2}</p> : null}
+      {address.cityTown ? <p>City / Town: {address.cityTown}</p> : null}
+      {address.countyOrStateDisplay !== "—" ? (
+        <p>County / State: {address.countyOrStateDisplay}</p>
+      ) : null}
+      {address.wardLocality ? <p>Ward / Locality: {address.wardLocality}</p> : null}
+      {address.postalCode ? <p>Postal code: {address.postalCode}</p> : null}
+      {address.landmark ? <p>Landmark: {address.landmark}</p> : null}
+      {address.gpsLatitude && address.gpsLongitude ? (
+        <p>
+          GPS: {address.gpsLatitude}, {address.gpsLongitude}
+        </p>
+      ) : null}
+      {address.notes ? <p>Notes: {address.notes}</p> : null}
+      {address.statusCode === PARTY_ADDRESS_STATUS_CODES.INACTIVE &&
+      address.deactivatedAt ? (
+        <p>Date deactivated: {formatDate(address.deactivatedAt)}</p>
+      ) : null}
+    </div>
+  );
+}
+
 export function PartyAddressesPanel({
   partyId,
   initialData,
 }: PartyAddressesPanelProps) {
-  const router = useRouter();
   const [panel, setPanel] = useState(initialData);
   const [syncedInitial, setSyncedInitial] = useState(initialData);
   const [addressTypeCode, setAddressTypeCode] = useState(
@@ -68,6 +112,7 @@ export function PartyAddressesPanel({
   const [isDefault, setIsDefault] = useState(false);
   const [notes, setNotes] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [viewingId, setViewingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<Partial<PartyAddressView>>({});
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -99,7 +144,7 @@ export function PartyAddressesPanel({
     setCountryCode(result.data.countries[0]?.code ?? "");
     resetAddForm();
     setEditingId(null);
-    router.refresh();
+    setViewingId(null);
   }
 
   function resetAddForm() {
@@ -151,6 +196,7 @@ export function PartyAddressesPanel({
 
   function startEdit(address: PartyAddressView) {
     setEditingId(address.id);
+    setViewingId(null);
     setEditDraft({ ...address });
     setError(null);
     setMessage(null);
@@ -362,11 +408,27 @@ export function PartyAddressesPanel({
                           <p className="text-xs text-muted-foreground">
                             Status: {address.statusCode}
                           </p>
+                          {viewingId === address.id ? (
+                            <AddressViewSummary address={address} />
+                          ) : null}
                         </>
                       )}
                     </div>
                     {editingId === address.id ? null : (
                       <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={isPending}
+                          onClick={() =>
+                            setViewingId((current) =>
+                              current === address.id ? null : address.id
+                            )
+                          }
+                        >
+                          View
+                        </Button>
                         <Button
                           type="button"
                           size="sm"

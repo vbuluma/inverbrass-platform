@@ -39,6 +39,25 @@ Mobile	Bottom Navigation Bar with contextual menus.
 Tablet	Navigation Rail with collapsible menu.
 Desktop	Left Sidebar Navigation with top toolbar.
 Progressive Web App	Responsive navigation optimized for installed experiences.
+
+ Global Navigation & Session Management
+
+Purpose
+
+Provide consistent navigation and session controls across the entire platform.
+
+Requirements
+
+Every authenticated page shall display the Global Platform Header.
+Every authenticated page shall provide access to Sign Out.
+Every authenticated page shall display breadcrumb navigation where applicable.
+Every form shall provide a clear Cancel, Back, or Close action.
+Users shall be able to switch Business (tenant) without signing out.
+Users shall be be able to access Profile and Preferences from any page.
+Navigation shall remain consistent across all Build Packs.
+Where to implement
+
+This shouldn't be added to a specific Build Pack. It belongs in the Platform Foundation, because every future module (Parties, Sales, Inventory, Property, Schools, Healthcare, etc.) will inherit it.
 ________________________________________
 5. Screen Layout Standards
 Every screen should follow a consistent structure.
@@ -173,5 +192,23 @@ Whenever a new screen is built, it should pass this checklist:
 •	Does it follow the InverBrass Design System?
 •	Does it remain configuration-driven rather than hard-coded?
 If the answer to any of these questions is no, the design should be revisited before implementation.
+________________________________________
+18. Client–Server Refresh Standards (UI-STD-004)
+
+Rule ID	UI-STD-004
+Title	Server Action Refresh Pattern
+Scope	All workspace-style screens and tab panels that call Server Actions
+
+After a successful Server Action:
+
+1. Update the affected UI using returned data (e.g. setPanel(result.data)).
+2. Use revalidatePath() on the server in the action.
+3. Do NOT call router.refresh() inside useTransition().
+4. Use router.refresh() only when no returned data can reasonably update the UI.
+5. Prefer shared workspace state over full-page refreshes for cross-panel synchronization.
+
+This pattern prevents "Saving…" hangs, reduces unnecessary RSC reloads, and keeps workspace tabs responsive while preserving cache correctness on navigation.
+
+Cursor rule: .cursor/rules/ui-std-004-server-action-refresh.mdc
 ________________________________________
 

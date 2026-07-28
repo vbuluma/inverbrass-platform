@@ -1,0 +1,54 @@
+---
+description: UI-STD-004 — Server Action refresh pattern for workspace panels
+globs: 03-platform/src/**/*.tsx
+alwaysApply: false
+---
+
+# UI-STD-004 — Server Action Refresh Pattern
+
+After a successful Server Action:
+
+1. **Update the affected UI using returned data** — e.g. `setPanel(result.data)` or `setParty(result.data)`.
+2. **Use `revalidatePath()` on the server** in the action so the next navigation or hard reload is fresh.
+3. **Do NOT call `router.refresh()` inside `useTransition()`** — it keeps `isPending` true until a slow full RSC reload completes.
+4. **Use `router.refresh()` only when no returned data can reasonably update the UI** (rare; document why).
+5. **Prefer shared workspace state over full-page refreshes** for cross-panel synchronization.
+
+## Example — workspace tab panel
+
+```tsx
+function applyPanelResult(result: PanelActionResult, successMessage: string) {
+  if (!result.success) {
+    setError(result.error.message);
+    return;
+  }
+  setError(null);
+  setMessage(successMessage);
+  setPanel(result.data);
+}
+
+startTransition(async () => {
+  const result = await updateSomethingAction(partyId, payload);
+  applyPanelResult(result, "Saved.");
+});
+```
+
+## Example — server action
+
+```ts
+const data = await service.update(context, partyId, payload);
+revalidatePath(`/parties/${partyId}`);
+return { success: true, data };
+```
+
+## Anti-pattern
+
+```tsx
+// ❌ BAD — races the transition; "Saving…" hangs until RSC reload finishes
+startTransition(async () => {
+  const result = await saveAction(...);
+  if (result.success) {
+    router.refresh();
+  }
+});
+```

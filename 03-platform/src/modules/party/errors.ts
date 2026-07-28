@@ -40,6 +40,13 @@ export const PARTY_ERROR_CODES = {
   HEAD_OFFICE_UNIT_INACTIVE: "HEAD_OFFICE_UNIT_INACTIVE",
   INVALID_ORGANIZATIONAL_UNIT_TRANSITION: "INVALID_ORGANIZATIONAL_UNIT_TRANSITION",
   INVALID_PARENT_ORGANIZATIONAL_UNIT: "INVALID_PARENT_ORGANIZATIONAL_UNIT",
+  PARTY_DOCUMENT_NOT_FOUND: "PARTY_DOCUMENT_NOT_FOUND",
+  INVALID_DOCUMENT_TRANSITION: "INVALID_DOCUMENT_TRANSITION",
+  DOCUMENT_NOT_VERIFIABLE: "DOCUMENT_NOT_VERIFIABLE",
+  DOCUMENT_DOWNLOAD_NOT_ALLOWED: "DOCUMENT_DOWNLOAD_NOT_ALLOWED",
+  DUPLICATE_PARTY_DOCUMENT: "DUPLICATE_PARTY_DOCUMENT",
+  DOCUMENT_UPLOAD_INVALID: "DOCUMENT_UPLOAD_INVALID",
+  STORAGE_NOT_CONFIGURED: "STORAGE_NOT_CONFIGURED",
   /** @deprecated */ ORGANIZATION_BRANCH_NOT_FOUND: "ORGANIZATIONAL_UNIT_NOT_FOUND",
   /** @deprecated */ ORGANIZATIONS_ONLY_BRANCHES: "ORGANIZATIONS_ONLY_UNITS",
   /** @deprecated */ DUPLICATE_BRANCH_CODE: "DUPLICATE_UNIT_CODE",
@@ -117,6 +124,15 @@ export const PARTY_USER_MESSAGES = {
     "That organizational unit status change is not allowed.",
   INVALID_PARENT_ORGANIZATIONAL_UNIT:
     "Select a valid parent organizational unit for this organization.",
+  PARTY_DOCUMENT_NOT_FOUND: "That document could not be found.",
+  INVALID_DOCUMENT_TRANSITION: "That document status change is not allowed.",
+  DOCUMENT_NOT_VERIFIABLE: "Only active documents can be verified.",
+  DOCUMENT_DOWNLOAD_NOT_ALLOWED: "Download is only available for active documents.",
+  DUPLICATE_PARTY_DOCUMENT:
+    "A document of that type with the same file already exists for this party.",
+  DOCUMENT_UPLOAD_INVALID: "That file could not be uploaded. Check type and size.",
+  STORAGE_NOT_CONFIGURED:
+    "Document storage is not configured. Contact your administrator.",
   /** @deprecated */ ORGANIZATION_BRANCH_NOT_FOUND: "That organizational unit could not be found.",
   /** @deprecated */ ORGANIZATIONS_ONLY_BRANCHES:
     "Organizational Units are only available for Organization parties.",

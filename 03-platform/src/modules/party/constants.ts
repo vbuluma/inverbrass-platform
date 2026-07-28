@@ -100,6 +100,36 @@ export const PARTY_RELATIONSHIP_STATUS_CODES = {
 export type PartyRelationshipStatusCode =
   (typeof PARTY_RELATIONSHIP_STATUS_CODES)[keyof typeof PARTY_RELATIONSHIP_STATUS_CODES];
 
+export const PARTY_DOCUMENT_STATUS_CODES = {
+  ACTIVE: "ACTIVE",
+  INACTIVE: "INACTIVE",
+} as const;
+
+export type PartyDocumentStatusCode =
+  (typeof PARTY_DOCUMENT_STATUS_CODES)[keyof typeof PARTY_DOCUMENT_STATUS_CODES];
+
+export const STORAGE_PROVIDER_CODES = {
+  SUPABASE: "SUPABASE",
+} as const;
+
+export type StorageProviderCode =
+  (typeof STORAGE_PROVIDER_CODES)[keyof typeof STORAGE_PROVIDER_CODES];
+
+export const PARTY_DOCUMENT_ALLOWED_MIME_TYPES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+] as const;
+
+export type PartyDocumentMimeType =
+  (typeof PARTY_DOCUMENT_ALLOWED_MIME_TYPES)[number];
+
+/** Default max upload size — override via env PARTY_DOCUMENT_MAX_SIZE_MB later. */
+export const PARTY_DOCUMENT_MAX_SIZE_BYTES = 10 * 1024 * 1024;
+
+export const PARTY_DOCUMENT_STORAGE_BUCKET = "party-documents" as const;
+
 export const GENDER_OPTIONS = [
   { code: "FEMALE", name: "Female" },
   { code: "MALE", name: "Male" },
@@ -114,7 +144,7 @@ export const PARTY_WORKSPACE_TABS = [
   { id: "addresses", label: "Addresses", available: true },
   { id: "organization-structure", label: "Organization Structure", available: true },
   { id: "relationships", label: "Relationships", available: true },
-  { id: "documents", label: "Documents", available: false },
+  { id: "documents", label: "Documents", available: true },
   { id: "groups", label: "Groups", available: false },
   { id: "timeline", label: "Timeline", available: false },
   {

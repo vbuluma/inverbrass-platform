@@ -8,7 +8,6 @@
 
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -59,7 +58,6 @@ export function PartyRelationshipsPanel({
   partyId,
   initialData,
 }: PartyRelationshipsPanelProps) {
-  const router = useRouter();
   const [panel, setPanel] = useState(initialData);
   const [syncedInitial, setSyncedInitial] = useState(initialData);
   const [syncedPartyId, setSyncedPartyId] = useState(partyId);
@@ -123,7 +121,6 @@ export function PartyRelationshipsPanel({
     setStartDate("");
     setNotes("");
     setEditingId(null);
-    router.refresh();
   }
 
   function onSearch() {

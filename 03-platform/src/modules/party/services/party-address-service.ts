@@ -93,6 +93,18 @@ export class PartyAddressService {
     partyId: string,
     payload: AddPartyAddressPayload
   ): Promise<PartyAddressesPanelView> {
+    await this.createAddressRecord(context, partyId, payload);
+    return this.getPartyAddresses(context, partyId);
+  }
+
+  /**
+   * WHAT: Create one party address row and return its id (for linking from other modules).
+   */
+  async createAddressRecord(
+    context: CurrentBusinessContext,
+    partyId: string,
+    payload: AddPartyAddressPayload
+  ): Promise<string> {
     const parsed = addPartyAddressSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
@@ -162,6 +174,7 @@ export class PartyAddressService {
     }
 
     const db = getDb();
+    let addressId = "";
     await db.transaction(async (tx) => {
       if (makeDefault) {
         await this.partyAddressRepository.clearDefaultForPartyAndType(
@@ -172,7 +185,7 @@ export class PartyAddressService {
         );
       }
 
-      await this.partyAddressRepository.insert(
+      const row = await this.partyAddressRepository.insert(
         {
           businessId: context.businessId,
           partyId,
@@ -196,9 +209,10 @@ export class PartyAddressService {
         },
         tx
       );
+      addressId = row.id;
     });
 
-    return this.getPartyAddresses(context, partyId);
+    return addressId;
   }
 
   async updateAddress(
@@ -485,6 +499,7 @@ export class PartyAddressService {
       isDefault: boolean;
       statusCode: string;
       notes: string | null;
+      updatedAt: Date;
     },
     typeNameByCode: Map<string, string>,
     countryNameByCode: Map<string, string>
@@ -517,6 +532,10 @@ export class PartyAddressService {
         row.countyDistrict,
         row.stateProvince
       ),
+      deactivatedAt:
+        statusCode === PARTY_ADDRESS_STATUS_CODES.INACTIVE
+          ? row.updatedAt.toISOString()
+          : null,
     };
   }
 }

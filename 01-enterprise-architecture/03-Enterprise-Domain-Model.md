@@ -76,6 +76,63 @@ Business Domain	Purpose	Owning Capability	Key Business Entities	Used By	Configur
 Business Rules	Execute configurable business rules	Business Rules Engine	Rule, Condition, Action	All Industry Solutions	Yes
 Machine Learning	Predict outcomes and detect anomalies	Machine Learning Engine	Model, Prediction, Forecast	All Industry Solutions	Yes
 Generative AI	Provide conversational assistance and recommendations	Generative AI Engine	Prompt, Conversation, Recommendation	All Industry Solutions	Yes
+
+
+14. Product Strategy & Lifecycle Management domain
+
+Purpose
+
+Manage digital products from:
+
+Idea
+
+↓
+
+Business Case
+
+↓
+
+Planning
+
+↓
+
+Delivery
+
+↓
+
+Launch
+
+↓
+
+Performance
+
+↓
+
+Continuous Improvement
+
+↓
+
+Retirement
+
+New Capability
+
+
+
+SC-045 Product Strategy & Lifecycle Management
+
+Then underneath:
+
+Capability	Purpose
+Product Portfolio	All products
+Innovation	Ideas
+Business Cases	Investment decisions
+Roadmaps	Planning
+Releases	Delivery
+Product Analytics	Performance
+AI Product Intelligence	Recommendations
+GTM	Commercialization
+Customer Feedback	Improvement
+Lifecycle	Growth → Retirement
 ________________________________________
 14. Domain Design Principles
 Principle	Description

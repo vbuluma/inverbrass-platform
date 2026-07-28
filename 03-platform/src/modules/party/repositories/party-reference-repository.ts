@@ -14,6 +14,7 @@ import * as schema from "@/db/schema";
 import { organizationalUnitType } from "@/db/schema/organizational-unit-type";
 import { relationshipType } from "@/db/schema/relationship-type";
 import { addressType } from "@/db/schema/address-type";
+import { documentType } from "@/db/schema/document-type";
 import { contactType } from "@/db/schema/contact-type";
 import { business } from "@/db/schema/business";
 import { country } from "@/db/schema/country";
@@ -298,6 +299,27 @@ export class PartyReferenceRepository {
           eq(organizationalUnitType.isActive, true)
         )
       )
+      .limit(1);
+
+    return row ?? null;
+  }
+
+  async listActiveDocumentTypes(dbClient: DbClient = getDb()) {
+    return dbClient
+      .select({
+        code: documentType.code,
+        name: documentType.name,
+      })
+      .from(documentType)
+      .where(eq(documentType.isActive, true))
+      .orderBy(asc(documentType.displayOrder), asc(documentType.name));
+  }
+
+  async findDocumentTypeByCode(code: string, dbClient: DbClient = getDb()) {
+    const [row] = await dbClient
+      .select({ code: documentType.code, name: documentType.name })
+      .from(documentType)
+      .where(and(eq(documentType.code, code), eq(documentType.isActive, true)))
       .limit(1);
 
     return row ?? null;

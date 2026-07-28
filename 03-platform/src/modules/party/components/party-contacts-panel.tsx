@@ -8,7 +8,6 @@
 
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -46,7 +45,6 @@ export function PartyContactsPanel({
   partyId,
   initialData,
 }: PartyContactsPanelProps) {
-  const router = useRouter();
   const [panel, setPanel] = useState(initialData);
   const [syncedInitial, setSyncedInitial] = useState(initialData);
   const [contactTypeCode, setContactTypeCode] = useState(
@@ -86,7 +84,6 @@ export function PartyContactsPanel({
     setIsPreferred(false);
     setNotes("");
     setEditingId(null);
-    router.refresh();
   }
 
   function onAdd() {
