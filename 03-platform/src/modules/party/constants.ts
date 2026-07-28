@@ -78,6 +78,20 @@ export const PARTY_ADDRESS_STATUS_CODES = {
 export type PartyAddressStatusCode =
   (typeof PARTY_ADDRESS_STATUS_CODES)[keyof typeof PARTY_ADDRESS_STATUS_CODES];
 
+export const ORGANIZATIONAL_UNIT_STATUS_CODES = {
+  ACTIVE: "ACTIVE",
+  INACTIVE: "INACTIVE",
+} as const;
+
+export type OrganizationalUnitStatusCode =
+  (typeof ORGANIZATIONAL_UNIT_STATUS_CODES)[keyof typeof ORGANIZATIONAL_UNIT_STATUS_CODES];
+
+/** @deprecated Use ORGANIZATIONAL_UNIT_STATUS_CODES */
+export const ORGANIZATION_BRANCH_STATUS_CODES = ORGANIZATIONAL_UNIT_STATUS_CODES;
+
+/** @deprecated Use OrganizationalUnitStatusCode */
+export type OrganizationBranchStatusCode = OrganizationalUnitStatusCode;
+
 export const PARTY_RELATIONSHIP_STATUS_CODES = {
   ACTIVE: "ACTIVE",
   INACTIVE: "INACTIVE",
@@ -98,7 +112,7 @@ export const PARTY_WORKSPACE_TABS = [
   { id: "roles", label: "Roles", available: true },
   { id: "contacts", label: "Contacts", available: true },
   { id: "addresses", label: "Addresses", available: true },
-  { id: "branches", label: "Branches", available: false },
+  { id: "organization-structure", label: "Organization Structure", available: true },
   { id: "relationships", label: "Relationships", available: true },
   { id: "documents", label: "Documents", available: false },
   { id: "groups", label: "Groups", available: false },

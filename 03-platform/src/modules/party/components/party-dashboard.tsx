@@ -11,6 +11,7 @@
 import {
   ArrowLeftIcon,
   Building2Icon,
+  NetworkIcon,
   UserPlusIcon,
   UsersIcon,
 } from "lucide-react";
@@ -25,6 +26,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { PARTY_TYPE_CODES } from "@/modules/party/constants";
 import type { PartyDashboardView } from "@/modules/party/types";
 
 type PartyDashboardProps = {
@@ -186,6 +188,7 @@ export function PartyDashboard({ data }: PartyDashboardProps) {
                   <th className="hidden px-4 py-3 font-medium lg:table-cell">
                     Registered
                   </th>
+                  <th className="px-4 py-3 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -212,6 +215,23 @@ export function PartyDashboard({ data }: PartyDashboardProps) {
                     </td>
                     <td className="hidden px-4 py-3 lg:table-cell">
                       {formatDate(party.registrationDate)}
+                    </td>
+                    <td className="px-4 py-3">
+                      {party.partyTypeCode === PARTY_TYPE_CODES.ORGANIZATION ? (
+                        <Link
+                          href={`/parties/${party.id}?tab=organization-structure&add=1`}
+                          prefetch={false}
+                          className={cn(
+                            buttonVariants({ variant: "outline", size: "sm" }),
+                            "gap-1"
+                          )}
+                        >
+                          <NetworkIcon className="size-3.5" aria-hidden />
+                          Add Unit
+                        </Link>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}

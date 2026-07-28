@@ -137,7 +137,7 @@ ________________________________________
 1. Normalization shall use the Party/Business operating country dialing code from the Localization & Regulatory Engine when available.
 2. Normalization shall occur centrally in the shared phone validation/normalization utility — not ad hoc in UI components or repositories.
 3. Duplicate detection shall compare normalized E.164 values so equivalent numbers cannot be registered twice.
-4. Platform Registration, Party Contacts, Employees, Branches, Customers, Suppliers, and all future Build Packs shall reuse the same utility.
+4. Platform Registration, Party Contacts, Organizational Units, Employees, Customers, Suppliers, and all future Build Packs shall reuse the same utility.
 
 **Implementation location:** `03-platform/src/core/shared/phone` (compatibility re-export: `core/auth/utils/phone-normalizer`).
 
@@ -149,9 +149,19 @@ ________________________________________
 1. Do not hardcode country-specific administrative level names (e.g. "County" for Kenya only) in the persistence model.
 2. UI labels and hierarchy order shall be resolved from the Localization & Regulatory Engine when available.
 3. Country is mandatory; GPS coordinates are optional.
-4. Party Address, Business Branch, Customer, Supplier, and all future Build Packs shall reuse the same address field model.
+4. Party Address, Organizational Units, Business Setup branches, Customer, Supplier, and all future Build Packs shall reuse the same address field model.
 
 **Implementation location:** `03-platform/src/core/shared/address` (generic labels until ENG-003b supplies country-specific hierarchy).
+
+### ENG-003c – Organization Structure Engine
+
+**Purpose:** Reusable internal structure for Organization Parties — departments, branches, campuses, warehouses, and other unit types — without creating duplicate Party records.
+
+**Canonical entity:** `organizational_unit` (child of Organization Party via `organization_party_id`).
+
+**Future Build Packs** shall reference `organizational_unit_id` for employees, inventory, sales, receipts, assets, projects, appointments, and related capabilities.
+
+**Implementation location:** `03-platform/src/modules/party/services/organizational-unit-service.ts`, `organizational-unit-repository.ts`, Party Workspace **Organization Structure** tab.
 
 ________________________________________
 Architect's Recommendation

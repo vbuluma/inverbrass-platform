@@ -112,6 +112,7 @@ Engine ID	Core Engine	Purpose
 ENG-001	Authentication Engine	Identity, Login, PIN, MFA
 ENG-002	Authorization Engine	Roles & Permissions
 ENG-003a	Configuration Engine	Stores configurable behaviour
+ENG-003c	Organization Structure Engine	Internal organizational units (departments, branches, campuses) owned by Organization Parties; future Build Packs reference organizational_unit_id
 ENG-003b Localization & Regulatory Engine: Handles-Country-, region-, and jurisdiction-specific configuration and regulatory behavior(It would centrally manage:
 
 Localization
@@ -242,6 +243,28 @@ New countries should primarily require configuration rather than development.
 Localization First Principle: All country-, region-, and jurisdiction-specific behaviour shall be implemented through the Localization & Regulatory Engine wherever possible. New country support should primarily require configuration and integration, not changes to core business logic.
 
 This single principle will stop future developers (or AI assistants) from introducing code like if country == "KE" throughout the application. Instead, they'll naturally look to the engine for policies and configuration, keeping the platform scalable as you expand into new markets.
+
+### ENG-003c – Organization Structure Engine
+
+**Purpose**
+
+Provides a reusable internal hierarchy for Organization Parties — head offices, departments, regional offices, branches, campuses, warehouses, and other unit types — without creating duplicate Party records. Organizational Units remain internal to a single Organization; subsidiaries continue to be modeled as separate Organization Parties linked through Party Relationships (IP-006).
+
+**Canonical entity:** `organizational_unit` (owned by Organization Party via `organization_party_id`).
+
+**Core responsibilities**
+
+1. Hierarchical organizational structure (parent/child units within one Organization)
+2. Configurable unit types via Configuration Engine (`organizational_unit_type`)
+3. Head Office designation (exactly one active Head Office per Organization)
+4. Unit lifecycle (active, inactive, soft delete)
+5. Location (address via EDS-009, optional country and GPS coordinates)
+6. Contact (phone via EDS-003, email)
+
+**Future Build Packs** shall reference `organizational_unit_id` for employees, inventory, sales, receipts, assets, projects, appointments, and related capabilities.
+
+**Implementation location:** `03-platform/src/modules/party` — Organization Structure tab in Party Workspace.
+
 ENG-004	Rules Engine	Executes deterministic business rules
 ENG-005	Workflow Engine	Maker-Checker, approvals
 ENG-006	Payment Engine	Cash, M-Pesa, Cards, Credit, Split Payments

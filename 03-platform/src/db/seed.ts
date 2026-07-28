@@ -29,6 +29,7 @@ import { seedPartyTypes } from "@/db/seeds/party-types-seed";
 import { seedRoleTypes } from "@/db/seeds/role-types-seed";
 import { seedContactTypes } from "@/db/seeds/contact-types-seed";
 import { seedAddressTypes } from "@/db/seeds/address-types-seed";
+import { seedOrganizationalUnitTypes } from "@/db/seeds/organizational-unit-types-seed";
 import { seedRelationshipTypes } from "@/db/seeds/relationship-types-seed";
 import { seedSecurityQuestions } from "@/db/seeds/security-questions-seed";
 
@@ -132,6 +133,12 @@ async function runSeed() {
     const relationshipTypeResults = await seedRelationshipTypes(db);
     console.log(
       `relationshipTypes: inserted=${relationshipTypeResults.inserted}, updated=${relationshipTypeResults.updated}, skipped=${relationshipTypeResults.skipped}`
+    );
+
+    console.log("Seeding organizational unit types...");
+    const organizationalUnitTypeResults = await seedOrganizationalUnitTypes(db);
+    console.log(
+      `organizationalUnitTypes: inserted=${organizationalUnitTypeResults.inserted}, updated=${organizationalUnitTypeResults.updated}, skipped=${organizationalUnitTypeResults.skipped}`
     );
 
     console.log("✅ Seed completed.");

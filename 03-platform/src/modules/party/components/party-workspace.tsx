@@ -7,12 +7,13 @@
  * BP-002 / IP-002 – Party Roles
  * BP-002 / IP-003 – Contacts & Communication
  * BP-002 / IP-004 – Address Management
- * BP-002 / IP-005 – Party Relationships
+ * BP-002 / IP-005 – Organization Structure Engine (ENG-003c)
+ * BP-002 / IP-006 – Party Relationships
  */
 
 "use client";
 
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon, NetworkIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -36,6 +37,7 @@ import {
   updatePartyAction,
 } from "@/modules/party/actions/party-actions";
 import { PartyAddressesPanel } from "@/modules/party/components/party-addresses-panel";
+import { PartyOrganizationStructurePanel } from "@/modules/party/components/party-organization-structure-panel";
 import { PartyContactsPanel } from "@/modules/party/components/party-contacts-panel";
 import { PartyRelationshipsPanel } from "@/modules/party/components/party-relationships-panel";
 import { PartyRolesPanel } from "@/modules/party/components/party-roles-panel";
@@ -47,6 +49,7 @@ import {
 } from "@/modules/party/constants";
 import type {
   PartyAddressesPanelView,
+  OrganizationStructurePanelView,
   PartyContactsPanelView,
   PartyDetailView,
   PartyRegistrationCatalogues,
@@ -60,7 +63,10 @@ type PartyWorkspaceProps = {
   roles: PartyRolesPanelView;
   contacts: PartyContactsPanelView;
   addresses: PartyAddressesPanelView;
+  organizationStructure: OrganizationStructurePanelView;
   relationships: PartyRelationshipsPanelView;
+  initialTab?: string;
+  showAddOrganizationalUnit?: boolean;
 };
 
 function formatDate(iso: string | null): string {
@@ -82,10 +88,14 @@ export function PartyWorkspace({
   roles,
   contacts,
   addresses,
+  organizationStructure,
   relationships,
+  initialTab = "overview",
+  showAddOrganizationalUnit = false,
 }: PartyWorkspaceProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const [showAddUnit, setShowAddUnit] = useState(showAddOrganizationalUnit);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -432,6 +442,23 @@ export function PartyWorkspace({
               <SummaryRow label="Display Name" value={party.displayName} />
               <SummaryRow label="Type" value={party.partyTypeName} />
               <SummaryRow label="Status" value={party.statusName} />
+              {party.partyTypeCode === PARTY_TYPE_CODES.ORGANIZATION ? (
+                <div className="pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-2"
+                    onClick={() => {
+                      setActiveTab("organization-structure");
+                      setShowAddUnit(true);
+                    }}
+                  >
+                    <NetworkIcon className="size-4" aria-hidden />
+                    Add Organizational Unit
+                  </Button>
+                </div>
+              ) : null}
               {party.individual ? (
                 <>
                   <SummaryRow
@@ -486,6 +513,13 @@ export function PartyWorkspace({
         <PartyContactsPanel partyId={party.id} initialData={contacts} />
       ) : activeTab === "addresses" ? (
         <PartyAddressesPanel partyId={party.id} initialData={addresses} />
+      ) : activeTab === "organization-structure" ? (
+        <PartyOrganizationStructurePanel
+          partyId={party.id}
+          organizationName={party.displayName}
+          initialData={organizationStructure}
+          showAddForm={showAddUnit}
+        />
       ) : activeTab === "relationships" ? (
         <PartyRelationshipsPanel
           partyId={party.id}

@@ -11,6 +11,7 @@ import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 
 import { getDb } from "@/db/client";
 import * as schema from "@/db/schema";
+import { organizationalUnitType } from "@/db/schema/organizational-unit-type";
 import { relationshipType } from "@/db/schema/relationship-type";
 import { addressType } from "@/db/schema/address-type";
 import { contactType } from "@/db/schema/contact-type";
@@ -265,6 +266,51 @@ export class PartyReferenceRepository {
       .limit(1);
 
     return row ?? null;
+  }
+
+  async listActiveOrganizationalUnitTypes(dbClient: DbClient = getDb()) {
+    return dbClient
+      .select({
+        code: organizationalUnitType.code,
+        name: organizationalUnitType.name,
+      })
+      .from(organizationalUnitType)
+      .where(eq(organizationalUnitType.isActive, true))
+      .orderBy(
+        asc(organizationalUnitType.displayOrder),
+        asc(organizationalUnitType.name)
+      );
+  }
+
+  async findOrganizationalUnitTypeByCode(
+    code: string,
+    dbClient: DbClient = getDb()
+  ) {
+    const [row] = await dbClient
+      .select({
+        code: organizationalUnitType.code,
+        name: organizationalUnitType.name,
+      })
+      .from(organizationalUnitType)
+      .where(
+        and(
+          eq(organizationalUnitType.code, code),
+          eq(organizationalUnitType.isActive, true)
+        )
+      )
+      .limit(1);
+
+    return row ?? null;
+  }
+
+  /** @deprecated Use listActiveOrganizationalUnitTypes */
+  async listActiveBranchTypes(dbClient: DbClient = getDb()) {
+    return this.listActiveOrganizationalUnitTypes(dbClient);
+  }
+
+  /** @deprecated Use findOrganizationalUnitTypeByCode */
+  async findBranchTypeByCode(code: string, dbClient: DbClient = getDb()) {
+    return this.findOrganizationalUnitTypeByCode(code, dbClient);
   }
 }
 

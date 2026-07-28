@@ -24,6 +24,8 @@ export { contactType } from "./contact-type";
 export { partyContact } from "./party-contact";
 export { addressType } from "./address-type";
 export { partyAddress } from "./party-address";
+export { organizationalUnitType } from "./organizational-unit-type";
+export { organizationalUnit } from "./organizational-unit";
 export { relationshipType } from "./relationship-type";
 export { partyRelationship } from "./party-relationship";
 export { paymentChannel } from "./payment-channel";

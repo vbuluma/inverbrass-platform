@@ -7,10 +7,12 @@
  * BP-002 / IP-002 – Party Roles
  * BP-002 / IP-003 – Contacts & Communication
  * BP-002 / IP-004 – Address Management
- * BP-002 / IP-005 – Party Relationships
+ * BP-002 / IP-005 – Organization Branch Management
+ * BP-002 / IP-006 – Party Relationships
  */
 
 import type {
+  OrganizationalUnitStatusCode,
   PartyAddressStatusCode,
   PartyContactStatusCode,
   PartyRelationshipStatusCode,
@@ -281,3 +283,97 @@ export type PartyRelationshipsPanelView = {
   relationships: PartyRelationshipView[];
   availableRelationshipTypes: ReferenceOption[];
 };
+
+export type AddOrganizationalUnitPayload = {
+  unitCode: string;
+  unitName: string;
+  organizationalUnitTypeCode: string;
+  parentOrganizationalUnitId?: string | null;
+  isHeadOffice?: boolean;
+  phone?: string;
+  email?: string;
+  partyAddressId?: string | null;
+  countryCode?: string;
+  latitude?: string | number | null;
+  longitude?: string | number | null;
+  openingDate?: string;
+  closingDate?: string | null;
+  notes?: string;
+};
+
+export type UpdateOrganizationalUnitPayload = {
+  unitName?: string;
+  organizationalUnitTypeCode?: string;
+  parentOrganizationalUnitId?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  partyAddressId?: string | null;
+  countryCode?: string | null;
+  latitude?: string | number | null;
+  longitude?: string | number | null;
+  openingDate?: string;
+  closingDate?: string | null;
+  notes?: string | null;
+};
+
+export type OrganizationalUnitAddressOption = {
+  id: string;
+  label: string;
+};
+
+export type OrganizationalUnitView = {
+  id: string;
+  organizationPartyId: string;
+  unitCode: string;
+  unitName: string;
+  organizationalUnitTypeCode: string;
+  organizationalUnitTypeName: string;
+  parentOrganizationalUnitId: string | null;
+  parentUnitName: string | null;
+  isHeadOffice: boolean;
+  phone: string | null;
+  email: string | null;
+  partyAddressId: string | null;
+  partyAddressLabel: string | null;
+  countryCode: string | null;
+  latitude: string | null;
+  longitude: string | null;
+  locationDisplay: string;
+  statusCode: OrganizationalUnitStatusCode;
+  openingDate: string | null;
+  closingDate: string | null;
+  notes: string | null;
+};
+
+export type OrganizationalUnitTreeNode = OrganizationalUnitView & {
+  children: OrganizationalUnitTreeNode[];
+};
+
+export type OrganizationStructureSummaryView = {
+  total: number;
+  active: number;
+  inactive: number;
+  headOfficeName: string | null;
+  hasOnlyHeadOffice: boolean;
+};
+
+export type OrganizationStructurePanelView = {
+  isOrganization: boolean;
+  units: OrganizationalUnitView[];
+  tree: OrganizationalUnitTreeNode[];
+  availableUnitTypes: ReferenceOption[];
+  availableAddresses: OrganizationalUnitAddressOption[];
+  parentUnitOptions: ReferenceOption[];
+  summary: OrganizationStructureSummaryView;
+};
+
+export type SearchOrganizationalUnitsPayload = {
+  query?: string;
+  organizationalUnitTypeCode?: string;
+  statusCode?: string;
+};
+
+/** @deprecated Use AddOrganizationalUnitPayload */
+export type AddOrganizationBranchPayload = AddOrganizationalUnitPayload;
+/** @deprecated Use OrganizationStructurePanelView */
+export type OrganizationBranchesPanelView = OrganizationStructurePanelView;

@@ -113,6 +113,20 @@
       "when": 1784564588816,
       "tag": "0015_bp002_ip005_party_relationships",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1784564588817,
+      "tag": "0016_bp002_ip005_organization_branches",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1784564588818,
+      "tag": "0017_organization_structure_engine",
+      "breakpoints": true
     }
   ]
 }

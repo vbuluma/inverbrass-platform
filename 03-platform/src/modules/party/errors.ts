@@ -33,6 +33,19 @@ export const PARTY_ERROR_CODES = {
   DUPLICATE_ACTIVE_RELATIONSHIP: "DUPLICATE_ACTIVE_RELATIONSHIP",
   SELF_RELATIONSHIP_NOT_ALLOWED: "SELF_RELATIONSHIP_NOT_ALLOWED",
   INVALID_RELATIONSHIP_TRANSITION: "INVALID_RELATIONSHIP_TRANSITION",
+  ORGANIZATIONAL_UNIT_NOT_FOUND: "ORGANIZATIONAL_UNIT_NOT_FOUND",
+  ORGANIZATIONS_ONLY_UNITS: "ORGANIZATIONS_ONLY_UNITS",
+  DUPLICATE_UNIT_CODE: "DUPLICATE_UNIT_CODE",
+  HEAD_OFFICE_ALREADY_EXISTS: "HEAD_OFFICE_ALREADY_EXISTS",
+  HEAD_OFFICE_UNIT_INACTIVE: "HEAD_OFFICE_UNIT_INACTIVE",
+  INVALID_ORGANIZATIONAL_UNIT_TRANSITION: "INVALID_ORGANIZATIONAL_UNIT_TRANSITION",
+  INVALID_PARENT_ORGANIZATIONAL_UNIT: "INVALID_PARENT_ORGANIZATIONAL_UNIT",
+  /** @deprecated */ ORGANIZATION_BRANCH_NOT_FOUND: "ORGANIZATIONAL_UNIT_NOT_FOUND",
+  /** @deprecated */ ORGANIZATIONS_ONLY_BRANCHES: "ORGANIZATIONS_ONLY_UNITS",
+  /** @deprecated */ DUPLICATE_BRANCH_CODE: "DUPLICATE_UNIT_CODE",
+  /** @deprecated */ HEAD_OFFICE_BRANCH_INACTIVE: "HEAD_OFFICE_UNIT_INACTIVE",
+  /** @deprecated */ INVALID_BRANCH_TRANSITION: "INVALID_ORGANIZATIONAL_UNIT_TRANSITION",
+  /** @deprecated */ INVALID_PARENT_BRANCH: "INVALID_PARENT_ORGANIZATIONAL_UNIT",
   PROVIDER_ERROR: "PROVIDER_ERROR",
 } as const;
 
@@ -91,5 +104,29 @@ export const PARTY_USER_MESSAGES = {
     "An active relationship of that type already exists between these parties.",
   SELF_RELATIONSHIP_NOT_ALLOWED: "A party cannot have a relationship with itself.",
   INVALID_RELATIONSHIP_TRANSITION: "That relationship status change is not allowed.",
+  ORGANIZATIONAL_UNIT_NOT_FOUND: "That organizational unit could not be found.",
+  ORGANIZATIONS_ONLY_UNITS:
+    "Organizational Units are only available for Organization parties.",
+  DUPLICATE_UNIT_CODE:
+    "That unit code is already used by this organization.",
+  HEAD_OFFICE_ALREADY_EXISTS:
+    "Head Office already exists. This Organization already has a designated Head Office. Remove the current Head Office designation before assigning another Organizational Unit as Head Office.",
+  HEAD_OFFICE_UNIT_INACTIVE:
+    "Remove the Head Office designation or assign another unit before deactivating or removing the current Head Office.",
+  INVALID_ORGANIZATIONAL_UNIT_TRANSITION:
+    "That organizational unit status change is not allowed.",
+  INVALID_PARENT_ORGANIZATIONAL_UNIT:
+    "Select a valid parent organizational unit for this organization.",
+  /** @deprecated */ ORGANIZATION_BRANCH_NOT_FOUND: "That organizational unit could not be found.",
+  /** @deprecated */ ORGANIZATIONS_ONLY_BRANCHES:
+    "Organizational Units are only available for Organization parties.",
+  /** @deprecated */ DUPLICATE_BRANCH_CODE:
+    "That unit code is already used by this organization.",
+  /** @deprecated */ HEAD_OFFICE_BRANCH_INACTIVE:
+    "Remove the Head Office designation or assign another unit before deactivating or removing the current Head Office.",
+  /** @deprecated */ INVALID_BRANCH_TRANSITION:
+    "That organizational unit status change is not allowed.",
+  /** @deprecated */ INVALID_PARENT_BRANCH:
+    "Select a valid parent organizational unit for this organization.",
   PROVIDER_ERROR: "We could not complete that Party action. Please try again.",
 } as const;
