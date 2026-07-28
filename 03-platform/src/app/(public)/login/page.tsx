@@ -14,6 +14,7 @@ import Link from "next/link";
 
 import { LoginForm } from "@/app/(public)/login/login-form";
 import { LoginRecoveryAlert } from "@/app/(public)/login/login-recovery-alert";
+import { AuthPageLinks } from "@/components/auth/auth-page-links";
 import { AuthPageShell } from "@/components/auth/auth-page-shell";
 import { createReferenceDataService } from "@/core/auth/services/reference-data-service";
 
@@ -30,20 +31,20 @@ export default async function LoginPage({
     <AuthPageShell
       title="Sign in"
       description="Enter your mobile number and password to access InverBrass."
-      footer={
-        <p>
-          New business owner?{" "}
-          <Link
-            href="/register"
-            className="font-medium text-primary underline-offset-4 hover:underline"
-          >
-            Create an account
-          </Link>
-        </p>
-      }
+      footer={<AuthPageLinks />}
+      className="max-w-md"
     >
       {params.recovered === "1" ? <LoginRecoveryAlert /> : null}
       <LoginForm countries={countries} />
+      <p className="pt-2 text-center text-sm text-muted-foreground">
+        New business owner?{" "}
+        <Link
+          href="/register"
+          className="font-medium text-primary underline-offset-4 hover:underline"
+        >
+          Create an account
+        </Link>
+      </p>
     </AuthPageShell>
   );
 }

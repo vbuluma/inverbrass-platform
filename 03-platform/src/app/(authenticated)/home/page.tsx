@@ -18,27 +18,10 @@ import { redirect } from "next/navigation";
 
 import { PlatformHomeBusinessList } from "@/app/(authenticated)/home/platform-home-business-list";
 import { AuthPageShell } from "@/components/auth/auth-page-shell";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { logoutAction } from "@/core/auth/actions/auth-actions";
+import { buttonVariants } from "@/components/ui/button";
 import { createAuthService } from "@/core/auth/services/auth-service";
 import { createBusinessContextService } from "@/core/auth/services/business-context-service";
-import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 import { cn } from "@/lib/utils";
-
-async function signOutAction() {
-  "use server";
-
-  try {
-    await logoutAction();
-    redirect("/login");
-  } catch (error) {
-    if (isNextRedirectError(error)) {
-      throw error;
-    }
-
-    redirect("/login");
-  }
-}
 
 type PlatformHomePageProps = {
   searchParams: Promise<{ openError?: string }>;
@@ -85,13 +68,6 @@ export default async function PlatformHomePage({
             : `You have: ${businessCount} Businesses`
       }
       className="max-w-lg"
-      footer={
-        <form action={signOutAction}>
-          <Button type="submit" variant="ghost" className="w-full">
-            Sign out
-          </Button>
-        </form>
-      }
     >
       <div className="space-y-8">
         <section className="space-y-3" aria-labelledby="my-businesses-heading">

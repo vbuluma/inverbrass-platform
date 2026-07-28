@@ -43,11 +43,52 @@ import type {
   CurrencyOption,
   IndustryOption,
 } from "@/core/auth/types";
+import {
+  getReferenceCacheEntry,
+  isReferenceCacheFresh,
+  setReferenceCache,
+  sleep,
+} from "@/core/auth/services/reference-data-cache";
+import { AUTH_COUNTRY_FALLBACK } from "@/core/auth/services/reference-data-fallbacks";
 import { getDb } from "@/db/client";
 import { businessType } from "@/db/schema/business-type";
 import { country } from "@/db/schema/country";
 import { currency } from "@/db/schema/currency";
 import { industry } from "@/db/schema/industry";
+
+const CACHE_KEYS = {
+  countries: "reference:countries:active",
+  industries: "reference:industries:active",
+  businessTypes: "reference:business-types:active",
+  currencies: "reference:currencies:active",
+} as const;
+
+const DB_RETRY_ATTEMPTS = 3;
+
+async function withReferenceQueryRetry<T>(
+  label: string,
+  query: () => Promise<T>
+): Promise<T> {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= DB_RETRY_ATTEMPTS; attempt += 1) {
+    try {
+      return await query();
+    } catch (error) {
+      lastError = error;
+      console.warn(
+        `[reference-data] ${label} attempt ${attempt}/${DB_RETRY_ATTEMPTS} failed.`,
+        error
+      );
+
+      if (attempt < DB_RETRY_ATTEMPTS) {
+        await sleep(attempt * 400);
+      }
+    }
+  }
+
+  throw lastError;
+}
 
 export class ReferenceDataService {
   /**
@@ -55,33 +96,53 @@ export class ReferenceDataService {
    * WHY: Auth and setup screens need a stable, non-throwing country catalogue.
    */
   async getActiveCountries(): Promise<CountryOption[]> {
-    try {
-      const db = getDb();
+    const cacheKey = CACHE_KEYS.countries;
+    const cached = getReferenceCacheEntry<CountryOption[]>(cacheKey);
 
-      const rows = await db
-        .select({
-          code: country.code,
-          name: country.name,
-          phoneCode: country.phoneCode,
-          currencyCode: country.currencyCode,
-        })
-        .from(country)
-        .where(eq(country.isActive, true))
-        .orderBy(asc(country.displayOrder), asc(country.name));
+    if (cached && isReferenceCacheFresh(cached)) {
+      return cached.data;
+    }
+
+    try {
+      const rows = await withReferenceQueryRetry("getActiveCountries", async () => {
+        const db = getDb();
+
+        return db
+          .select({
+            code: country.code,
+            name: country.name,
+            phoneCode: country.phoneCode,
+            currencyCode: country.currencyCode,
+          })
+          .from(country)
+          .where(eq(country.isActive, true))
+          .orderBy(asc(country.displayOrder), asc(country.name));
+      });
 
       if (rows.length === 0) {
         console.info(
           "[reference-data] No active countries found. Seed countries before onboarding."
         );
+      } else {
+        setReferenceCache(cacheKey, rows);
       }
 
-      return rows;
+      return rows.length > 0 ? rows : AUTH_COUNTRY_FALLBACK;
     } catch (error) {
       console.error(
-        "[reference-data] Failed to load active countries; returning empty collection.",
+        "[reference-data] Failed to load active countries after retries.",
         error
       );
-      return [];
+
+      if (cached) {
+        console.warn("[reference-data] Serving stale cached countries.");
+        return cached.data;
+      }
+
+      console.warn(
+        "[reference-data] Serving static country fallback for auth selectors."
+      );
+      return AUTH_COUNTRY_FALLBACK;
     }
   }
 
@@ -90,33 +151,45 @@ export class ReferenceDataService {
    * WHY: Industry selection drives Business Template filtering — not hardcoded.
    */
   async getActiveIndustries(): Promise<IndustryOption[]> {
-    try {
-      const db = getDb();
+    const cacheKey = CACHE_KEYS.industries;
+    const cached = getReferenceCacheEntry<IndustryOption[]>(cacheKey);
 
-      const rows = await db
-        .select({
-          id: industry.id,
-          name: industry.name,
-          code: industry.code,
-          description: industry.description,
-        })
-        .from(industry)
-        .where(eq(industry.isActive, true))
-        .orderBy(asc(industry.displayOrder), asc(industry.name));
+    if (cached && isReferenceCacheFresh(cached)) {
+      return cached.data;
+    }
+
+    try {
+      const rows = await withReferenceQueryRetry("getActiveIndustries", async () => {
+        const db = getDb();
+
+        return db
+          .select({
+            id: industry.id,
+            name: industry.name,
+            code: industry.code,
+            description: industry.description,
+          })
+          .from(industry)
+          .where(eq(industry.isActive, true))
+          .orderBy(asc(industry.displayOrder), asc(industry.name));
+      });
 
       if (rows.length === 0) {
         console.info(
           "[reference-data] No active industries found. Seed industries before Business Registration."
         );
+      } else {
+        setReferenceCache(cacheKey, rows);
       }
 
       return rows;
     } catch (error) {
       console.error(
-        "[reference-data] Failed to load active industries; returning empty collection.",
+        "[reference-data] Failed to load active industries after retries.",
         error
       );
-      return [];
+
+      return cached?.data ?? [];
     }
   }
 
@@ -127,40 +200,55 @@ export class ReferenceDataService {
   async getActiveBusinessTypes(
     industryId?: string
   ): Promise<BusinessTypeOption[]> {
-    try {
-      const db = getDb();
+    const cacheKey = `${CACHE_KEYS.businessTypes}:${industryId ?? "all"}`;
+    const cached = getReferenceCacheEntry<BusinessTypeOption[]>(cacheKey);
 
-      const rows = await db
-        .select({
-          id: businessType.id,
-          name: businessType.name,
-          code: businessType.code,
-          industryId: businessType.industryId,
-        })
-        .from(businessType)
-        .where(
-          industryId
-            ? and(
-                eq(businessType.isActive, true),
-                eq(businessType.industryId, industryId)
-              )
-            : eq(businessType.isActive, true)
-        )
-        .orderBy(asc(businessType.displayOrder), asc(businessType.name));
+    if (cached && isReferenceCacheFresh(cached)) {
+      return cached.data;
+    }
+
+    try {
+      const rows = await withReferenceQueryRetry(
+        "getActiveBusinessTypes",
+        async () => {
+          const db = getDb();
+
+          return db
+            .select({
+              id: businessType.id,
+              name: businessType.name,
+              code: businessType.code,
+              industryId: businessType.industryId,
+            })
+            .from(businessType)
+            .where(
+              industryId
+                ? and(
+                    eq(businessType.isActive, true),
+                    eq(businessType.industryId, industryId)
+                  )
+                : eq(businessType.isActive, true)
+            )
+            .orderBy(asc(businessType.displayOrder), asc(businessType.name));
+        }
+      );
 
       if (rows.length === 0) {
         console.info(
           "[reference-data] No active business templates found for the requested filter. Seed industries and business types before Business Registration."
         );
+      } else {
+        setReferenceCache(cacheKey, rows);
       }
 
       return rows;
     } catch (error) {
       console.error(
-        "[reference-data] Failed to load active business templates; returning empty collection.",
+        "[reference-data] Failed to load active business templates after retries.",
         error
       );
-      return [];
+
+      return cached?.data ?? [];
     }
   }
 
@@ -169,34 +257,46 @@ export class ReferenceDataService {
    * WHY: IP-006 currency steps consume shared reference data (no duplicate ownership).
    */
   async getActiveCurrencies(): Promise<CurrencyOption[]> {
-    try {
-      const db = getDb();
+    const cacheKey = CACHE_KEYS.currencies;
+    const cached = getReferenceCacheEntry<CurrencyOption[]>(cacheKey);
 
-      const rows = await db
-        .select({
-          code: currency.code,
-          name: currency.name,
-          symbol: currency.symbol,
-          decimalPlaces: currency.decimalPlaces,
-          isActive: currency.isActive,
-        })
-        .from(currency)
-        .where(eq(currency.isActive, true))
-        .orderBy(asc(currency.displayOrder), asc(currency.name));
+    if (cached && isReferenceCacheFresh(cached)) {
+      return cached.data;
+    }
+
+    try {
+      const rows = await withReferenceQueryRetry("getActiveCurrencies", async () => {
+        const db = getDb();
+
+        return db
+          .select({
+            code: currency.code,
+            name: currency.name,
+            symbol: currency.symbol,
+            decimalPlaces: currency.decimalPlaces,
+            isActive: currency.isActive,
+          })
+          .from(currency)
+          .where(eq(currency.isActive, true))
+          .orderBy(asc(currency.displayOrder), asc(currency.name));
+      });
 
       if (rows.length === 0) {
         console.info(
           "[reference-data] No active currencies found. Seed currencies before business setup."
         );
+      } else {
+        setReferenceCache(cacheKey, rows);
       }
 
       return rows;
     } catch (error) {
       console.error(
-        "[reference-data] Failed to load active currencies; returning empty collection.",
+        "[reference-data] Failed to load active currencies after retries.",
         error
       );
-      return [];
+
+      return cached?.data ?? [];
     }
   }
 }

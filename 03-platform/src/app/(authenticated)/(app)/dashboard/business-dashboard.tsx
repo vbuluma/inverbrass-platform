@@ -12,7 +12,6 @@
 
 import {
   ActivityIcon,
-  ArrowLeftRightIcon,
   BadgeCheckIcon,
   BellIcon,
   Building2Icon,
@@ -20,7 +19,6 @@ import {
   ClipboardListIcon,
   FactoryIcon,
   Globe2Icon,
-  HomeIcon,
   LayoutDashboardIcon,
   PackageIcon,
   ReceiptIcon,
@@ -34,7 +32,7 @@ import {
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -43,7 +41,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { BusinessDashboardView } from "@/modules/business/onboarding/types";
-import { cn } from "@/lib/utils";
 
 type BusinessDashboardProps = {
   data: BusinessDashboardView;
@@ -283,30 +280,9 @@ export function BusinessDashboard({ data }: BusinessDashboardProps) {
           </div>
 
           <div className="flex flex-col gap-2 sm:items-end">
-            {data.canSwitchBusiness ? (
-              <Link
-                href="/select-business"
-                prefetch={false}
-                className={cn(
-                  buttonVariants({ variant: "outline" }),
-                  "w-full sm:w-auto"
-                )}
-              >
-                <ArrowLeftRightIcon className="size-4" aria-hidden />
-                Switch Business
-              </Link>
-            ) : null}
-            <Link
-              href="/home"
-              prefetch={false}
-              className={cn(
-                buttonVariants({ variant: "ghost" }),
-                "w-full sm:w-auto"
-              )}
-            >
-              <HomeIcon className="size-4" aria-hidden />
-              Platform Home
-            </Link>
+            <p className="text-xs text-muted-foreground sm:text-right">
+              Use the header to switch business or open Platform Home.
+            </p>
           </div>
         </div>
         <p className="max-w-2xl text-sm text-muted-foreground">

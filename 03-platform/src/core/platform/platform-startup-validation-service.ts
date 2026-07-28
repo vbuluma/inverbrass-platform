@@ -73,13 +73,13 @@ export async function validatePlatformReferenceData(): Promise<
   });
 
   try {
-    const [countries, businessTypes, currencies, securityQuestions] =
-      await Promise.all([
-        countActive(country, country.isActive),
-        countActive(businessType, businessType.isActive),
-        countActive(currency, currency.isActive),
-        countActive(securityQuestion, securityQuestion.isActive),
-      ]);
+    const countries = await countActive(country, country.isActive);
+    const businessTypes = await countActive(businessType, businessType.isActive);
+    const currencies = await countActive(currency, currency.isActive);
+    const securityQuestions = await countActive(
+      securityQuestion,
+      securityQuestion.isActive
+    );
 
     checks.push({
       name: "countries",

@@ -8,13 +8,12 @@
 
 "use client";
 
-import { ArrowLeftIcon } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { PageBackLink } from "@/components/platform/page-back-link";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -111,17 +110,7 @@ export function PartyRegistrationForm({
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-8 sm:px-6">
       <div className="space-y-3">
-        <Link
-          href="/parties"
-          prefetch={false}
-          className={cn(
-            buttonVariants({ variant: "ghost" }),
-            "w-fit gap-2 px-0"
-          )}
-        >
-          <ArrowLeftIcon className="size-4" aria-hidden />
-          Back to Party Dashboard
-        </Link>
+        <PageBackLink href="/parties" label="Back to Party Dashboard" />
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">
             Party Registration

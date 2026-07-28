@@ -10,12 +10,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
-  ArrowLeftIcon,
   ArrowRightIcon,
   Settings2Icon,
 } from "lucide-react";
 
-import { buttonVariants } from "@/components/ui/button";
+import { PageBackLink } from "@/components/platform/page-back-link";
 import {
   Card,
   CardContent,
@@ -23,7 +22,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 import {
   getSetupProgressAction,
   getSetupReviewAction,
@@ -64,17 +62,7 @@ export default async function BusinessSettingsPage() {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
       <div className="space-y-3">
-        <Link
-          href="/dashboard"
-          prefetch={false}
-          className={cn(
-            buttonVariants({ variant: "ghost" }),
-            "w-fit gap-2 px-0"
-          )}
-        >
-          <ArrowLeftIcon className="size-4" aria-hidden />
-          Back to dashboard
-        </Link>
+        <PageBackLink href="/dashboard" label="Back to dashboard" />
         <div className="flex items-start gap-3">
           <span className="flex size-11 items-center justify-center rounded-lg bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200">
             <Settings2Icon className="size-5" aria-hidden />
