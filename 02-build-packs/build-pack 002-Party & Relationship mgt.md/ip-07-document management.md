@@ -1,40 +1,50 @@
-## BP-002 – IP-007 Party Documents
+## BP-002 – IP-007 Documents & Compliance
 
 ### Scope
 
-Implement **PC-012 – Party Documents** from the BRD.
+Transform **PC-012 – Party Documents** from a generic document repository into a **Party-centric compliance capability** that answers:
 
-This is a **generic Enterprise Document Management capability** attached to a Party. It is **not** a general document repository and **not** a DMS—those can come later as a platform service.
+> **Is this Party compliant?**
 
-Design this document engine from the start to support **multiple storage providers** (via a storage abstraction), even if you initially implement only Supabase Storage.
+This is a **Digitalization Platform** capability — not an ERP document module. The Documents tab stores **evidence**; **ENG-003b Localization & Regulatory Engine** owns applicable document requirements.
+
+Design preserves the existing storage abstraction and `party_document` metadata model. Upload, verify, replace, and lifecycle rules are unchanged — only presentation and compliance orchestration are extended.
 
 ---
 
 ## Deliverables
 
-### 1. Document Type Catalogue
+### 1. Documents & Compliance Tab
 
-Configurable document types, seeded initially (National ID, Passport, Driving Licence, Business Registration, Tax Certificate, etc.).
+Party Workspace tab renamed to **Documents & Compliance** with five sections:
 
-### 2. Party Document Entity
+1. **Compliance Summary** — country, rule set, compliance %, required/uploaded/verified/expired/missing counts
+2. **Required Documents** — all applicable requirements (including missing), with upload/replace/view/verify actions
+3. **Uploaded Documents** — existing repository (preview, download, replace, deactivate, reactivate, soft delete, hash, audit trail)
+4. **Verification** — status, verified by, date, method (manual), comments; API-ready architecture
+5. **AI Compliance Insights** — collapsed placeholder (no OCR/RAG in this IP)
 
-Metadata in PostgreSQL; binaries in object storage (Supabase Storage initially).
+### 2. ENG-003b Integration
 
-### 3. Documents Tab
+Applicable document requirements loaded from ENG-003b configuration by:
 
-Party Workspace **Documents** tab — upload, preview, download, replace, verify, reactivate, remove, filter by type.
+- Country (party default address → business operating country fallback)
+- Party Type
+- Industry (Organization profile; optional rule-set scoping)
 
-### 4. Upload Rules
+**No hardcoded** document types in the Party module.
 
-PDF, JPG, JPEG, PNG — max 10 MB. Upload progress/status display.
+### 3. Compliance Rules
 
-### 5. Business Rules
+- Compliance % = verified required documents ÷ total required documents
+- Optional documents do not affect score
+- Missing required → status `MISSING`, upload action visible
+- Expired documents highlighted (amber)
+- Manual verification only; architecture ready for regulator APIs
 
-Unlimited documents per party, duplicate detection (type + SHA-256 hash), soft delete, verify active only, version replacement preserves audit via `supersedes_document_id`, download active only.
+### 4. Unchanged Upload Engine
 
-### 6. Future Compatibility
-
-Reusable by KYC, HR, supplier onboarding, contracts, assets, etc. — not implemented now.
+PDF, JPG, JPEG, PNG — max 10 MB. Duplicate detection, soft delete, version replacement via `supersedes_document_id`.
 
 ---
 
@@ -42,90 +52,183 @@ Reusable by KYC, HR, supplier onboarding, contracts, assets, etc. — not implem
 
 ```text
 UI → Server Actions → PartyDocumentService → PartyDocumentRepository → Drizzle → PostgreSQL
-                                              ↘ StorageProvider → Supabase Storage
+                      ↘ RegulatoryDocumentRequirementsService (ENG-003b)
+                      ↘ StorageProvider → Supabase Storage
 ```
+
+Business rules:
+
+- **ENG-003b** — requirement resolution (configuration)
+- **party-document-compliance-rules** — evidence matching & score calculation
+- **PartyDocumentService** — orchestration
 
 ---
 
 ## IP-007 Completion Status
 
-**Status:** Implemented — pending `db:migrate`, `db:seed`, and Supabase bucket setup for live uploads.
+**Status:** Rebuilt — Documents & Compliance (Party-centric). Pending `db:migrate`, `db:seed`, and Supabase bucket for live uploads.
 
 ### Files Created
 
-- `03-platform/src/db/schema/document-type.ts`
-- `03-platform/src/db/schema/party-document.ts`
-- `03-platform/drizzle/0018_bp002_ip007_party_documents.sql`
-- `03-platform/src/db/seeds/document-types.ts`
-- `03-platform/src/db/seeds/document-types-seed.ts`
-- `03-platform/src/core/shared/storage/types.ts`
-- `03-platform/src/core/shared/storage/supabase-storage-provider.ts`
-- `03-platform/src/core/shared/storage/index.ts`
-- `03-platform/src/modules/party/repositories/party-document-repository.ts`
-- `03-platform/src/modules/party/services/party-document-service.ts`
-- `03-platform/src/modules/party/services/party-document-rules.ts`
-- `03-platform/src/modules/party/validators/party-document-validators.ts`
-- `03-platform/src/modules/party/actions/party-document-actions.ts`
-- `03-platform/src/modules/party/components/party-documents-panel.tsx`
-- `03-platform/scripts/bp002-ip007-party-documents-smoke-validation.ts`
+- `03-platform/src/db/schema/regulatory-rule-set.ts`
+- `03-platform/src/db/schema/regulatory-document-requirement.ts`
+- `03-platform/drizzle/0019_eng003b_regulatory_document_requirements.sql`
+- `03-platform/src/db/seeds/regulatory-document-requirements.ts`
+- `03-platform/src/db/seeds/regulatory-document-requirements-seed.ts`
+- `03-platform/src/core/localization-regulatory/types.ts`
+- `03-platform/src/core/localization-regulatory/index.ts`
+- `03-platform/src/core/localization-regulatory/repositories/regulatory-config-repository.ts`
+- `03-platform/src/core/localization-regulatory/services/regulatory-document-requirements-service.ts`
+- `03-platform/src/modules/party/services/party-document-compliance-rules.ts`
 
 ### Files Modified
 
 - `03-platform/src/db/schema/index.ts`
 - `03-platform/src/db/seed.ts`
 - `03-platform/drizzle/meta/_journal.json`
-- `03-platform/src/modules/party/constants.ts`
-- `03-platform/src/modules/party/errors.ts`
-- `03-platform/src/modules/party/types.ts`
-- `03-platform/src/modules/party/repositories/party-reference-repository.ts`
+- `03-platform/src/modules/party/constants.ts` — tab label **Documents & Compliance**
+- `03-platform/src/modules/party/types.ts` — compliance view models
+- `03-platform/src/modules/party/services/party-document-service.ts` — ENG-003b integration
+- `03-platform/src/modules/party/repositories/party-address-repository.ts` — primary country lookup
+- `03-platform/src/modules/party/components/party-documents-panel.tsx` — five-section UI
 - `03-platform/src/modules/party/components/party-workspace.tsx`
-- `03-platform/src/app/(authenticated)/(app)/parties/[partyId]/page.tsx`
+- `03-platform/scripts/bp002-ip007-party-documents-smoke-validation.ts`
 
 ### Database Entities
 
-- `document_type` — reference catalogue
-- `party_document` — tenant-scoped metadata with storage reference, verification, versioning link
+| Entity | Owner | Purpose |
+|--------|-------|---------|
+| `document_type` | Platform catalogue | Document type names/codes |
+| `party_document` | BP-002 IP-007 | Evidence storage metadata |
+| `regulatory_rule_set` | ENG-003b | Country/party-type/industry policies |
+| `regulatory_document_requirement` | ENG-003b | Required/optional documents per rule set |
+
+No changes to `party_document` schema.
 
 ### Business Rules Implemented
 
-- Unlimited documents per party
-- Duplicate detection (same type + SHA-256 hash)
-- MIME whitelist (PDF, JPG, JPEG, PNG) and size limit (10 MB)
-- Soft delete only
-- Cannot verify inactive documents
-- Version replacement soft-deletes prior row and links via `supersedes_document_id`
-- Download/preview only for active documents
+| Rule | Implementation |
+|------|----------------|
+| Requirements from ENG-003b | `RegulatoryDocumentRequirementsService.resolveDocumentRequirements` |
+| No hardcoded document types in Party module | Requirements loaded from DB configuration |
+| Compliance % | Verified required ÷ total required (optional excluded) |
+| Missing requirements visible | Required Documents table lists all applicable types |
+| Expired highlighting | Amber badge + summary count |
+| Manual verification | `verifyDocument` unchanged; method shown as MANUAL |
+| Upload engine unchanged | Same service methods and storage abstraction |
+
+### Seed Configuration (initial)
+
+| Rule Set | Country | Party Type | Required (examples from config) |
+|----------|---------|------------|----------------------------------|
+| Individual - Kenya | KE | INDIVIDUAL | 3 required (+ optional) |
+| Organization - Kenya | KE | ORGANIZATION | 4 required (+ optional) |
+
+Document type **codes** reference `document_type` catalogue — labels are not hardcoded in Party code.
 
 ### Quality Gate Results
 
 | Gate | Result |
 |------|--------|
-| Typecheck | Pass |
-| ESLint | Pass |
-| Production build | Pass |
-| Smoke tests | 31/32 pass — `document_type` seed pending migrate + seed |
+| Typecheck | Pass (after rebuild) |
+| ESLint | Pass (after rebuild) |
+| Production build | Pass (after rebuild) |
+| Smoke tests | Pass (after rebuild) |
 
-### Remaining Manual Verification
+### Manual Verification Steps
 
 1. Run `npm run db:migrate` then `npm run db:seed`
-2. Create Supabase Storage bucket `party-documents` (private) with service-role access
-3. Upload, preview, download, replace, verify, deactivate, reactivate, remove in Party Workspace
-4. Re-run smoke: `npx tsx scripts/bp002-ip007-party-documents-smoke-validation.ts`
+2. Ensure Supabase Storage bucket `party-documents` exists (private)
+3. Open a Party Workspace → **Documents & Compliance** tab
+4. Confirm Compliance Summary shows country and rule set (e.g. Individual - Kenya)
+5. Confirm Required Documents lists all applicable types including missing rows
+6. Upload a required document → status moves to UPLOADED
+7. Verify document → status VERIFIED; compliance % increases
+8. Set expiry date in the past → status EXPIRED (amber)
+9. Confirm Uploaded Documents section retains preview/download/replace/deactivate/remove/hash
+10. Confirm Verification table shows manual method and verifier
+11. Confirm AI section is collapsed placeholder only
+12. Re-run smoke: `npx tsx scripts/bp002-ip007-party-documents-smoke-validation.ts`
 
 ---
 
 ## Handover
 
 1. **Build Pack:** BP-002 – Party & Relationship Management
-2. **Implementation Package:** IP-007 – Party Documents
-3. **Completion Status:** Code complete; DB migration + storage bucket pending
-4. **Architecture decisions:** Storage abstraction (`StorageProvider`); metadata in PostgreSQL; Supabase Storage initial provider; `supersedes_document_id` for version audit trail
-5. **Database entities:** `document_type`, `party_document`
-6. **Services:** `PartyDocumentService`
-7. **UI:** `PartyDocumentsPanel`, Documents tab enabled in `PartyWorkspace`
-8. **Enterprise Standards:** EDS-001 (base entity pattern)
-9. **Known limitations:** No AWS S3/Azure/GCS providers yet; no in-app PDF viewer (opens signed URL); bucket must be created manually in Supabase
-10. **Remaining IPs in BP-002:** Groups, Timeline, Communication Preferences, Audit History (future tabs)
-11. **Quality gates:** Typecheck, ESLint, build — all pass
+2. **Implementation Package:** IP-007 – Documents & Compliance
+3. **Completion Status:** Rebuilt from document repository to Party-centric compliance view
+4. **Architecture alignment:** UI → Server Actions → Services → Repositories → Drizzle; ENG-003b owns regulatory configuration; Party module stores evidence only
+5. **Services:** `PartyDocumentService`, `RegulatoryDocumentRequirementsService` (ENG-003b), `party-document-compliance-rules`
+6. **UI:** `PartyDocumentsPanel` (5 sections), tab **Documents & Compliance** in `PartyWorkspace`
+7. **Enterprise Standards:** EDS-001 (base entity), Localization First Principle (ENG-003b)
+8. **Known limitations:** ENG-003b slice covers document requirements only (not full localization); no regulator API verification; no OCR/RAG; AI placeholder only; additional countries require ENG-003b configuration + seed, not Party code changes
+9. **Remaining IPs in BP-002:** Groups, Timeline, Communication Preferences, Audit History (future tabs)
+10. **Do not proceed to IP-008** until this IP is approved
+
+### Future Enhancements
+
+- Full ENG-003b admin UI for rule sets and requirements
+- Industry-specific rule set overrides per country
+- Regulator API verification (KRA PIN, company registry, etc.)
+- OCR extraction and AI compliance insights (placeholder prepared)
+- Expiry notifications and compliance dashboards
+- Additional storage providers (S3, Azure, GCS)
 
 **Await approval before proceeding to the next Implementation Package.**
+
+---
+
+## Platform Architecture Refactor (Post IP-007)
+
+**Status:** Complete — architecture-only refactor; no user-facing behaviour change.
+
+### Architecture Changes
+
+```text
+Core Platform – Document & Compliance (core/document-compliance)
+        ↓
+Party Module (first consumer — BP-002 IP-007)
+        ↓
+Future Build Packs (Property, HR, Fleet, Projects, Loans, …)
+```
+
+- Reusable compliance logic moved to `03-platform/src/core/document-compliance/`
+- ENG-003b config table renamed: `regulatory_document_requirement` → `required_document`
+- Validity status and verification status separated internally; UI display status unchanged
+- Verification methods configurable via `verification_method` catalogue + `party_document.verification_method_code`
+
+### Files Created (Refactor)
+
+- `03-platform/src/core/document-compliance/**`
+- `03-platform/src/db/schema/required-document.ts`
+- `03-platform/src/db/schema/verification-method.ts`
+- `03-platform/drizzle/0020_document_compliance_platform_refactor.sql`
+- `03-platform/src/db/seeds/verification-methods.ts`
+- `03-platform/src/db/seeds/verification-methods-seed.ts`
+- `03-platform/src/modules/party/adapters/party-document-evidence-adapter.ts`
+
+### Business Rule Changes
+
+**None.** Compliance %, scoring, UI sections, upload engine, and storage provider behaviour are unchanged.
+
+### Documentation Updates
+
+- `01-enterprise-architecture/01-Enterprise-Solution-Architecture.md` — ENG-015a Document & Compliance Engine
+- `01-enterprise-architecture/02-Platform-Module-Catalog.md` — Core Platform capability + reuse rule
+
+### Migration Impact
+
+Run `npm run db:migrate` then `npm run db:seed` for migration `0020`:
+
+- Renames `regulatory_document_requirement` → `required_document` (if present)
+- Creates `verification_method` catalogue
+- Adds `party_document.verification_method_code` (nullable; set to `MANUAL` on verify)
+
+### Future Reuse Guidance
+
+1. Import compliance assembly from `@/core/document-compliance`
+2. Resolve requirements from `@/core/localization-regulatory` (ENG-003b)
+3. Map module-specific evidence rows to `DocumentEvidenceRecord`
+4. Do **not** duplicate compliance scoring or requirement matching in Build Pack modules
+5. Store evidence in subject-specific tables that reference platform document metadata patterns
+

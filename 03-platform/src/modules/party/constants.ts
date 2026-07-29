@@ -108,6 +108,32 @@ export const PARTY_DOCUMENT_STATUS_CODES = {
 export type PartyDocumentStatusCode =
   (typeof PARTY_DOCUMENT_STATUS_CODES)[keyof typeof PARTY_DOCUMENT_STATUS_CODES];
 
+export const PARTY_GROUP_STATUS_CODES = {
+  ACTIVE: "ACTIVE",
+  INACTIVE: "INACTIVE",
+} as const;
+
+export type PartyGroupStatusCode =
+  (typeof PARTY_GROUP_STATUS_CODES)[keyof typeof PARTY_GROUP_STATUS_CODES];
+
+export const PARTY_GROUP_MEMBER_STATUS_CODES = {
+  ACTIVE: "ACTIVE",
+  EXITED: "EXITED",
+} as const;
+
+export type PartyGroupMemberStatusCode =
+  (typeof PARTY_GROUP_MEMBER_STATUS_CODES)[keyof typeof PARTY_GROUP_MEMBER_STATUS_CODES];
+
+export const GROUP_WORKSPACE_TABS = [
+  { id: "overview", label: "Overview", available: true },
+  { id: "members", label: "Members", available: true },
+  { id: "documents", label: "Documents", available: false },
+  { id: "contacts", label: "Contacts", available: false },
+  { id: "meetings", label: "Meetings", available: false },
+  { id: "contributions", label: "Contributions", available: false },
+  { id: "activities", label: "Activities", available: false },
+] as const;
+
 export const STORAGE_PROVIDER_CODES = {
   SUPABASE: "SUPABASE",
 } as const;
@@ -144,15 +170,19 @@ export const PARTY_WORKSPACE_TABS = [
   { id: "addresses", label: "Addresses", available: true },
   { id: "organization-structure", label: "Organization Structure", available: true },
   { id: "relationships", label: "Relationships", available: true },
-  { id: "documents", label: "Documents", available: true },
-  { id: "groups", label: "Groups", available: false },
-  { id: "timeline", label: "Timeline", available: false },
+  {
+    id: "documents",
+    label: "Documents & Compliance",
+    available: true,
+  },
+  { id: "groups", label: "Groups & Membership", available: true },
+  { id: "timeline", label: "Party Timeline & Activity History", available: true },
   {
     id: "communication-preferences",
-    label: "Communication Preferences",
-    available: false,
+    label: "Communication & Consent Preferences",
+    available: true,
   },
-  { id: "audit-history", label: "Audit History", available: false },
+  { id: "audit-history", label: "Audit History", available: true },
 ] as const;
 
 export const FUTURE_TAB_MESSAGE =

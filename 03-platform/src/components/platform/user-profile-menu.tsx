@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -62,55 +63,61 @@ export function UserProfileMenu({
           }
         />
         <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>{userDisplayName}</DropdownMenuLabel>
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>{userDisplayName}</DropdownMenuLabel>
+          </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            render={
-              <Link href="/profile/personal" prefetch={false}>
-                <UserIcon aria-hidden />
-                My Profile
-              </Link>
-            }
-          />
-          <DropdownMenuItem
-            render={
-              <Link href="/profile/preferences" prefetch={false}>
-                <SettingsIcon aria-hidden />
-                Preferences
-              </Link>
-            }
-          />
-          {canSwitchBusiness ? (
+          <DropdownMenuGroup>
             <DropdownMenuItem
               render={
-                <Link href="/select-business" prefetch={false}>
-                  <ArrowLeftRightIcon aria-hidden />
-                  Switch Business
+                <Link href="/profile/personal" prefetch={false}>
+                  <UserIcon aria-hidden />
+                  My Profile
                 </Link>
               }
             />
-          ) : (
-            <DropdownMenuItem onClick={() => setSwitchPlaceholderOpen(true)}>
-              <ArrowLeftRightIcon aria-hidden />
-              Switch Business
+            <DropdownMenuItem
+              render={
+                <Link href="/profile/preferences" prefetch={false}>
+                  <SettingsIcon aria-hidden />
+                  Preferences
+                </Link>
+              }
+            />
+            {canSwitchBusiness ? (
+              <DropdownMenuItem
+                render={
+                  <Link href="/select-business" prefetch={false}>
+                    <ArrowLeftRightIcon aria-hidden />
+                    Switch Business
+                  </Link>
+                }
+              />
+            ) : (
+              <DropdownMenuItem onClick={() => setSwitchPlaceholderOpen(true)}>
+                <ArrowLeftRightIcon aria-hidden />
+                Switch Business
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onClick={() => setHelpOpen(true)}>
+              <CircleHelpIcon aria-hidden />
+              Help
             </DropdownMenuItem>
-          )}
-          <DropdownMenuItem onClick={() => setHelpOpen(true)}>
-            <CircleHelpIcon aria-hidden />
-            Help
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setAboutOpen(true)}>
-            <InfoIcon aria-hidden />
-            About InverBrass
-          </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setAboutOpen(true)}>
+              <InfoIcon aria-hidden />
+              About InverBrass
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            variant="destructive"
-            onClick={() => signOutAndRedirectAction()}
-          >
-            <LogOutIcon aria-hidden />
-            Sign Out
-          </DropdownMenuItem>
+          <DropdownMenuGroup>
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={() => signOutAndRedirectAction()}
+            >
+              <LogOutIcon aria-hidden />
+              Sign Out
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
 

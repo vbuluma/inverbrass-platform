@@ -134,6 +134,55 @@
       "when": 1784564588819,
       "tag": "0018_bp002_ip007_party_documents",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1784564588820,
+      "tag": "0019_eng003b_regulatory_document_requirements",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1784564588821,
+      "tag": "0020_document_compliance_platform_refactor",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1784564588822,
+      "tag": "0021_bp002_ip008_party_groups",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1784564588823,
+      "tag": "0022_bp002_ip010_party_timeline",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1784564588824,
+      "tag": "0023_bp002_ip011_audit_history",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1784564588825,
+      "tag": "0024_bp002_ip012_party_communication_preference",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1784564588826,
+      "tag": "0025_eng003b_consent_sources_and_events",
+      "breakpoints": true
     }
   ]
 }

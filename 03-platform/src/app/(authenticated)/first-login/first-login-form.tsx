@@ -69,6 +69,7 @@ export function FirstLoginForm({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   // Show/Hide for answers is UI-only — answers are hashed before persistence.
   const [showSecurityAnswer, setShowSecurityAnswer] = useState(false);
+  const [securityQuestionId, setSecurityQuestionId] = useState("");
   const [isPending, startTransition] = useTransition();
   const securityCatalogReady =
     !requiresSecurityQuestion || securityQuestions.length > 0;
@@ -187,7 +188,8 @@ export function FirstLoginForm({
               id="securityQuestionId"
               name="securityQuestionId"
               required
-              defaultValue=""
+              value={securityQuestionId}
+              onChange={(event) => setSecurityQuestionId(event.target.value)}
               className={selectClassName}
             >
               <option value="" disabled>

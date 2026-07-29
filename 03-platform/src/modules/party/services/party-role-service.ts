@@ -10,6 +10,18 @@
  */
 
 import type { CurrentBusinessContext } from "@/core/auth/types";
+import {
+  AUDIT_ENTITY_NAMES,
+  AUDIT_OPERATIONS,
+  AUDIT_SOURCE_MODULES,
+  createAuditService,
+} from "@/core/audit";
+import {
+  buildTimelineEventFromContext,
+  createPartyTimelineService,
+  PARTY_TIMELINE_EVENT_CATEGORIES,
+  PARTY_TIMELINE_EVENT_TYPES,
+} from "@/core/party-timeline";
 import { getDb } from "@/db/client";
 import {
   PARTY_ROLE_STATUS_CODES,
@@ -27,6 +39,7 @@ import {
   todayIsoDate,
   wouldDuplicateActiveRole,
 } from "@/modules/party/services/party-role-rules";
+import { recordPartyEntityAudit } from "@/modules/party/services/party-audit-helper";
 import type {
   AssignPartyRolePayload,
   PartyRoleCountView,
@@ -43,7 +56,9 @@ export class PartyRoleService {
   constructor(
     private readonly partyRepository = createPartyRepository(),
     private readonly partyRoleRepository = createPartyRoleRepository(),
-    private readonly referenceRepository = createPartyReferenceRepository()
+    private readonly referenceRepository = createPartyReferenceRepository(),
+    private readonly timelineService = createPartyTimelineService(),
+    private readonly auditService = createAuditService()
   ) {}
 
   async getPartyRoles(
@@ -136,6 +151,7 @@ export class PartyRoleService {
     );
 
     const db = getDb();
+    let insertedRoleId = "";
     await db.transaction(async (tx) => {
       if (makePrimary) {
         await this.partyRoleRepository.clearPrimaryForParty(
@@ -145,7 +161,7 @@ export class PartyRoleService {
         );
       }
 
-      await this.partyRoleRepository.insert(
+      const inserted = await this.partyRoleRepository.insert(
         {
           businessId: context.businessId,
           partyId,
@@ -159,6 +175,31 @@ export class PartyRoleService {
         },
         tx
       );
+      insertedRoleId = inserted.id;
+    });
+
+    await this.timelineService.recordEvent(
+      buildTimelineEventFromContext(context, {
+        partyId,
+        eventType: PARTY_TIMELINE_EVENT_TYPES.ROLE_ASSIGNED,
+        eventCategory: PARTY_TIMELINE_EVENT_CATEGORIES.REGISTRATION,
+        summary: `${roleType.name} role assigned`,
+        referenceEntity: "party_role",
+      })
+    );
+
+    await recordPartyEntityAudit(this.auditService, context, {
+      partyId,
+      entityName: AUDIT_ENTITY_NAMES.PARTY_ROLE,
+      entityId: insertedRoleId,
+      operation: AUDIT_OPERATIONS.CREATE,
+      sourceModule: AUDIT_SOURCE_MODULES.PARTY_ROLES,
+      createValues: {
+        roleTypeCode: parsed.data.roleTypeCode,
+        statusCode: PARTY_ROLE_STATUS_CODES.ACTIVE,
+        isPrimary: makePrimary,
+        effectiveDate: parsed.data.effectiveDate?.trim() || todayIsoDate(),
+      },
     });
 
     return this.getPartyRoles(context, partyId);
@@ -193,11 +234,45 @@ export class PartyRoleService {
       );
     }
 
+    const endDateValue = endDate?.trim() || todayIsoDate();
+
     await this.partyRoleRepository.updateById(context.businessId, partyRoleId, {
       statusCode: PARTY_ROLE_STATUS_CODES.ENDED,
       isPrimary: false,
-      endDate: endDate?.trim() || todayIsoDate(),
+      endDate: endDateValue,
       updatedBy: context.platformUserId,
+    });
+
+    const roleType = await this.referenceRepository.findRoleTypeByCode(
+      role.roleTypeCode
+    );
+    await this.timelineService.recordEvent(
+      buildTimelineEventFromContext(context, {
+        partyId,
+        eventType: PARTY_TIMELINE_EVENT_TYPES.ROLE_REMOVED,
+        eventCategory: PARTY_TIMELINE_EVENT_CATEGORIES.REGISTRATION,
+        summary: `${roleType?.name ?? role.roleTypeCode} role removed`,
+        referenceEntity: "party_role",
+        referenceId: partyRoleId,
+      })
+    );
+
+    await recordPartyEntityAudit(this.auditService, context, {
+      partyId,
+      entityName: AUDIT_ENTITY_NAMES.PARTY_ROLE,
+      entityId: partyRoleId,
+      operation: AUDIT_OPERATIONS.DEACTIVATE,
+      sourceModule: AUDIT_SOURCE_MODULES.PARTY_ROLES,
+      before: {
+        statusCode: role.statusCode,
+        isPrimary: role.isPrimary,
+        endDate: role.endDate,
+      },
+      after: {
+        statusCode: PARTY_ROLE_STATUS_CODES.ENDED,
+        isPrimary: false,
+        endDate: endDateValue,
+      },
     });
 
     await this.ensurePrimaryIfNeeded(context, partyId);
@@ -263,6 +338,38 @@ export class PartyRoleService {
       );
     });
 
+    const roleType = await this.referenceRepository.findRoleTypeByCode(
+      role.roleTypeCode
+    );
+    await this.timelineService.recordEvent(
+      buildTimelineEventFromContext(context, {
+        partyId,
+        eventType: PARTY_TIMELINE_EVENT_TYPES.ROLE_ASSIGNED,
+        eventCategory: PARTY_TIMELINE_EVENT_CATEGORIES.REGISTRATION,
+        summary: `${roleType?.name ?? role.roleTypeCode} role reactivated`,
+        referenceEntity: "party_role",
+        referenceId: partyRoleId,
+      })
+    );
+
+    await recordPartyEntityAudit(this.auditService, context, {
+      partyId,
+      entityName: AUDIT_ENTITY_NAMES.PARTY_ROLE,
+      entityId: partyRoleId,
+      operation: AUDIT_OPERATIONS.ACTIVATE,
+      sourceModule: AUDIT_SOURCE_MODULES.PARTY_ROLES,
+      before: {
+        statusCode: role.statusCode,
+        isPrimary: role.isPrimary,
+        endDate: role.endDate,
+      },
+      after: {
+        statusCode: PARTY_ROLE_STATUS_CODES.ACTIVE,
+        isPrimary: makePrimary,
+        endDate: null,
+      },
+    });
+
     return this.getPartyRoles(context, partyId);
   }
 
@@ -298,6 +405,30 @@ export class PartyRoleService {
         },
         tx
       );
+    });
+
+    const roleType = await this.referenceRepository.findRoleTypeByCode(
+      role.roleTypeCode
+    );
+    await this.timelineService.recordEvent(
+      buildTimelineEventFromContext(context, {
+        partyId,
+        eventType: PARTY_TIMELINE_EVENT_TYPES.ROLE_PRIMARY_SET,
+        eventCategory: PARTY_TIMELINE_EVENT_CATEGORIES.REGISTRATION,
+        summary: `${roleType?.name ?? role.roleTypeCode} set as primary role`,
+        referenceEntity: "party_role",
+        referenceId: partyRoleId,
+      })
+    );
+
+    await recordPartyEntityAudit(this.auditService, context, {
+      partyId,
+      entityName: AUDIT_ENTITY_NAMES.PARTY_ROLE,
+      entityId: partyRoleId,
+      operation: AUDIT_OPERATIONS.UPDATE,
+      sourceModule: AUDIT_SOURCE_MODULES.PARTY_ROLES,
+      before: { isPrimary: role.isPrimary },
+      after: { isPrimary: true },
     });
 
     return this.getPartyRoles(context, partyId);
@@ -336,7 +467,7 @@ export class PartyRoleService {
     }
 
     await this.requireParty(context, partyId);
-    await this.requireRole(context, partyId, partyRoleId);
+    const roleBefore = await this.requireRole(context, partyId, partyRoleId);
 
     await this.partyRoleRepository.updateById(context.businessId, partyRoleId, {
       ...(parsed.data.effectiveDate?.trim()
@@ -351,6 +482,37 @@ export class PartyRoleService {
           }
         : {}),
       updatedBy: context.platformUserId,
+    });
+
+    const roleAfter = await this.requireRole(context, partyId, partyRoleId);
+    const roleType = await this.referenceRepository.findRoleTypeByCode(
+      roleAfter.roleTypeCode
+    );
+    await this.timelineService.recordEvent(
+      buildTimelineEventFromContext(context, {
+        partyId,
+        eventType: PARTY_TIMELINE_EVENT_TYPES.ROLE_UPDATED,
+        eventCategory: PARTY_TIMELINE_EVENT_CATEGORIES.REGISTRATION,
+        summary: `${roleType?.name ?? roleAfter.roleTypeCode} role updated`,
+        referenceEntity: "party_role",
+        referenceId: partyRoleId,
+      })
+    );
+
+    await recordPartyEntityAudit(this.auditService, context, {
+      partyId,
+      entityName: AUDIT_ENTITY_NAMES.PARTY_ROLE,
+      entityId: partyRoleId,
+      operation: AUDIT_OPERATIONS.UPDATE,
+      sourceModule: AUDIT_SOURCE_MODULES.PARTY_ROLES,
+      before: {
+        effectiveDate: roleBefore.effectiveDate,
+        endDate: roleBefore.endDate,
+      },
+      after: {
+        effectiveDate: roleAfter.effectiveDate,
+        endDate: roleAfter.endDate,
+      },
     });
 
     return this.getPartyRoles(context, partyId);

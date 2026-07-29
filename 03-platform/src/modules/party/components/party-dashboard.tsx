@@ -17,13 +17,12 @@ import {
 import Link from "next/link";
 
 import { PageBackLink } from "@/components/platform/page-back-link";
+import { PlatformEmptyState } from "@/components/platform/platform-empty-state";
+import { PlatformKpiCard } from "@/components/platform/platform-kpi-card";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { PARTY_TYPE_CODES } from "@/modules/party/constants";
@@ -70,7 +69,7 @@ export function PartyDashboard({ data }: PartyDashboardProps) {
               className={cn(buttonVariants({ variant: "default" }), "gap-2")}
             >
               <UserPlusIcon className="size-4" aria-hidden />
-              New Individual
+              Create Individual
             </Link>
             <Link
               href="/parties/new?type=ORGANIZATION"
@@ -78,7 +77,7 @@ export function PartyDashboard({ data }: PartyDashboardProps) {
               className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
             >
               <Building2Icon className="size-4" aria-hidden />
-              New Organization
+              Create Organization
             </Link>
           </div>
         </div>
@@ -91,10 +90,10 @@ export function PartyDashboard({ data }: PartyDashboardProps) {
         <h2 id="party-kpis-heading" className="sr-only">
           Party statistics
         </h2>
-        <KpiCard label="Total Parties" value={data.totalParties} />
-        <KpiCard label="Individuals" value={data.individuals} />
-        <KpiCard label="Organizations" value={data.organizations} />
-        <KpiCard label="Active Parties" value={data.activeParties} />
+        <PlatformKpiCard label="Total Parties" value={data.totalParties} />
+        <PlatformKpiCard label="Individuals" value={data.individuals} />
+        <PlatformKpiCard label="Organizations" value={data.organizations} />
+        <PlatformKpiCard label="Active Parties" value={data.activeParties} />
       </section>
 
       <section aria-labelledby="party-roles-heading" className="space-y-3">
@@ -105,15 +104,12 @@ export function PartyDashboard({ data }: PartyDashboardProps) {
           Roles
         </h2>
         {data.roleCounts.length === 0 ? (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">No active roles yet</CardTitle>
-              <CardDescription>
-                Assign Customer, Supplier, Farmer, and other roles from a Party
-                Workspace to populate this widget.
-              </CardDescription>
-            </CardHeader>
-          </Card>
+          <PlatformEmptyState
+            title="No Roles Yet"
+            description="Assign Customer, Supplier, Farmer, and other roles from a Party Workspace to populate this widget."
+            actionLabel="View Parties"
+            actionHref="/parties"
+          />
         ) : (
           <Card>
             <CardContent className="grid gap-3 px-4 py-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -153,15 +149,12 @@ export function PartyDashboard({ data }: PartyDashboardProps) {
         </div>
 
         {data.recentlyRegistered.length === 0 ? (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">No parties yet</CardTitle>
-              <CardDescription>
-                Register an Individual or Organization to populate the master
-                Party repository.
-              </CardDescription>
-            </CardHeader>
-          </Card>
+          <PlatformEmptyState
+            title="No Parties Yet"
+            description="Create an Individual or Organization to populate the master Party repository."
+            actionLabel="Create Individual"
+            actionHref="/parties/new?type=INDIVIDUAL"
+          />
         ) : (
           <div className="overflow-hidden rounded-xl border">
             <table className="w-full text-left text-sm">
@@ -231,18 +224,5 @@ export function PartyDashboard({ data }: PartyDashboardProps) {
         )}
       </section>
     </main>
-  );
-}
-
-function KpiCard({ label, value }: { label: string; value: number }) {
-  return (
-    <Card className="gap-2 py-4">
-      <CardHeader className="px-4 pb-0">
-        <CardDescription>{label}</CardDescription>
-      </CardHeader>
-      <CardContent className="px-4">
-        <p className="text-3xl font-semibold tracking-tight">{value}</p>
-      </CardContent>
-    </Card>
   );
 }

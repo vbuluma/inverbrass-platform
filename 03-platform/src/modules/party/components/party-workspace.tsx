@@ -9,18 +9,38 @@
  * BP-002 / IP-004 – Address Management
  * BP-002 / IP-005 – Organization Structure Engine (ENG-003c)
  * BP-002 / IP-006 – Party Relationships
- * BP-002 / IP-007 – Party Documents
+ * BP-002 / IP-007 – Documents & Compliance
+ * BP-002 / IP-008 – Party Groups & Membership
+ * BP-002 / IP-010 – Party Timeline & Activity History
+ * BP-002 / IP-011 – Enterprise Audit History
+ * BP-002 / IP-012 – Party Communication & Consent Preferences
  */
 
 "use client";
 
 import { NetworkIcon } from "lucide-react";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState } from "react";
 
-import { PageBackLink } from "@/components/platform/page-back-link";
 import { SetBreadcrumbs } from "@/components/platform/breadcrumb-context";
-
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  PlatformFavoriteButton,
+  PlatformFormActionFooter,
+  PlatformProcessingButton,
+  PlatformRecentActivityCard,
+  PlatformRecommendationsCard,
+  PlatformTabs,
+  PlatformWorkspaceHeader,
+  PROCESSING_LABELS,
+  buildPartyCompletionItems,
+  buildPartyQuickActions,
+  buildPartyRecommendations,
+  toRecentActivityItems,
+  useAsyncAction,
+  useFormDraft,
+  useUnsavedChangesGuard,
+} from "@/components/platform";
+import { platformError, platformSuccess } from "@/core/platform/platform-action-helpers";
+import type { PlatformActionResult } from "@/core/platform/types";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,7 +51,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
+import { dateFieldValue, textFieldValue, useControlledForm } from "@/lib/forms";
 import {
   activatePartyAction,
   archivePartyAction,
@@ -42,6 +62,10 @@ import { PartyAddressesPanel } from "@/modules/party/components/party-addresses-
 import { PartyOrganizationStructurePanel } from "@/modules/party/components/party-organization-structure-panel";
 import { PartyContactsPanel } from "@/modules/party/components/party-contacts-panel";
 import { PartyDocumentsPanel } from "@/modules/party/components/party-documents-panel";
+import { PartyGroupsPanel } from "@/modules/party/components/party-groups-panel";
+import { PartyAuditHistoryPanel } from "@/modules/party/components/party-audit-history-panel";
+import { PartyCommunicationPreferencesPanel } from "@/modules/party/components/party-communication-preferences-panel";
+import { PartyTimelinePanel } from "@/modules/party/components/party-timeline-panel";
 import { PartyRelationshipsPanel } from "@/modules/party/components/party-relationships-panel";
 import { PartyRolesPanel } from "@/modules/party/components/party-roles-panel";
 import {
@@ -56,6 +80,10 @@ import type {
   PartyContactsPanelView,
   PartyDetailView,
   PartyDocumentsPanelView,
+  PartyGroupsPanelView,
+  PartyTimelinePanelView,
+  PartyAuditHistoryPanelView,
+  PartyCommunicationPreferencesPanelView,
   PartyRegistrationCatalogues,
   PartyRelationshipsPanelView,
   PartyRolesPanelView,
@@ -70,9 +98,28 @@ type PartyWorkspaceProps = {
   organizationStructure: OrganizationStructurePanelView;
   relationships: PartyRelationshipsPanelView;
   documents: PartyDocumentsPanelView;
+  groups: PartyGroupsPanelView;
+  timeline: PartyTimelinePanelView;
+  auditHistory: PartyAuditHistoryPanelView;
+  communicationPreferences: PartyCommunicationPreferencesPanelView;
   initialTab?: string;
   showAddOrganizationalUnit?: boolean;
 };
+
+function buildOverviewInitial(party: PartyDetailView) {
+  return {
+    displayName: textFieldValue(party.displayName),
+    notes: textFieldValue(party.notes),
+    dateOfBirth: dateFieldValue(party.individual?.dateOfBirth),
+    gender: textFieldValue(party.individual?.gender),
+    preferredLanguageCode: textFieldValue(party.individual?.preferredLanguageCode),
+    registrationNumber: textFieldValue(party.organization?.registrationNumber),
+    taxNumber: textFieldValue(party.organization?.taxNumber),
+    industryCode: textFieldValue(party.organization?.industryCode),
+    organizationTypeCode: textFieldValue(party.organization?.organizationTypeCode),
+    website: textFieldValue(party.organization?.website),
+  };
+}
 
 function formatDate(iso: string | null): string {
   if (!iso) {
@@ -96,6 +143,10 @@ export function PartyWorkspace({
   organizationStructure,
   relationships,
   documents,
+  groups,
+  timeline,
+  auditHistory,
+  communicationPreferences,
   initialTab = "overview",
   showAddOrganizationalUnit = false,
 }: PartyWorkspaceProps) {
@@ -103,9 +154,35 @@ export function PartyWorkspace({
   const [syncedInitialParty, setSyncedInitialParty] = useState(initialParty);
   const [activeTab, setActiveTab] = useState(initialTab);
   const [showAddUnit, setShowAddUnit] = useState(showAddOrganizationalUnit);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [overviewResult, setOverviewResult] = useState<PlatformActionResult | null>(
+    null
+  );
+  const [headerResult, setHeaderResult] = useState<PlatformActionResult | null>(
+    null
+  );
+  const [isDirty, setIsDirty] = useState(false);
+  const [activeAction, setActiveAction] = useState<"overview" | "header" | null>(
+    null
+  );
+  const overviewFormRef = useRef<HTMLFormElement>(null);
+  const { isProcessing, run } = useAsyncAction();
+  const {
+    draftValues: overviewDraft,
+    saveDraft: saveOverviewDraft,
+    clearDraft: clearOverviewDraft,
+    draftSavedAt: overviewDraftSavedAt,
+    isHydrated: overviewDraftHydrated,
+  } = useFormDraft<Record<string, string>>(`party-${initialParty.id}-overview-draft`);
+  const overviewInitial = useMemo(
+    () => buildOverviewInitial(party),
+    [party]
+  );
+  const overviewForm = useControlledForm({
+    initial: overviewInitial,
+    draft: overviewDraft,
+    draftHydrated: overviewDraftHydrated,
+  });
+  const { unsavedChangesDialog } = useUnsavedChangesGuard({ isDirty });
 
   if (initialParty !== syncedInitialParty) {
     setSyncedInitialParty(initialParty);
@@ -115,52 +192,103 @@ export function PartyWorkspace({
   function refreshAfter(
     result:
       | { success: true; data: PartyDetailView }
-      | { success: false; error?: { message: string } }
+      | { success: false; error?: { message: string } },
+    target: "overview" | "header",
+    successMessage: string
   ) {
+    const setResult =
+      target === "overview" ? setOverviewResult : setHeaderResult;
+
     if (!result.success) {
-      setError(result.error?.message ?? "Action failed.");
+      setResult(
+        platformError(
+          "Action failed",
+          result.error?.message ?? "Action failed."
+        )
+      );
       return;
     }
-    setError(null);
-    setMessage("Party updated.");
+    setResult(platformSuccess("Saved successfully.", successMessage));
+    setIsDirty(false);
     setParty(result.data);
+    overviewForm.reset(buildOverviewInitial(result.data));
+    clearOverviewDraft();
   }
 
-  function onSaveOverview(formData: FormData) {
-    setError(null);
-    setMessage(null);
-
-    startTransition(async () => {
+  function onSaveOverview(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setOverviewResult(null);
+    setActiveAction("overview");
+    void run(async () => {
       const result = await updatePartyAction(party.id, {
-        displayName: String(formData.get("displayName") ?? ""),
-        notes: String(formData.get("notes") ?? ""),
-        dateOfBirth: String(formData.get("dateOfBirth") ?? ""),
-        gender: String(formData.get("gender") ?? ""),
-        preferredLanguageCode: String(
-          formData.get("preferredLanguageCode") ?? ""
-        ),
-        registrationNumber: String(formData.get("registrationNumber") ?? ""),
-        taxNumber: String(formData.get("taxNumber") ?? ""),
-        industryCode: String(formData.get("industryCode") ?? ""),
-        organizationTypeCode: String(
-          formData.get("organizationTypeCode") ?? ""
-        ),
-        website: String(formData.get("website") ?? ""),
+        displayName: overviewForm.textValue("displayName"),
+        notes: overviewForm.textValue("notes"),
+        dateOfBirth: overviewForm.textValue("dateOfBirth"),
+        gender: overviewForm.textValue("gender"),
+        preferredLanguageCode: overviewForm.textValue("preferredLanguageCode"),
+        registrationNumber: overviewForm.textValue("registrationNumber"),
+        taxNumber: overviewForm.textValue("taxNumber"),
+        industryCode: overviewForm.textValue("industryCode"),
+        organizationTypeCode: overviewForm.textValue("organizationTypeCode"),
+        website: overviewForm.textValue("website"),
       });
-      refreshAfter(result);
-    });
+      refreshAfter(result, "overview", "Party overview was updated.");
+    }).finally(() => setActiveAction(null));
+  }
+
+  function onSaveOverviewDraft() {
+    saveOverviewDraft(overviewForm.values as Record<string, string>);
+    setIsDirty(false);
   }
 
   function runLifecycle(
-    action: typeof activatePartyAction
+    action: typeof activatePartyAction,
+    successMessage: string
   ) {
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
+    setHeaderResult(null);
+    setActiveAction("header");
+    void run(async () => {
       const result = await action(party.id);
-      refreshAfter(result);
-    });
+      refreshAfter(result, "header", successMessage);
+    }).finally(() => setActiveAction(null));
   }
+
+  const completionItems = useMemo(
+    () =>
+      buildPartyCompletionItems({
+        party,
+        contacts,
+        addresses,
+        documents,
+        relationships,
+        groups,
+        organizationStructure,
+        roles,
+      }),
+    [party, contacts, addresses, documents, relationships, groups, organizationStructure, roles]
+  );
+
+  const quickActions = useMemo(
+    () => buildPartyQuickActions(party.id, party.partyTypeCode),
+    [party.id, party.partyTypeCode]
+  );
+
+  const recommendations = useMemo(
+    () =>
+      buildPartyRecommendations({
+        party,
+        contacts,
+        addresses,
+        documents,
+        organizationStructure,
+      }),
+    [party, contacts, addresses, documents, organizationStructure]
+  );
+
+  const recentActivity = useMemo(
+    () => toRecentActivityItems(timeline.events),
+    [timeline.events]
+  );
 
   const activeTabLabel =
     PARTY_WORKSPACE_TABS.find((tab) => tab.id === activeTab)?.label ??
@@ -179,86 +307,80 @@ export function PartyWorkspace({
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6">
       <SetBreadcrumbs items={breadcrumbs} />
-      <div className="space-y-3">
-        <PageBackLink href="/parties" label="Back to Party Dashboard" />
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Party Workspace
-            </p>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {party.displayName}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {party.partyNumber} · {party.partyTypeName} · {party.statusName}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
+      <PlatformWorkspaceHeader
+        backHref="/parties"
+        backLabel="Back to Party Dashboard"
+        workspaceLabel="Party Workspace"
+        title={party.displayName}
+        subtitle={`${party.partyNumber} · ${party.partyTypeName}`}
+        statusLabel={party.statusName}
+        createdLabel={formatDate(party.registrationDate)}
+        completionItems={completionItems}
+        quickActions={quickActions}
+        headerResult={headerResult}
+        isProcessing={isProcessing && activeAction === "header"}
+        processingLabel={PROCESSING_LABELS.saving}
+        onDismissHeaderResult={() => setHeaderResult(null)}
+        favoriteControl={
+          <PlatformFavoriteButton
+            entityType="party"
+            entityId={party.id}
+            label={party.displayName}
+            href={`/parties/${party.id}`}
+          />
+        }
+        primaryActions={
+          <>
             {party.statusCode !== PARTY_STATUS_CODES.ACTIVE ? (
-              <Button
+              <PlatformProcessingButton
                 type="button"
                 variant="outline"
-                disabled={isPending || party.statusCode === PARTY_STATUS_CODES.ARCHIVED}
-                onClick={() => runLifecycle(activatePartyAction)}
-              >
-                Activate
-              </Button>
+                disabled={party.statusCode === PARTY_STATUS_CODES.ARCHIVED}
+                isProcessing={isProcessing}
+                processingLabel={PROCESSING_LABELS.saving}
+                idleLabel="Activate"
+                onClick={() =>
+                  runLifecycle(activatePartyAction, "Party activated.")
+                }
+              />
             ) : null}
             {party.statusCode === PARTY_STATUS_CODES.ACTIVE ? (
-              <Button
+              <PlatformProcessingButton
                 type="button"
                 variant="outline"
-                disabled={isPending}
-                onClick={() => runLifecycle(suspendPartyAction)}
-              >
-                Suspend
-              </Button>
+                isProcessing={isProcessing}
+                processingLabel={PROCESSING_LABELS.saving}
+                idleLabel="Suspend"
+                onClick={() =>
+                  runLifecycle(suspendPartyAction, "Party suspended.")
+                }
+              />
             ) : null}
             {party.statusCode !== PARTY_STATUS_CODES.ARCHIVED ? (
-              <Button
+              <PlatformProcessingButton
                 type="button"
                 variant="outline"
-                disabled={isPending}
-                onClick={() => runLifecycle(archivePartyAction)}
-              >
-                Archive
-              </Button>
+                isProcessing={isProcessing}
+                processingLabel={PROCESSING_LABELS.saving}
+                idleLabel="Archive"
+                onClick={() =>
+                  runLifecycle(archivePartyAction, "Party archived.")
+                }
+              />
             ) : null}
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
-      <nav
-        aria-label="Party workspace tabs"
-        className="flex gap-1 overflow-x-auto border-b pb-px"
-      >
-        {PARTY_WORKSPACE_TABS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActiveTab(tab.id)}
-            className={cn(
-              "shrink-0 rounded-t-md px-3 py-2 text-sm transition-colors",
-              activeTab === tab.id
-                ? "border-b-2 border-emerald-700 font-medium text-emerald-900"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </nav>
-
-      {error ? (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      ) : null}
-      {message ? (
-        <Alert>
-          <AlertDescription>{message}</AlertDescription>
-        </Alert>
-      ) : null}
+      <PlatformTabs
+        tabs={PARTY_WORKSPACE_TABS.map((tab) => ({
+          id: tab.id,
+          label: tab.label,
+        }))}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        ariaLabel="Party workspace tabs"
+      />
 
       {activeTab === "overview" ? (
         <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
@@ -271,9 +393,10 @@ export function PartyWorkspace({
             </CardHeader>
             <CardContent>
               <form
-                key={`overview-${party.id}-${party.statusCode}-${party.displayName}`}
-                action={onSaveOverview}
+                ref={overviewFormRef}
+                onSubmit={onSaveOverview}
                 className="space-y-4"
+                onChange={() => setIsDirty(true)}
               >
                 <div className="grid gap-4 sm:grid-cols-2">
                   <ReadOnlyField label="Party ID" value={party.partyNumber} />
@@ -290,7 +413,10 @@ export function PartyWorkspace({
                   <Input
                     id="displayName"
                     name="displayName"
-                    defaultValue={party.displayName}
+                    value={overviewForm.textValue("displayName")}
+                    onChange={(event) =>
+                      overviewForm.setField("displayName", event.target.value)
+                    }
                     required
                     maxLength={300}
                     disabled={party.statusCode === PARTY_STATUS_CODES.ARCHIVED}
@@ -306,7 +432,10 @@ export function PartyWorkspace({
                         id="dateOfBirth"
                         name="dateOfBirth"
                         type="date"
-                        defaultValue={party.individual.dateOfBirth ?? ""}
+                        value={overviewForm.textValue("dateOfBirth")}
+                        onChange={(event) =>
+                          overviewForm.setField("dateOfBirth", event.target.value)
+                        }
                         disabled={
                           party.statusCode === PARTY_STATUS_CODES.ARCHIVED
                         }
@@ -317,7 +446,10 @@ export function PartyWorkspace({
                       <select
                         id="gender"
                         name="gender"
-                        defaultValue={party.individual.gender ?? ""}
+                        value={overviewForm.textValue("gender")}
+                        onChange={(event) =>
+                          overviewForm.setField("gender", event.target.value)
+                        }
                         disabled={
                           party.statusCode === PARTY_STATUS_CODES.ARCHIVED
                         }
@@ -338,8 +470,12 @@ export function PartyWorkspace({
                       <select
                         id="preferredLanguageCode"
                         name="preferredLanguageCode"
-                        defaultValue={
-                          party.individual.preferredLanguageCode ?? ""
+                        value={overviewForm.textValue("preferredLanguageCode")}
+                        onChange={(event) =>
+                          overviewForm.setField(
+                            "preferredLanguageCode",
+                            event.target.value
+                          )
                         }
                         disabled={
                           party.statusCode === PARTY_STATUS_CODES.ARCHIVED
@@ -367,8 +503,12 @@ export function PartyWorkspace({
                       <Input
                         id="registrationNumber"
                         name="registrationNumber"
-                        defaultValue={
-                          party.organization.registrationNumber ?? ""
+                        value={overviewForm.textValue("registrationNumber")}
+                        onChange={(event) =>
+                          overviewForm.setField(
+                            "registrationNumber",
+                            event.target.value
+                          )
                         }
                         disabled={
                           party.statusCode === PARTY_STATUS_CODES.ARCHIVED
@@ -380,7 +520,10 @@ export function PartyWorkspace({
                       <Input
                         id="taxNumber"
                         name="taxNumber"
-                        defaultValue={party.organization.taxNumber ?? ""}
+                        value={overviewForm.textValue("taxNumber")}
+                        onChange={(event) =>
+                          overviewForm.setField("taxNumber", event.target.value)
+                        }
                         disabled={
                           party.statusCode === PARTY_STATUS_CODES.ARCHIVED
                         }
@@ -391,7 +534,10 @@ export function PartyWorkspace({
                       <select
                         id="industryCode"
                         name="industryCode"
-                        defaultValue={party.organization.industryCode}
+                        value={overviewForm.textValue("industryCode")}
+                        onChange={(event) =>
+                          overviewForm.setField("industryCode", event.target.value)
+                        }
                         disabled={
                           party.statusCode === PARTY_STATUS_CODES.ARCHIVED
                         }
@@ -411,7 +557,13 @@ export function PartyWorkspace({
                       <select
                         id="organizationTypeCode"
                         name="organizationTypeCode"
-                        defaultValue={party.organization.organizationTypeCode}
+                        value={overviewForm.textValue("organizationTypeCode")}
+                        onChange={(event) =>
+                          overviewForm.setField(
+                            "organizationTypeCode",
+                            event.target.value
+                          )
+                        }
                         disabled={
                           party.statusCode === PARTY_STATUS_CODES.ARCHIVED
                         }
@@ -429,7 +581,10 @@ export function PartyWorkspace({
                       <Input
                         id="website"
                         name="website"
-                        defaultValue={party.organization.website ?? ""}
+                        value={overviewForm.textValue("website")}
+                        onChange={(event) =>
+                          overviewForm.setField("website", event.target.value)
+                        }
                         disabled={
                           party.statusCode === PARTY_STATUS_CODES.ARCHIVED
                         }
@@ -444,26 +599,59 @@ export function PartyWorkspace({
                     id="notes"
                     name="notes"
                     rows={3}
-                    defaultValue={party.notes ?? ""}
+                    value={overviewForm.textValue("notes")}
+                    onChange={(event) =>
+                      overviewForm.setField("notes", event.target.value)
+                    }
                     disabled={party.statusCode === PARTY_STATUS_CODES.ARCHIVED}
                     className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                   />
                 </div>
 
                 {party.statusCode !== PARTY_STATUS_CODES.ARCHIVED ? (
-                  <Button type="submit" disabled={isPending}>
-                    {isPending ? "Saving…" : "Save Overview"}
-                  </Button>
+                  <PlatformFormActionFooter
+                    result={overviewResult}
+                    isProcessing={isProcessing && activeAction === "overview"}
+                    processingLabel={PROCESSING_LABELS.savingOverview}
+                    draftSavedAt={overviewDraftSavedAt}
+                    onDismiss={() => setOverviewResult(null)}
+                  >
+                    <PlatformProcessingButton
+                      type="submit"
+                      isProcessing={isProcessing}
+                      processingLabel={PROCESSING_LABELS.savingOverview}
+                      idleLabel="Save Overview"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={isProcessing}
+                      onClick={onSaveOverviewDraft}
+                    >
+                      Save Draft
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={isProcessing}
+                      onClick={() => setIsDirty(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </PlatformFormActionFooter>
                 ) : null}
               </form>
             </CardContent>
           </Card>
 
-          <Card className="h-fit">
-            <CardHeader>
-              <CardTitle className="text-base">Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
+          <div className="platform-workspace-guidance-column space-y-4">
+            <PlatformRecentActivityCard events={recentActivity} />
+            <PlatformRecommendationsCard recommendations={recommendations} />
+            <Card className="h-fit">
+              <CardHeader>
+                <CardTitle className="text-base">Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
               <SummaryRow label="Display Name" value={party.displayName} />
               <SummaryRow label="Type" value={party.partyTypeName} />
               <SummaryRow label="Status" value={party.statusName} />
@@ -531,6 +719,7 @@ export function PartyWorkspace({
               ) : null}
             </CardContent>
           </Card>
+          </div>
         </div>
       ) : activeTab === "roles" ? (
         <PartyRolesPanel partyId={party.id} initialData={roles} />
@@ -552,6 +741,17 @@ export function PartyWorkspace({
         />
       ) : activeTab === "documents" ? (
         <PartyDocumentsPanel partyId={party.id} initialData={documents} />
+      ) : activeTab === "groups" ? (
+        <PartyGroupsPanel partyId={party.id} initialData={groups} />
+      ) : activeTab === "timeline" ? (
+        <PartyTimelinePanel partyId={party.id} initialData={timeline} />
+      ) : activeTab === "communication-preferences" ? (
+        <PartyCommunicationPreferencesPanel
+          partyId={party.id}
+          initialData={communicationPreferences}
+        />
+      ) : activeTab === "audit-history" ? (
+        <PartyAuditHistoryPanel partyId={party.id} initialData={auditHistory} />
       ) : (
         <Card>
           <CardHeader>
@@ -562,6 +762,7 @@ export function PartyWorkspace({
           </CardHeader>
         </Card>
       )}
+      {unsavedChangesDialog}
     </main>
   );
 }

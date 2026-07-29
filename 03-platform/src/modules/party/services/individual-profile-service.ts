@@ -11,6 +11,18 @@
  */
 
 import type { CurrentBusinessContext } from "@/core/auth/types";
+import {
+  AUDIT_ENTITY_NAMES,
+  AUDIT_OPERATIONS,
+  AUDIT_SOURCE_MODULES,
+  createAuditService,
+} from "@/core/audit";
+import {
+  buildTimelineEventFromContext,
+  createPartyTimelineService,
+  PARTY_TIMELINE_EVENT_CATEGORIES,
+  PARTY_TIMELINE_EVENT_TYPES,
+} from "@/core/party-timeline";
 import { getDb } from "@/db/client";
 import {
   CONTACT_TYPE_CODES,
@@ -37,13 +49,16 @@ import {
   normalizeRegistrationMobile,
   requireBusinessPhoneContext,
 } from "@/modules/party/services/party-phone";
+import { recordPartyEntityAudit } from "@/modules/party/services/party-audit-helper";
 
 export class IndividualProfileService {
   constructor(
     private readonly partyRepository = createPartyRepository(),
     private readonly individualProfileRepository = createIndividualProfileRepository(),
     private readonly partyContactRepository = createPartyContactRepository(),
-    private readonly referenceRepository = createPartyReferenceRepository()
+    private readonly referenceRepository = createPartyReferenceRepository(),
+    private readonly timelineService = createPartyTimelineService(),
+    private readonly auditService = createAuditService()
   ) {}
 
   /**
@@ -191,6 +206,36 @@ export class IndividualProfileService {
       );
 
       return partyRow;
+    });
+
+    await this.timelineService.recordEvent(
+      buildTimelineEventFromContext(context, {
+        partyId: created.id,
+        eventType: PARTY_TIMELINE_EVENT_TYPES.PARTY_CREATED,
+        eventCategory: PARTY_TIMELINE_EVENT_CATEGORIES.REGISTRATION,
+        summary: `Individual party registered — ${parsed.data.fullName}`,
+        referenceEntity: "party",
+        referenceId: created.id,
+      })
+    );
+
+    await recordPartyEntityAudit(this.auditService, context, {
+      partyId: created.id,
+      entityName: AUDIT_ENTITY_NAMES.PARTY,
+      entityId: created.id,
+      operation: AUDIT_OPERATIONS.CREATE,
+      sourceModule: AUDIT_SOURCE_MODULES.PARTY_MANAGEMENT,
+      createValues: {
+        partyNumber,
+        partyTypeCode: PARTY_TYPE_CODES.INDIVIDUAL,
+        displayName: parsed.data.fullName,
+        statusCode: PARTY_STATUS_CODES.ACTIVE,
+        fullName: parsed.data.fullName,
+        dateOfBirth: parsed.data.dateOfBirth,
+        gender: parsed.data.gender,
+        preferredLanguageCode: parsed.data.preferredLanguageCode,
+        mobile: mobileE164,
+      },
     });
 
     return this.toDetailView(created.id, context.businessId);

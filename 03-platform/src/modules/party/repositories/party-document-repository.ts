@@ -36,6 +36,7 @@ export type PartyDocumentInsertValues = {
   isVerified?: boolean;
   verifiedBy?: string | null;
   verifiedAt?: Date | null;
+  verificationMethodCode?: string | null;
   supersedesDocumentId?: string | null;
   notes?: string | null;
   createdBy?: string | null;
@@ -47,6 +48,7 @@ export type PartyDocumentUpdateValues = {
   isVerified?: boolean;
   verifiedBy?: string | null;
   verifiedAt?: Date | null;
+  verificationMethodCode?: string | null;
   notes?: string | null;
   updatedBy?: string | null;
   deletedAt?: Date | null;
@@ -76,6 +78,7 @@ export class PartyDocumentRepository {
         isVerified: values.isVerified ?? false,
         verifiedBy: values.verifiedBy ?? null,
         verifiedAt: values.verifiedAt ?? null,
+        verificationMethodCode: values.verificationMethodCode ?? null,
         supersedesDocumentId: values.supersedesDocumentId ?? null,
         notes: values.notes ?? null,
         createdBy: values.createdBy ?? null,
@@ -169,6 +172,9 @@ export class PartyDocumentRepository {
         ...(values.isVerified !== undefined ? { isVerified: values.isVerified } : {}),
         ...(values.verifiedBy !== undefined ? { verifiedBy: values.verifiedBy } : {}),
         ...(values.verifiedAt !== undefined ? { verifiedAt: values.verifiedAt } : {}),
+        ...(values.verificationMethodCode !== undefined
+          ? { verificationMethodCode: values.verificationMethodCode }
+          : {}),
         ...(values.notes !== undefined ? { notes: values.notes } : {}),
         ...(values.deletedAt !== undefined ? { deletedAt: values.deletedAt } : {}),
         ...(values.updatedBy !== undefined ? { updatedBy: values.updatedBy } : {}),

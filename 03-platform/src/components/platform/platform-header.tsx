@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import {
-  BellIcon,
   CircleHelpIcon,
   MenuIcon,
   SearchIcon,
@@ -10,10 +9,18 @@ import {
 import { useState } from "react";
 
 import { BusinessSwitcher } from "@/components/platform/business-switcher";
+import {
+  PlatformGlobalSearchShell,
+  PlatformGlobalSearchTrigger,
+} from "@/components/platform/platform-global-search-shell";
+import {
+  PlatformNotificationBell,
+  PlatformNotificationCenter,
+  useNotifications,
+} from "@/components/platform/platform-notification-center";
 import { PlaceholderNotice } from "@/components/platform/placeholder-notice";
 import { UserProfileMenu } from "@/components/platform/user-profile-menu";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import {
   PLACEHOLDER_MESSAGES,
@@ -38,6 +45,7 @@ export function PlatformHeader({
   const [searchOpen, setSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const { unreadCount } = useNotifications();
 
   return (
     <>
@@ -84,22 +92,10 @@ export function PlatformHeader({
           </div>
 
           <div className="ml-auto flex items-center gap-1 sm:gap-2">
-            <button
-              type="button"
+            <PlatformGlobalSearchTrigger
               onClick={() => setSearchOpen(true)}
               className="hidden max-w-xs flex-1 sm:flex"
-              aria-label="Open search"
-            >
-              <div className="relative w-full max-w-[14rem] lg:max-w-xs">
-                <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  readOnly
-                  placeholder="Search..."
-                  className="h-8 cursor-pointer pl-8 text-sm"
-                  tabIndex={-1}
-                />
-              </div>
-            </button>
+            />
 
             <Button
               type="button"
@@ -112,15 +108,10 @@ export function PlatformHeader({
               <SearchIcon aria-hidden />
             </Button>
 
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
+            <PlatformNotificationBell
               onClick={() => setNotificationsOpen(true)}
-              aria-label="Notifications"
-            >
-              <BellIcon aria-hidden />
-            </Button>
+              unreadCount={unreadCount}
+            />
 
             <Button
               type="button"
@@ -151,15 +142,8 @@ export function PlatformHeader({
         </div>
       </header>
 
-      <PlaceholderNotice
-        title="Search"
-        message={PLACEHOLDER_MESSAGES.search}
-        open={searchOpen}
-        onOpenChange={setSearchOpen}
-      />
-      <PlaceholderNotice
-        title="Notifications"
-        message={PLACEHOLDER_MESSAGES.notifications}
+      <PlatformGlobalSearchShell open={searchOpen} onOpenChange={setSearchOpen} />
+      <PlatformNotificationCenter
         open={notificationsOpen}
         onOpenChange={setNotificationsOpen}
       />

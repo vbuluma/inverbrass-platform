@@ -63,6 +63,8 @@ export const partyDocument = pgTable("party_document", {
 
   verifiedAt: timestamp("verified_at", { withTimezone: true }),
 
+  verificationMethodCode: varchar("verification_method_code", { length: 50 }),
+
   supersedesDocumentId: uuid("supersedes_document_id"),
 
   notes: varchar("notes", { length: 2000 }),

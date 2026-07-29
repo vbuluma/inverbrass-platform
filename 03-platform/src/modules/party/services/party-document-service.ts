@@ -1,26 +1,57 @@
 /**
  * Purpose:
- * Party Document Management — upload, verify, replace, download.
+ * Party orchestration for Document & Compliance — first consumer of the
+ * Core Platform Document & Compliance module.
  *
  * Architecture:
- * Server Actions → PartyDocumentService → Repositories + StorageProvider
+ * Server Actions → PartyDocumentService → PartyDocumentRepository
+ *                                      ↘ Core Document & Compliance
+ *                                      ↘ ENG-003b RegulatoryDocumentRequirementsService
+ *                                      ↘ StorageProvider
  *
  * Implementation Package:
- * BP-002 / IP-007 – Party Documents
+ * BP-002 / IP-007 – Documents & Compliance (Party consumer)
  */
 
 import { createHash, randomUUID } from "node:crypto";
 
 import type { CurrentBusinessContext } from "@/core/auth/types";
+import {
+  AUDIT_ENTITY_NAMES,
+  AUDIT_SOURCE_MODULES,
+  createAuditService,
+} from "@/core/audit";
+import {
+  buildTimelineEventFromContext,
+  createPartyTimelineService,
+  PARTY_TIMELINE_EVENT_CATEGORIES,
+  PARTY_TIMELINE_EVENT_TYPES,
+} from "@/core/party-timeline";
+import {
+  buildComplianceSummary,
+  buildRequirementRows,
+  buildVerificationRows,
+  DEFAULT_VERIFICATION_METHOD_CODE,
+} from "@/core/document-compliance";
+import { createVerificationMethodRepository } from "@/core/document-compliance/repositories/verification-method-repository";
+import { createRegulatoryDocumentRequirementsService } from "@/core/localization-regulatory";
 import { createStorageProvider } from "@/core/shared/storage";
+import { inArray } from "drizzle-orm";
+
+import { getDb } from "@/db/client";
+import { platformUser } from "@/db/schema/platform-user";
+import { mapPartyDocumentsToEvidence } from "@/modules/party/adapters/party-document-evidence-adapter";
 import {
   PARTY_DOCUMENT_ALLOWED_MIME_TYPES,
   PARTY_DOCUMENT_MAX_SIZE_BYTES,
   PARTY_DOCUMENT_STATUS_CODES,
   PARTY_DOCUMENT_STORAGE_BUCKET,
+  PARTY_TYPE_CODES,
   STORAGE_PROVIDER_CODES,
 } from "@/modules/party/constants";
 import { PartyError, PARTY_USER_MESSAGES } from "@/modules/party/errors";
+import { createOrganizationProfileRepository } from "@/modules/party/repositories/organization-profile-repository";
+import { createPartyAddressRepository } from "@/modules/party/repositories/party-address-repository";
 import { createPartyDocumentRepository } from "@/modules/party/repositories/party-document-repository";
 import { createPartyReferenceRepository } from "@/modules/party/repositories/party-reference-repository";
 import { createPartyRepository } from "@/modules/party/repositories/party-repository";
@@ -35,7 +66,12 @@ import {
   isAllowedMimeType,
   isPartyDocumentStatusCode,
 } from "@/modules/party/services/party-document-rules";
+import {
+  inferAuditOperationFromEventType,
+  recordPartyEntityAudit,
+} from "@/modules/party/services/party-audit-helper";
 import type {
+  PartyComplianceSummaryView,
   PartyDocumentsPanelView,
   PartyDocumentView,
   UploadPartyDocumentMetadata,
@@ -58,10 +94,16 @@ export class PartyDocumentService {
   constructor(
     private readonly partyRepository = createPartyRepository(),
     private readonly partyDocumentRepository = createPartyDocumentRepository(),
+    private readonly partyAddressRepository = createPartyAddressRepository(),
+    private readonly organizationProfileRepository = createOrganizationProfileRepository(),
     private readonly referenceRepository = createPartyReferenceRepository(),
+    private readonly regulatoryRequirementsService = createRegulatoryDocumentRequirementsService(),
+    private readonly verificationMethodRepository = createVerificationMethodRepository(),
     private readonly storageProvider = createStorageProvider(
       STORAGE_PROVIDER_CODES.SUPABASE
-    )
+    ),
+    private readonly timelineService = createPartyTimelineService(),
+    private readonly auditService = createAuditService()
   ) {}
 
   async getPartyDocuments(
@@ -69,15 +111,16 @@ export class PartyDocumentService {
     partyId: string,
     filterDocumentTypeCode?: string
   ): Promise<PartyDocumentsPanelView> {
-    await this.requireParty(context, partyId);
+    const party = await this.requireParty(context, partyId);
 
-    const [rows, documentTypes] = await Promise.all([
+    const [rows, documentTypes, regulatoryContext] = await Promise.all([
       this.partyDocumentRepository.listByPartyId(
         context.businessId,
         partyId,
         filterDocumentTypeCode?.trim() || undefined
       ),
       this.referenceRepository.listActiveDocumentTypes(),
+      this.resolvePartyRegulatoryContext(context, party),
     ]);
 
     if (documentTypes.length === 0) {
@@ -89,9 +132,82 @@ export class PartyDocumentService {
     }
 
     const typeNameByCode = new Map(documentTypes.map((t) => [t.code, t.name]));
+    const documents = rows.map((row) => this.toView(row, typeNameByCode));
+
+    const resolvedRuleSet =
+      await this.regulatoryRequirementsService.resolveDocumentRequirements(
+        regulatoryContext
+      );
+
+    const country =
+      (await this.referenceRepository.findCountryByCode(
+        regulatoryContext.countryCode
+      )) ?? {
+        code: regulatoryContext.countryCode,
+        name: regulatoryContext.countryCode,
+      };
+
+    const evidence = mapPartyDocumentsToEvidence(documents);
+    const verificationMethods = await this.verificationMethodRepository.listActive();
+    const methodNameByCode = new Map(
+      verificationMethods.map((method) => [method.code, method.name])
+    );
+
+    const platformRequirements = resolvedRuleSet
+      ? buildRequirementRows({
+          requirements: resolvedRuleSet.requirements,
+          evidence,
+          typeNameByCode,
+        })
+      : [];
+
+    const requiredDocuments = platformRequirements.map((row) => ({
+      documentTypeCode: row.documentTypeCode,
+      documentTypeName: row.documentTypeName,
+      isRequired: row.isRequired,
+      status: row.status,
+      partyDocumentId: row.evidenceId,
+      issueDate: row.issueDate,
+      expiryDate: row.expiryDate,
+    }));
+
+    const complianceSummary = resolvedRuleSet
+      ? buildComplianceSummary({
+          countryCode: country.code,
+          countryName: country.name,
+          ruleSetCode: resolvedRuleSet.code,
+          ruleSetName: resolvedRuleSet.name,
+          requiredDocuments: platformRequirements,
+        })
+      : this.buildEmptySummaryView(country);
+
+    const verifiedByNameById = await this.loadVerifiedByNames(
+      documents
+        .map((document) => document.verifiedBy)
+        .filter((value): value is string => Boolean(value))
+    );
+
+    const verifications = buildVerificationRows({
+      evidence,
+      typeNameByCode,
+      verifiedByNameById,
+      methodNameByCode,
+    }).map((row) => ({
+      partyDocumentId: row.evidenceId,
+      documentTypeName: row.documentTypeName,
+      originalFileName: row.originalFileName,
+      verificationStatus: row.verificationStatus,
+      verifiedByDisplay: row.verifiedByDisplay,
+      verifiedAt: row.verifiedAt,
+      verificationMethod: row.verificationMethod,
+      comments: row.comments,
+    }));
 
     return {
-      documents: rows.map((row) => this.toView(row, typeNameByCode)),
+      complianceSummary,
+      requiredDocuments,
+      documents,
+      verifications,
       availableDocumentTypes: documentTypes,
       maxUploadSizeBytes: PARTY_DOCUMENT_MAX_SIZE_BYTES,
       allowedMimeTypes: PARTY_DOCUMENT_ALLOWED_MIME_TYPES,
@@ -183,6 +299,14 @@ export class PartyDocumentService {
       createdBy: context.platformUserId,
       updatedBy: context.platformUserId,
     });
+
+    await this.recordDocumentTimeline(
+      context,
+      partyId,
+      PARTY_TIMELINE_EVENT_TYPES.DOCUMENT_UPLOADED,
+      `${documentType.name} uploaded`,
+      documentId
+    );
 
     return this.getPartyDocuments(context, partyId);
   }
@@ -299,11 +423,23 @@ export class PartyDocumentService {
         isVerified: true,
         verifiedBy: context.platformUserId,
         verifiedAt: new Date(),
+        verificationMethodCode: DEFAULT_VERIFICATION_METHOD_CODE,
         ...(parsed.data.notes
           ? { notes: nullableTrimmed(parsed.data.notes) }
           : {}),
         updatedBy: context.platformUserId,
       }
+    );
+
+    const documentType = await this.referenceRepository.findDocumentTypeByCode(
+      document.documentTypeCode
+    );
+    await this.recordDocumentTimeline(
+      context,
+      partyId,
+      PARTY_TIMELINE_EVENT_TYPES.DOCUMENT_VERIFIED,
+      `${documentType?.name ?? document.documentTypeCode} verified`,
+      partyDocumentId
     );
 
     return this.getPartyDocuments(context, partyId);
@@ -331,6 +467,17 @@ export class PartyDocumentService {
         statusCode: PARTY_DOCUMENT_STATUS_CODES.INACTIVE,
         updatedBy: context.platformUserId,
       }
+    );
+
+    const documentType = await this.referenceRepository.findDocumentTypeByCode(
+      document.documentTypeCode
+    );
+    await this.recordDocumentTimeline(
+      context,
+      partyId,
+      PARTY_TIMELINE_EVENT_TYPES.DOCUMENT_REMOVED,
+      `${documentType?.name ?? document.documentTypeCode} deactivated`,
+      partyDocumentId
     );
 
     return this.getPartyDocuments(context, partyId);
@@ -368,7 +515,7 @@ export class PartyDocumentService {
     partyId: string,
     partyDocumentId: string
   ): Promise<PartyDocumentsPanelView> {
-    await this.requireDocument(context, partyId, partyDocumentId);
+    const document = await this.requireDocument(context, partyId, partyDocumentId);
 
     await this.partyDocumentRepository.updateById(
       context.businessId,
@@ -377,6 +524,17 @@ export class PartyDocumentService {
         deletedAt: new Date(),
         updatedBy: context.platformUserId,
       }
+    );
+
+    const documentType = await this.referenceRepository.findDocumentTypeByCode(
+      document.documentTypeCode
+    );
+    await this.recordDocumentTimeline(
+      context,
+      partyId,
+      PARTY_TIMELINE_EVENT_TYPES.DOCUMENT_REMOVED,
+      `${documentType?.name ?? document.documentTypeCode} removed`,
+      partyDocumentId
     );
 
     return this.getPartyDocuments(context, partyId);
@@ -497,6 +655,106 @@ export class PartyDocumentService {
     return document;
   }
 
+  private async resolvePartyRegulatoryContext(
+    context: CurrentBusinessContext,
+    party: { partyTypeCode: string; id: string }
+  ) {
+    const [addressCountry, businessContext, organizationProfile] =
+      await Promise.all([
+        this.partyAddressRepository.findPrimaryCountryCode(
+          context.businessId,
+          party.id
+        ),
+        this.referenceRepository.findBusinessPhoneContext(context.businessId),
+        party.partyTypeCode === PARTY_TYPE_CODES.ORGANIZATION
+          ? this.organizationProfileRepository.findByPartyId(party.id)
+          : Promise.resolve(null),
+      ]);
+
+    const countryCode =
+      addressCountry ?? businessContext?.countryCode ?? "KE";
+
+    return {
+      countryCode,
+      partyTypeCode: party.partyTypeCode,
+      industryCode: organizationProfile?.industryCode ?? null,
+    };
+  }
+
+  private buildEmptySummaryView(country: {
+    code: string;
+    name: string;
+  }): PartyComplianceSummaryView {
+    return {
+      countryCode: country.code,
+      countryName: country.name,
+      ruleSetCode: "—",
+      ruleSetName: "No applicable rule set",
+      compliancePercent: 0,
+      requiredCount: 0,
+      uploadedCount: 0,
+      verifiedCount: 0,
+      expiredCount: 0,
+      missingCount: 0,
+    };
+  }
+
+  private async recordDocumentTimeline(
+    context: CurrentBusinessContext,
+    partyId: string,
+    eventType: string,
+    summary: string,
+    referenceId?: string
+  ) {
+    await this.timelineService.recordEvent(
+      buildTimelineEventFromContext(context, {
+        partyId,
+        eventType,
+        eventCategory: PARTY_TIMELINE_EVENT_CATEGORIES.DOCUMENTS,
+        summary,
+        referenceEntity: "party_document",
+        referenceId,
+      })
+    );
+
+    if (referenceId) {
+      await recordPartyEntityAudit(this.auditService, context, {
+        partyId,
+        entityName: AUDIT_ENTITY_NAMES.PARTY_DOCUMENT,
+        entityId: referenceId,
+        operation: inferAuditOperationFromEventType(eventType),
+        sourceModule: AUDIT_SOURCE_MODULES.PARTY_DOCUMENTS,
+      });
+    }
+  }
+
+  private async loadVerifiedByNames(
+    platformUserIds: string[]
+  ): Promise<Map<string, string>> {
+    if (platformUserIds.length === 0) {
+      return new Map();
+    }
+
+    const uniqueIds = [...new Set(platformUserIds)];
+    const rows = await getDb()
+      .select({
+        id: platformUser.id,
+        displayName: platformUser.displayName,
+        firstName: platformUser.firstName,
+        lastName: platformUser.lastName,
+      })
+      .from(platformUser)
+      .where(inArray(platformUser.id, uniqueIds));
+
+    return new Map(
+      rows.map((row) => [
+        row.id,
+        row.displayName?.trim() ||
+          `${row.firstName} ${row.lastName}`.trim(),
+      ])
+    );
+  }
+
   private toView(
     row: {
       id: string;
@@ -505,11 +763,14 @@ export class PartyDocumentService {
       originalFileName: string;
       mimeType: string;
       fileSizeBytes: number;
+      fileHash: string | null;
       issueDate: string | null;
       expiryDate: string | null;
       statusCode: string;
       isVerified: boolean;
+      verifiedBy: string | null;
       verifiedAt: Date | null;
+      verificationMethodCode: string | null;
       notes: string | null;
       createdAt: Date;
       supersedesDocumentId: string | null;
@@ -525,11 +786,14 @@ export class PartyDocumentService {
       mimeType: row.mimeType,
       fileSizeBytes: row.fileSizeBytes,
       fileSizeDisplay: formatFileSizeDisplay(row.fileSizeBytes),
+      fileHash: row.fileHash,
       issueDate: row.issueDate,
       expiryDate: row.expiryDate,
       statusCode: row.statusCode as PartyDocumentView["statusCode"],
       isVerified: row.isVerified,
+      verifiedBy: row.verifiedBy,
       verifiedAt: row.verifiedAt?.toISOString() ?? null,
+      verificationMethodCode: row.verificationMethodCode,
       notes: row.notes,
       createdAt: row.createdAt.toISOString(),
       supersedesDocumentId: row.supersedesDocumentId,

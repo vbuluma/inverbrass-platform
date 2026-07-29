@@ -129,7 +129,8 @@ export function ForgotPasswordForm({ countries }: ForgotPasswordFormProps) {
             name="countryCode"
             disabled={!catalogsReady}
             required
-            defaultValue={countryCode}
+            value={countryCode}
+            onChange={(event) => setCountryCode(event.target.value)}
             className={selectClassName}
           >
             {countries.map((country) => (

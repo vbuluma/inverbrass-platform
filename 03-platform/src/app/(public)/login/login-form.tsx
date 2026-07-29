@@ -59,19 +59,23 @@ export function LoginForm({ countries }: LoginFormProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [countryCode, setCountryCode] = useState(countries[0]?.code ?? "KE");
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [password, setPassword] = useState("");
   const [isPending, startTransition] = useTransition();
 
   const defaultCountryCode = countries[0]?.code ?? "KE";
   const catalogsReady = countries.length > 0;
 
-  function handleSubmit(formData: FormData) {
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setErrorMessage(null);
 
     startTransition(async () => {
       const result = await loginUiAction({
-        countryCode: String(formData.get("countryCode") ?? defaultCountryCode),
-        mobileNumber: String(formData.get("mobileNumber") ?? ""),
-        password: String(formData.get("password") ?? ""),
+        countryCode: countryCode || defaultCountryCode,
+        mobileNumber,
+        password,
       });
 
       if (result && !result.success) {
@@ -81,7 +85,7 @@ export function LoginForm({ countries }: LoginFormProps) {
   }
 
   return (
-    <form action={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {!catalogsReady ? (
         <CatalogEmptyNotice message={CATALOG_EMPTY_MESSAGES.countries} />
       ) : null}
@@ -92,7 +96,8 @@ export function LoginForm({ countries }: LoginFormProps) {
           id="countryCode"
           name="countryCode"
           required
-          defaultValue={defaultCountryCode}
+          value={countryCode}
+          onChange={(event) => setCountryCode(event.target.value)}
           className={selectClassName}
           disabled={!catalogsReady}
         >
@@ -114,6 +119,8 @@ export function LoginForm({ countries }: LoginFormProps) {
           inputMode="tel"
           required
           placeholder="712345678"
+          value={mobileNumber}
+          onChange={(event) => setMobileNumber(event.target.value)}
         />
       </div>
 
@@ -127,6 +134,8 @@ export function LoginForm({ countries }: LoginFormProps) {
             autoComplete="current-password"
             required
             className="pr-10"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
           />
           <Button
             type="button"

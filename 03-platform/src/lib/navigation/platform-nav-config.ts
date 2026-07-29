@@ -14,6 +14,7 @@ import {
   SettingsIcon,
   StarIcon,
   UsersIcon,
+  UsersRoundIcon,
 } from "lucide-react";
 
 import type { PlatformNavItem } from "@/lib/navigation/types";
@@ -36,6 +37,12 @@ export const BUSINESS_APP_NAV_ITEMS: PlatformNavItem[] = [
     label: "Parties",
     href: "/parties",
     icon: UsersIcon,
+  },
+  {
+    id: "groups",
+    label: "Groups",
+    href: "/groups",
+    icon: UsersRoundIcon,
   },
   {
     id: "solutions",

@@ -3,7 +3,9 @@ This is the frozen, enterprise-ready InverBrass v1.0 Architecture Blueprint. It 
 T**his & future architecture changes MUST support My core VISSION below**:
 ****Platform Principle & Vission PP-001 – Digital Business Platform**
 
-     The InverBrass Platform is a configurable SME Digital Business Platform designed to digitize business operations and provide a foundation for value-added ecosystem services such as embedded finance, insurance, lending, analytics, AI, and partner integrations. Operational modules exist to generate trusted digital business data, not to replicate traditional ERP systems I want to introduce one rule that we'll follow throughout this project: Every capability must have one and only one owner. For example, Customer Management belongs to the Customer Domain. Property, School, Business Operations, Chama, and Academy all use it—they don't create their own customer management. This principle will prevent duplication across the platform.
+```
+ The InverBrass Platform is a configurable SME Digital Business Platform designed to digitize business operations and provide a foundation for value-added ecosystem services such as embedded finance, insurance, lending, analytics, AI, and partner integrations. Operational modules exist to generate trusted digital business data, not to replicate traditional ERP systems I want to introduce one rule that we'll follow throughout this project: Every capability must have one and only one owner. For example, Customer Management belongs to the Customer Domain. Property, School, Business Operations, Chama, and Academy all use it—they don't create their own customer management. This principle will prevent duplication across the platform.
+```
 
 📂 Production Directory Layout
 Implement this identical structure in your workspace root. This clean hierarchy ensures Cursor can scan, index, and modify code blocks without losing relational context.
@@ -65,7 +67,6 @@ Copy and paste this configuration file directly into .cursorrules in the root of
 Supabase PostgreSQL
 
 - Supabase Auth
-
 - **Database Engine Access**: Drizzle ORM (Type-safe client query builder)
 - **Structural Blueprint**: Single-app Modular Monolith. Do not invent cross-app packages or monorepo configurations.
 
@@ -134,145 +135,98 @@ Product Design Principles, containing the philosophies  defined below:
 7. 80/20 Design-Build the features that solve 80% of SME needs with 20% of the complexity. Always ask, What is the simplest workflow that solves the business problem?"
 8. AI as a Guide, Not a Replacement
 
-##5 – Platform Layer Architecture
-Layer 1 – Core Platform ServicesS
-Engine ID	Core Engine	Purpose
-ENG-001	Authentication Engine	Identity, Login, PIN, MFA
-ENG-002	Authorization Engine	Roles & Permissions
-ENG-003a	Configuration Engine	Stores configurable behaviour
-ENG-003c	Organization Structure Engine	Internal organizational units (departments, branches, campuses) owned by Organization Parties; future Build Packs reference organizational_unit_id
-ENG-003b Localization & Regulatory Engine: Handles-Country-, region-, and jurisdiction-specific configuration and regulatory behavior(It would centrally manage:
+## 5 – Platform Layer Architecture
 
-Localization
-Countries
-States / Counties / Provinces
-Cities
-Languages
-Time zones
-Date & time formats
-Number formats
-Currency formats
-Regulatory
-Tax policies
-Invoice policies
-Receipt numbering
-Business registration rules
-Identity document types
-Financial year definitions
-Public holidays
-Compliance requirements
-Country Integrations
-Kenya eTIMS
-KRA PIN validation
-Uganda URA
-Tanzania TRA
-Zambia ZRA
-Future government APIs
-Feature Policies
+### Layer 1 – Core Platform Services (ENG-001 – ENG-016)
 
-Enable/disable features by:
+> **Canonical engine catalog:** [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3.
 
-Country
-Industry
-Business Type
-Subscription
-Individual Business
+| Engine ID | Core Engine | Purpose |
+|-----------|-------------|---------|
+| **ENG-001** | Authentication Engine | Identity, login, PIN, MFA |
+| **ENG-002** | Authorization Engine | Roles and permissions |
+| **ENG-003a** | Configuration Engine | Stores configurable behaviour |
+| **ENG-003b** | Localization & Regulatory Engine | Country-, region-, and jurisdiction-specific configuration and regulatory behaviour |
+| **ENG-003c** | Organization Structure Engine | Internal organizational units (departments, branches, campuses) owned by Organization Parties; future Build Packs reference `organizational_unit_id` |
+| **ENG-003d** | Event Ingestion Engine | Receives, validates, normalizes, and routes business events |
+| **ENG-003e** | Partner Integration Engine | External platform connectors, OAuth, webhooks, rate limiting |
+| **ENG-003f** | Product Intelligence Engine | Product governance, roadmap, analytics, AI-assisted insights |
+| **ENG-003g** | Business Presence Engine | Countries and legal jurisdictions in which a business operates |
+| **ENG-003h** | Platform Performance & Scalability Engine | Caching, queues, observability, circuit breakers |
+| **ENG-003i** | Consent Engine | Event-driven regulatory consent capture |
+| **ENG-004** | Rules Engine | Executes deterministic business rules |
+| **ENG-005** | Workflow Engine | Maker-checker, approvals |
+| **ENG-006** | Payment Engine | Cash, M-Pesa, cards, credit, split payments |
+| **ENG-007** | Receipting Engine | Receipts, invoices, credit notes |
+| **ENG-008** | Reconciliation Engine | Cash balancing and payment reconciliation |
+| **ENG-009** | Notification Engine | SMS, email, WhatsApp, push |
+| **ENG-010** | Integration Engine | APIs, Daraja, banks, eTIMS |
+| **ENG-011** | Reporting Engine | Operational and management reports |
+| **ENG-012** | AI Engine | Rules → ML → GenAI |
+| **ENG-013** | Audit Engine | Immutable audit trail |
+| **ENG-014** | Offline Sync Engine | Offline-first synchronization |
+| **ENG-015** | Document Engine | PDF, attachments, contracts |
+| **ENG-015a** | Document & Compliance Engine | Evidence storage, requirement matching, verification, compliance scoring |
+| **ENG-016** | Search Engine | Global search |
 
-For example:
+### ENG-003b – Localization & Regulatory Engine
 
-Feature	Kenya	Uganda	Tanzania
-eTIMS	✅	❌	❌
-Multi Currency	✅	✅	✅
-Embedded Finance	✅	✅	❌)
-...............ENG-003b – Localization & Regulatory Engine
+> **Merge note:** ENG-017 was merged into ENG-003b (see [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3.1). Use **ENG-003b** in all new references.
 
-Purpose
+**Purpose**
 
 Provides centralized country-, region-, and jurisdiction-specific localization, regulatory compliance, and feature policy management through configuration rather than application code, enabling the InverBrass Platform to operate consistently across multiple countries from a single codebase.
 
-Core Responsibilities
+**Core Responsibilities**
 
-1. Geographic Configuration
+1. **Geographic Configuration** — Countries; states / counties / provinces; cities / towns; regions; postal codes; GPS standards; time zones.
 
-Countries
-States / Counties / Provinces
-Cities / Towns
-Regions
-Postal codes
-GPS standards
-Time zones
-2. Localization
-Languages
-Date formats
-Time formats
-Number formats
-Currency formats
-Address formats
-Name formats
-3. Financial & Tax Configuration
-Base currencies
-Additional currencies
-Exchange rate sources
-Tax regimes
-VAT / GST / Sales Tax
-Withholding tax
-Tax calculation rules
-Financial year definitions
-4. Regulatory Compliance
-Business registration requirements
-Identity document types
-Industry licensing requirements
-Receipt and invoice regulations
-Fiscal device integrations
-Government reporting requirements
-Country-specific validation rules
-5. Government & External Integrations
-Revenue authorities (e.g., KRA, URA, TRA)
-Tax platforms (e.g., eTIMS)
-Company registries
-National identity services
-Regulatory APIs
-6. Feature Policies
+2. **Localization** — Languages; date, time, number, currency, address, and name formats.
 
-Enable or disable features based on:
+3. **Financial & Tax Configuration** — Base and additional currencies; exchange rate sources; tax regimes (VAT / GST / sales tax); withholding tax; tax calculation rules; financial year definitions; **tax policies**; **invoice policies**; **receipt numbering** rules.
 
-Country
-Region
-Industry
-Business Type
-Subscription Plan
-Individual Business
+4. **Regulatory Compliance** — Business registration requirements; identity document types; industry licensing; receipt and invoice regulations; fiscal device integrations; government reporting; country-specific validation rules; required identity and organization documents by country; verification rules; public holidays; compliance requirements.
 
-Examples:
+5. **Government & External Integrations** — Revenue authorities and tax platforms; company registries; national identity services; regulatory APIs.
 
-Multi-currency
-Embedded Finance
-Embedded Insurance
-AI Services
-Payroll
-Fiscal Receipts
-Inventory
-Loyalty
-7. Calendars
-Public holidays
-Working days
-Weekend definitions
-Financial periods
-Tax periods
-8. Country Profiles
+   | Integration | Jurisdiction |
+   |-------------|--------------|
+   | Kenya eTIMS | Kenya |
+   | KRA PIN validation | Kenya |
+   | Uganda URA | Uganda |
+   | Tanzania TRA | Tanzania |
+   | Zambia ZRA | Zambia |
+   | Future government APIs | As configured |
 
-Maintain reusable profiles that define how a business operates within a particular jurisdiction.
+6. **Feature Policies** — Enable or disable features based on country, region, industry, business type, subscription plan, or individual business.
 
-Design Principles
-One platform, one codebase.
-No country-specific application forks.
-Regulatory behaviour is configuration-driven.
-Country rules are reusable across all Build Packs.
-New countries should primarily require configuration rather than development.
+   Example policy matrix:
 
-Localization First Principle: All country-, region-, and jurisdiction-specific behaviour shall be implemented through the Localization & Regulatory Engine wherever possible. New country support should primarily require configuration and integration, not changes to core business logic.
+   | Feature | Kenya | Uganda | Tanzania |
+   |---------|-------|--------|----------|
+   | eTIMS | ✅ | ❌ | ❌ |
+   | Multi Currency | ✅ | ✅ | ✅ |
+   | Embedded Finance | ✅ | ✅ | ❌ |
 
-This single principle will stop future developers (or AI assistants) from introducing code like if country == "KE" throughout the application. Instead, they'll naturally look to the engine for policies and configuration, keeping the platform scalable as you expand into new markets.
+   Additional policy-controlled features: embedded insurance, AI services, payroll, fiscal receipts, inventory, loyalty.
+
+7. **Calendars** — Public holidays; working days; weekend definitions; financial and tax periods.
+
+8. **Country Profiles** — Reusable profiles defining how a business operates within a particular jurisdiction.
+
+9. **Consent Source Catalogue** — Country-configurable `consent_source` reference data (consumed by ENG-003i Consent Engine).
+
+**Design Principles**
+
+- One platform, one codebase.
+- No country-specific application forks.
+- Regulatory behaviour is configuration-driven.
+- Country rules are reusable across all Build Packs.
+- New countries should primarily require configuration rather than development.
+
+**Localization First Principle:** All country-, region-, and jurisdiction-specific behaviour shall be implemented through **ENG-003b** wherever possible. New country support should primarily require configuration and integration, not changes to core business logic.
+
+This single principle will stop future developers (or AI assistants) from introducing code like `if country == "KE"` throughout the application. Instead, they'll naturally look to the engine for policies and configuration, keeping the platform scalable as you expand into new markets.
 
 ### ENG-003c – Organization Structure Engine
 
@@ -295,13 +249,28 @@ Provides a reusable internal hierarchy for Organization Parties — head offices
 
 **Implementation location:** `03-platform/src/modules/party` — Organization Structure tab in Party Workspace.
 
+### ENG-003i — Consent Engine (UX-001.2)
 
+Captures regulatory consent as immutable events from platform channels. Updates Party Communication Preferences as the read model.
+
+```
+Channel → Consent Engine → party_consent_event + party_communication_preference
+```
+
+- **ENG-003b** owns `consent_source` reference data (country-configurable)
+- **ENG-003d / ENG-003e** (future) ingest partner and channel events
+- **Party Module** displays consent — never sets source on manual save
+- Manual consent entry permitted only for **Branch**
+
+**Implementation:** `03-platform/src/core/consent/services/consent-engine-service.ts`
 
 
 |                                         |                                                                                                                                                                                                                                                                                                                                                                    |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **ENG-003d Event Ingestion Engine**     | Receives, validates, normalizes, and routes business events from internal and external sources (e.g., Gmail, Outlook, WhatsApp, SMS, APIs, webhooks, payment platforms, IoT devices) into the Workflow Engine and other platform services.                                                                                                                         |
 | **ENG-003e Partner Integration Engine** | Provides a centralized framework for integrating with external platforms and partners. Manages connectors, OAuth, API keys, webhooks, polling, rate limiting, retries, connector health monitoring, configuration, and lifecycle management. Connectors (e.g., Gmail, Outlook, Banks, Insurers, M-Pesa) publish standardized events to the Event Ingestion Engine. |
+
+
 
 
 ### Architecture Flow
@@ -333,30 +302,45 @@ Platform Services & Industry Solutions
 | **ENG-003f Product Intelligence Engine** | Provides product governance, roadmap management, product analytics, feature prioritization, AI-assisted product insights, and lifecycle management. Integrates with Workflow, Reporting, AI, Document Management, and Collaboration services to support end-to-end product management.(ideation to retirement). Capability to analyse the products through it's live, and propose when it is declining and how to manage(Re-invent, retire etc)-AI will shine here.Product │ ├── Vision ├── Objectives ├── Business Case ├── Personas ├── Roadmap ├── Releases │ ├── BP-001 │ ├── BP-002 │ └── BP-003 ├── KPIs ├── Go-to-Market ├── Customer Feedback ├── Product Analytics ├── AI Product Insights ├── Recommendations └── Lifecycle Decisions |
 
 
-ENG-004	Rules Engine	Executes deterministic business rules
-ENG-005	Workflow Engine	Maker-Checker, approvals
-ENG-006	Payment Engine	Cash, M-Pesa, Cards, Credit, Split Payments
-ENG-007	Receipting Engine	Receipts, Invoices, Credit Notes
-ENG-008	Reconciliation Engine	Cash balancing & payment reconciliation
-ENG-009	Notification Engine	SMS, Email, WhatsApp, Push
-ENG-010	Integration Engine	APIs, Daraja, Banks, eTIMS
-ENG-011	Reporting Engine	Operational & Management reports
-ENG-012	AI Engine	Rules → ML → GenAI
-ENG-013	Audit Engine	Immutable audit trail
-ENG-014	Offline Sync Engine	Offline-first synchronization
-ENG-015	Document Engine	PDF, Attachments, Contracts
-ENG-016	Search Engine	Global search
-ENG-017 Localization & Regulatory Engine: Handles-Country-, region-, and jurisdiction-specific configuration and regulatory behavior
 
-| Principle |          Description                                                                  |
-------------------------------------------------------------------------------------- |
+
+
+|                                       |
+| ------------------------------------- |
+| **ENG-003g Business Presence Engine** |
+
+
+
+|                                                                                                                                                                                                                                                                       |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Maintains the countries and legal jurisdictions in which a business operates, including operational status, effective dates, legal entities, tax registrations, licenses, banking relationships, and links to the applicable Localization & Regulatory configuration. |
+
+
+### **ENG-003h – Platform Performance & Scalability Engine**
+
+Responsibilities:
+
+- Caching
+- Connection pooling
+- Rate limiting
+- Background job processing
+- Queue management
+- Performance monitoring
+- Auto scaling
+- Health monitoring
+- Circuit breakers
+- Distributed locking
+- Observability (metrics, logs, tracing)
+
+This isn't a business engine—it's a platform capability that ensures every Build Pack performs well under load.
+
+---
+
+| Principle | Description |
+|-----------|-------------|
 | **Cross-Platform First** | InverBrass shall be delivered as a mobile-first Progressive Web Application (PWA) providing a consistent user experience across Android, iOS, and modern desktop browsers from a single codebase. |
 
 EDS-003 – All telephone numbers shall be stored in canonical E.164 format. User input may be entered in local or international formats, but the platform shall normalize before validation, duplicate detection, integration, and persistence.
-
-
-
-
 
 # What we have designed that supports this vision
 
@@ -388,11 +372,15 @@ These are exactly the kinds of engines a digital platform needs.
 
 ---
 
+
+
 ### Core Data Foundations
 
 ✔ Party Management
 
 ✔ Organization Structure
+
+✔ Document & Compliance (Core Platform — BP-002 Party is first consumer)
 
 ✔ Documents
 
@@ -407,8 +395,6 @@ These are exactly the kinds of engines a digital platform needs.
 ✔ Reporting
 
 These become the "digital memory" of the business.
-
-
 
 Technology Baseline (Version 1.0)
 This is the official approved technology stack

@@ -1,0 +1,98 @@
+/**
+ * Purpose:
+ * Constants for the reusable Enterprise Audit capability.
+ *
+ * Implementation Package:
+ * BP-002 / IP-011 – Enterprise Audit History
+ */
+
+export const AUDIT_OPERATIONS = {
+  CREATE: "CREATE",
+  UPDATE: "UPDATE",
+  DELETE: "DELETE",
+  RESTORE: "RESTORE",
+  VERIFY: "VERIFY",
+  ACTIVATE: "ACTIVATE",
+  DEACTIVATE: "DEACTIVATE",
+  ARCHIVE: "ARCHIVE",
+} as const;
+
+export type AuditOperation =
+  (typeof AUDIT_OPERATIONS)[keyof typeof AUDIT_OPERATIONS];
+
+export const AUDIT_OPERATION_LABELS: Record<AuditOperation, string> = {
+  CREATE: "Create",
+  UPDATE: "Update",
+  DELETE: "Delete",
+  RESTORE: "Restore",
+  VERIFY: "Verify",
+  ACTIVATE: "Activate",
+  DEACTIVATE: "Deactivate",
+  ARCHIVE: "Archive",
+};
+
+export const AUDIT_ENTITY_NAMES = {
+  PARTY: "party",
+  INDIVIDUAL_PROFILE: "individual_profile",
+  ORGANIZATION_PROFILE: "organization_profile",
+  PARTY_ROLE: "party_role",
+  PARTY_CONTACT: "party_contact",
+  PARTY_ADDRESS: "party_address",
+  ORGANIZATIONAL_UNIT: "organizational_unit",
+  PARTY_RELATIONSHIP: "party_relationship",
+  PARTY_DOCUMENT: "party_document",
+  PARTY_GROUP: "party_group",
+  PARTY_GROUP_MEMBER: "party_group_member",
+  PARTY_TIMELINE: "party_timeline",
+  PARTY_COMMUNICATION_PREFERENCE: "party_communication_preference",
+} as const;
+
+export type AuditEntityName =
+  (typeof AUDIT_ENTITY_NAMES)[keyof typeof AUDIT_ENTITY_NAMES];
+
+export const AUDIT_ENTITY_LABELS: Record<AuditEntityName, string> = {
+  party: "Party",
+  individual_profile: "Individual Profile",
+  organization_profile: "Organization Profile",
+  party_role: "Role",
+  party_contact: "Contact",
+  party_address: "Address",
+  organizational_unit: "Organizational Unit",
+  party_relationship: "Relationship",
+  party_document: "Document",
+  party_group: "Group",
+  party_group_member: "Group Member",
+  party_timeline: "Timeline",
+  party_communication_preference: "Communication & Consent Preferences",
+};
+
+export const AUDIT_SOURCE_MODULES = {
+  PARTY_MANAGEMENT: "party_management",
+  PARTY_ROLES: "party_roles",
+  PARTY_CONTACTS: "party_contacts",
+  PARTY_ADDRESSES: "party_addresses",
+  ORGANIZATION_STRUCTURE: "organization_structure",
+  PARTY_RELATIONSHIPS: "party_relationships",
+  PARTY_DOCUMENTS: "party_documents",
+  PARTY_GROUPS: "party_groups",
+  PARTY_TIMELINE: "party_timeline",
+  PARTY_COMMUNICATION_PREFERENCES: "party_communication_preferences",
+} as const;
+
+export type AuditSourceModule =
+  (typeof AUDIT_SOURCE_MODULES)[keyof typeof AUDIT_SOURCE_MODULES];
+
+export const AUDIT_SOURCE_MODULE_LABELS: Record<AuditSourceModule, string> = {
+  party_management: "Party Management",
+  party_roles: "Party Roles",
+  party_contacts: "Party Contacts",
+  party_addresses: "Party Addresses",
+  organization_structure: "Organization Structure",
+  party_relationships: "Party Relationships",
+  party_documents: "Party Documents",
+  party_groups: "Party Groups",
+  party_timeline: "Party Timeline",
+  party_communication_preferences: "Party Communication & Consent Preferences",
+};
+
+export const AUDIT_DEFAULT_PAGE_SIZE = 25;

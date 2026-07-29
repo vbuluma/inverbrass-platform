@@ -1,0 +1,62 @@
+---
+description: Enterprise Experience & Channel-Aware Consent Framework (UX-001.2)
+globs:
+  - 03-platform/src/**/*.tsx
+  - 03-platform/src/**/*.ts
+  - 01-enterprise-architecture/**/*.md
+alwaysApply: false
+---
+
+# UI-STD-006 — Enterprise Experience (UX-001.2)
+
+## Dashboard Identity
+
+1. **Never expose login credentials as dashboard identity.**
+   - Do not greet users with phone numbers unless absolutely necessary.
+   - Use `resolveUserGreetingName()` from `@/core/auth/utils/resolve-user-display-name`.
+   - Priority: Preferred Name → First Name → Display Name → Full Name → Username → Email → Phone.
+
+2. **Enterprise Dashboard Header**
+   - Use `PlatformEnterpriseDashboardHeader` for operational workspaces.
+   - Display: greeting + personal name, current business name, current role.
+   - Do not show "Operational Workspace" or raw credential labels.
+
+## Search Experience
+
+3. **All contextual searches must implement four states via `PlatformSearchState`:**
+   - Searching — spinner / "Searching…"
+   - Empty — "No results found" with hints + optional Create action
+   - Error — message + Retry
+   - Success — render results as children
+
+## Document Preview
+
+4. **Documents preview inside the application.**
+   - Use `PlatformDocumentPreview` (slide-over panel).
+   - Do not use `window.open()` for preview actions.
+   - Actions: Preview, Download, Replace, Verify, Close.
+
+## Consent Architecture
+
+5. **Consent Sources belong to ENG-003b.**
+   - Load from `consent_source` reference table via `ConsentSourceService`.
+   - Never hardcode consent source codes in Party module validators or UI.
+
+6. **Consent originates from Events, not manual entry (except Branch).**
+   - Use `ConsentEngineService.captureEvent()` for consent changes.
+   - Party Workspace displays consent — it never determines consent source.
+   - Do not allow consent field edits from Party Communication Preferences save.
+
+## Workspace Visual Zones
+
+7. **Workspace colours follow Platform UX zoning:**
+   - Left Navigation: `#F6F8FA` (`--workspace-nav` / `--sidebar`)
+   - Center Workspace: `#FFFFFF` (`platform-workspace-main`)
+   - Right Guidance Panel: `#F8FBFF` (`platform-workspace-guidance-column`)
+
+## References
+
+- `01-enterprise-architecture/06b-UX & Interaction Standards.md` — UX-001.2 sections
+- `01-enterprise-architecture/01-Enterprise-Solution-Architecture.md` — Consent Engine
+- `03-platform/src/core/consent/` — Consent Engine
+- `03-platform/src/core/localization-regulatory/services/consent-source-service.ts` — ENG-003b

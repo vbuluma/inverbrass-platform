@@ -1,0 +1,92 @@
+---
+description: Core Platform Engine catalog governance — preserve ENG-001–017, merge duplicates with approval
+globs:
+  - 01-enterprise-architecture/**/*.md
+  - 02-build-packs/**/*.md
+  - 03-platform/src/core/**/*
+alwaysApply: true
+---
+
+# ENG-CAT-001 — Core Platform Engine Catalog Governance
+
+## Preserve the Catalog
+
+1. **Never remove ENG-001 – ENG-017** from architecture documentation.
+   - Canonical catalog: `01-enterprise-architecture/02-Platform-Module-Catalog.md` §3
+   - Architecture detail: `01-enterprise-architecture/01-Enterprise-Solution-Architecture.md` §5
+2. Do not collapse, rename, or delete engine IDs without following the merge workflow below.
+
+## Duplicate Detection & Merge Workflow
+
+When two or more engine IDs describe the **same capability** (e.g. ENG-017 and ENG-003b both = Localization & Regulatory):
+
+### Step 1 — Compare (mandatory)
+
+Side-by-side diff of every duplicate:
+
+- Purpose statement
+- Core responsibilities / scope
+- Configuration dimensions
+- Integration points
+- Implementation location
+- Build Pack references
+
+### Step 2 — Merge missing content (mandatory)
+
+- Identify responsibilities present in the **newer or duplicate** ID but absent from the **canonical** ID.
+- Port those additions into the canonical engine specification.
+- Output **one merged engine definition** — never leave two parallel specs.
+
+### Step 3 — Present for approval (mandatory — do not skip)
+
+Before replacing or removing any engine entry, present to the user:
+
+```
+Engine Merge Proposal — AWAITING APPROVAL
+
+Canonical:  ENG-003b — Localization & Regulatory Engine
+Retiring:   ENG-017 — Localization & Regulatory Engine
+
+Additions ported into canonical:
+- [list each item]
+
+Proposed merged output:
+[full single engine definition]
+
+Files to update:
+- [list files]
+
+Approve merge? (yes/no)
+```
+
+**Do not apply documentation or code changes until the user explicitly approves.**
+
+### Step 4 — Record the merge
+
+After approval:
+
+1. Update the canonical engine spec with merged content.
+2. Remove the duplicate from active catalog tables (§3 in Platform Module Catalog).
+3. Add a row to **§3.1 Engine Merge Registry** with retired ID, canonical ID, rationale, and absorbed content.
+4. Leave a one-line pointer in the canonical spec: `> Merge note: ENG-XXX merged into ENG-YYY`.
+
+## Canonical vs Extension IDs
+
+| Pattern | Treatment |
+|---------|-----------|
+| ENG-003a–i | Sub-engines under ENG-003; keep as separate rows |
+| ENG-015a | Extension of ENG-015 (compliance layer); keep both unless user approves merge |
+| ENG-017 → ENG-003b | Merged; ENG-017 lives only in §3.1 Merge Registry |
+
+## Related Engines (not duplicates)
+
+Do not merge without explicit approval when engines are **complementary**:
+
+- ENG-003b (regulatory config) + ENG-003i (consent events)
+- ENG-015 (document generation) + ENG-015a (compliance scoring)
+- ENG-003c (org structure) + ENG-003b (localization)
+
+## References
+
+- `01-enterprise-architecture/02-Platform-Module-Catalog.md` — §3, §3.1
+- `01-enterprise-architecture/01-Enterprise-Solution-Architecture.md` — §5

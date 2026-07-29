@@ -32,6 +32,11 @@ import { seedAddressTypes } from "@/db/seeds/address-types-seed";
 import { seedOrganizationalUnitTypes } from "@/db/seeds/organizational-unit-types-seed";
 import { seedRelationshipTypes } from "@/db/seeds/relationship-types-seed";
 import { seedDocumentTypes } from "@/db/seeds/document-types-seed";
+import { seedGroupMembershipRoles } from "@/db/seeds/group-membership-roles-seed";
+import { seedGroupTypes } from "@/db/seeds/group-types-seed";
+import { seedConsentSources } from "@/db/seeds/consent-sources-seed";
+import { seedRegulatoryDocumentRequirements } from "@/db/seeds/regulatory-document-requirements-seed";
+import { seedVerificationMethods } from "@/db/seeds/verification-methods-seed";
 import { seedSecurityQuestions } from "@/db/seeds/security-questions-seed";
 
 async function runSeed() {
@@ -142,10 +147,40 @@ async function runSeed() {
       `organizationalUnitTypes: inserted=${organizationalUnitTypeResults.inserted}, updated=${organizationalUnitTypeResults.updated}, skipped=${organizationalUnitTypeResults.skipped}`
     );
 
+    console.log("Seeding group types...");
+    const groupTypeResults = await seedGroupTypes(db);
+    console.log(
+      `groupTypes: inserted=${groupTypeResults.inserted}, updated=${groupTypeResults.updated}, skipped=${groupTypeResults.skipped}`
+    );
+
+    console.log("Seeding group membership roles...");
+    const groupMembershipRoleResults = await seedGroupMembershipRoles(db);
+    console.log(
+      `groupMembershipRoles: inserted=${groupMembershipRoleResults.inserted}, updated=${groupMembershipRoleResults.updated}, skipped=${groupMembershipRoleResults.skipped}`
+    );
+
     console.log("Seeding document types...");
     const documentTypeResults = await seedDocumentTypes(db);
     console.log(
       `documentTypes: inserted=${documentTypeResults.inserted}, updated=${documentTypeResults.updated}, skipped=${documentTypeResults.skipped}`
+    );
+
+    console.log("Seeding ENG-003b regulatory document requirements...");
+    const regulatoryResults = await seedRegulatoryDocumentRequirements(db);
+    console.log(
+      `requiredDocument: inserted=${regulatoryResults.inserted}, updated=${regulatoryResults.updated}, skipped=${regulatoryResults.skipped}`
+    );
+
+    console.log("Seeding ENG-003b consent sources...");
+    const consentSourceResults = await seedConsentSources(db);
+    console.log(
+      `consentSources: inserted=${consentSourceResults.inserted}, updated=${consentSourceResults.updated}, skipped=${consentSourceResults.skipped}`
+    );
+
+    console.log("Seeding verification methods...");
+    const verificationMethodResults = await seedVerificationMethods(db);
+    console.log(
+      `verificationMethods: inserted=${verificationMethodResults.inserted}, updated=${verificationMethodResults.updated}, skipped=${verificationMethodResults.skipped}`
     );
 
     console.log("✅ Seed completed.");

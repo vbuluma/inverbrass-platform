@@ -1,0 +1,52 @@
+---
+description: Platform Form Standard — controlled/uncontrolled consistency (UI-STD-005)
+globs:
+  - 03-platform/src/**/*.tsx
+  - 03-platform/src/**/*.ts
+alwaysApply: false
+---
+
+# UI-STD-005 — Platform Form Consistency
+
+Every form in the Digitalization Platform must follow the Platform Form Standard.
+
+## Rules
+
+1. **Never mix controlled and uncontrolled on the same element.**
+   - Use `value` + `onChange` (controlled) **OR** `defaultValue` (uncontrolled with stable remount).
+   - Never pass both `value` and `defaultValue` to the same input, select, textarea, checkbox, radio, or switch.
+
+2. **Never switch mode after render.**
+   - Do not initialize with `defaultValue` and later provide `value`.
+   - Do not change `defaultValue` after mount without remounting the field (via `key`).
+
+3. **Prefer controlled forms for workspace panels and multi-step flows.**
+   - Use `useControlledForm` from `@/lib/forms`.
+   - Initialize with helpers from `@/lib/forms/form-field-values`.
+
+4. **Empty value conventions**
+
+   | Field type | Initial value |
+   |------------|---------------|
+   | Text | `""` |
+   | Number | `null` |
+   | Boolean / Checkbox | `false` |
+   | Select | `""` or explicit placeholder option |
+   | Date | `""` (HTML date input) |
+
+5. **Uncontrolled + server action forms** (auth, onboarding wizard):
+   - May use `usePreservedFormValues` with `formKey` remount on validation failure.
+   - All fields in the form must remain uncontrolled — no mixed controlled siblings.
+
+6. **Never suppress React warnings.** Fix the root cause.
+
+7. **Every new form must:**
+   - Import from `@/lib/forms` when using shared patterns.
+   - Document which pattern (controlled vs preserved uncontrolled) is used.
+   - Pass TypeScript, ESLint, and production build with zero console warnings.
+
+## References
+
+- `03-platform/src/lib/forms/` — hooks and empty value helpers
+- `01-enterprise-architecture/06b-UX & Interaction Standards.md` — Form Standard section
+- `.cursor/rules/ui-std-004-server-action-refresh.mdc` — post-save refresh pattern

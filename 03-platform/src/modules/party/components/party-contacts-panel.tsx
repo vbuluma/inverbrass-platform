@@ -8,10 +8,18 @@
 
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+
+import {
+  PlatformEmptyState,
+  PlatformProcessingButton,
+  PROCESSING_LABELS,
+  contactCreatedNextActions,
+  useFormDraft,
+  usePanelFeedback,
+} from "@/components/platform";
 import {
   Card,
   CardContent,
@@ -47,18 +55,41 @@ export function PartyContactsPanel({
 }: PartyContactsPanelProps) {
   const [panel, setPanel] = useState(initialData);
   const [syncedInitial, setSyncedInitial] = useState(initialData);
+  const {
+    isPending,
+    runPanelAction,
+    setValidationError,
+    requestConfirm,
+    FormFeedback,
+    ConfirmDialogHost,
+  } = usePanelFeedback<PartyContactsPanelView>();
+  const {
+    draftValues,
+    saveDraft,
+    clearDraft,
+    draftSavedAt,
+  } = useFormDraft<{
+    contactTypeCode: string;
+    contactValue: string;
+    isPreferred: boolean;
+    notes: string;
+  }>(`party-${partyId}-contacts-create-draft`);
   const [contactTypeCode, setContactTypeCode] = useState(
-    initialData.availableContactTypes[0]?.code ?? ""
+    () =>
+      draftValues?.contactTypeCode ??
+      initialData.availableContactTypes[0]?.code ??
+      ""
   );
-  const [contactValue, setContactValue] = useState("");
-  const [isPreferred, setIsPreferred] = useState(false);
-  const [notes, setNotes] = useState("");
+  const [contactValue, setContactValue] = useState(
+    () => draftValues?.contactValue ?? ""
+  );
+  const [isPreferred, setIsPreferred] = useState(
+    () => Boolean(draftValues?.isPreferred)
+  );
+  const [notes, setNotes] = useState(() => draftValues?.notes ?? "");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [editNotes, setEditNotes] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
 
   if (initialData !== syncedInitial) {
     setSyncedInitial(initialData);
@@ -66,20 +97,9 @@ export function PartyContactsPanel({
     setContactTypeCode(initialData.availableContactTypes[0]?.code ?? "");
   }
 
-  function applyResult(
-    result:
-      | { success: true; data: PartyContactsPanelView }
-      | { success: false; error: { message: string } },
-    successMessage: string
-  ) {
-    if (!result.success) {
-      setError(result.error.message);
-      return;
-    }
-    setError(null);
-    setMessage(successMessage);
-    setPanel(result.data);
-    setContactTypeCode(result.data.availableContactTypes[0]?.code ?? "");
+  function applySuccess(data: PartyContactsPanelView) {
+    setPanel(data);
+    setContactTypeCode(data.availableContactTypes[0]?.code ?? "");
     setContactValue("");
     setIsPreferred(false);
     setNotes("");
@@ -88,113 +108,137 @@ export function PartyContactsPanel({
 
   function onAdd() {
     if (!contactTypeCode) {
-      setError("Select a contact type.");
+      setValidationError("Select a contact type.");
       return;
     }
     if (!contactValue.trim()) {
-      setError("Enter a contact value.");
+      setValidationError("Enter a contact value.");
       return;
     }
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await addPartyContactAction(partyId, {
-        contactTypeCode,
-        contactValue,
-        isPreferred,
-        notes,
-      });
-      applyResult(result, "Contact added.");
-    });
+    runPanelAction(
+      () =>
+        addPartyContactAction(partyId, {
+          contactTypeCode,
+          contactValue,
+          isPreferred,
+          notes,
+        }),
+      {
+        successTitle: "Contact created successfully.",
+        successMessage: "The contact is now available on this party.",
+        nextActions: contactCreatedNextActions(partyId),
+        onSuccess: (data) => {
+          applySuccess(data);
+          clearDraft();
+        },
+      }
+    );
   }
 
   function startEdit(contact: PartyContactView) {
     setEditingId(contact.id);
     setEditValue(contact.contactValue);
     setEditNotes(contact.notes ?? "");
-    setError(null);
-    setMessage(null);
   }
 
   function onSaveEdit(partyContactId: string) {
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await updatePartyContactAction(partyId, partyContactId, {
-        contactValue: editValue,
-        notes: editNotes,
-      });
-      applyResult(result, "Contact updated.");
-    });
+    runPanelAction(
+      () =>
+        updatePartyContactAction(partyId, partyContactId, {
+          contactValue: editValue,
+          notes: editNotes,
+        }),
+      {
+        successTitle: "Contact saved.",
+        successMessage: "Contact details were updated.",
+        onSuccess: applySuccess,
+      }
+    );
   }
 
   function onSetPreferred(partyContactId: string) {
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await setPreferredPartyContactAction(
-        partyId,
-        partyContactId
-      );
-      applyResult(result, "Preferred contact updated.");
-    });
+    runPanelAction(
+      () => setPreferredPartyContactAction(partyId, partyContactId),
+      {
+        successTitle: "Preferred contact updated.",
+        successMessage: "The preferred contact for this type was changed.",
+        onSuccess: applySuccess,
+      }
+    );
   }
 
   function onVerify(partyContactId: string) {
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await verifyPartyContactAction(partyId, partyContactId);
-      applyResult(result, "Contact marked verified.");
-    });
+    runPanelAction(
+      () => verifyPartyContactAction(partyId, partyContactId),
+      {
+        successTitle: "Contact verified.",
+        successMessage: "This contact is now marked as verified.",
+        onSuccess: applySuccess,
+      }
+    );
   }
 
   function onDeactivate(partyContactId: string) {
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await deactivatePartyContactAction(
-        partyId,
-        partyContactId
-      );
-      applyResult(result, "Contact deactivated.");
+    requestConfirm({
+      title: "Deactivate Contact?",
+      description:
+        "This contact will remain in history but cannot be used for communication.",
+      confirmLabel: "Deactivate",
+      onConfirm: () => {
+        runPanelAction(
+          () => deactivatePartyContactAction(partyId, partyContactId),
+          {
+            successTitle: "Contact deactivated.",
+            successMessage: "The contact is no longer active.",
+            onSuccess: applySuccess,
+          }
+        );
+      },
     });
   }
 
   function onReactivate(partyContactId: string) {
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await reactivatePartyContactAction(
-        partyId,
-        partyContactId
-      );
-      applyResult(result, "Contact reactivated.");
-    });
+    runPanelAction(
+      () => reactivatePartyContactAction(partyId, partyContactId),
+      {
+        successTitle: "Contact reactivated.",
+        successMessage: "The contact is active again.",
+        onSuccess: applySuccess,
+      }
+    );
   }
 
   function onRemove(partyContactId: string) {
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await removePartyContactAction(partyId, partyContactId);
-      applyResult(result, "Contact removed.");
+    requestConfirm({
+      title: "Remove Contact?",
+      description:
+        "This contact will be removed from the active list. Historical records may remain in audit history.",
+      confirmLabel: "Remove",
+      onConfirm: () => {
+        runPanelAction(
+          () => removePartyContactAction(partyId, partyContactId),
+          {
+            successTitle: "Contact removed.",
+            successMessage: "The contact was removed from this party.",
+            onSuccess: applySuccess,
+          }
+        );
+      },
+    });
+  }
+
+  function onSaveDraft() {
+    saveDraft({
+      contactTypeCode,
+      contactValue,
+      isPreferred,
+      notes,
     });
   }
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
       <div className="space-y-4">
-        {error ? (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        ) : null}
-        {message ? (
-          <Alert>
-            <AlertDescription>{message}</AlertDescription>
-          </Alert>
-        ) : null}
 
         <Card>
           <CardHeader>
@@ -206,9 +250,15 @@ export function PartyContactsPanel({
           </CardHeader>
           <CardContent className="space-y-3">
             {panel.contacts.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No contacts yet. Add a contact to begin.
-              </p>
+              <PlatformEmptyState
+                title="No Contacts Yet"
+                description="Create your first contact to start communicating with this party."
+                actionLabel="Create Contact"
+                onAction={() =>
+                  document.getElementById("contactValue")?.focus()
+                }
+                compact
+              />
             ) : (
               <ul className="space-y-3">
                 {panel.contacts.map((contact) => (
@@ -332,7 +382,7 @@ export function PartyContactsPanel({
                         <Button
                           type="button"
                           size="sm"
-                          variant="outline"
+                          variant="destructive"
                           disabled={isPending}
                           onClick={() => onRemove(contact.id)}
                         >
@@ -350,7 +400,7 @@ export function PartyContactsPanel({
 
       <Card className="h-fit">
         <CardHeader>
-          <CardTitle className="text-base">Add Contact</CardTitle>
+          <CardTitle className="text-base">Create Contact</CardTitle>
           <CardDescription>
             Additional channels are maintained here after registration.
           </CardDescription>
@@ -398,16 +448,30 @@ export function PartyContactsPanel({
               maxLength={2000}
             />
           </div>
-          <Button
+          <PlatformProcessingButton
             type="button"
             className="w-full"
-            disabled={isPending}
+            isProcessing={isPending}
+            processingLabel={PROCESSING_LABELS.creatingContact}
+            idleLabel="Create Contact"
             onClick={onAdd}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={isPending}
+            onClick={onSaveDraft}
           >
-            {isPending ? "Saving…" : "Add Contact"}
+            Save Draft
           </Button>
+          <FormFeedback
+            processingLabel={PROCESSING_LABELS.creatingContact}
+            draftSavedAt={draftSavedAt}
+          />
         </CardContent>
       </Card>
+      <ConfirmDialogHost />
     </div>
   );
 }

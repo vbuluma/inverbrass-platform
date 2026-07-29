@@ -10,7 +10,8 @@ import { eq } from "drizzle-orm";
 
 import { createAuthService } from "@/core/auth/services/auth-service";
 import { createBusinessContextService } from "@/core/auth/services/business-context-service";
-import type { PlatformChromeContext, PlatformChromeMode } from "@/lib/navigation/types";
+import { resolveUserDisplayName } from "@/core/auth/utils/resolve-user-display-name";
+import type { PlatformChromeContext } from "@/lib/navigation/types";
 import { getDb } from "@/db/client";
 import { business } from "@/db/schema/business";
 
@@ -32,14 +33,23 @@ function buildInitials(firstName: string, lastName: string, email: string | null
 function buildDisplayName(
   firstName: string,
   lastName: string,
-  email: string | null
+  email: string | null,
+  displayName: string | null,
+  staffCode: string | null,
+  phoneNumber: string | null
 ): string {
-  const full = `${firstName} ${lastName}`.trim();
-  return full || email || "User";
+  return resolveUserDisplayName({
+    firstName,
+    lastName,
+    displayName,
+    username: staffCode,
+    email,
+    phoneNumber,
+  });
 }
 
 export class PlatformNavigationService {
-  async getChromeContext(mode: PlatformChromeMode): Promise<PlatformChromeContext | null> {
+  async getChromeContext(): Promise<PlatformChromeContext | null> {
     const authService = createAuthService();
     const user = await authService.getAuthenticatedUser();
 
@@ -74,14 +84,21 @@ export class PlatformNavigationService {
     }
 
     return {
-      mode,
-      userDisplayName: buildDisplayName(user.firstName, user.lastName, user.email),
+      mode: "platform",
+      userDisplayName: buildDisplayName(
+        user.firstName,
+        user.lastName,
+        user.email,
+        user.displayName,
+        user.staffCode,
+        user.phoneNumber
+      ),
       userInitials: buildInitials(user.firstName, user.lastName, user.email),
       businessName,
       businessStatusCode,
       canSwitchBusiness,
       businessCount,
-      showSidebar: mode === "business-app",
+      showSidebar: false,
     };
   }
 }

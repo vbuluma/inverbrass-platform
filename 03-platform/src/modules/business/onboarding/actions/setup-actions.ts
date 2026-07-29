@@ -35,12 +35,17 @@
 
 import { redirect } from "next/navigation";
 
+import { and, eq, isNull } from "drizzle-orm";
+
 import type { AuthActionResult } from "@/core/auth/actions/auth-actions";
 import { AuthError } from "@/core/auth/errors";
 import { createAuthService } from "@/core/auth/services/auth-service";
 import { createBusinessContextService } from "@/core/auth/services/business-context-service";
-import type { AuthSessionUser } from "@/core/auth/types";
+import { resolveUserGreetingName } from "@/core/auth/utils/resolve-user-display-name";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
+import { getDb } from "@/db/client";
+import { role } from "@/db/schema/role";
+import { userRole } from "@/db/schema/user-role";
 import {
   SETUP_ALLOW_BASE_CURRENCY_CHANGE,
   SETUP_STEPS,
@@ -91,34 +96,30 @@ async function requireSetupContext() {
 }
 
 /**
- * WHAT: Resolve a personal greeting name for the Business Dashboard.
- * WHY: BP-001 registration may derive first/last from proposed business name
- * ("InverMeU2" + "User"). Prefer the platform username (mobile) in that case.
+ * WHAT: Resolve role label for the current business membership.
  */
-function resolveDashboardGreetingName(
-  user: AuthSessionUser,
-  businessName: string
-): string {
-  const fullName = `${user.firstName} ${user.lastName}`.trim();
-  const first = user.firstName.trim();
-  const last = user.lastName.trim();
-  const business = businessName.trim().toLowerCase();
-  const syntheticBusinessUserLabel =
-    last.toLowerCase() === "user" &&
-    first.length > 0 &&
-    (business === first.toLowerCase() ||
-      business.startsWith(`${first.toLowerCase()} `) ||
-      business.startsWith(first.toLowerCase()));
-
-  if (syntheticBusinessUserLabel) {
-    return user.phoneNumber || user.email || fullName || "there";
+async function resolveMembershipRoleLabel(
+  membershipId: string,
+  isOwner: boolean
+): Promise<string> {
+  if (isOwner) {
+    return "Owner";
   }
 
-  if (fullName && fullName.toLowerCase() !== "platform user") {
-    return fullName;
-  }
+  const db = getDb();
+  const [row] = await db
+    .select({ roleName: role.name })
+    .from(userRole)
+    .innerJoin(role, eq(userRole.roleId, role.id))
+    .where(
+      and(
+        eq(userRole.businessMembershipId, membershipId),
+        isNull(userRole.effectiveTo)
+      )
+    )
+    .limit(1);
 
-  return user.phoneNumber || user.email || "there";
+  return row?.roleName ?? "Operations Manager";
 }
 
 function toActionError(error: unknown): AuthActionResult<never> {
@@ -451,11 +452,27 @@ export async function getBusinessDashboardAction(): Promise<
       (item) => item.businessId === context.businessId
     );
     const businessName = currentBusiness?.businessName ?? "";
-    const displayName = resolveDashboardGreetingName(user, businessName);
-    const roleLabel = currentBusiness?.isOwner ? "Owner" : "Administrator";
+    const greetingName = resolveUserGreetingName(
+      {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        displayName: user.displayName,
+        username: user.staffCode,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+      },
+      { businessName }
+    );
+    const roleLabel = currentBusiness
+      ? await resolveMembershipRoleLabel(
+          currentBusiness.membershipId,
+          currentBusiness.isOwner
+        )
+      : "Member";
 
     const data = await setupService.getBusinessDashboard(context, {
-      currentUserName: displayName,
+      greetingName,
+      businessName,
       roleLabel,
       canSwitchBusiness: businesses.length >= 2,
     });

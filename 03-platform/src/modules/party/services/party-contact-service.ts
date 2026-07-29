@@ -10,6 +10,18 @@
  */
 
 import type { CurrentBusinessContext } from "@/core/auth/types";
+import {
+  AUDIT_ENTITY_NAMES,
+  AUDIT_OPERATIONS,
+  AUDIT_SOURCE_MODULES,
+  createAuditService,
+} from "@/core/audit";
+import {
+  buildTimelineEventFromContext,
+  createPartyTimelineService,
+  PARTY_TIMELINE_EVENT_CATEGORIES,
+  PARTY_TIMELINE_EVENT_TYPES,
+} from "@/core/party-timeline";
 import { getDb } from "@/db/client";
 import {
   CONTACT_TYPE_CODES,
@@ -44,12 +56,15 @@ import {
   updatePartyContactSchema,
   validateContactValueForType,
 } from "@/modules/party/validators/party-contact-validators";
+import { recordPartyEntityAudit } from "@/modules/party/services/party-audit-helper";
 
 export class PartyContactService {
   constructor(
     private readonly partyRepository = createPartyRepository(),
     private readonly partyContactRepository = createPartyContactRepository(),
-    private readonly referenceRepository = createPartyReferenceRepository()
+    private readonly referenceRepository = createPartyReferenceRepository(),
+    private readonly timelineService = createPartyTimelineService(),
+    private readonly auditService = createAuditService()
   ) {}
 
   async getPartyContacts(
@@ -180,6 +195,7 @@ export class PartyContactService {
     }
 
     const db = getDb();
+    let insertedContactId = "";
     await db.transaction(async (tx) => {
       if (makePreferred) {
         await this.partyContactRepository.clearPreferredForPartyAndType(
@@ -190,7 +206,7 @@ export class PartyContactService {
         );
       }
 
-      await this.partyContactRepository.insert(
+      const inserted = await this.partyContactRepository.insert(
         {
           businessId: context.businessId,
           partyId,
@@ -205,7 +221,23 @@ export class PartyContactService {
         },
         tx
       );
+      insertedContactId = inserted.id;
     });
+
+    await this.recordContactTimeline(
+      context,
+      partyId,
+      PARTY_TIMELINE_EVENT_TYPES.CONTACT_CREATED,
+      `${contactType.name} contact added`,
+      insertedContactId,
+      AUDIT_OPERATIONS.CREATE,
+      {
+        contactTypeCode: parsed.data.contactTypeCode,
+        contactValue,
+        isPreferred: makePreferred,
+        statusCode: PARTY_CONTACT_STATUS_CODES.ACTIVE,
+      }
+    );
 
     return this.getPartyContacts(context, partyId);
   }
@@ -289,6 +321,32 @@ export class PartyContactService {
       }
     );
 
+    const contactType = await this.referenceRepository.findContactTypeByCode(
+      contact.contactTypeCode
+    );
+    await this.recordContactTimeline(
+      context,
+      partyId,
+      PARTY_TIMELINE_EVENT_TYPES.CONTACT_UPDATED,
+      `${contactType?.name ?? contact.contactTypeCode} contact updated`,
+      partyContactId,
+      AUDIT_OPERATIONS.UPDATE,
+      undefined,
+      {
+        contactValue: contact.contactValue,
+        notes: contact.notes,
+      },
+      {
+        contactValue: contactValue ?? contact.contactValue,
+        notes:
+          parsed.data.notes !== undefined
+            ? parsed.data.notes === null
+              ? null
+              : parsed.data.notes.trim() || null
+            : contact.notes,
+      }
+    );
+
     return this.getPartyContacts(context, partyId);
   }
 
@@ -332,6 +390,21 @@ export class PartyContactService {
       );
     });
 
+    const contactType = await this.referenceRepository.findContactTypeByCode(
+      contact.contactTypeCode
+    );
+    await this.recordContactTimeline(
+      context,
+      partyId,
+      PARTY_TIMELINE_EVENT_TYPES.CONTACT_UPDATED,
+      `${contactType?.name ?? contact.contactTypeCode} set as preferred contact`,
+      partyContactId,
+      AUDIT_OPERATIONS.UPDATE,
+      undefined,
+      { isPreferred: contact.isPreferred },
+      { isPreferred: true }
+    );
+
     return this.getPartyContacts(context, partyId);
   }
 
@@ -345,7 +418,7 @@ export class PartyContactService {
     partyContactId: string
   ): Promise<PartyContactsPanelView> {
     await this.requireParty(context, partyId);
-    await this.requireContact(context, partyId, partyContactId);
+    const contact = await this.requireContact(context, partyId, partyContactId);
 
     await this.partyContactRepository.updateById(
       context.businessId,
@@ -354,6 +427,21 @@ export class PartyContactService {
         isVerified: true,
         updatedBy: context.platformUserId,
       }
+    );
+
+    const contactType = await this.referenceRepository.findContactTypeByCode(
+      contact.contactTypeCode
+    );
+    await this.recordContactTimeline(
+      context,
+      partyId,
+      PARTY_TIMELINE_EVENT_TYPES.CONTACT_VERIFIED,
+      `${contactType?.name ?? contact.contactTypeCode} contact verified`,
+      partyContactId,
+      AUDIT_OPERATIONS.VERIFY,
+      undefined,
+      { isVerified: contact.isVerified },
+      { isVerified: true }
     );
 
     return this.getPartyContacts(context, partyId);
@@ -396,6 +484,21 @@ export class PartyContactService {
       }
     );
 
+    const contactType = await this.referenceRepository.findContactTypeByCode(
+      contact.contactTypeCode
+    );
+    await this.recordContactTimeline(
+      context,
+      partyId,
+      PARTY_TIMELINE_EVENT_TYPES.CONTACT_UPDATED,
+      `${contactType?.name ?? contact.contactTypeCode} contact deactivated`,
+      partyContactId,
+      AUDIT_OPERATIONS.DEACTIVATE,
+      undefined,
+      { statusCode: contact.statusCode },
+      { statusCode: PARTY_CONTACT_STATUS_CODES.INACTIVE }
+    );
+
     return this.getPartyContacts(context, partyId);
   }
 
@@ -426,6 +529,21 @@ export class PartyContactService {
       }
     );
 
+    const contactType = await this.referenceRepository.findContactTypeByCode(
+      contact.contactTypeCode
+    );
+    await this.recordContactTimeline(
+      context,
+      partyId,
+      PARTY_TIMELINE_EVENT_TYPES.CONTACT_UPDATED,
+      `${contactType?.name ?? contact.contactTypeCode} contact reactivated`,
+      partyContactId,
+      AUDIT_OPERATIONS.ACTIVATE,
+      undefined,
+      { statusCode: contact.statusCode },
+      { statusCode: PARTY_CONTACT_STATUS_CODES.ACTIVE }
+    );
+
     return this.getPartyContacts(context, partyId);
   }
 
@@ -438,7 +556,7 @@ export class PartyContactService {
     partyContactId: string
   ): Promise<PartyContactsPanelView> {
     await this.requireParty(context, partyId);
-    await this.requireContact(context, partyId, partyContactId);
+    const contact = await this.requireContact(context, partyId, partyContactId);
 
     await this.partyContactRepository.updateById(
       context.businessId,
@@ -450,7 +568,60 @@ export class PartyContactService {
       }
     );
 
+    const contactType = await this.referenceRepository.findContactTypeByCode(
+      contact.contactTypeCode
+    );
+    await this.recordContactTimeline(
+      context,
+      partyId,
+      PARTY_TIMELINE_EVENT_TYPES.CONTACT_REMOVED,
+      `${contactType?.name ?? contact.contactTypeCode} contact removed`,
+      partyContactId,
+      AUDIT_OPERATIONS.DELETE,
+      undefined,
+      { deletedAt: contact.deletedAt },
+      { deletedAt: new Date().toISOString() }
+    );
+
     return this.getPartyContacts(context, partyId);
+  }
+
+  private async recordContactTimeline(
+    context: CurrentBusinessContext,
+    partyId: string,
+    eventType: string,
+    summary: string,
+    referenceId?: string,
+    operation?: string,
+    createValues?: Record<string, unknown>,
+    before?: Record<string, unknown>,
+    after?: Record<string, unknown>
+  ) {
+    await this.timelineService.recordEvent(
+      buildTimelineEventFromContext(context, {
+        partyId,
+        eventType,
+        eventCategory: PARTY_TIMELINE_EVENT_CATEGORIES.COMMUNICATION,
+        summary,
+        referenceEntity: "party_contact",
+        referenceId,
+      })
+    );
+
+    if (!referenceId || !operation) {
+      return;
+    }
+
+    await recordPartyEntityAudit(this.auditService, context, {
+      partyId,
+      entityName: AUDIT_ENTITY_NAMES.PARTY_CONTACT,
+      entityId: referenceId,
+      operation,
+      sourceModule: AUDIT_SOURCE_MODULES.PARTY_CONTACTS,
+      createValues,
+      before,
+      after,
+    });
   }
 
   private async requireParty(

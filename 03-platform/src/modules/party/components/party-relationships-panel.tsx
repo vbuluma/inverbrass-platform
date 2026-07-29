@@ -8,9 +8,18 @@
 
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  PlatformEmptyState,
+  PlatformSearchState,
+  type PlatformSearchStateStatus,
+  PlatformProcessingButton,
+  PROCESSING_LABELS,
+  relationshipCreatedNextActions,
+  useFormDraft,
+  usePanelFeedback,
+} from "@/components/platform";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -61,34 +70,64 @@ export function PartyRelationshipsPanel({
   const [panel, setPanel] = useState(initialData);
   const [syncedInitial, setSyncedInitial] = useState(initialData);
   const [syncedPartyId, setSyncedPartyId] = useState(partyId);
-  const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<PartySearchResultView[]>(
     []
   );
-  const [selectedPartyId, setSelectedPartyId] = useState("");
-  const [relationshipTypeCode, setRelationshipTypeCode] = useState(
-    initialData.availableRelationshipTypes[0]?.code ?? ""
-  );
-  const [startDate, setStartDate] = useState("");
-  const [notes, setNotes] = useState("");
+  const [searchStatus, setSearchStatus] =
+    useState<PlatformSearchStateStatus>("idle");
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editStartDate, setEditStartDate] = useState("");
   const [editEndDate, setEditEndDate] = useState("");
   const [editNotes, setEditNotes] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const {
+    isPending,
+    runPanelAction,
+    clearResult,
+    setValidationError,
+    requestConfirm,
+    FormFeedback,
+    ConfirmDialogHost,
+  } = usePanelFeedback<PartyRelationshipsPanelView>();
+  const {
+    draftValues,
+    saveDraft,
+    clearDraft,
+    draftSavedAt,
+  } = useFormDraft<{
+    searchQuery: string;
+    selectedPartyId: string;
+    relationshipTypeCode: string;
+    startDate: string;
+    notes: string;
+  }>(`party-${partyId}-relationships-create-draft`);
+  const [searchQuery, setSearchQuery] = useState(
+    () => draftValues?.searchQuery ?? ""
+  );
+  const [selectedPartyId, setSelectedPartyId] = useState(
+    () => draftValues?.selectedPartyId ?? ""
+  );
+  const [relationshipTypeCode, setRelationshipTypeCode] = useState(
+    () =>
+      draftValues?.relationshipTypeCode ??
+      initialData.availableRelationshipTypes[0]?.code ??
+      ""
+  );
+  const [startDate, setStartDate] = useState(
+    () => draftValues?.startDate ?? ""
+  );
+  const [notes, setNotes] = useState(() => draftValues?.notes ?? "");
 
   if (partyId !== syncedPartyId) {
     setSyncedPartyId(partyId);
     setSearchQuery("");
     setSearchResults([]);
+    setSearchStatus("idle");
+    setSearchError(null);
     setSelectedPartyId("");
     setStartDate("");
     setNotes("");
     setEditingId(null);
-    setError(null);
-    setMessage(null);
   }
 
   if (initialData !== syncedInitial) {
@@ -99,24 +138,13 @@ export function PartyRelationshipsPanel({
     );
   }
 
-  function applyPanelResult(
-    result:
-      | { success: true; data: PartyRelationshipsPanelView }
-      | { success: false; error: { message: string } },
-    successMessage: string
-  ) {
-    if (!result.success) {
-      setError(result.error.message);
-      return;
-    }
-    setError(null);
-    setMessage(successMessage);
-    setPanel(result.data);
-    setRelationshipTypeCode(
-      result.data.availableRelationshipTypes[0]?.code ?? ""
-    );
+  function applySuccess(data: PartyRelationshipsPanelView) {
+    setPanel(data);
+    setRelationshipTypeCode(data.availableRelationshipTypes[0]?.code ?? "");
     setSearchQuery("");
     setSearchResults([]);
+    setSearchStatus("idle");
+    setSearchError(null);
     setSelectedPartyId("");
     setStartDate("");
     setNotes("");
@@ -125,49 +153,86 @@ export function PartyRelationshipsPanel({
 
   function onSearch() {
     if (searchQuery.trim().length < 2) {
-      setError("Enter at least 2 characters to search.");
+      setValidationError("Enter at least 2 characters to search.");
       return;
     }
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await searchPartiesForRelationshipAction(
-        partyId,
-        searchQuery
-      );
-      if (!result.success) {
-        setError(result.error.message);
-        return;
+    setSearchStatus("searching");
+    setSearchError(null);
+    setSearchResults([]);
+    runPanelAction(
+      async () => {
+        try {
+          const result = await searchPartiesForRelationshipAction(
+            partyId,
+            searchQuery
+          );
+          if (!result.success) {
+            setSearchStatus("error");
+            setSearchError(result.error.message);
+            return result;
+          }
+          const filtered = result.data.filter((row) => row.id !== partyId);
+          setSearchResults(filtered);
+          setSelectedPartyId(filtered[0]?.id ?? "");
+          setSearchStatus(filtered.length > 0 ? "success" : "empty");
+          return { success: true, data: panel };
+        } catch {
+          setSearchStatus("error");
+          setSearchError("Unable to complete search.");
+          return {
+            success: false,
+            error: { code: "SEARCH_FAILED", message: "Unable to complete search." },
+          };
+        }
+      },
+      {
+        successTitle: "Search complete.",
+        successMessage: "Select a party from the results to create a relationship.",
+        onSuccess: () => clearResult(),
       }
-      const filtered = result.data.filter((row) => row.id !== partyId);
-      setSearchResults(filtered);
-      setSelectedPartyId(filtered[0]?.id ?? "");
-    });
+    );
   }
 
   function onAdd() {
     if (!selectedPartyId) {
-      setError("Search and select a related party.");
+      setValidationError("Search and select a related party.");
       return;
     }
     if (selectedPartyId === partyId) {
-      setError("A party cannot have a relationship with itself.");
+      setValidationError("A party cannot have a relationship with itself.");
       return;
     }
     if (!relationshipTypeCode) {
-      setError("Select a relationship type.");
+      setValidationError("Select a relationship type.");
       return;
     }
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await addPartyRelationshipAction(partyId, {
-        toPartyId: selectedPartyId,
-        relationshipTypeCode,
-        startDate: startDate || undefined,
-        notes,
-      });
-      applyPanelResult(result, "Relationship added.");
+    runPanelAction(
+      () =>
+        addPartyRelationshipAction(partyId, {
+          toPartyId: selectedPartyId,
+          relationshipTypeCode,
+          startDate: startDate || undefined,
+          notes,
+        }),
+      {
+        successTitle: "Relationship created successfully.",
+        successMessage: "The relationship is now linked to this party.",
+        nextActions: relationshipCreatedNextActions(partyId),
+        onSuccess: (data) => {
+          applySuccess(data);
+          clearDraft();
+        },
+      }
+    );
+  }
+
+  function onSaveDraft() {
+    saveDraft({
+      searchQuery,
+      selectedPartyId,
+      relationshipTypeCode,
+      startDate,
+      notes,
     });
   }
 
@@ -176,76 +241,76 @@ export function PartyRelationshipsPanel({
     setEditStartDate(relationship.startDate);
     setEditEndDate(relationship.endDate ?? "");
     setEditNotes(relationship.notes ?? "");
-    setError(null);
-    setMessage(null);
   }
 
   function onSaveEdit(partyRelationshipId: string) {
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await updatePartyRelationshipAction(
-        partyId,
-        partyRelationshipId,
-        {
+    runPanelAction(
+      () =>
+        updatePartyRelationshipAction(partyId, partyRelationshipId, {
           startDate: editStartDate,
           endDate: editEndDate,
           notes: editNotes,
-        }
-      );
-      applyPanelResult(result, "Relationship updated.");
-    });
+        }),
+      {
+        successTitle: "Relationship saved.",
+        successMessage: "Relationship details were updated.",
+        onSuccess: applySuccess,
+      }
+    );
   }
 
   function onDeactivate(partyRelationshipId: string) {
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await deactivatePartyRelationshipAction(
-        partyId,
-        partyRelationshipId
-      );
-      applyPanelResult(result, "Relationship deactivated.");
+    requestConfirm({
+      title: "Deactivate Relationship?",
+      description:
+        "This relationship will remain in history but will no longer be active.",
+      confirmLabel: "Deactivate",
+      onConfirm: () => {
+        runPanelAction(
+          () => deactivatePartyRelationshipAction(partyId, partyRelationshipId),
+          {
+            successTitle: "Relationship deactivated.",
+            successMessage: "The relationship is no longer active.",
+            onSuccess: applySuccess,
+          }
+        );
+      },
     });
   }
 
   function onReactivate(partyRelationshipId: string) {
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await reactivatePartyRelationshipAction(
-        partyId,
-        partyRelationshipId
-      );
-      applyPanelResult(result, "Relationship reactivated.");
-    });
+    runPanelAction(
+      () => reactivatePartyRelationshipAction(partyId, partyRelationshipId),
+      {
+        successTitle: "Relationship reactivated.",
+        successMessage: "The relationship is active again.",
+        onSuccess: applySuccess,
+      }
+    );
   }
 
   function onRemove(partyRelationshipId: string) {
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await removePartyRelationshipAction(
-        partyId,
-        partyRelationshipId
-      );
-      applyPanelResult(result, "Relationship removed.");
+    requestConfirm({
+      title: "Remove Relationship?",
+      description:
+        "This relationship will be removed from the active list. Historical records may remain in audit history.",
+      confirmLabel: "Remove",
+      onConfirm: () => {
+        runPanelAction(
+          () => removePartyRelationshipAction(partyId, partyRelationshipId),
+          {
+            successTitle: "Relationship removed.",
+            successMessage: "The relationship was removed from this party.",
+            onSuccess: applySuccess,
+          }
+        );
+      },
     });
   }
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
       <div className="space-y-4">
-        {error ? (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        ) : null}
-        {message ? (
-          <Alert>
-            <AlertDescription>{message}</AlertDescription>
-          </Alert>
-        ) : null}
 
         <Card>
           <CardHeader>
@@ -256,9 +321,15 @@ export function PartyRelationshipsPanel({
           </CardHeader>
           <CardContent className="space-y-3">
             {panel.relationships.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No relationships yet. Search for a party to link.
-              </p>
+              <PlatformEmptyState
+                title="No Relationships Yet"
+                description="Search for an existing party to create your first relationship."
+                actionLabel="Create Relationship"
+                onAction={() =>
+                  document.getElementById("partySearch")?.focus()
+                }
+                compact
+              />
             ) : (
               <ul className="space-y-3">
                 {panel.relationships.map((relationship) => (
@@ -370,7 +441,7 @@ export function PartyRelationshipsPanel({
                         <Button
                           type="button"
                           size="sm"
-                          variant="outline"
+                          variant="destructive"
                           disabled={isPending}
                           onClick={() => onRemove(relationship.id)}
                         >
@@ -388,7 +459,7 @@ export function PartyRelationshipsPanel({
 
       <Card className="h-fit">
         <CardHeader>
-          <CardTitle className="text-base">Add Relationship</CardTitle>
+          <CardTitle className="text-base">Create Relationship</CardTitle>
           <CardDescription>
             Search an existing party — relationships never create duplicate
             parties.
@@ -414,24 +485,36 @@ export function PartyRelationshipsPanel({
               </Button>
             </div>
           </div>
-          {searchResults.length > 0 ? (
-            <div className="space-y-2">
-              <Label htmlFor="selectedParty">Related Party</Label>
-              <select
-                id="selectedParty"
-                value={selectedPartyId}
-                onChange={(event) => setSelectedPartyId(event.target.value)}
-                className="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-sm"
-              >
-                {searchResults.map((result) => (
-                  <option key={result.id} value={result.id}>
-                    {result.displayName} ({result.partyNumber}) ·{" "}
-                    {result.partyTypeName}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : null}
+          <PlatformSearchState
+            status={searchStatus}
+            onRetry={onSearch}
+            errorMessage={searchError ?? undefined}
+            emptyHints={[
+              "Different keywords",
+              "Removing filters",
+              "Create a new party first",
+            ]}
+            compact
+          >
+            {searchResults.length > 0 ? (
+              <div className="space-y-2">
+                <Label htmlFor="selectedParty">Related Party</Label>
+                <select
+                  id="selectedParty"
+                  value={selectedPartyId}
+                  onChange={(event) => setSelectedPartyId(event.target.value)}
+                  className="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-sm"
+                >
+                  {searchResults.map((result) => (
+                    <option key={result.id} value={result.id}>
+                      {result.displayName} ({result.partyNumber}) ·{" "}
+                      {result.partyTypeName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+          </PlatformSearchState>
           <div className="space-y-2">
             <Label htmlFor="relationshipTypeCode">Relationship Type</Label>
             <select
@@ -466,16 +549,30 @@ export function PartyRelationshipsPanel({
               maxLength={2000}
             />
           </div>
-          <Button
+          <PlatformProcessingButton
             type="button"
             className="w-full"
-            disabled={isPending}
+            isProcessing={isPending}
+            processingLabel={PROCESSING_LABELS.creatingRelationship}
+            idleLabel="Create Relationship"
             onClick={onAdd}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={isPending}
+            onClick={onSaveDraft}
           >
-            {isPending ? "Saving…" : "Add Relationship"}
+            Save Draft
           </Button>
+          <FormFeedback
+            processingLabel={PROCESSING_LABELS.creatingRelationship}
+            draftSavedAt={draftSavedAt}
+          />
         </CardContent>
       </Card>
+      <ConfirmDialogHost />
     </div>
   );
 }

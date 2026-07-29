@@ -16,6 +16,10 @@ import { listOrganizationStructureAction } from "@/modules/party/actions/organiz
 import { listPartyAddressesAction } from "@/modules/party/actions/party-address-actions";
 import { listPartyContactsAction } from "@/modules/party/actions/party-contact-actions";
 import { listPartyDocumentsAction } from "@/modules/party/actions/party-document-actions";
+import { listPartyGroupsAction } from "@/modules/party/actions/party-group-actions";
+import { listPartyAuditHistoryAction } from "@/modules/party/actions/party-audit-actions";
+import { getPartyCommunicationPreferencesAction } from "@/modules/party/actions/party-communication-preference-actions";
+import { listPartyTimelineAction } from "@/modules/party/actions/party-timeline-actions";
 import { listPartyRelationshipsAction } from "@/modules/party/actions/party-relationship-actions";
 import { listPartyRolesAction } from "@/modules/party/actions/party-role-actions";
 import { PartyWorkspace } from "@/modules/party/components/party-workspace";
@@ -40,6 +44,10 @@ export default async function PartyWorkspacePage({
     structureResult,
     relationshipsResult,
     documentsResult,
+    groupsResult,
+    timelineResult,
+    auditHistoryResult,
+    communicationPreferencesResult,
   ] = await Promise.all([
     getPartyAction(partyId),
     getPartyRegistrationCataloguesAction(),
@@ -49,6 +57,10 @@ export default async function PartyWorkspacePage({
     listOrganizationStructureAction(partyId),
     listPartyRelationshipsAction(partyId),
     listPartyDocumentsAction(partyId),
+    listPartyGroupsAction(partyId),
+    listPartyTimelineAction(partyId),
+    listPartyAuditHistoryAction(partyId),
+    getPartyCommunicationPreferencesAction(partyId),
   ]);
 
   if (!partyResult.success) {
@@ -146,6 +158,50 @@ export default async function PartyWorkspacePage({
     );
   }
 
+  if (!groupsResult.success) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <h1 className="text-xl font-semibold">Party Workspace</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {groupsResult.error.message}
+        </p>
+      </main>
+    );
+  }
+
+  if (!timelineResult.success) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <h1 className="text-xl font-semibold">Party Workspace</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {timelineResult.error.message}
+        </p>
+      </main>
+    );
+  }
+
+  if (!auditHistoryResult.success) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <h1 className="text-xl font-semibold">Party Workspace</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {auditHistoryResult.error.message}
+        </p>
+      </main>
+    );
+  }
+
+  if (!communicationPreferencesResult.success) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <h1 className="text-xl font-semibold">Party Workspace</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {communicationPreferencesResult.error.message}
+        </p>
+      </main>
+    );
+  }
+
   const initialTab =
     tab === "organization-structure" ? "organization-structure" : tab ?? "overview";
 
@@ -159,6 +215,10 @@ export default async function PartyWorkspacePage({
       organizationStructure={structureResult.data}
       relationships={relationshipsResult.data}
       documents={documentsResult.data}
+      groups={groupsResult.data}
+      timeline={timelineResult.data}
+      auditHistory={auditHistoryResult.data}
+      communicationPreferences={communicationPreferencesResult.data}
       initialTab={initialTab}
       showAddOrganizationalUnit={add === "1"}
     />

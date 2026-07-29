@@ -158,6 +158,44 @@ export class PartyAddressRepository {
       );
   }
 
+  async findPrimaryCountryCode(
+    businessId: string,
+    partyId: string,
+    dbClient: DbClient = getDb()
+  ): Promise<string | null> {
+    const [defaultRow] = await dbClient
+      .select({ countryCode: partyAddress.countryCode })
+      .from(partyAddress)
+      .where(
+        and(
+          eq(partyAddress.businessId, businessId),
+          eq(partyAddress.partyId, partyId),
+          eq(partyAddress.isDefault, true),
+          isNull(partyAddress.deletedAt)
+        )
+      )
+      .limit(1);
+
+    if (defaultRow?.countryCode) {
+      return defaultRow.countryCode;
+    }
+
+    const [firstRow] = await dbClient
+      .select({ countryCode: partyAddress.countryCode })
+      .from(partyAddress)
+      .where(
+        and(
+          eq(partyAddress.businessId, businessId),
+          eq(partyAddress.partyId, partyId),
+          isNull(partyAddress.deletedAt)
+        )
+      )
+      .orderBy(asc(partyAddress.createdAt))
+      .limit(1);
+
+    return firstRow?.countryCode ?? null;
+  }
+
   async updateById(
     businessId: string,
     partyAddressId: string,

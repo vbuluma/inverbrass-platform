@@ -167,6 +167,7 @@ ________________________________________
 Rule	Description
 Business Alignment	User interfaces must support approved business processes and requirements.
 Architecture Compliance	Screens must align with the Enterprise Solution Architecture, Platform Module Catalog and Domain Model.
+Core Platform Engines	All reusable processing belongs to **ENG-001 – ENG-016** (active) plus extensions (ENG-003a–i, ENG-015a). Retired IDs are in the Merge Registry — see [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3 and §3.1. Governed by `.cursor/rules/eng-catalog-governance.mdc`.
 Cursor Rules Compliance	Generated UI code must comply with the project's .cursorrules and coding standards.
 Component Standards	Only approved design system components should be used unless explicitly justified.
 Self-Service Validation	Every new feature should be evaluated against the Self-Service First principle.
@@ -210,5 +211,33 @@ After a successful Server Action:
 This pattern prevents "Saving…" hangs, reduces unnecessary RSC reloads, and keeps workspace tabs responsive while preserving cache correctness on navigation.
 
 Cursor rule: .cursor/rules/ui-std-004-server-action-refresh.mdc
-________________________________________
 
+________________________________________
+19. UX & Interaction Standards (UX-001)
+
+The **UX-001 Enterprise Interaction Standard** defines platform-wide interaction patterns: action naming, processing feedback, completion results, guided navigation, button hierarchy, enclosed tabs, empty states, confirmation dialogs, sticky action bars, unsaved-changes protection, and breadcrumbs.
+
+Full specification: [06b – UX & Interaction Standards](./07-UX%20%26%20Interaction%20Standards.md)
+
+Implementation location:
+
+- Types & helpers: `03-platform/src/core/platform/`
+- UI components: `03-platform/src/components/platform/`
+- Button variants: `03-platform/src/components/ui/button.tsx`
+
+Key rules:
+
+| Rule | Summary |
+|------|---------|
+| UX-001a | Buttons use clear verbs (Create, Upload, Assign — not New or Add) |
+| UX-001b | `PlatformActionResultDisplay` for all action outcomes |
+| UX-001c | `PlatformProcessingButton` — spinner + disabled state during actions |
+| UX-001d | `nextActions` on successful create flows |
+| UX-001e | Primary / Secondary / Danger / Success button hierarchy |
+| UX-001f | `PlatformTabs` — pill-style enclosed tabs |
+| UX-001g | `PlatformEmptyState` — guided empty tables |
+| UX-001h | `PlatformConfirmDialog` — destructive action confirmation |
+| UX-001i | `PlatformStickyActionBar` — visible Save/Cancel on long forms |
+| UX-001j | `useUnsavedChangesGuard` — warn before leaving edited forms |
+| UX-001k | Breadcrumb navigation on all workspace screens |
+| UX-001l | `PlatformActionResult` model on server actions |

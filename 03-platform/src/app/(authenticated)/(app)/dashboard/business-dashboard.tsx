@@ -12,14 +12,12 @@
 
 import {
   ActivityIcon,
-  BadgeCheckIcon,
   BellIcon,
   Building2Icon,
   CircleDollarSignIcon,
   ClipboardListIcon,
   FactoryIcon,
   Globe2Icon,
-  LayoutDashboardIcon,
   PackageIcon,
   ReceiptIcon,
   Settings2Icon,
@@ -40,6 +38,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  PlatformEnterpriseDashboardHeader,
+  timeBasedGreeting,
+} from "@/components/platform/platform-enterprise-dashboard-header";
 import type { BusinessDashboardView } from "@/modules/business/onboarding/types";
 
 type BusinessDashboardProps = {
@@ -90,17 +92,6 @@ const OPERATION_MODULES: FutureModule[] = [
     icon: ClipboardListIcon,
   },
 ];
-
-function timeGreeting(date: Date): string {
-  const hour = date.getHours();
-  if (hour < 12) {
-    return "Good Morning";
-  }
-  if (hour < 17) {
-    return "Good Afternoon";
-  }
-  return "Good Evening";
-}
 
 function formatMoney(currencyCode: string, amount: number): string {
   const code = currencyCode && currencyCode !== "—" ? currencyCode : "KES";
@@ -244,7 +235,7 @@ function ConfigLinkRow({
 
 export function BusinessDashboard({ data }: BusinessDashboardProps) {
   const [futureModule, setFutureModule] = useState<FutureModule | null>(null);
-  const greeting = timeGreeting(new Date());
+  const greeting = timeBasedGreeting(new Date());
 
   const salesPlaceholder = useMemo(
     () => formatMoney(data.baseCurrencyCode, 0),
@@ -254,43 +245,15 @@ export function BusinessDashboard({ data }: BusinessDashboardProps) {
   const productsModule = OPERATION_MODULES.find((m) => m.id === "products")!;
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-8 sm:px-6">
-      <header className="space-y-4 border-b border-border pb-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <LayoutDashboardIcon className="size-4" aria-hidden />
-              <span>Operational workspace</span>
-            </div>
-            <h1 className="text-3xl font-semibold tracking-tight">
-              {greeting}, {data.currentUserName}
-            </h1>
-            <p className="text-lg text-foreground/90">
-              Welcome back to {data.businessName}
-            </p>
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-2 py-1 font-medium text-emerald-800 ring-1 ring-emerald-200">
-                <BadgeCheckIcon className="size-3.5" aria-hidden />
-                Status: {data.businessStatusCode}
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 font-medium text-foreground ring-1 ring-border">
-                Role: {data.roleLabel}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2 sm:items-end">
-            <p className="text-xs text-muted-foreground sm:text-right">
-              Use the header to switch business or open Platform Home.
-            </p>
-          </div>
-        </div>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          This is your operational workspace.
-          <br />
-          Manage your businesses from Platform Home.
-        </p>
-      </header>
+    <main className="platform-workspace-main mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-8 sm:px-6">
+      <PlatformEnterpriseDashboardHeader
+        greeting={greeting}
+        greetingName={data.greetingName}
+        businessName={data.businessName}
+        roleLabel={data.roleLabel}
+        businessStatusCode={data.businessStatusCode}
+        canSwitchBusiness={data.canSwitchBusiness}
+      />
 
       {data.postActivationCta === "products" ? (
         <section aria-labelledby="express-cta-heading">

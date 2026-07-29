@@ -64,6 +64,8 @@ type PlatformUserRecord = {
   email: string | null;
   firstName: string;
   lastName: string;
+  displayName: string | null;
+  staffCode: string | null;
   isActive: boolean;
   mustChangePassword: boolean;
   failedLoginAttempts: number;
@@ -281,6 +283,8 @@ export class AuthService {
         email: platformUser.email,
         firstName: platformUser.firstName,
         lastName: platformUser.lastName,
+        displayName: platformUser.displayName,
+        staffCode: platformUser.staffCode,
         isActive: platformUser.isActive,
         proposedBusinessName: platformUser.proposedBusinessName,
         mustChangePassword: userSecurityProfile.mustChangePassword,
@@ -306,6 +310,8 @@ export class AuthService {
       email: row.email,
       firstName: row.firstName,
       lastName: row.lastName,
+      displayName: row.displayName,
+      staffCode: row.staffCode,
       isActive: row.isActive,
       proposedBusinessName: row.proposedBusinessName,
       mustChangePassword: row.mustChangePassword ?? false,
@@ -541,6 +547,8 @@ export class AuthService {
         email: platformUser.email,
         firstName: platformUser.firstName,
         lastName: platformUser.lastName,
+        displayName: platformUser.displayName,
+        staffCode: platformUser.staffCode,
         isActive: platformUser.isActive,
         proposedBusinessName: platformUser.proposedBusinessName,
         mustChangePassword: userSecurityProfile.mustChangePassword,
@@ -566,6 +574,8 @@ export class AuthService {
       email: row.email,
       firstName: row.firstName,
       lastName: row.lastName,
+      displayName: row.displayName,
+      staffCode: row.staffCode,
       isActive: row.isActive,
       proposedBusinessName: row.proposedBusinessName,
       mustChangePassword: row.mustChangePassword ?? false,
@@ -600,6 +610,8 @@ export class AuthService {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
+      displayName: user.displayName,
+      staffCode: user.staffCode,
       isActive: user.isActive,
       mustChangePassword: user.mustChangePassword,
       proposedBusinessName: user.proposedBusinessName,

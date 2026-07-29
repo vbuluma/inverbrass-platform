@@ -8,9 +8,16 @@
 
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  PlatformEmptyState,
+  PlatformProcessingButton,
+  PROCESSING_LABELS,
+  addressCreatedNextActions,
+  useFormDraft,
+  usePanelFeedback,
+} from "@/components/platform";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -93,30 +100,77 @@ export function PartyAddressesPanel({
 }: PartyAddressesPanelProps) {
   const [panel, setPanel] = useState(initialData);
   const [syncedInitial, setSyncedInitial] = useState(initialData);
-  const [addressTypeCode, setAddressTypeCode] = useState(
-    initialData.availableAddressTypes[0]?.code ?? ""
-  );
-  const [countryCode, setCountryCode] = useState(
-    initialData.countries[0]?.code ?? ""
-  );
-  const [stateProvince, setStateProvince] = useState("");
-  const [countyDistrict, setCountyDistrict] = useState("");
-  const [cityTown, setCityTown] = useState("");
-  const [wardLocality, setWardLocality] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [addressLine1, setAddressLine1] = useState("");
-  const [addressLine2, setAddressLine2] = useState("");
-  const [landmark, setLandmark] = useState("");
-  const [gpsLatitude, setGpsLatitude] = useState("");
-  const [gpsLongitude, setGpsLongitude] = useState("");
-  const [isDefault, setIsDefault] = useState(false);
-  const [notes, setNotes] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [viewingId, setViewingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<Partial<PartyAddressView>>({});
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const {
+    isPending,
+    runPanelAction,
+    setValidationError,
+    requestConfirm,
+    FormFeedback,
+    ConfirmDialogHost,
+  } = usePanelFeedback<PartyAddressesPanelView>();
+  const {
+    draftValues,
+    saveDraft,
+    clearDraft,
+    draftSavedAt,
+  } = useFormDraft<{
+    addressTypeCode: string;
+    countryCode: string;
+    stateProvince: string;
+    countyDistrict: string;
+    cityTown: string;
+    wardLocality: string;
+    postalCode: string;
+    addressLine1: string;
+    addressLine2: string;
+    landmark: string;
+    gpsLatitude: string;
+    gpsLongitude: string;
+    isDefault: boolean;
+    notes: string;
+  }>(`party-${partyId}-addresses-create-draft`);
+  const [addressTypeCode, setAddressTypeCode] = useState(
+    () =>
+      draftValues?.addressTypeCode ??
+      initialData.availableAddressTypes[0]?.code ??
+      ""
+  );
+  const [countryCode, setCountryCode] = useState(
+    () => draftValues?.countryCode ?? initialData.countries[0]?.code ?? ""
+  );
+  const [stateProvince, setStateProvince] = useState(
+    () => draftValues?.stateProvince ?? ""
+  );
+  const [countyDistrict, setCountyDistrict] = useState(
+    () => draftValues?.countyDistrict ?? ""
+  );
+  const [cityTown, setCityTown] = useState(() => draftValues?.cityTown ?? "");
+  const [wardLocality, setWardLocality] = useState(
+    () => draftValues?.wardLocality ?? ""
+  );
+  const [postalCode, setPostalCode] = useState(
+    () => draftValues?.postalCode ?? ""
+  );
+  const [addressLine1, setAddressLine1] = useState(
+    () => draftValues?.addressLine1 ?? ""
+  );
+  const [addressLine2, setAddressLine2] = useState(
+    () => draftValues?.addressLine2 ?? ""
+  );
+  const [landmark, setLandmark] = useState(() => draftValues?.landmark ?? "");
+  const [gpsLatitude, setGpsLatitude] = useState(
+    () => draftValues?.gpsLatitude ?? ""
+  );
+  const [gpsLongitude, setGpsLongitude] = useState(
+    () => draftValues?.gpsLongitude ?? ""
+  );
+  const [isDefault, setIsDefault] = useState(() =>
+    Boolean(draftValues?.isDefault)
+  );
+  const [notes, setNotes] = useState(() => draftValues?.notes ?? "");
 
   if (initialData !== syncedInitial) {
     setSyncedInitial(initialData);
@@ -127,21 +181,10 @@ export function PartyAddressesPanel({
 
   const fieldLabels = getAddressFieldLabels(countryCode);
 
-  function applyResult(
-    result:
-      | { success: true; data: PartyAddressesPanelView }
-      | { success: false; error: { message: string } },
-    successMessage: string
-  ) {
-    if (!result.success) {
-      setError(result.error.message);
-      return;
-    }
-    setError(null);
-    setMessage(successMessage);
-    setPanel(result.data);
-    setAddressTypeCode(result.data.availableAddressTypes[0]?.code ?? "");
-    setCountryCode(result.data.countries[0]?.code ?? "");
+  function applySuccess(data: PartyAddressesPanelView) {
+    setPanel(data);
+    setAddressTypeCode(data.availableAddressTypes[0]?.code ?? "");
+    setCountryCode(data.countries[0]?.code ?? "");
     resetAddForm();
     setEditingId(null);
     setViewingId(null);
@@ -164,33 +207,59 @@ export function PartyAddressesPanel({
 
   function onAdd() {
     if (!addressTypeCode) {
-      setError("Select an address type.");
+      setValidationError("Select an address type.");
       return;
     }
     if (!countryCode) {
-      setError("Select a country.");
+      setValidationError("Select a country.");
       return;
     }
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await addPartyAddressAction(partyId, {
-        addressTypeCode,
-        countryCode,
-        stateProvince,
-        countyDistrict,
-        cityTown,
-        wardLocality,
-        postalCode,
-        addressLine1,
-        addressLine2,
-        landmark,
-        gpsLatitude: gpsLatitude || null,
-        gpsLongitude: gpsLongitude || null,
-        isDefault,
-        notes,
-      });
-      applyResult(result, "Address added.");
+    runPanelAction(
+      () =>
+        addPartyAddressAction(partyId, {
+          addressTypeCode,
+          countryCode,
+          stateProvince,
+          countyDistrict,
+          cityTown,
+          wardLocality,
+          postalCode,
+          addressLine1,
+          addressLine2,
+          landmark,
+          gpsLatitude: gpsLatitude || null,
+          gpsLongitude: gpsLongitude || null,
+          isDefault,
+          notes,
+        }),
+      {
+        successTitle: "Address created successfully.",
+        successMessage: "The address is now available on this party.",
+        nextActions: addressCreatedNextActions(partyId),
+        onSuccess: (data) => {
+          applySuccess(data);
+          clearDraft();
+        },
+      }
+    );
+  }
+
+  function onSaveDraft() {
+    saveDraft({
+      addressTypeCode,
+      countryCode,
+      stateProvince,
+      countyDistrict,
+      cityTown,
+      wardLocality,
+      postalCode,
+      addressLine1,
+      addressLine2,
+      landmark,
+      gpsLatitude,
+      gpsLongitude,
+      isDefault,
+      notes,
     });
   }
 
@@ -198,65 +267,90 @@ export function PartyAddressesPanel({
     setEditingId(address.id);
     setViewingId(null);
     setEditDraft({ ...address });
-    setError(null);
-    setMessage(null);
   }
 
   function onSaveEdit(partyAddressId: string) {
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await updatePartyAddressAction(partyId, partyAddressId, {
-        countryCode: editDraft.countryCode,
-        stateProvince: editDraft.stateProvince ?? "",
-        countyDistrict: editDraft.countyDistrict ?? "",
-        cityTown: editDraft.cityTown ?? "",
-        wardLocality: editDraft.wardLocality ?? "",
-        postalCode: editDraft.postalCode ?? "",
-        addressLine1: editDraft.addressLine1 ?? "",
-        addressLine2: editDraft.addressLine2 ?? "",
-        landmark: editDraft.landmark ?? "",
-        gpsLatitude: editDraft.gpsLatitude ?? null,
-        gpsLongitude: editDraft.gpsLongitude ?? null,
-        notes: editDraft.notes ?? "",
-      });
-      applyResult(result, "Address updated.");
-    });
+    runPanelAction(
+      () =>
+        updatePartyAddressAction(partyId, partyAddressId, {
+          countryCode: editDraft.countryCode,
+          stateProvince: editDraft.stateProvince ?? "",
+          countyDistrict: editDraft.countyDistrict ?? "",
+          cityTown: editDraft.cityTown ?? "",
+          wardLocality: editDraft.wardLocality ?? "",
+          postalCode: editDraft.postalCode ?? "",
+          addressLine1: editDraft.addressLine1 ?? "",
+          addressLine2: editDraft.addressLine2 ?? "",
+          landmark: editDraft.landmark ?? "",
+          gpsLatitude: editDraft.gpsLatitude ?? null,
+          gpsLongitude: editDraft.gpsLongitude ?? null,
+          notes: editDraft.notes ?? "",
+        }),
+      {
+        successTitle: "Address saved.",
+        successMessage: "Address details were updated.",
+        onSuccess: applySuccess,
+      }
+    );
   }
 
   function onSetDefault(partyAddressId: string) {
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await setDefaultPartyAddressAction(partyId, partyAddressId);
-      applyResult(result, "Default address updated.");
-    });
+    runPanelAction(
+      () => setDefaultPartyAddressAction(partyId, partyAddressId),
+      {
+        successTitle: "Default address updated.",
+        successMessage: "The default address for this type was changed.",
+        onSuccess: applySuccess,
+      }
+    );
   }
 
   function onDeactivate(partyAddressId: string) {
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await deactivatePartyAddressAction(partyId, partyAddressId);
-      applyResult(result, "Address deactivated.");
+    requestConfirm({
+      title: "Deactivate Address?",
+      description:
+        "This address will remain in history but cannot be used as active.",
+      confirmLabel: "Deactivate",
+      onConfirm: () => {
+        runPanelAction(
+          () => deactivatePartyAddressAction(partyId, partyAddressId),
+          {
+            successTitle: "Address deactivated.",
+            successMessage: "The address is no longer active.",
+            onSuccess: applySuccess,
+          }
+        );
+      },
     });
   }
 
   function onReactivate(partyAddressId: string) {
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await reactivatePartyAddressAction(partyId, partyAddressId);
-      applyResult(result, "Address reactivated.");
-    });
+    runPanelAction(
+      () => reactivatePartyAddressAction(partyId, partyAddressId),
+      {
+        successTitle: "Address reactivated.",
+        successMessage: "The address is active again.",
+        onSuccess: applySuccess,
+      }
+    );
   }
 
   function onRemove(partyAddressId: string) {
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await removePartyAddressAction(partyId, partyAddressId);
-      applyResult(result, "Address removed.");
+    requestConfirm({
+      title: "Remove Address?",
+      description:
+        "This address will be removed from the active list. Historical records may remain in audit history.",
+      confirmLabel: "Remove",
+      onConfirm: () => {
+        runPanelAction(
+          () => removePartyAddressAction(partyId, partyAddressId),
+          {
+            successTitle: "Address removed.",
+            successMessage: "The address was removed from this party.",
+            onSuccess: applySuccess,
+          }
+        );
+      },
     });
   }
 
@@ -265,16 +359,6 @@ export function PartyAddressesPanel({
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
       <div className="space-y-4">
-        {error ? (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        ) : null}
-        {message ? (
-          <Alert>
-            <AlertDescription>{message}</AlertDescription>
-          </Alert>
-        ) : null}
 
         <Card>
           <CardHeader>
@@ -285,9 +369,15 @@ export function PartyAddressesPanel({
           </CardHeader>
           <CardContent className="space-y-3">
             {panel.addresses.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No addresses yet. Add an address to begin.
-              </p>
+              <PlatformEmptyState
+                title="No Addresses Yet"
+                description="Create your first address to record locations for this party."
+                actionLabel="Create Address"
+                onAction={() =>
+                  document.getElementById("addressLine1")?.focus()
+                }
+                compact
+              />
             ) : (
               <ul className="space-y-3">
                 {panel.addresses.map((address) => (
@@ -476,7 +566,7 @@ export function PartyAddressesPanel({
                         <Button
                           type="button"
                           size="sm"
-                          variant="outline"
+                          variant="destructive"
                           disabled={isPending}
                           onClick={() => onRemove(address.id)}
                         >
@@ -494,7 +584,7 @@ export function PartyAddressesPanel({
 
       <Card className="h-fit">
         <CardHeader>
-          <CardTitle className="text-base">Add Address</CardTitle>
+          <CardTitle className="text-base">Create Address</CardTitle>
           <CardDescription>
             Addresses are maintained here after registration.
           </CardDescription>
@@ -621,16 +711,30 @@ export function PartyAddressesPanel({
               maxLength={2000}
             />
           </div>
-          <Button
+          <PlatformProcessingButton
             type="button"
             className="w-full"
-            disabled={isPending}
+            isProcessing={isPending}
+            processingLabel={PROCESSING_LABELS.creatingAddress}
+            idleLabel="Create Address"
             onClick={onAdd}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={isPending}
+            onClick={onSaveDraft}
           >
-            {isPending ? "Saving…" : "Add Address"}
+            Save Draft
           </Button>
+          <FormFeedback
+            processingLabel={PROCESSING_LABELS.creatingAddress}
+            draftSavedAt={draftSavedAt}
+          />
         </CardContent>
       </Card>
+      <ConfirmDialogHost />
     </div>
   );
 }

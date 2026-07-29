@@ -13,6 +13,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -65,24 +66,28 @@ export function BusinessSwitcher({
           }
         />
         <DropdownMenuContent align="start" className="w-56">
-          <DropdownMenuLabel>Current business</DropdownMenuLabel>
-          <DropdownMenuItem disabled>{businessName}</DropdownMenuItem>
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Current business</DropdownMenuLabel>
+            <DropdownMenuItem disabled>{businessName}</DropdownMenuItem>
+          </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            render={
-              <Link href="/select-business" prefetch={false}>
-                <ArrowLeftRightIcon aria-hidden />
-                Switch Business
-              </Link>
-            }
-          />
-          <DropdownMenuItem
-            render={
-              <Link href="/home" prefetch={false}>
-                Platform Home
-              </Link>
-            }
-          />
+          <DropdownMenuGroup>
+            <DropdownMenuItem
+              render={
+                <Link href="/select-business" prefetch={false}>
+                  <ArrowLeftRightIcon aria-hidden />
+                  Switch Business
+                </Link>
+              }
+            />
+            <DropdownMenuItem
+              render={
+                <Link href="/home" prefetch={false}>
+                  Platform Home
+                </Link>
+              }
+            />
+          </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
     );

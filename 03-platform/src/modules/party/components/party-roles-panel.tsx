@@ -8,9 +8,15 @@
 
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  PlatformEmptyState,
+  PlatformProcessingButton,
+  PROCESSING_LABELS,
+  useFormDraft,
+  usePanelFeedback,
+} from "@/components/platform";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -39,12 +45,28 @@ export function PartyRolesPanel({
 }: PartyRolesPanelProps) {
   const [panel, setPanel] = useState(initialData);
   const [syncedInitial, setSyncedInitial] = useState(initialData);
-  const [roleTypeCode, setRoleTypeCode] = useState(
-    initialData.availableRoleTypes[0]?.code ?? ""
+  const {
+    isPending,
+    runPanelAction,
+    setValidationError,
+    requestConfirm,
+    FormFeedback,
+    ConfirmDialogHost,
+  } = usePanelFeedback<PartyRolesPanelView>();
+  const {
+    draftValues,
+    saveDraft,
+    clearDraft,
+    draftSavedAt,
+  } = useFormDraft<{ roleTypeCode: string }>(
+    `party-${partyId}-roles-create-draft`
   );
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [roleTypeCode, setRoleTypeCode] = useState(
+    () =>
+      draftValues?.roleTypeCode ??
+      initialData.availableRoleTypes[0]?.code ??
+      ""
+  );
 
   if (initialData !== syncedInitial) {
     setSyncedInitial(initialData);
@@ -52,81 +74,71 @@ export function PartyRolesPanel({
     setRoleTypeCode(initialData.availableRoleTypes[0]?.code ?? "");
   }
 
-  function applyResult(
-    result: { success: true; data: PartyRolesPanelView } | {
-      success: false;
-      error: { message: string };
-    },
-    successMessage: string
-  ) {
-    if (!result.success) {
-      setError(result.error.message);
-      return;
-    }
-    setError(null);
-    setMessage(successMessage);
-    setPanel(result.data);
-    setRoleTypeCode(result.data.availableRoleTypes[0]?.code ?? "");
+  function applySuccess(data: PartyRolesPanelView) {
+    setPanel(data);
+    setRoleTypeCode(data.availableRoleTypes[0]?.code ?? "");
   }
 
   function onAssign() {
     if (!roleTypeCode) {
-      setError("Select a role type.");
+      setValidationError("Select a role type.");
       return;
     }
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await assignPartyRoleAction(partyId, { roleTypeCode });
-      applyResult(result, "Role assigned.");
+    runPanelAction(() => assignPartyRoleAction(partyId, { roleTypeCode }), {
+      successTitle: "Role assigned.",
+      successMessage: "The role is now active on this party.",
+      onSuccess: (data) => {
+        applySuccess(data);
+        clearDraft();
+      },
     });
   }
 
+  function onSaveDraft() {
+    saveDraft({ roleTypeCode });
+  }
+
   function onRemove(partyRoleId: string) {
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await removePartyRoleAction(partyId, partyRoleId);
-      applyResult(result, "Role ended and retained in history.");
+    requestConfirm({
+      title: "Remove Role?",
+      description:
+        "This role will be ended and retained in history. It cannot be undone from this screen.",
+      confirmLabel: "Remove",
+      onConfirm: () => {
+        runPanelAction(() => removePartyRoleAction(partyId, partyRoleId), {
+          successTitle: "Role removed.",
+          successMessage: "The role was ended and retained in history.",
+          onSuccess: applySuccess,
+        });
+      },
     });
   }
 
   function onSetPrimary(partyRoleId: string) {
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      // Dedicated action — always runs changePrimaryRole (clear previous + set new).
-      // Avoids updateRole fallthrough that only touches updatedBy when isPrimary
-      // is missing from the shared update payload.
-      const result = await setPrimaryPartyRoleAction(partyId, partyRoleId);
-      applyResult(result, "Primary role updated.");
+    runPanelAction(() => setPrimaryPartyRoleAction(partyId, partyRoleId), {
+      successTitle: "Primary role updated.",
+      successMessage: "The primary role for this party was changed.",
+      onSuccess: applySuccess,
     });
   }
 
   function onReactivate(partyRoleId: string) {
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await updatePartyRoleAction(partyId, partyRoleId, {
-        reactivate: true,
-      });
-      applyResult(result, "Role reactivated.");
-    });
+    runPanelAction(
+      () =>
+        updatePartyRoleAction(partyId, partyRoleId, {
+          reactivate: true,
+        }),
+      {
+        successTitle: "Role reactivated.",
+        successMessage: "The role is active again.",
+        onSuccess: applySuccess,
+      }
+    );
   }
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
       <div className="space-y-4">
-        {error ? (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        ) : null}
-        {message ? (
-          <Alert>
-            <AlertDescription>{message}</AlertDescription>
-          </Alert>
-        ) : null}
 
         <Card>
           <CardHeader>
@@ -137,9 +149,15 @@ export function PartyRolesPanel({
           </CardHeader>
           <CardContent className="space-y-3">
             {panel.activeRoles.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No active roles yet. Assign a role to begin.
-              </p>
+              <PlatformEmptyState
+                title="No Active Roles Yet"
+                description="Assign a role to define how this party participates in the platform."
+                actionLabel="Assign Role"
+                onAction={() =>
+                  document.getElementById("roleTypeCode")?.focus()
+                }
+                compact
+              />
             ) : (
               <ul className="space-y-2">
                 {panel.activeRoles.map((role) => (
@@ -174,7 +192,7 @@ export function PartyRolesPanel({
                       ) : null}
                       <Button
                         type="button"
-                        variant="outline"
+                        variant="destructive"
                         size="sm"
                         disabled={isPending}
                         onClick={() => onRemove(role.id)}
@@ -198,9 +216,11 @@ export function PartyRolesPanel({
           </CardHeader>
           <CardContent>
             {panel.historyRoles.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No historical roles.
-              </p>
+              <PlatformEmptyState
+                title="No Role History"
+                description="Ended roles will appear here when a role is removed."
+                compact
+              />
             ) : (
               <ul className="space-y-2">
                 {panel.historyRoles.map((role) => (
@@ -234,7 +254,7 @@ export function PartyRolesPanel({
 
       <Card className="h-fit">
         <CardHeader>
-          <CardTitle className="text-base">Assign New Role</CardTitle>
+          <CardTitle className="text-base">Assign Role</CardTitle>
           <CardDescription>
             Role types come from configurable reference data.
           </CardDescription>
@@ -262,16 +282,31 @@ export function PartyRolesPanel({
               )}
             </select>
           </div>
-          <Button
+          <PlatformProcessingButton
             type="button"
             disabled={isPending || panel.availableRoleTypes.length === 0}
             onClick={onAssign}
             className="w-full"
+            isProcessing={isPending}
+            processingLabel={PROCESSING_LABELS.assigningRole}
+            idleLabel="Assign Role"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={isPending}
+            onClick={onSaveDraft}
           >
-            {isPending ? "Saving…" : "Assign Role"}
+            Save Draft
           </Button>
+          <FormFeedback
+            processingLabel={PROCESSING_LABELS.assigningRole}
+            draftSavedAt={draftSavedAt}
+          />
         </CardContent>
       </Card>
+      <ConfirmDialogHost />
     </div>
   );
 }

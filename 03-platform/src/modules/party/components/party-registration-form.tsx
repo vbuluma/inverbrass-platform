@@ -8,11 +8,19 @@
 
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { PageBackLink } from "@/components/platform/page-back-link";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  PlatformFormActionFooter,
+  PlatformProcessingButton,
+  PROCESSING_LABELS,
+  useAsyncAction,
+  useFormDraft,
+  useUnsavedChangesGuard,
+} from "@/components/platform";
+import { platformError } from "@/core/platform/platform-action-helpers";
+import type { PlatformActionResult } from "@/core/platform/types";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,6 +31,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useControlledForm } from "@/lib/forms";
 import { cn } from "@/lib/utils";
 import {
   createIndividualPartyAction,
@@ -30,6 +39,28 @@ import {
 } from "@/modules/party/actions/party-actions";
 import { PARTY_TYPE_CODES, type PartyTypeCode } from "@/modules/party/constants";
 import type { PartyRegistrationCatalogues } from "@/modules/party/types";
+
+const DRAFT_STORAGE_KEY = "party-registration-draft";
+
+type RegistrationDraft = Record<string, string> & {
+  partyType: PartyTypeCode;
+};
+
+const EMPTY_REGISTRATION = {
+  fullName: "",
+  dateOfBirth: "",
+  gender: "",
+  preferredLanguageCode: "",
+  mobile: "",
+  organizationName: "",
+  registrationNumber: "",
+  taxNumber: "",
+  industryCode: "",
+  organizationTypeCode: "",
+  email: "",
+  website: "",
+  notes: "",
+};
 
 type PartyRegistrationFormProps = {
   catalogues: PartyRegistrationCatalogues;
@@ -40,72 +71,123 @@ export function PartyRegistrationForm({
   catalogues,
   initialType,
 }: PartyRegistrationFormProps) {
-  const router = useRouter();
-  const [partyType, setPartyType] = useState<PartyTypeCode>(
+  const formRef = useRef<HTMLFormElement>(null);
+  const {
+    draftValues,
+    saveDraft,
+    clearDraft,
+    draftSavedAt,
+    isHydrated,
+  } = useFormDraft<RegistrationDraft>(DRAFT_STORAGE_KEY);
+  const [partyTypeSelection, setPartyTypeSelection] = useState<PartyTypeCode>(
     initialType ?? PARTY_TYPE_CODES.INDIVIDUAL
   );
-  const [error, setError] = useState<string | null>(null);
-  const [fieldError, setFieldError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const partyType =
+    isHydrated && draftValues?.partyType
+      ? draftValues.partyType
+      : partyTypeSelection;
+  const registrationDraft = draftValues
+    ? {
+        fullName: draftValues.fullName,
+        dateOfBirth: draftValues.dateOfBirth,
+        gender: draftValues.gender,
+        preferredLanguageCode: draftValues.preferredLanguageCode,
+        mobile: draftValues.mobile,
+        organizationName: draftValues.organizationName,
+        registrationNumber: draftValues.registrationNumber,
+        taxNumber: draftValues.taxNumber,
+        industryCode: draftValues.industryCode,
+        organizationTypeCode: draftValues.organizationTypeCode,
+        email: draftValues.email,
+        website: draftValues.website,
+        notes: draftValues.notes,
+      }
+    : undefined;
+  const form = useControlledForm({
+    initial: EMPTY_REGISTRATION,
+    draft: registrationDraft,
+    draftHydrated: isHydrated,
+  });
+  const [result, setResult] = useState<PlatformActionResult | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const { isProcessing, run } = useAsyncAction();
+  const { unsavedChangesDialog } = useUnsavedChangesGuard({ isDirty });
 
-  async function onSubmit(formData: FormData) {
-    setError(null);
-    setFieldError(null);
-    setIsSubmitting(true);
+  function onSaveDraft() {
+    saveDraft({
+      ...(form.values as Record<string, string>),
+      partyType,
+    });
+    setIsDirty(false);
+  }
 
-    try {
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setResult(null);
+
+    await run(async () => {
       if (partyType === PARTY_TYPE_CODES.INDIVIDUAL) {
-        const result = await createIndividualPartyAction({
-          fullName: String(formData.get("fullName") ?? ""),
-          dateOfBirth: String(formData.get("dateOfBirth") ?? ""),
-          gender: String(formData.get("gender") ?? ""),
-          preferredLanguageCode: String(
-            formData.get("preferredLanguageCode") ?? ""
-          ),
-          mobile: String(formData.get("mobile") ?? ""),
-          notes: String(formData.get("notes") ?? ""),
+        const actionResult = await createIndividualPartyAction({
+          fullName: form.textValue("fullName"),
+          dateOfBirth: form.textValue("dateOfBirth"),
+          gender: form.textValue("gender"),
+          preferredLanguageCode: form.textValue("preferredLanguageCode"),
+          mobile: form.textValue("mobile"),
+          notes: form.textValue("notes"),
         });
 
-        if (!result.success) {
-          setError(result.error.message);
-          setFieldError(result.error.field ?? null);
-          setIsSubmitting(false);
+        if (!actionResult.success) {
+          setResult(
+            actionResult.platform ??
+              platformError(
+                "Could not create individual",
+                actionResult.error.message,
+                actionResult.error.field
+              )
+          );
           return;
         }
 
-        // Navigate only — do not call router.refresh() inside/after the same
-        // submit flow (it races soft-nav and keeps the form mounted on "Saving…").
-        router.push(`/parties/${result.data.id}`);
+        setResult(actionResult.platform ?? null);
+        clearDraft();
+        setIsDirty(false);
         return;
       }
 
-      const result = await createOrganizationPartyAction({
-        organizationName: String(formData.get("organizationName") ?? ""),
-        registrationNumber: String(formData.get("registrationNumber") ?? ""),
-        taxNumber: String(formData.get("taxNumber") ?? ""),
-        industryCode: String(formData.get("industryCode") ?? ""),
-        organizationTypeCode: String(
-          formData.get("organizationTypeCode") ?? ""
-        ),
-        website: String(formData.get("website") ?? ""),
-        mobile: String(formData.get("mobile") ?? ""),
-        email: String(formData.get("email") ?? ""),
-        notes: String(formData.get("notes") ?? ""),
+      const actionResult = await createOrganizationPartyAction({
+        organizationName: form.textValue("organizationName"),
+        registrationNumber: form.textValue("registrationNumber"),
+        taxNumber: form.textValue("taxNumber"),
+        industryCode: form.textValue("industryCode"),
+        organizationTypeCode: form.textValue("organizationTypeCode"),
+        website: form.textValue("website"),
+        mobile: form.textValue("mobile"),
+        email: form.textValue("email"),
+        notes: form.textValue("notes"),
       });
 
-      if (!result.success) {
-        setError(result.error.message);
-        setFieldError(result.error.field ?? null);
-        setIsSubmitting(false);
+      if (!actionResult.success) {
+        setResult(
+          actionResult.platform ??
+            platformError(
+              "Could not create organization",
+              actionResult.error.message,
+              actionResult.error.field
+            )
+        );
         return;
       }
 
-      router.push(`/parties/${result.data.id}`);
-    } catch {
-      setError("We could not save this Party. Please try again.");
-      setIsSubmitting(false);
-    }
+      setResult(actionResult.platform ?? null);
+      clearDraft();
+      setIsDirty(false);
+    });
   }
+
+  const processingLabel =
+    partyType === PARTY_TYPE_CODES.INDIVIDUAL
+      ? PROCESSING_LABELS.creatingIndividual
+      : PROCESSING_LABELS.creatingOrganization;
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-8 sm:px-6">
@@ -134,7 +216,10 @@ export function PartyRegistrationForm({
           <div className="grid gap-2 sm:grid-cols-2">
             <button
               type="button"
-              onClick={() => setPartyType(PARTY_TYPE_CODES.INDIVIDUAL)}
+              onClick={() => {
+                setPartyTypeSelection(PARTY_TYPE_CODES.INDIVIDUAL);
+                setIsDirty(true);
+              }}
               className={cn(
                 "rounded-lg border px-4 py-3 text-left text-sm transition-colors",
                 partyType === PARTY_TYPE_CODES.INDIVIDUAL
@@ -146,7 +231,10 @@ export function PartyRegistrationForm({
             </button>
             <button
               type="button"
-              onClick={() => setPartyType(PARTY_TYPE_CODES.ORGANIZATION)}
+              onClick={() => {
+                setPartyTypeSelection(PARTY_TYPE_CODES.ORGANIZATION);
+                setIsDirty(true);
+              }}
               className={cn(
                 "rounded-lg border px-4 py-3 text-left text-sm transition-colors",
                 partyType === PARTY_TYPE_CODES.ORGANIZATION
@@ -158,20 +246,23 @@ export function PartyRegistrationForm({
             </button>
           </div>
 
-          {error ? (
-            <Alert variant="destructive">
-              <AlertDescription>
-                {error}
-                {fieldError ? ` (${fieldError})` : null}
-              </AlertDescription>
-            </Alert>
-          ) : null}
-
-          <form action={onSubmit} className="space-y-4">
+          <form
+            ref={formRef}
+            onSubmit={onSubmit}
+            className="space-y-4"
+            onChange={() => setIsDirty(true)}
+          >
             {partyType === PARTY_TYPE_CODES.INDIVIDUAL ? (
               <>
                 <Field label="Full Name" htmlFor="fullName" required>
-                  <Input id="fullName" name="fullName" required maxLength={300} />
+                  <Input
+                    id="fullName"
+                    name="fullName"
+                    required
+                    maxLength={300}
+                    value={form.textValue("fullName")}
+                    onChange={(event) => form.setField("fullName", event.target.value)}
+                  />
                 </Field>
                 <Field label="Date of Birth" htmlFor="dateOfBirth" required>
                   <Input
@@ -179,6 +270,8 @@ export function PartyRegistrationForm({
                     name="dateOfBirth"
                     type="date"
                     required
+                    value={form.textValue("dateOfBirth")}
+                    onChange={(event) => form.setField("dateOfBirth", event.target.value)}
                   />
                 </Field>
                 <Field label="Gender" htmlFor="gender" required>
@@ -186,6 +279,8 @@ export function PartyRegistrationForm({
                     id="gender"
                     name="gender"
                     required
+                    value={form.textValue("gender")}
+                    onChange={(event) => form.setField("gender", event.target.value)}
                     className="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-sm"
                   >
                     <option value="">Select gender</option>
@@ -205,6 +300,10 @@ export function PartyRegistrationForm({
                     id="preferredLanguageCode"
                     name="preferredLanguageCode"
                     required
+                    value={form.textValue("preferredLanguageCode")}
+                    onChange={(event) =>
+                      form.setField("preferredLanguageCode", event.target.value)
+                    }
                     className="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-sm"
                   >
                     <option value="">Select language</option>
@@ -222,6 +321,8 @@ export function PartyRegistrationForm({
                     required
                     maxLength={30}
                     placeholder="+254..."
+                    value={form.textValue("mobile")}
+                    onChange={(event) => form.setField("mobile", event.target.value)}
                   />
                 </Field>
               </>
@@ -237,6 +338,10 @@ export function PartyRegistrationForm({
                     name="organizationName"
                     required
                     maxLength={300}
+                    value={form.textValue("organizationName")}
+                    onChange={(event) =>
+                      form.setField("organizationName", event.target.value)
+                    }
                   />
                 </Field>
                 <Field
@@ -247,16 +352,28 @@ export function PartyRegistrationForm({
                     id="registrationNumber"
                     name="registrationNumber"
                     maxLength={100}
+                    value={form.textValue("registrationNumber")}
+                    onChange={(event) =>
+                      form.setField("registrationNumber", event.target.value)
+                    }
                   />
                 </Field>
                 <Field label="Tax Number (optional)" htmlFor="taxNumber">
-                  <Input id="taxNumber" name="taxNumber" maxLength={100} />
+                  <Input
+                    id="taxNumber"
+                    name="taxNumber"
+                    maxLength={100}
+                    value={form.textValue("taxNumber")}
+                    onChange={(event) => form.setField("taxNumber", event.target.value)}
+                  />
                 </Field>
                 <Field label="Industry" htmlFor="industryCode" required>
                   <select
                     id="industryCode"
                     name="industryCode"
                     required
+                    value={form.textValue("industryCode")}
+                    onChange={(event) => form.setField("industryCode", event.target.value)}
                     className="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-sm"
                   >
                     <option value="">Select industry</option>
@@ -276,6 +393,10 @@ export function PartyRegistrationForm({
                     id="organizationTypeCode"
                     name="organizationTypeCode"
                     required
+                    value={form.textValue("organizationTypeCode")}
+                    onChange={(event) =>
+                      form.setField("organizationTypeCode", event.target.value)
+                    }
                     className="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-sm"
                   >
                     <option value="">Select organization type</option>
@@ -292,6 +413,8 @@ export function PartyRegistrationForm({
                     name="mobile"
                     maxLength={30}
                     placeholder="+254..."
+                    value={form.textValue("mobile")}
+                    onChange={(event) => form.setField("mobile", event.target.value)}
                   />
                 </Field>
                 <Field label="Email (optional)" htmlFor="email">
@@ -300,6 +423,8 @@ export function PartyRegistrationForm({
                     name="email"
                     type="email"
                     maxLength={255}
+                    value={form.textValue("email")}
+                    onChange={(event) => form.setField("email", event.target.value)}
                   />
                 </Field>
                 <Field label="Website (optional)" htmlFor="website">
@@ -308,6 +433,8 @@ export function PartyRegistrationForm({
                     name="website"
                     placeholder="https://"
                     maxLength={500}
+                    value={form.textValue("website")}
+                    onChange={(event) => form.setField("website", event.target.value)}
                   />
                 </Field>
               </>
@@ -319,20 +446,51 @@ export function PartyRegistrationForm({
                 name="notes"
                 rows={3}
                 maxLength={2000}
+                value={form.textValue("notes")}
+                onChange={(event) => form.setField("notes", event.target.value)}
                 className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
               />
             </Field>
 
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full sm:w-auto"
+            <PlatformFormActionFooter
+              result={result}
+              isProcessing={isProcessing}
+              processingLabel={processingLabel}
+              draftSavedAt={draftSavedAt}
             >
-              {isSubmitting ? "Saving…" : "Save Party"}
-            </Button>
+              <PlatformProcessingButton
+                type="submit"
+                disabled={Boolean(result?.success)}
+                isProcessing={isProcessing}
+                processingLabel={processingLabel}
+                idleLabel={
+                  partyType === PARTY_TYPE_CODES.INDIVIDUAL
+                    ? "Create Individual"
+                    : "Create Organization"
+                }
+                className="w-full sm:w-auto"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isProcessing}
+                onClick={onSaveDraft}
+              >
+                Save Draft
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isProcessing}
+                onClick={() => setIsDirty(false)}
+              >
+                Cancel
+              </Button>
+            </PlatformFormActionFooter>
           </form>
         </CardContent>
       </Card>
+      {unsavedChangesDialog}
     </main>
   );
 }

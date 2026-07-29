@@ -73,7 +73,7 @@
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
+  --sidebar: #F6F8FA;
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
@@ -81,6 +81,10 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  /* UX-001.2 — Workspace visual zones */
+  --workspace-nav: #F6F8FA;
+  --workspace-main: #FFFFFF;
+  --workspace-guidance: #F8FBFF;
 }
 
 .dark {
@@ -126,5 +130,20 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+@layer utilities {
+  .platform-workspace-main {
+    background-color: var(--workspace-main);
+  }
+
+  .platform-workspace-guidance {
+    background-color: var(--workspace-guidance);
+  }
+
+  .platform-workspace-guidance-column {
+    @apply space-y-4 rounded-xl border border-border/60 p-1 shadow-sm;
+    background-color: var(--workspace-guidance);
   }
 }

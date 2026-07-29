@@ -3,7 +3,6 @@
 import { useState, type ReactNode } from "react";
 
 import { BreadcrumbNav } from "@/components/platform/breadcrumb-nav";
-import { BreadcrumbProvider } from "@/components/platform/breadcrumb-context";
 import { PlatformHeader } from "@/components/platform/platform-header";
 import {
   PlatformSidebar,
@@ -27,45 +26,43 @@ export function PlatformAppShell({ context, children }: PlatformAppShellProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   return (
-    <BreadcrumbProvider>
-      <div className="flex min-h-screen flex-col bg-background">
-        <PlatformHeader
-          {...context}
-          showMenuButton={context.showSidebar}
-          onMenuClick={() => setMobileNavOpen(true)}
-        />
+    <div className="flex min-h-screen flex-col bg-background">
+      <PlatformHeader
+        {...context}
+        showMenuButton={context.showSidebar}
+        onMenuClick={() => setMobileNavOpen(true)}
+      />
 
-        <div className="flex flex-1">
-          {context.showSidebar ? <PlatformSidebarDesktop /> : null}
+      <div className="flex flex-1">
+        {context.showSidebar ? <PlatformSidebarDesktop /> : null}
 
-          <div className="flex min-w-0 flex-1 flex-col">
-            {context.showSidebar ? (
-              <div className="border-b border-border px-4 py-2 sm:px-6">
-                <BreadcrumbNav />
-              </div>
-            ) : null}
-            <div className="flex-1">{children}</div>
-          </div>
+        <div className="platform-workspace-main flex min-w-0 flex-1 flex-col shadow-[inset_1px_0_0_0_rgba(0,0,0,0.04)]">
+          {context.showSidebar ? (
+            <div className="border-b border-border px-4 py-2 sm:px-6">
+              <BreadcrumbNav />
+            </div>
+          ) : null}
+          <div className="flex-1">{children}</div>
         </div>
-
-        {context.showSidebar ? (
-          <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-            <SheetContent side="left" className="w-[min(100vw-2rem,18rem)] p-0">
-              <SheetHeader className="sr-only">
-                <SheetTitle>Navigation menu</SheetTitle>
-                <SheetDescription>
-                  Main navigation for InverBrass business operations
-                </SheetDescription>
-              </SheetHeader>
-              <PlatformSidebar
-                mobile
-                onNavigate={() => setMobileNavOpen(false)}
-              />
-            </SheetContent>
-          </Sheet>
-        ) : null}
       </div>
-    </BreadcrumbProvider>
+
+      {context.showSidebar ? (
+        <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+          <SheetContent side="left" className="w-[min(100vw-2rem,18rem)] p-0">
+            <SheetHeader className="sr-only">
+              <SheetTitle>Navigation menu</SheetTitle>
+              <SheetDescription>
+                Main navigation for InverBrass business operations
+              </SheetDescription>
+            </SheetHeader>
+            <PlatformSidebar
+              mobile
+              onNavigate={() => setMobileNavOpen(false)}
+            />
+          </SheetContent>
+        </Sheet>
+      ) : null}
+    </div>
   );
 }
 

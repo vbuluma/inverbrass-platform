@@ -3,12 +3,7 @@
  * Client form for Business Registration: Industry → filtered Template → Create.
  *
  * Design rationale:
- * Business Templates are filtered by Industry Type. No global unscoped
- * business-type dropdown is used as the primary selection path.
- * Failed validation preserves all entered values (platform UX standard).
- *
- * Why this exists:
- * BP-001 foundation correction — Industry Types drive template catalogues.
+ * Fully controlled form — Platform Form Standard (UI-STD-005).
  */
 
 "use client";
@@ -28,7 +23,7 @@ import type {
   CountryOption,
   IndustryOption,
 } from "@/core/auth/types";
-import { usePreservedFormValues } from "@/lib/forms/preserve-form-values";
+import { useControlledForm } from "@/lib/forms";
 import { cn } from "@/lib/utils";
 
 type CreateBusinessFormProps = {
@@ -53,65 +48,59 @@ export function CreateBusinessForm({
   defaultMobileNumber,
 }: CreateBusinessFormProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [industryId, setIndustryId] = useState("");
-  const [businessTypeId, setBusinessTypeId] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  const preserved = usePreservedFormValues({
+  const form = useControlledForm({
     initial: {
       businessName: defaultBusinessName,
       countryCode: defaultCountryCode,
+      industryId: "",
+      businessTypeId: "",
     },
   });
 
   const filteredTemplates = useMemo(
     () =>
-      industryId
-        ? templates.filter((template) => template.industryId === industryId)
+      form.textValue("industryId")
+        ? templates.filter(
+            (template) => template.industryId === form.textValue("industryId")
+          )
         : [],
-    [industryId, templates]
+    [form, templates]
   );
 
   const catalogsReady = industries.length > 0 && countries.length > 0;
-  const templatesReadyForIndustry =
-    !industryId || filteredTemplates.length > 0;
+  const industryId = form.textValue("industryId");
+  const businessTypeId = form.textValue("businessTypeId");
+  const templatesReadyForIndustry = !industryId || filteredTemplates.length > 0;
 
   function handleIndustryChange(nextIndustryId: string) {
-    setIndustryId(nextIndustryId);
-    setBusinessTypeId("");
+    form.setFields({ industryId: nextIndustryId, businessTypeId: "" });
   }
 
-  function handleSubmit(formData: FormData) {
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setErrorMessage(null);
-    preserved.clearInvalidField();
-
-    // Keep dropdown selections in React state across failed submits.
-    const nextIndustryId = String(formData.get("industryId") ?? "");
-    const nextBusinessTypeId = String(formData.get("businessTypeId") ?? "");
-    setIndustryId(nextIndustryId);
-    setBusinessTypeId(nextBusinessTypeId);
+    form.setInvalidField(null);
 
     startTransition(async () => {
       const result = await createBusinessUiAction({
-        businessName: String(formData.get("businessName") ?? ""),
-        industryId: nextIndustryId,
-        businessTypeId: nextBusinessTypeId,
-        countryCode: String(formData.get("countryCode") ?? defaultCountryCode),
+        businessName: form.textValue("businessName"),
+        industryId: form.textValue("industryId"),
+        businessTypeId: form.textValue("businessTypeId"),
+        countryCode: form.textValue("countryCode") || defaultCountryCode,
         mobileNumber: defaultMobileNumber || undefined,
       });
 
       if (result && !result.success) {
-        preserved.recoverAfterValidationFailure(
-          formData,
-          result.error.field
-        );
+        form.setInvalidField(result.error.field ?? null);
         setErrorMessage(result.error.message);
       }
     });
   }
 
   return (
-    <form key={preserved.formKey} action={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {!catalogsReady ? (
         <CatalogEmptyNotice
           message={
@@ -128,9 +117,10 @@ export function CreateBusinessForm({
           id="businessName"
           name="businessName"
           required
-          defaultValue={preserved.textValue("businessName")}
-          className={preserved.fieldClassName("businessName")}
-          aria-invalid={preserved.invalidField === "businessName"}
+          value={form.textValue("businessName")}
+          onChange={(event) => form.setField("businessName", event.target.value)}
+          className={form.fieldClassName("businessName")}
+          aria-invalid={form.invalidField === "businessName"}
         />
       </div>
 
@@ -144,10 +134,10 @@ export function CreateBusinessForm({
           onChange={(event) => handleIndustryChange(event.target.value)}
           className={cn(
             selectClassName,
-            preserved.invalidField === "industryId" &&
+            form.invalidField === "industryId" &&
               "border-destructive ring-2 ring-destructive/30"
           )}
-          aria-invalid={preserved.invalidField === "industryId"}
+          aria-invalid={form.invalidField === "industryId"}
         >
           <option value="" disabled>
             Select an Industry Type
@@ -167,14 +157,14 @@ export function CreateBusinessForm({
           name="businessTypeId"
           required
           value={businessTypeId}
-          onChange={(event) => setBusinessTypeId(event.target.value)}
+          onChange={(event) => form.setField("businessTypeId", event.target.value)}
           disabled={!industryId || filteredTemplates.length === 0}
           className={cn(
             selectClassName,
-            preserved.invalidField === "businessTypeId" &&
+            form.invalidField === "businessTypeId" &&
               "border-destructive ring-2 ring-destructive/30"
           )}
-          aria-invalid={preserved.invalidField === "businessTypeId"}
+          aria-invalid={form.invalidField === "businessTypeId"}
         >
           <option value="" disabled>
             {industryId
@@ -200,15 +190,14 @@ export function CreateBusinessForm({
           id="countryCode"
           name="countryCode"
           required
-          defaultValue={
-            preserved.textValue("countryCode") || defaultCountryCode
-          }
+          value={form.textValue("countryCode")}
+          onChange={(event) => form.setField("countryCode", event.target.value)}
           className={cn(
             selectClassName,
-            preserved.invalidField === "countryCode" &&
+            form.invalidField === "countryCode" &&
               "border-destructive ring-2 ring-destructive/30"
           )}
-          aria-invalid={preserved.invalidField === "countryCode"}
+          aria-invalid={form.invalidField === "countryCode"}
         >
           {countries.map((country) => (
             <option key={country.code} value={country.code}>

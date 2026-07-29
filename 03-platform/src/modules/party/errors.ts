@@ -47,6 +47,13 @@ export const PARTY_ERROR_CODES = {
   DUPLICATE_PARTY_DOCUMENT: "DUPLICATE_PARTY_DOCUMENT",
   DOCUMENT_UPLOAD_INVALID: "DOCUMENT_UPLOAD_INVALID",
   STORAGE_NOT_CONFIGURED: "STORAGE_NOT_CONFIGURED",
+  PARTY_GROUP_NOT_FOUND: "PARTY_GROUP_NOT_FOUND",
+  PARTY_GROUP_MEMBER_NOT_FOUND: "PARTY_GROUP_MEMBER_NOT_FOUND",
+  DUPLICATE_ACTIVE_GROUP_MEMBERSHIP: "DUPLICATE_ACTIVE_GROUP_MEMBERSHIP",
+  DUPLICATE_GROUP_CODE: "DUPLICATE_GROUP_CODE",
+  INVALID_GROUP_TRANSITION: "INVALID_GROUP_TRANSITION",
+  INVALID_GROUP_MEMBER_TRANSITION: "INVALID_GROUP_MEMBER_TRANSITION",
+  GROUP_INACTIVE: "GROUP_INACTIVE",
   /** @deprecated */ ORGANIZATION_BRANCH_NOT_FOUND: "ORGANIZATIONAL_UNIT_NOT_FOUND",
   /** @deprecated */ ORGANIZATIONS_ONLY_BRANCHES: "ORGANIZATIONS_ONLY_UNITS",
   /** @deprecated */ DUPLICATE_BRANCH_CODE: "DUPLICATE_UNIT_CODE",
@@ -133,6 +140,15 @@ export const PARTY_USER_MESSAGES = {
   DOCUMENT_UPLOAD_INVALID: "That file could not be uploaded. Check type and size.",
   STORAGE_NOT_CONFIGURED:
     "Document storage is not configured. Contact your administrator.",
+  PARTY_GROUP_NOT_FOUND: "That group could not be found.",
+  PARTY_GROUP_MEMBER_NOT_FOUND: "That group membership could not be found.",
+  DUPLICATE_ACTIVE_GROUP_MEMBERSHIP:
+    "This party already has an active membership in that group.",
+  DUPLICATE_GROUP_CODE: "That group code is already in use.",
+  INVALID_GROUP_TRANSITION: "That group status change is not allowed.",
+  INVALID_GROUP_MEMBER_TRANSITION:
+    "That membership status change is not allowed.",
+  GROUP_INACTIVE: "Cannot add members to an inactive group.",
   /** @deprecated */ ORGANIZATION_BRANCH_NOT_FOUND: "That organizational unit could not be found.",
   /** @deprecated */ ORGANIZATIONS_ONLY_BRANCHES:
     "Organizational Units are only available for Organization parties.",

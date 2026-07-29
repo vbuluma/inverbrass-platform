@@ -6,31 +6,22 @@
  * BP-001 / IP-007 – Global Navigation & Session Management
  */
 
-import {
-  PlatformAppShell,
-  PlatformChromeShell,
-} from "@/components/platform/platform-app-shell";
+import { PlatformChromeClient } from "@/components/platform/platform-chrome-client";
 import { createPlatformNavigationService } from "@/core/navigation/services/platform-navigation-service";
-import type { PlatformChromeMode } from "@/lib/navigation/types";
 
 type PlatformChromeProps = {
-  mode: PlatformChromeMode;
   children: React.ReactNode;
 };
 
-export async function PlatformChrome({ mode, children }: PlatformChromeProps) {
+export async function PlatformChrome({ children }: PlatformChromeProps) {
   const service = createPlatformNavigationService();
-  const context = await service.getChromeContext(mode);
+  const context = await service.getChromeContext();
 
   if (!context) {
     return children;
   }
 
-  if (context.showSidebar) {
-    return <PlatformAppShell context={context}>{children}</PlatformAppShell>;
-  }
-
   return (
-    <PlatformChromeShell context={context}>{children}</PlatformChromeShell>
+    <PlatformChromeClient context={context}>{children}</PlatformChromeClient>
   );
 }

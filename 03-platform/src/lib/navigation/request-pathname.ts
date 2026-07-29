@@ -5,15 +5,11 @@
 
 import { headers } from "next/headers";
 
-const BUSINESS_APP_PREFIXES = ["/dashboard", "/parties", "/settings"];
+import { isBusinessAppRoute } from "@/lib/navigation/business-app-routes";
+
+export { isBusinessAppRoute };
 
 export async function getRequestPathname(): Promise<string> {
   const headerStore = await headers();
   return headerStore.get("x-pathname") ?? "/";
-}
-
-export function isBusinessAppRoute(pathname: string): boolean {
-  return BUSINESS_APP_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
-  );
 }

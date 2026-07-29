@@ -203,10 +203,11 @@ export type BusinessDashboardConfigItem = {
 };
 
 export type BusinessDashboardView = {
+  /** Personal name for time-based greeting — never raw credentials. */
+  greetingName: string;
   businessName: string;
-  businessStatusCode: string;
-  currentUserName: string;
   roleLabel: string;
+  businessStatusCode: string;
   canSwitchBusiness: boolean;
   industryName: string;
   businessTypeName: string;

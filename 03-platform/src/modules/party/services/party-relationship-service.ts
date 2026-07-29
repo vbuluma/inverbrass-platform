@@ -11,6 +11,17 @@
 
 import type { CurrentBusinessContext } from "@/core/auth/types";
 import {
+  AUDIT_ENTITY_NAMES,
+  AUDIT_SOURCE_MODULES,
+  createAuditService,
+} from "@/core/audit";
+import {
+  buildTimelineEventFromContext,
+  createPartyTimelineService,
+  PARTY_TIMELINE_EVENT_CATEGORIES,
+  PARTY_TIMELINE_EVENT_TYPES,
+} from "@/core/party-timeline";
+import {
   PARTY_RELATIONSHIP_STATUS_CODES,
   type PartyRelationshipStatusCode,
 } from "@/modules/party/constants";
@@ -25,6 +36,10 @@ import {
   isSelfRelationship,
   todayIsoDate,
 } from "@/modules/party/services/party-relationship-rules";
+import {
+  inferAuditOperationFromEventType,
+  recordPartyEntityAudit,
+} from "@/modules/party/services/party-audit-helper";
 import type {
   AddPartyRelationshipPayload,
   PartyRelationshipsPanelView,
@@ -41,7 +56,9 @@ export class PartyRelationshipService {
   constructor(
     private readonly partyRepository = createPartyRepository(),
     private readonly partyRelationshipRepository = createPartyRelationshipRepository(),
-    private readonly referenceRepository = createPartyReferenceRepository()
+    private readonly referenceRepository = createPartyReferenceRepository(),
+    private readonly timelineService = createPartyTimelineService(),
+    private readonly auditService = createAuditService()
   ) {}
 
   async getPartyRelationships(
@@ -170,7 +187,7 @@ export class PartyRelationshipService {
     const startDate = parsed.data.startDate?.trim() || todayIsoDate();
     const endDate = nullableTrimmed(parsed.data.endDate ?? null);
 
-    await this.partyRelationshipRepository.insert({
+    const inserted = await this.partyRelationshipRepository.insert({
       businessId: context.businessId,
       fromPartyId,
       toPartyId: parsed.data.toPartyId,
@@ -182,6 +199,67 @@ export class PartyRelationshipService {
       createdBy: context.platformUserId,
       updatedBy: context.platformUserId,
     });
+
+    const fromParty = await this.partyRepository.findById(
+      context.businessId,
+      fromPartyId
+    );
+    await Promise.all([
+      this.timelineService.recordEvent(
+        buildTimelineEventFromContext(context, {
+          partyId: fromPartyId,
+          eventType: PARTY_TIMELINE_EVENT_TYPES.RELATIONSHIP_CREATED,
+          eventCategory: PARTY_TIMELINE_EVENT_CATEGORIES.RELATIONSHIP,
+          summary: `${relationshipType.name} relationship with ${toParty.displayName}`,
+          referenceEntity: "party_relationship",
+          referenceId: inserted.id,
+        })
+      ),
+      this.timelineService.recordEvent(
+        buildTimelineEventFromContext(context, {
+          partyId: parsed.data.toPartyId,
+          eventType: PARTY_TIMELINE_EVENT_TYPES.RELATIONSHIP_CREATED,
+          eventCategory: PARTY_TIMELINE_EVENT_CATEGORIES.RELATIONSHIP,
+          summary: `${relationshipType.name} relationship with ${fromParty?.displayName ?? "party"}`,
+          referenceEntity: "party_relationship",
+          referenceId: inserted.id,
+        })
+      ),
+      recordPartyEntityAudit(this.auditService, context, {
+        partyId: fromPartyId,
+        entityName: AUDIT_ENTITY_NAMES.PARTY_RELATIONSHIP,
+        entityId: inserted.id,
+        operation: inferAuditOperationFromEventType(
+          PARTY_TIMELINE_EVENT_TYPES.RELATIONSHIP_CREATED
+        ),
+        sourceModule: AUDIT_SOURCE_MODULES.PARTY_RELATIONSHIPS,
+        createValues: {
+          fromPartyId,
+          toPartyId: parsed.data.toPartyId,
+          relationshipTypeCode: parsed.data.relationshipTypeCode,
+          startDate,
+          endDate,
+          statusCode: PARTY_RELATIONSHIP_STATUS_CODES.ACTIVE,
+        },
+      }),
+      recordPartyEntityAudit(this.auditService, context, {
+        partyId: parsed.data.toPartyId,
+        entityName: AUDIT_ENTITY_NAMES.PARTY_RELATIONSHIP,
+        entityId: inserted.id,
+        operation: inferAuditOperationFromEventType(
+          PARTY_TIMELINE_EVENT_TYPES.RELATIONSHIP_CREATED
+        ),
+        sourceModule: AUDIT_SOURCE_MODULES.PARTY_RELATIONSHIPS,
+        createValues: {
+          fromPartyId,
+          toPartyId: parsed.data.toPartyId,
+          relationshipTypeCode: parsed.data.relationshipTypeCode,
+          startDate,
+          endDate,
+          statusCode: PARTY_RELATIONSHIP_STATUS_CODES.ACTIVE,
+        },
+      }),
+    ]);
 
     return this.getPartyRelationships(context, fromPartyId);
   }
@@ -227,6 +305,14 @@ export class PartyRelationshipService {
       }
     );
 
+    await this.recordRelationshipTimeline(
+      context,
+      partyId,
+      PARTY_TIMELINE_EVENT_TYPES.RELATIONSHIP_UPDATED,
+      "Relationship updated",
+      partyRelationshipId
+    );
+
     return this.getPartyRelationships(context, partyId);
   }
 
@@ -262,6 +348,14 @@ export class PartyRelationshipService {
         endDate: relationship.endDate ?? todayIsoDate(),
         updatedBy: context.platformUserId,
       }
+    );
+
+    await this.recordRelationshipTimeline(
+      context,
+      partyId,
+      PARTY_TIMELINE_EVENT_TYPES.RELATIONSHIP_UPDATED,
+      "Relationship deactivated",
+      partyRelationshipId
     );
 
     return this.getPartyRelationships(context, partyId);
@@ -316,6 +410,14 @@ export class PartyRelationshipService {
       }
     );
 
+    await this.recordRelationshipTimeline(
+      context,
+      partyId,
+      PARTY_TIMELINE_EVENT_TYPES.RELATIONSHIP_UPDATED,
+      "Relationship reactivated",
+      partyRelationshipId
+    );
+
     return this.getPartyRelationships(context, partyId);
   }
 
@@ -340,7 +442,44 @@ export class PartyRelationshipService {
       }
     );
 
+    await this.recordRelationshipTimeline(
+      context,
+      partyId,
+      PARTY_TIMELINE_EVENT_TYPES.RELATIONSHIP_REMOVED,
+      "Relationship removed",
+      partyRelationshipId
+    );
+
     return this.getPartyRelationships(context, partyId);
+  }
+
+  private async recordRelationshipTimeline(
+    context: CurrentBusinessContext,
+    partyId: string,
+    eventType: string,
+    summary: string,
+    referenceId?: string
+  ) {
+    await this.timelineService.recordEvent(
+      buildTimelineEventFromContext(context, {
+        partyId,
+        eventType,
+        eventCategory: PARTY_TIMELINE_EVENT_CATEGORIES.RELATIONSHIP,
+        summary,
+        referenceEntity: "party_relationship",
+        referenceId,
+      })
+    );
+
+    if (referenceId) {
+      await recordPartyEntityAudit(this.auditService, context, {
+        partyId,
+        entityName: AUDIT_ENTITY_NAMES.PARTY_RELATIONSHIP,
+        entityId: referenceId,
+        operation: inferAuditOperationFromEventType(eventType),
+        sourceModule: AUDIT_SOURCE_MODULES.PARTY_RELATIONSHIPS,
+      });
+    }
   }
 
   private async requireParty(

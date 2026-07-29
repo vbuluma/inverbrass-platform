@@ -17,6 +17,8 @@ import type {
   PartyAddressStatusCode,
   PartyContactStatusCode,
   PartyDocumentStatusCode,
+  PartyGroupMemberStatusCode,
+  PartyGroupStatusCode,
   PartyRelationshipStatusCode,
   PartyRoleStatusCode,
   PartyStatusCode,
@@ -408,18 +410,64 @@ export type PartyDocumentView = {
   mimeType: string;
   fileSizeBytes: number;
   fileSizeDisplay: string;
+  fileHash: string | null;
   issueDate: string | null;
   expiryDate: string | null;
   statusCode: PartyDocumentStatusCode;
   isVerified: boolean;
+  verifiedBy: string | null;
   verifiedAt: string | null;
+  verificationMethodCode: string | null;
   notes: string | null;
   createdAt: string;
   supersedesDocumentId: string | null;
 };
 
+export type ComplianceRequirementStatus =
+  | "MISSING"
+  | "UPLOADED"
+  | "VERIFIED"
+  | "EXPIRED";
+
+export type PartyComplianceSummaryView = {
+  countryCode: string;
+  countryName: string;
+  ruleSetCode: string;
+  ruleSetName: string;
+  compliancePercent: number;
+  requiredCount: number;
+  uploadedCount: number;
+  verifiedCount: number;
+  expiredCount: number;
+  missingCount: number;
+};
+
+export type PartyDocumentRequirementView = {
+  documentTypeCode: string;
+  documentTypeName: string;
+  isRequired: boolean;
+  status: ComplianceRequirementStatus;
+  partyDocumentId: string | null;
+  issueDate: string | null;
+  expiryDate: string | null;
+};
+
+export type PartyDocumentVerificationView = {
+  partyDocumentId: string;
+  documentTypeName: string;
+  originalFileName: string;
+  verificationStatus: "PENDING" | "VERIFIED";
+  verifiedByDisplay: string | null;
+  verifiedAt: string | null;
+  verificationMethod: string;
+  comments: string | null;
+};
+
 export type PartyDocumentsPanelView = {
+  complianceSummary: PartyComplianceSummaryView;
+  requiredDocuments: PartyDocumentRequirementView[];
   documents: PartyDocumentView[];
+  verifications: PartyDocumentVerificationView[];
   availableDocumentTypes: ReferenceOption[];
   maxUploadSizeBytes: number;
   allowedMimeTypes: readonly string[];
@@ -435,3 +483,197 @@ export type UploadPartyDocumentMetadata = {
 export type VerifyPartyDocumentPayload = {
   notes?: string;
 };
+
+export type CreatePartyGroupPayload = {
+  groupName: string;
+  groupCode: string;
+  groupTypeCode: string;
+  description?: string;
+  countryCode?: string;
+};
+
+export type UpdatePartyGroupPayload = {
+  groupName?: string;
+  groupTypeCode?: string;
+  description?: string | null;
+  countryCode?: string | null;
+};
+
+export type AddPartyGroupMemberPayload = {
+  partyId: string;
+  membershipRoleCode: string;
+  joinDate?: string;
+  isPrimaryContact?: boolean;
+  notes?: string;
+};
+
+export type AddPartyToGroupPayload = {
+  partyGroupId: string;
+  membershipRoleCode: string;
+  joinDate?: string;
+  isPrimaryContact?: boolean;
+  notes?: string;
+};
+
+export type UpdatePartyGroupMemberPayload = {
+  membershipRoleCode?: string;
+  joinDate?: string;
+  exitDate?: string | null;
+  isPrimaryContact?: boolean;
+  notes?: string | null;
+};
+
+export type PartyGroupSummaryView = {
+  id: string;
+  groupName: string;
+  groupCode: string;
+  groupTypeCode: string;
+  groupTypeName: string;
+  statusCode: PartyGroupStatusCode;
+  memberCount: number;
+  countryCode: string | null;
+};
+
+export type PartyGroupDetailView = {
+  id: string;
+  groupName: string;
+  groupCode: string;
+  groupTypeCode: string;
+  groupTypeName: string;
+  statusCode: PartyGroupStatusCode;
+  description: string | null;
+  countryCode: string | null;
+  countryName: string | null;
+  activeMemberCount: number;
+  totalMemberCount: number;
+};
+
+export type PartyGroupMemberView = {
+  id: string;
+  partyGroupId: string;
+  partyId: string;
+  partyNumber: string;
+  partyName: string;
+  partyTypeCode: PartyTypeCode;
+  partyTypeName: string;
+  membershipRoleCode: string;
+  membershipRoleName: string;
+  joinDate: string;
+  exitDate: string | null;
+  statusCode: PartyGroupMemberStatusCode;
+  isPrimaryContact: boolean;
+  notes: string | null;
+};
+
+export type PartyGroupMembershipView = {
+  id: string;
+  partyGroupId: string;
+  groupName: string;
+  groupCode: string;
+  groupTypeCode: string;
+  groupTypeName: string;
+  groupStatusCode: PartyGroupStatusCode;
+  membershipRoleCode: string;
+  membershipRoleName: string;
+  joinDate: string;
+  exitDate: string | null;
+  statusCode: PartyGroupMemberStatusCode;
+  isPrimaryContact: boolean;
+  notes: string | null;
+};
+
+export type PartyGroupsPanelView = {
+  memberships: PartyGroupMembershipView[];
+  availableGroups: PartyGroupSummaryView[];
+  availableMembershipRoles: ReferenceOption[];
+};
+
+export type PartyGroupDashboardView = {
+  groups: PartyGroupSummaryView[];
+  availableGroupTypes: ReferenceOption[];
+  countries: ReferenceOption[];
+};
+
+export type PartyGroupMembersPanelView = {
+  group: PartyGroupDetailView;
+  members: PartyGroupMemberView[];
+  availableMembershipRoles: ReferenceOption[];
+};
+
+export type PartyGroupSearchResultView = {
+  id: string;
+  groupName: string;
+  groupCode: string;
+  groupTypeName: string;
+};
+
+export type PartyTimelineEventView = {
+  id: string;
+  eventDateTime: string;
+  eventType: string;
+  eventCategory: string;
+  eventCategoryLabel: string;
+  sourceModule: string;
+  sourceModuleLabel: string;
+  referenceEntity: string | null;
+  referenceId: string | null;
+  summary: string;
+  description: string | null;
+  performedByName: string | null;
+  visibility: string;
+  systemGenerated: boolean;
+  metadata: Record<string, unknown> | null;
+};
+
+export type PartyTimelinePanelView = {
+  events: PartyTimelineEventView[];
+  totalCount: number;
+  hasMore: boolean;
+  pageSize: number;
+  offset: number;
+  filterOptions: {
+    categories: Array<{ code: string; label: string }>;
+    sourceModules: Array<{ code: string; label: string }>;
+  };
+};
+
+export type PartyAuditHistoryEntryView = {
+  id: string;
+  changedDateTime: string;
+  changedByName: string | null;
+  operation: string;
+  operationLabel: string;
+  entityName: string;
+  entityLabel: string;
+  entityId: string;
+  fieldName: string | null;
+  oldValue: string | null;
+  newValue: string | null;
+  sourceModule: string;
+  sourceModuleLabel: string;
+  correlationId: string | null;
+  systemGenerated: boolean;
+  metadata: Record<string, unknown> | null;
+  ipAddress: string | null;
+  browserClient: string | null;
+  device: string | null;
+};
+
+export type PartyAuditHistoryPanelView = {
+  entries: PartyAuditHistoryEntryView[];
+  totalCount: number;
+  hasMore: boolean;
+  pageSize: number;
+  offset: number;
+  filterOptions: {
+    operations: Array<{ code: string; label: string }>;
+    entities: Array<{ code: string; label: string }>;
+    users: Array<{ id: string; name: string }>;
+    sourceModules: Array<{ code: string; label: string }>;
+  };
+};
+
+export type PartyCommunicationPreferencesPanelView =
+  import("@/core/communication-preference/types").CommunicationPreferencePanelView & {
+    consentEvents: import("@/core/consent/services/consent-engine-service").ConsentEventView[];
+  };

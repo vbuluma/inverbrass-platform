@@ -1341,7 +1341,8 @@ export class BusinessSetupService {
   async getBusinessDashboard(
     context: CurrentBusinessContext,
     options: {
-      currentUserName: string;
+      greetingName: string;
+      businessName: string;
       roleLabel: string;
       canSwitchBusiness: boolean;
     }
@@ -1398,10 +1399,10 @@ export class BusinessSetupService {
         : "";
 
     return {
-      businessName: review.businessName || progress.businessName,
-      businessStatusCode: progress.businessStatusCode,
-      currentUserName: options.currentUserName,
+      greetingName: options.greetingName,
+      businessName: options.businessName || review.businessName || progress.businessName,
       roleLabel: options.roleLabel,
+      businessStatusCode: progress.businessStatusCode,
       canSwitchBusiness: options.canSwitchBusiness,
       industryName: review.industryName,
       businessTypeName: review.businessTypeName,

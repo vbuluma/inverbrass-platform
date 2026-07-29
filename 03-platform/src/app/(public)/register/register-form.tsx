@@ -30,7 +30,7 @@ import {
   getPasswordMatchState,
   isPasswordPolicySatisfied,
 } from "@/core/auth/utils/password-strength";
-import { usePreservedFormValues } from "@/lib/forms/preserve-form-values";
+import { useControlledForm } from "@/lib/forms";
 import { cn } from "@/lib/utils";
 
 type SecurityQuestionOption = {
@@ -55,26 +55,28 @@ export function RegisterForm({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  // Show/Hide for answers is UI-only — persistence always stores bcrypt hashes.
   const [showSecurityAnswer, setShowSecurityAnswer] = useState(false);
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [isPending, startTransition] = useTransition();
 
   const defaultCountryCode = countries[0]?.code ?? "KE";
   const catalogsReady =
     countries.length > 0 && securityQuestions.length > 0;
 
-  const preserved = usePreservedFormValues({
+  const form = useControlledForm({
     initial: {
       businessName: "",
       countryCode: defaultCountryCode,
       mobileNumber: "",
       email: "",
+      password: "",
+      confirmPassword: "",
       securityQuestionId: "",
       securityAnswer: "",
     },
   });
+
+  const password = form.textValue("password");
+  const confirmPassword = form.textValue("confirmPassword");
 
   const passwordRules = useMemo(
     () => evaluatePasswordStrength(password),
@@ -86,9 +88,10 @@ export function RegisterForm({
 
   const canSubmit = catalogsReady && passwordsReady && !isPending;
 
-  function handleSubmit(formData: FormData) {
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setErrorMessage(null);
-    preserved.clearInvalidField();
+    form.setInvalidField(null);
 
     if (!catalogsReady) {
       setErrorMessage(
@@ -100,8 +103,7 @@ export function RegisterForm({
     }
 
     if (!passwordsReady) {
-      preserved.recoverAfterValidationFailure(
-        formData,
+      form.setInvalidField(
         matchState === "mismatch" ? "confirmPassword" : "password"
       );
       setErrorMessage(
@@ -114,28 +116,25 @@ export function RegisterForm({
 
     startTransition(async () => {
       const result = await registerOwnerUiAction({
-        businessName: String(formData.get("businessName") ?? ""),
-        countryCode: String(formData.get("countryCode") ?? defaultCountryCode),
-        mobileNumber: String(formData.get("mobileNumber") ?? ""),
-        email: String(formData.get("email") ?? ""),
-        password: String(formData.get("password") ?? ""),
-        confirmPassword: String(formData.get("confirmPassword") ?? ""),
-        securityQuestionId: String(formData.get("securityQuestionId") ?? ""),
-        securityAnswer: String(formData.get("securityAnswer") ?? ""),
+        businessName: form.textValue("businessName"),
+        countryCode: form.textValue("countryCode") || defaultCountryCode,
+        mobileNumber: form.textValue("mobileNumber"),
+        email: form.textValue("email"),
+        password: form.textValue("password"),
+        confirmPassword: form.textValue("confirmPassword"),
+        securityQuestionId: form.textValue("securityQuestionId"),
+        securityAnswer: form.textValue("securityAnswer"),
       });
 
       if (result && !result.success) {
-        preserved.recoverAfterValidationFailure(
-          formData,
-          result.error.field
-        );
+        form.setInvalidField(result.error.field ?? null);
         setErrorMessage(result.error.message);
       }
     });
   }
 
   return (
-    <form key={preserved.formKey} action={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {!catalogsReady ? (
         <CatalogEmptyNotice
           message={
@@ -156,9 +155,10 @@ export function RegisterForm({
           required
           autoComplete="organization"
           placeholder="Proposed business name"
-          defaultValue={preserved.textValue("businessName")}
-          className={preserved.fieldClassName("businessName")}
-          aria-invalid={preserved.invalidField === "businessName"}
+          value={form.textValue("businessName")}
+          onChange={(event) => form.setField("businessName", event.target.value)}
+          className={form.fieldClassName("businessName")}
+          aria-invalid={form.invalidField === "businessName"}
         />
         <p className="text-xs text-muted-foreground">
           Temporary / proposed name. No business is created at registration.
@@ -171,15 +171,14 @@ export function RegisterForm({
           id="countryCode"
           name="countryCode"
           required
-          defaultValue={
-            preserved.textValue("countryCode") || defaultCountryCode
-          }
+          value={form.textValue("countryCode")}
+          onChange={(event) => form.setField("countryCode", event.target.value)}
           className={cn(
             selectClassName,
-            preserved.invalidField === "countryCode" &&
+            form.invalidField === "countryCode" &&
               "border-destructive ring-2 ring-destructive/30"
           )}
-          aria-invalid={preserved.invalidField === "countryCode"}
+          aria-invalid={form.invalidField === "countryCode"}
         >
           {countries.map((country) => (
             <option key={country.code} value={country.code}>
@@ -199,9 +198,10 @@ export function RegisterForm({
           inputMode="tel"
           required
           placeholder="712345678"
-          defaultValue={preserved.textValue("mobileNumber")}
-          className={preserved.fieldClassName("mobileNumber")}
-          aria-invalid={preserved.invalidField === "mobileNumber"}
+          value={form.textValue("mobileNumber")}
+          onChange={(event) => form.setField("mobileNumber", event.target.value)}
+          className={form.fieldClassName("mobileNumber")}
+          aria-invalid={form.invalidField === "mobileNumber"}
         />
         <p className="text-xs text-muted-foreground">
           Your mobile number is your username.
@@ -219,12 +219,12 @@ export function RegisterForm({
             required
             className={cn(
               "pr-10",
-              preserved.invalidField === "password" &&
+              form.invalidField === "password" &&
                 "border-destructive ring-2 ring-destructive/30"
             )}
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            aria-invalid={preserved.invalidField === "password"}
+            onChange={(event) => form.setField("password", event.target.value)}
+            aria-invalid={form.invalidField === "password"}
           />
           <Button
             type="button"
@@ -262,12 +262,14 @@ export function RegisterForm({
             required
             className={cn(
               "pr-10",
-              preserved.invalidField === "confirmPassword" &&
+              form.invalidField === "confirmPassword" &&
                 "border-destructive ring-2 ring-destructive/30"
             )}
             value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            aria-invalid={preserved.invalidField === "confirmPassword"}
+            onChange={(event) =>
+              form.setField("confirmPassword", event.target.value)
+            }
+            aria-invalid={form.invalidField === "confirmPassword"}
           />
           <Button
             type="button"
@@ -302,13 +304,16 @@ export function RegisterForm({
           id="securityQuestionId"
           name="securityQuestionId"
           required
-          defaultValue={preserved.textValue("securityQuestionId")}
+          value={form.textValue("securityQuestionId")}
+          onChange={(event) =>
+            form.setField("securityQuestionId", event.target.value)
+          }
           className={cn(
             selectClassName,
-            preserved.invalidField === "securityQuestionId" &&
+            form.invalidField === "securityQuestionId" &&
               "border-destructive ring-2 ring-destructive/30"
           )}
-          aria-invalid={preserved.invalidField === "securityQuestionId"}
+          aria-invalid={form.invalidField === "securityQuestionId"}
         >
           <option value="" disabled>
             Select a question
@@ -330,12 +335,12 @@ export function RegisterForm({
             type={showSecurityAnswer ? "text" : "password"}
             autoComplete="off"
             required
-            className={cn(
-              "pr-10",
-              preserved.fieldClassName("securityAnswer")
-            )}
-            defaultValue={preserved.textValue("securityAnswer")}
-            aria-invalid={preserved.invalidField === "securityAnswer"}
+            className={cn("pr-10", form.fieldClassName("securityAnswer"))}
+            value={form.textValue("securityAnswer")}
+            onChange={(event) =>
+              form.setField("securityAnswer", event.target.value)
+            }
+            aria-invalid={form.invalidField === "securityAnswer"}
           />
           <Button
             type="button"
@@ -360,9 +365,10 @@ export function RegisterForm({
           type="email"
           autoComplete="email"
           placeholder="you@example.com"
-          defaultValue={preserved.textValue("email")}
-          className={preserved.fieldClassName("email")}
-          aria-invalid={preserved.invalidField === "email"}
+          value={form.textValue("email")}
+          onChange={(event) => form.setField("email", event.target.value)}
+          className={form.fieldClassName("email")}
+          aria-invalid={form.invalidField === "email"}
         />
       </div>
 

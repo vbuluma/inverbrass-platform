@@ -11,6 +11,18 @@
  */
 
 import type { CurrentBusinessContext } from "@/core/auth/types";
+import {
+  AUDIT_ENTITY_NAMES,
+  AUDIT_OPERATIONS,
+  AUDIT_SOURCE_MODULES,
+  createAuditService,
+} from "@/core/audit";
+import {
+  buildTimelineEventFromContext,
+  createPartyTimelineService,
+  PARTY_TIMELINE_EVENT_CATEGORIES,
+  PARTY_TIMELINE_EVENT_TYPES,
+} from "@/core/party-timeline";
 import { getDb } from "@/db/client";
 import {
   CONTACT_TYPE_CODES,
@@ -37,13 +49,16 @@ import {
   normalizeRegistrationMobile,
   requireBusinessPhoneContext,
 } from "@/modules/party/services/party-phone";
+import { recordPartyEntityAudit } from "@/modules/party/services/party-audit-helper";
 
 export class OrganizationProfileService {
   constructor(
     private readonly partyRepository = createPartyRepository(),
     private readonly organizationProfileRepository = createOrganizationProfileRepository(),
     private readonly partyContactRepository = createPartyContactRepository(),
-    private readonly referenceRepository = createPartyReferenceRepository()
+    private readonly referenceRepository = createPartyReferenceRepository(),
+    private readonly timelineService = createPartyTimelineService(),
+    private readonly auditService = createAuditService()
   ) {}
 
   /**
@@ -249,6 +264,39 @@ export class OrganizationProfileService {
       }
 
       return partyRow;
+    });
+
+    await this.timelineService.recordEvent(
+      buildTimelineEventFromContext(context, {
+        partyId: created.id,
+        eventType: PARTY_TIMELINE_EVENT_TYPES.PARTY_CREATED,
+        eventCategory: PARTY_TIMELINE_EVENT_CATEGORIES.REGISTRATION,
+        summary: `Organization party registered — ${parsed.data.organizationName}`,
+        referenceEntity: "party",
+        referenceId: created.id,
+      })
+    );
+
+    await recordPartyEntityAudit(this.auditService, context, {
+      partyId: created.id,
+      entityName: AUDIT_ENTITY_NAMES.PARTY,
+      entityId: created.id,
+      operation: AUDIT_OPERATIONS.CREATE,
+      sourceModule: AUDIT_SOURCE_MODULES.PARTY_MANAGEMENT,
+      createValues: {
+        partyNumber,
+        partyTypeCode: PARTY_TYPE_CODES.ORGANIZATION,
+        displayName: parsed.data.organizationName,
+        statusCode: PARTY_STATUS_CODES.ACTIVE,
+        organizationName: parsed.data.organizationName,
+        registrationNumber: parsed.data.registrationNumber,
+        taxNumber: parsed.data.taxNumber,
+        industryCode: parsed.data.industryCode,
+        organizationTypeCode: parsed.data.organizationTypeCode,
+        website,
+        mobile: mobileE164,
+        email,
+      },
     });
 
     return this.toDetailView(created.id, context.businessId);

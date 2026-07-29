@@ -11,6 +11,8 @@ import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 
 import { getDb } from "@/db/client";
 import * as schema from "@/db/schema";
+import { groupMembershipRole } from "@/db/schema/group-membership-role";
+import { groupType } from "@/db/schema/group-type";
 import { organizationalUnitType } from "@/db/schema/organizational-unit-type";
 import { relationshipType } from "@/db/schema/relationship-type";
 import { addressType } from "@/db/schema/address-type";
@@ -81,6 +83,21 @@ export class PartyReferenceRepository {
       .from(language)
       .where(eq(language.isActive, true))
       .orderBy(asc(language.displayOrder), asc(language.name));
+  }
+
+  async listActiveTimezones(dbClient: DbClient = getDb()) {
+    const rows = await dbClient
+      .selectDistinct({
+        code: country.timezoneCode,
+      })
+      .from(country)
+      .where(eq(country.isActive, true))
+      .orderBy(asc(country.timezoneCode));
+
+    return rows.map((row) => ({
+      code: row.code,
+      name: row.code.replace(/_/g, " "),
+    }));
   }
 
   async listActiveRoleTypes(dbClient: DbClient = getDb()) {
@@ -320,6 +337,62 @@ export class PartyReferenceRepository {
       .select({ code: documentType.code, name: documentType.name })
       .from(documentType)
       .where(and(eq(documentType.code, code), eq(documentType.isActive, true)))
+      .limit(1);
+
+    return row ?? null;
+  }
+
+  async listActiveGroupTypes(dbClient: DbClient = getDb()) {
+    return dbClient
+      .select({
+        code: groupType.code,
+        name: groupType.name,
+      })
+      .from(groupType)
+      .where(eq(groupType.isActive, true))
+      .orderBy(asc(groupType.displayOrder), asc(groupType.name));
+  }
+
+  async findGroupTypeByCode(code: string, dbClient: DbClient = getDb()) {
+    const [row] = await dbClient
+      .select({ code: groupType.code, name: groupType.name })
+      .from(groupType)
+      .where(and(eq(groupType.code, code), eq(groupType.isActive, true)))
+      .limit(1);
+
+    return row ?? null;
+  }
+
+  async listActiveGroupMembershipRoles(dbClient: DbClient = getDb()) {
+    return dbClient
+      .select({
+        code: groupMembershipRole.code,
+        name: groupMembershipRole.name,
+      })
+      .from(groupMembershipRole)
+      .where(eq(groupMembershipRole.isActive, true))
+      .orderBy(
+        asc(groupMembershipRole.displayOrder),
+        asc(groupMembershipRole.name)
+      );
+  }
+
+  async findGroupMembershipRoleByCode(
+    code: string,
+    dbClient: DbClient = getDb()
+  ) {
+    const [row] = await dbClient
+      .select({
+        code: groupMembershipRole.code,
+        name: groupMembershipRole.name,
+      })
+      .from(groupMembershipRole)
+      .where(
+        and(
+          eq(groupMembershipRole.code, code),
+          eq(groupMembershipRole.isActive, true)
+        )
+      )
       .limit(1);
 
     return row ?? null;

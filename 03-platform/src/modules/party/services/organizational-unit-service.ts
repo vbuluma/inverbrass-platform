@@ -12,6 +12,17 @@
 import { normalizePhoneNumberToE164 } from "@/core/shared/phone";
 import type { CurrentBusinessContext } from "@/core/auth/types";
 import {
+  AUDIT_ENTITY_NAMES,
+  AUDIT_SOURCE_MODULES,
+  createAuditService,
+} from "@/core/audit";
+import {
+  buildTimelineEventFromContext,
+  createPartyTimelineService,
+  PARTY_TIMELINE_EVENT_CATEGORIES,
+  PARTY_TIMELINE_EVENT_TYPES,
+} from "@/core/party-timeline";
+import {
   ORGANIZATIONAL_UNIT_STATUS_CODES,
   PARTY_ADDRESS_STATUS_CODES,
   PARTY_TYPE_CODES,
@@ -36,6 +47,10 @@ import {
   todayIsoDate,
 } from "@/modules/party/services/organizational-unit-rules";
 import { buildOrganizationalUnitTree } from "@/modules/party/services/organizational-unit-tree";
+import {
+  inferAuditOperationFromEventType,
+  recordPartyEntityAudit,
+} from "@/modules/party/services/party-audit-helper";
 import {
   requireBusinessPhoneContext,
   type BusinessPhoneContext,
@@ -63,7 +78,9 @@ export class OrganizationalUnitService {
     private readonly organizationalUnitRepository = createOrganizationalUnitRepository(),
     private readonly partyAddressRepository = createPartyAddressRepository(),
     private readonly partyAddressService = createPartyAddressService(),
-    private readonly referenceRepository = createPartyReferenceRepository()
+    private readonly referenceRepository = createPartyReferenceRepository(),
+    private readonly timelineService = createPartyTimelineService(),
+    private readonly auditService = createAuditService()
   ) {}
 
   async getOrganizationStructure(
@@ -330,6 +347,13 @@ export class OrganizationalUnitService {
       updatedBy: context.platformUserId,
     });
 
+    await this.recordOrgUnitTimeline(
+      context,
+      organizationPartyId,
+      PARTY_TIMELINE_EVENT_TYPES.ORGANIZATION_UNIT_CREATED,
+      `Organizational unit created — ${parsed.data.unitName.trim()}`
+    );
+
     return this.getOrganizationStructure(context, organizationPartyId);
   }
 
@@ -351,7 +375,7 @@ export class OrganizationalUnitService {
     }
 
     await this.requireOrganizationParty(context, organizationPartyId);
-    await this.requireUnitForOrganization(
+    const unit = await this.requireUnitForOrganization(
       context,
       organizationPartyId,
       organizationalUnitId
@@ -471,6 +495,14 @@ export class OrganizationalUnitService {
       }
     );
 
+    await this.recordOrgUnitTimeline(
+      context,
+      organizationPartyId,
+      PARTY_TIMELINE_EVENT_TYPES.ORGANIZATION_UNIT_UPDATED,
+      `Organizational unit updated — ${unit.unitName}`,
+      organizationalUnitId
+    );
+
     return this.getOrganizationStructure(context, organizationPartyId);
   }
 
@@ -519,6 +551,14 @@ export class OrganizationalUnitService {
       }
     );
 
+    await this.recordOrgUnitTimeline(
+      context,
+      organizationPartyId,
+      PARTY_TIMELINE_EVENT_TYPES.ORGANIZATION_UNIT_UPDATED,
+      `Head office designated — ${unit.unitName}`,
+      organizationalUnitId
+    );
+
     return this.getOrganizationStructure(context, organizationPartyId);
   }
 
@@ -549,6 +589,14 @@ export class OrganizationalUnitService {
         isHeadOffice: false,
         updatedBy: context.platformUserId,
       }
+    );
+
+    await this.recordOrgUnitTimeline(
+      context,
+      organizationPartyId,
+      PARTY_TIMELINE_EVENT_TYPES.ORGANIZATION_UNIT_UPDATED,
+      `Head office designation removed — ${unit.unitName}`,
+      organizationalUnitId
     );
 
     return this.getOrganizationStructure(context, organizationPartyId);
@@ -593,6 +641,14 @@ export class OrganizationalUnitService {
       }
     );
 
+    await this.recordOrgUnitTimeline(
+      context,
+      organizationPartyId,
+      PARTY_TIMELINE_EVENT_TYPES.ORGANIZATION_UNIT_UPDATED,
+      `Organizational unit deactivated — ${unit.unitName}`,
+      organizationalUnitId
+    );
+
     return this.getOrganizationStructure(context, organizationPartyId);
   }
 
@@ -630,6 +686,14 @@ export class OrganizationalUnitService {
       }
     );
 
+    await this.recordOrgUnitTimeline(
+      context,
+      organizationPartyId,
+      PARTY_TIMELINE_EVENT_TYPES.ORGANIZATION_UNIT_UPDATED,
+      `Organizational unit reactivated — ${unit.unitName}`,
+      organizationalUnitId
+    );
+
     return this.getOrganizationStructure(context, organizationPartyId);
   }
 
@@ -663,7 +727,44 @@ export class OrganizationalUnitService {
       }
     );
 
+    await this.recordOrgUnitTimeline(
+      context,
+      organizationPartyId,
+      PARTY_TIMELINE_EVENT_TYPES.ORGANIZATION_UNIT_REMOVED,
+      `Organizational unit removed — ${unit.unitName}`,
+      organizationalUnitId
+    );
+
     return this.getOrganizationStructure(context, organizationPartyId);
+  }
+
+  private async recordOrgUnitTimeline(
+    context: CurrentBusinessContext,
+    organizationPartyId: string,
+    eventType: string,
+    summary: string,
+    referenceId?: string
+  ) {
+    await this.timelineService.recordEvent(
+      buildTimelineEventFromContext(context, {
+        partyId: organizationPartyId,
+        eventType,
+        eventCategory: PARTY_TIMELINE_EVENT_CATEGORIES.ORGANIZATION,
+        summary,
+        referenceEntity: "organizational_unit",
+        referenceId,
+      })
+    );
+
+    if (referenceId) {
+      await recordPartyEntityAudit(this.auditService, context, {
+        partyId: organizationPartyId,
+        entityName: AUDIT_ENTITY_NAMES.ORGANIZATIONAL_UNIT,
+        entityId: referenceId,
+        operation: inferAuditOperationFromEventType(eventType),
+        sourceModule: AUDIT_SOURCE_MODULES.ORGANIZATION_STRUCTURE,
+      });
+    }
   }
 
   private emptyPanel(isOrganization: boolean): OrganizationStructurePanelView {

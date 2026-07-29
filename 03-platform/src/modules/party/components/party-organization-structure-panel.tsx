@@ -8,9 +8,15 @@
 
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  PlatformEmptyState,
+  PlatformProcessingButton,
+  PROCESSING_LABELS,
+  useFormDraft,
+  usePanelFeedback,
+} from "@/components/platform";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -72,29 +78,6 @@ export function PartyOrganizationStructurePanel({
   const [syncedInitial, setSyncedInitial] = useState(initialData);
   const [syncedPartyId, setSyncedPartyId] = useState(partyId);
   const [showAdd, setShowAdd] = useState(showAddForm);
-  const [unitCode, setUnitCode] = useState("");
-  const [unitName, setUnitName] = useState("");
-  const [organizationalUnitTypeCode, setOrganizationalUnitTypeCode] = useState(
-    initialData.availableUnitTypes[0]?.code ?? ""
-  );
-  const [parentOrganizationalUnitId, setParentOrganizationalUnitId] =
-    useState("");
-  const [isHeadOffice, setIsHeadOffice] = useState(false);
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [partyAddressId, setPartyAddressId] = useState("");
-  const [physicalAddressMode, setPhysicalAddressMode] =
-    useState<PhysicalAddressMode>("none");
-  const [physicalCountryCode, setPhysicalCountryCode] = useState(
-    initialData.countries[0]?.code ?? ""
-  );
-  const [physicalAddressLine1, setPhysicalAddressLine1] = useState("");
-  const [physicalCityTown, setPhysicalCityTown] = useState("");
-  const [physicalCountyDistrict, setPhysicalCountyDistrict] = useState("");
-  const [physicalGpsLatitude, setPhysicalGpsLatitude] = useState("");
-  const [physicalGpsLongitude, setPhysicalGpsLongitude] = useState("");
-  const [openingDate, setOpeningDate] = useState("");
-  const [notes, setNotes] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchTypeCode, setSearchTypeCode] = useState("");
   const [searchStatusCode, setSearchStatusCode] = useState("");
@@ -115,9 +98,82 @@ export function PartyOrganizationStructurePanel({
     useState("");
   const [editOpeningDate, setEditOpeningDate] = useState("");
   const [editNotes, setEditNotes] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const {
+    isPending,
+    runPanelAction,
+    setValidationError,
+    requestConfirm,
+    FormFeedback,
+    ConfirmDialogHost,
+  } = usePanelFeedback<OrganizationStructurePanelView>();
+  const {
+    draftValues,
+    saveDraft,
+    clearDraft,
+    draftSavedAt,
+  } = useFormDraft<{
+    unitCode: string;
+    unitName: string;
+    organizationalUnitTypeCode: string;
+    parentOrganizationalUnitId: string;
+    isHeadOffice: boolean;
+    phone: string;
+    email: string;
+    partyAddressId: string;
+    physicalAddressMode: PhysicalAddressMode;
+    physicalCountryCode: string;
+    physicalAddressLine1: string;
+    physicalCityTown: string;
+    physicalCountyDistrict: string;
+    physicalGpsLatitude: string;
+    physicalGpsLongitude: string;
+    openingDate: string;
+    notes: string;
+  }>(`party-${partyId}-organization-structure-create-draft`);
+  const [unitCode, setUnitCode] = useState(() => draftValues?.unitCode ?? "");
+  const [unitName, setUnitName] = useState(() => draftValues?.unitName ?? "");
+  const [organizationalUnitTypeCode, setOrganizationalUnitTypeCode] = useState(
+    () =>
+      draftValues?.organizationalUnitTypeCode ??
+      initialData.availableUnitTypes[0]?.code ??
+      ""
+  );
+  const [parentOrganizationalUnitId, setParentOrganizationalUnitId] =
+    useState(() => draftValues?.parentOrganizationalUnitId ?? "");
+  const [isHeadOffice, setIsHeadOffice] = useState(() =>
+    Boolean(draftValues?.isHeadOffice)
+  );
+  const [phone, setPhone] = useState(() => draftValues?.phone ?? "");
+  const [email, setEmail] = useState(() => draftValues?.email ?? "");
+  const [partyAddressId, setPartyAddressId] = useState(
+    () => draftValues?.partyAddressId ?? ""
+  );
+  const [physicalAddressMode, setPhysicalAddressMode] =
+    useState<PhysicalAddressMode>(
+      () => draftValues?.physicalAddressMode ?? "none"
+    );
+  const [physicalCountryCode, setPhysicalCountryCode] = useState(
+    () => draftValues?.physicalCountryCode ?? initialData.countries[0]?.code ?? ""
+  );
+  const [physicalAddressLine1, setPhysicalAddressLine1] = useState(
+    () => draftValues?.physicalAddressLine1 ?? ""
+  );
+  const [physicalCityTown, setPhysicalCityTown] = useState(
+    () => draftValues?.physicalCityTown ?? ""
+  );
+  const [physicalCountyDistrict, setPhysicalCountyDistrict] = useState(
+    () => draftValues?.physicalCountyDistrict ?? ""
+  );
+  const [physicalGpsLatitude, setPhysicalGpsLatitude] = useState(
+    () => draftValues?.physicalGpsLatitude ?? ""
+  );
+  const [physicalGpsLongitude, setPhysicalGpsLongitude] = useState(
+    () => draftValues?.physicalGpsLongitude ?? ""
+  );
+  const [openingDate, setOpeningDate] = useState(
+    () => draftValues?.openingDate ?? ""
+  );
+  const [notes, setNotes] = useState(() => draftValues?.notes ?? "");
 
   useEffect(() => {
     if (showAddForm && addFormRef.current) {
@@ -133,8 +189,6 @@ export function PartyOrganizationStructurePanel({
     setSearchStatusCode("");
     setViewingId(null);
     setEditingId(null);
-    setError(null);
-    setMessage(null);
   }
 
   if (initialData !== syncedInitial) {
@@ -165,91 +219,104 @@ export function PartyOrganizationStructurePanel({
     setNotes("");
   }
 
-  function applyPanelResult(
-    result:
-      | { success: true; data: OrganizationStructurePanelView }
-      | { success: false; error: { message: string } },
-    successMessage: string
-  ) {
-    if (!result.success) {
-      setError(result.error.message);
-      return;
-    }
-    setError(null);
-    setMessage(successMessage);
-    setPanel(result.data);
-    setOrganizationalUnitTypeCode(
-      result.data.availableUnitTypes[0]?.code ?? ""
-    );
+  function applySuccess(data: OrganizationStructurePanelView) {
+    setPanel(data);
+    setOrganizationalUnitTypeCode(data.availableUnitTypes[0]?.code ?? "");
     resetAddForm();
     setShowAdd(false);
     setEditingId(null);
     setViewingId(null);
-    // Do not call router.refresh() here — it races the in-flight transition
-    // and keeps isPending on "Saving…" until a slow full RSC reload completes.
-    // The action already revalidatePath; setPanel has fresh data from the response.
   }
 
   function onSearch() {
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await searchOrganizationalUnitsAction(partyId, {
-        query: searchQuery || undefined,
-        organizationalUnitTypeCode: searchTypeCode || undefined,
-        statusCode: searchStatusCode || undefined,
-      });
-      if (!result.success) {
-        setError(result.error.message);
-        return;
+    runPanelAction(
+      () =>
+        searchOrganizationalUnitsAction(partyId, {
+          query: searchQuery || undefined,
+          organizationalUnitTypeCode: searchTypeCode || undefined,
+          statusCode: searchStatusCode || undefined,
+        }),
+      {
+        successTitle: "Search complete.",
+        successMessage: "The organizational unit list was updated.",
+        onSuccess: (data) => setPanel(data),
       }
-      setPanel(result.data);
-    });
+    );
   }
 
   function onAdd() {
     if (!unitCode.trim() || !unitName.trim() || !organizationalUnitTypeCode) {
-      setError("Unit code, name, and type are required.");
+      setValidationError("Unit code, name, and type are required.");
       return;
     }
     if (physicalAddressMode === "existing" && !partyAddressId) {
-      setError("Select an existing physical address.");
+      setValidationError("Select an existing physical address.");
       return;
     }
     if (physicalAddressMode === "new") {
       if (!physicalCountryCode || !physicalAddressLine1.trim()) {
-        setError("Country and address line 1 are required for a new physical address.");
+        setValidationError(
+          "Country and address line 1 are required for a new physical address."
+        );
         return;
       }
     }
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await addOrganizationalUnitAction(partyId, {
-        unitCode,
-        unitName,
-        organizationalUnitTypeCode,
-        parentOrganizationalUnitId: parentOrganizationalUnitId || undefined,
-        isHeadOffice,
-        phone,
-        email,
-        partyAddressId:
-          physicalAddressMode === "existing" ? partyAddressId : undefined,
-        newPhysicalAddress:
-          physicalAddressMode === "new"
-            ? {
-                countryCode: physicalCountryCode,
-                addressLine1: physicalAddressLine1,
-                cityTown: physicalCityTown || undefined,
-                countyDistrict: physicalCountyDistrict || undefined,
-                gpsLatitude: physicalGpsLatitude || null,
-                gpsLongitude: physicalGpsLongitude || null,
-              }
-            : undefined,
-        openingDate: openingDate || undefined,
-        notes,
-      });
-      applyPanelResult(result, "Organizational unit added.");
+    runPanelAction(
+      () =>
+        addOrganizationalUnitAction(partyId, {
+          unitCode,
+          unitName,
+          organizationalUnitTypeCode,
+          parentOrganizationalUnitId: parentOrganizationalUnitId || undefined,
+          isHeadOffice,
+          phone,
+          email,
+          partyAddressId:
+            physicalAddressMode === "existing" ? partyAddressId : undefined,
+          newPhysicalAddress:
+            physicalAddressMode === "new"
+              ? {
+                  countryCode: physicalCountryCode,
+                  addressLine1: physicalAddressLine1,
+                  cityTown: physicalCityTown || undefined,
+                  countyDistrict: physicalCountyDistrict || undefined,
+                  gpsLatitude: physicalGpsLatitude || null,
+                  gpsLongitude: physicalGpsLongitude || null,
+                }
+              : undefined,
+          openingDate: openingDate || undefined,
+          notes,
+        }),
+      {
+        successTitle: "Organizational unit created.",
+        successMessage: "The unit was added to the organization structure.",
+        onSuccess: (data) => {
+          applySuccess(data);
+          clearDraft();
+        },
+      }
+    );
+  }
+
+  function onSaveDraft() {
+    saveDraft({
+      unitCode,
+      unitName,
+      organizationalUnitTypeCode,
+      parentOrganizationalUnitId,
+      isHeadOffice,
+      phone,
+      email,
+      partyAddressId,
+      physicalAddressMode,
+      physicalCountryCode,
+      physicalAddressLine1,
+      physicalCityTown,
+      physicalCountyDistrict,
+      physicalGpsLatitude,
+      physicalGpsLongitude,
+      openingDate,
+      notes,
     });
   }
 
@@ -269,18 +336,12 @@ export function PartyOrganizationStructurePanel({
     setEditPhysicalCountyDistrict("");
     setEditOpeningDate(node.openingDate ?? "");
     setEditNotes(node.notes ?? "");
-    setError(null);
-    setMessage(null);
   }
 
   function onSaveEdit(organizationalUnitId: string) {
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await updateOrganizationalUnitAction(
-        partyId,
-        organizationalUnitId,
-        {
+    runPanelAction(
+      () =>
+        updateOrganizationalUnitAction(partyId, organizationalUnitId, {
           unitName: editName,
           organizationalUnitTypeCode: editTypeCode,
           parentOrganizationalUnitId: editParentId || null,
@@ -303,23 +364,30 @@ export function PartyOrganizationStructurePanel({
               : undefined,
           openingDate: editOpeningDate || undefined,
           notes: editNotes,
-        }
-      );
-      applyPanelResult(result, "Organizational unit updated.");
-    });
+        }),
+      {
+        successTitle: "Organizational unit saved.",
+        successMessage: "Unit details were updated.",
+        onSuccess: applySuccess,
+      }
+    );
   }
 
-  function runAction(
-    action: () => Promise<
-      | { success: true; data: OrganizationStructurePanelView }
-      | { success: false; error: { message: string } }
-    >,
+  function runConfirmedAction(
+    confirm: { title: string; description: string; confirmLabel: string },
+    action: () => ReturnType<typeof removeHeadOfficeDesignationAction>,
+    successTitle: string,
     successMessage: string
   ) {
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      applyPanelResult(await action(), successMessage);
+    requestConfirm({
+      ...confirm,
+      onConfirm: () => {
+        runPanelAction(action, {
+          successTitle,
+          successMessage,
+          onSuccess: applySuccess,
+        });
+      },
     });
   }
 
@@ -344,16 +412,6 @@ export function PartyOrganizationStructurePanel({
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
       <div className="space-y-4">
-        {error ? (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        ) : null}
-        {message ? (
-          <Alert>
-            <AlertDescription>{message}</AlertDescription>
-          </Alert>
-        ) : null}
 
         <Card>
           <CardHeader>
@@ -429,23 +487,18 @@ export function PartyOrganizationStructurePanel({
                 });
               }}
             >
-              Add Organizational Unit
+              Create Organizational Unit
             </Button>
           </CardHeader>
           <CardContent className="space-y-3">
             {emptyState ? (
-              <div className="space-y-3 rounded-lg border border-dashed px-4 py-6 text-center">
-                <p className="text-sm text-muted-foreground">
-                  No additional Organizational Units have been created.
-                </p>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => setShowAdd(true)}
-                >
-                  Add Organizational Unit
-                </Button>
-              </div>
+              <PlatformEmptyState
+                title="No Organizational Units Yet"
+                description="Create organizational units to build out this organization's structure."
+                actionLabel="Create Organizational Unit"
+                onAction={() => setShowAdd(true)}
+                compact
+              />
             ) : null}
             <OrganizationalUnitTree
               nodes={panel.tree}
@@ -458,33 +511,62 @@ export function PartyOrganizationStructurePanel({
               }
               onEdit={startEdit}
               onSetHeadOffice={(id) =>
-                runAction(
+                runPanelAction(
                   () => setHeadOfficeOrganizationalUnitAction(partyId, id),
-                  "Head Office updated."
+                  {
+                    successTitle: "Head Office updated.",
+                    successMessage: "The head office designation was changed.",
+                    onSuccess: applySuccess,
+                  }
                 )
               }
               onRemoveHeadOffice={(id) =>
-                runAction(
+                runConfirmedAction(
+                  {
+                    title: "Remove Head Office?",
+                    description:
+                      "This unit will no longer be designated as head office.",
+                    confirmLabel: "Remove Head Office",
+                  },
                   () => removeHeadOfficeDesignationAction(partyId, id),
-                  "Head Office designation removed."
+                  "Head Office designation removed.",
+                  "The head office designation was removed from this unit."
                 )
               }
               onDeactivate={(id) =>
-                runAction(
+                runConfirmedAction(
+                  {
+                    title: "Deactivate Organizational Unit?",
+                    description:
+                      "This unit will remain in history but will no longer be active.",
+                    confirmLabel: "Deactivate",
+                  },
                   () => deactivateOrganizationalUnitAction(partyId, id),
-                  "Organizational unit deactivated."
+                  "Organizational unit deactivated.",
+                  "The unit is no longer active."
                 )
               }
               onReactivate={(id) =>
-                runAction(
+                runPanelAction(
                   () => reactivateOrganizationalUnitAction(partyId, id),
-                  "Organizational unit reactivated."
+                  {
+                    successTitle: "Organizational unit reactivated.",
+                    successMessage: "The unit is active again.",
+                    onSuccess: applySuccess,
+                  }
                 )
               }
               onRemove={(id) =>
-                runAction(
+                runConfirmedAction(
+                  {
+                    title: "Remove Organizational Unit?",
+                    description:
+                      "This unit will be removed from the active structure. Historical records may remain in audit history.",
+                    confirmLabel: "Remove",
+                  },
                   () => removeOrganizationalUnitAction(partyId, id),
-                  "Organizational unit removed."
+                  "Organizational unit removed.",
+                  "The unit was removed from the organization structure."
                 )
               }
               renderViewDetails={(node) => (
@@ -649,7 +731,7 @@ export function PartyOrganizationStructurePanel({
       {showAdd ? (
         <Card className="h-fit" ref={addFormRef}>
           <CardHeader>
-            <CardTitle className="text-base">Add Organizational Unit</CardTitle>
+            <CardTitle className="text-base">Create Organizational Unit</CardTitle>
             <CardDescription>
               Register a unit within this organization&apos;s structure.
             </CardDescription>
@@ -826,17 +908,31 @@ export function PartyOrganizationStructurePanel({
                 maxLength={2000}
               />
             </div>
-            <Button
+            <PlatformProcessingButton
               type="button"
               className="w-full"
-              disabled={isPending}
+              isProcessing={isPending}
+              processingLabel={PROCESSING_LABELS.saving}
+              idleLabel="Create Organizational Unit"
               onClick={onAdd}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              disabled={isPending}
+              onClick={onSaveDraft}
             >
-              {isPending ? "Saving…" : "Add Organizational Unit"}
+              Save Draft
             </Button>
+            <FormFeedback
+              processingLabel={PROCESSING_LABELS.saving}
+              draftSavedAt={draftSavedAt}
+            />
           </CardContent>
         </Card>
       ) : null}
+      <ConfirmDialogHost />
     </div>
   );
 }

@@ -18,6 +18,15 @@ import { AuthError } from "@/core/auth/errors";
 import { createAuthService } from "@/core/auth/services/auth-service";
 import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
+import {
+  platformError,
+  platformSuccess,
+} from "@/core/platform/platform-action-helpers";
+import {
+  individualCreatedNextActions,
+  organizationCreatedNextActions,
+} from "@/core/platform/party-next-actions";
+import type { PlatformActionResult } from "@/core/platform/types";
 import { PartyError } from "@/modules/party/errors";
 import { createIndividualProfileService } from "@/modules/party/services/individual-profile-service";
 import { createOrganizationProfileService } from "@/modules/party/services/organization-profile-service";
@@ -31,6 +40,61 @@ import type {
   RegisterOrganizationPayload,
   UpdatePartyOverviewPayload,
 } from "@/modules/party/types";
+
+export type PartyActionResult<T> = AuthActionResult<T> & {
+  platform?: PlatformActionResult<T>;
+};
+
+function formatPartyCreatedDate(iso: string): string {
+  try {
+    return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
+      new Date(iso)
+    );
+  } catch {
+    return iso;
+  }
+}
+
+function partyCreateSummary(party: PartyDetailView) {
+  return [
+    { label: "Reference Number", value: party.partyNumber },
+    { label: "Status", value: party.statusName },
+    { label: "Created Date", value: formatPartyCreatedDate(party.registrationDate) },
+    { label: "Party Type", value: party.partyTypeName },
+  ];
+}
+
+function toPlatformCreateResult<T extends PartyDetailView>(
+  result: AuthActionResult<T>,
+  successTitle: string,
+  completionTitle: string,
+  successMessage: (data: T) => string,
+  nextActions: (data: T) => PlatformActionResult<T>["nextActions"]
+): PartyActionResult<T> {
+  if (!result.success) {
+    return {
+      ...result,
+      platform: platformError(
+        "Action failed",
+        result.error.message,
+        result.error.field
+      ),
+    };
+  }
+  return {
+    ...result,
+    platform: platformSuccess(
+      successTitle,
+      successMessage(result.data),
+      result.data,
+      nextActions(result.data),
+      {
+        completionTitle,
+        summary: partyCreateSummary(result.data),
+      }
+    ),
+  };
+}
 
 function isNextDynamicServerError(error: unknown): boolean {
   return (
@@ -155,27 +219,61 @@ export async function getPartyRegistrationCataloguesAction(): Promise<
 
 export async function createIndividualPartyAction(
   payload: RegisterIndividualPayload
-): Promise<AuthActionResult<PartyDetailView>> {
+): Promise<PartyActionResult<PartyDetailView>> {
   try {
     const context = await requirePartyContext();
     const service = createIndividualProfileService();
     const data = await service.registerIndividual(context, payload);
-    return { success: true, data };
+    return toPlatformCreateResult(
+      { success: true, data },
+      "Individual created successfully.",
+      "✓ Individual Created Successfully",
+      (party) => `${party.displayName} is ready in the Party repository.`,
+      (party) => individualCreatedNextActions(party.id)
+    );
   } catch (error) {
-    return toActionError(error);
+    const failed = toActionError(error);
+    if (!failed.success) {
+      return {
+        ...failed,
+        platform: platformError(
+          "Action failed",
+          failed.error.message,
+          failed.error.field
+        ),
+      };
+    }
+    return failed;
   }
 }
 
 export async function createOrganizationPartyAction(
   payload: RegisterOrganizationPayload
-): Promise<AuthActionResult<PartyDetailView>> {
+): Promise<PartyActionResult<PartyDetailView>> {
   try {
     const context = await requirePartyContext();
     const service = createOrganizationProfileService();
     const data = await service.registerOrganization(context, payload);
-    return { success: true, data };
+    return toPlatformCreateResult(
+      { success: true, data },
+      "Organization created successfully.",
+      "✓ Organization Created Successfully",
+      (party) => `${party.displayName} is ready in the Party repository.`,
+      (party) => organizationCreatedNextActions(party.id)
+    );
   } catch (error) {
-    return toActionError(error);
+    const failed = toActionError(error);
+    if (!failed.success) {
+      return {
+        ...failed,
+        platform: platformError(
+          "Action failed",
+          failed.error.message,
+          failed.error.field
+        ),
+      };
+    }
+    return failed;
   }
 }
 

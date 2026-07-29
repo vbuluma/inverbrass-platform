@@ -10,6 +10,18 @@
  */
 
 import type { CurrentBusinessContext } from "@/core/auth/types";
+import {
+  AUDIT_ENTITY_NAMES,
+  AUDIT_OPERATIONS,
+  AUDIT_SOURCE_MODULES,
+  createAuditService,
+} from "@/core/audit";
+import {
+  buildTimelineEventFromContext,
+  createPartyTimelineService,
+  PARTY_TIMELINE_EVENT_CATEGORIES,
+  PARTY_TIMELINE_EVENT_TYPES,
+} from "@/core/party-timeline";
 import { formatCountyOrState } from "@/core/shared/address";
 import { getDb } from "@/db/client";
 import {
@@ -43,12 +55,15 @@ import {
   updatePartyAddressSchema,
   validateGpsCoordinates,
 } from "@/modules/party/validators/party-address-validators";
+import { recordPartyEntityAudit } from "@/modules/party/services/party-audit-helper";
 
 export class PartyAddressService {
   constructor(
     private readonly partyRepository = createPartyRepository(),
     private readonly partyAddressRepository = createPartyAddressRepository(),
-    private readonly referenceRepository = createPartyReferenceRepository()
+    private readonly referenceRepository = createPartyReferenceRepository(),
+    private readonly timelineService = createPartyTimelineService(),
+    private readonly auditService = createAuditService()
   ) {}
 
   async getPartyAddresses(
@@ -212,6 +227,15 @@ export class PartyAddressService {
       addressId = row.id;
     });
 
+    await this.recordAddressTimeline(
+      context,
+      partyId,
+      PARTY_TIMELINE_EVENT_TYPES.ADDRESS_CREATED,
+      `${addressType.name} address added`,
+      addressId,
+      AUDIT_OPERATIONS.CREATE
+    );
+
     return addressId;
   }
 
@@ -311,6 +335,18 @@ export class PartyAddressService {
       }
     );
 
+    const addressType = await this.referenceRepository.findAddressTypeByCode(
+      address.addressTypeCode
+    );
+    await this.recordAddressTimeline(
+      context,
+      partyId,
+      PARTY_TIMELINE_EVENT_TYPES.ADDRESS_UPDATED,
+      `${addressType?.name ?? address.addressTypeCode} address updated`,
+      partyAddressId,
+      AUDIT_OPERATIONS.UPDATE
+    );
+
     return this.getPartyAddresses(context, partyId);
   }
 
@@ -350,6 +386,18 @@ export class PartyAddressService {
         tx
       );
     });
+
+    const addressType = await this.referenceRepository.findAddressTypeByCode(
+      address.addressTypeCode
+    );
+    await this.recordAddressTimeline(
+      context,
+      partyId,
+      PARTY_TIMELINE_EVENT_TYPES.ADDRESS_UPDATED,
+      `${addressType?.name ?? address.addressTypeCode} set as default address`,
+      partyAddressId,
+      AUDIT_OPERATIONS.UPDATE
+    );
 
     return this.getPartyAddresses(context, partyId);
   }
@@ -391,6 +439,18 @@ export class PartyAddressService {
       }
     );
 
+    const addressType = await this.referenceRepository.findAddressTypeByCode(
+      address.addressTypeCode
+    );
+    await this.recordAddressTimeline(
+      context,
+      partyId,
+      PARTY_TIMELINE_EVENT_TYPES.ADDRESS_UPDATED,
+      `${addressType?.name ?? address.addressTypeCode} address deactivated`,
+      partyAddressId,
+      AUDIT_OPERATIONS.DEACTIVATE
+    );
+
     return this.getPartyAddresses(context, partyId);
   }
 
@@ -419,6 +479,18 @@ export class PartyAddressService {
       }
     );
 
+    const addressType = await this.referenceRepository.findAddressTypeByCode(
+      address.addressTypeCode
+    );
+    await this.recordAddressTimeline(
+      context,
+      partyId,
+      PARTY_TIMELINE_EVENT_TYPES.ADDRESS_UPDATED,
+      `${addressType?.name ?? address.addressTypeCode} address reactivated`,
+      partyAddressId,
+      AUDIT_OPERATIONS.ACTIVATE
+    );
+
     return this.getPartyAddresses(context, partyId);
   }
 
@@ -428,7 +500,7 @@ export class PartyAddressService {
     partyAddressId: string
   ): Promise<PartyAddressesPanelView> {
     await this.requireParty(context, partyId);
-    await this.requireAddress(context, partyId, partyAddressId);
+    const address = await this.requireAddress(context, partyId, partyAddressId);
 
     await this.partyAddressRepository.updateById(
       context.businessId,
@@ -440,7 +512,55 @@ export class PartyAddressService {
       }
     );
 
+    const addressType = await this.referenceRepository.findAddressTypeByCode(
+      address.addressTypeCode
+    );
+    await this.recordAddressTimeline(
+      context,
+      partyId,
+      PARTY_TIMELINE_EVENT_TYPES.ADDRESS_REMOVED,
+      `${addressType?.name ?? address.addressTypeCode} address removed`,
+      partyAddressId,
+      AUDIT_OPERATIONS.DELETE
+    );
+
     return this.getPartyAddresses(context, partyId);
+  }
+
+  private async recordAddressTimeline(
+    context: CurrentBusinessContext,
+    partyId: string,
+    eventType: string,
+    summary: string,
+    referenceId?: string,
+    operation?: string,
+    before?: Record<string, unknown>,
+    after?: Record<string, unknown>
+  ) {
+    await this.timelineService.recordEvent(
+      buildTimelineEventFromContext(context, {
+        partyId,
+        eventType,
+        eventCategory: PARTY_TIMELINE_EVENT_CATEGORIES.OPERATIONS,
+        summary,
+        referenceEntity: "party_address",
+        referenceId,
+      })
+    );
+
+    if (!referenceId || !operation) {
+      return;
+    }
+
+    await recordPartyEntityAudit(this.auditService, context, {
+      partyId,
+      entityName: AUDIT_ENTITY_NAMES.PARTY_ADDRESS,
+      entityId: referenceId,
+      operation,
+      sourceModule: AUDIT_SOURCE_MODULES.PARTY_ADDRESSES,
+      before,
+      after,
+    });
   }
 
   private async requireParty(

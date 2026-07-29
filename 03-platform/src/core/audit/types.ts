@@ -1,3 +1,17 @@
+/**
+ * Purpose:
+ * Type contracts for the Enterprise Audit capability.
+ *
+ * Implementation Package:
+ * BP-002 / IP-011 – Enterprise Audit History
+ */
+
+import type {
+  AuditEntityName,
+  AuditOperation,
+  AuditSourceModule,
+} from "@/core/audit/constants";
+
 export const AUTHENTICATION_AUDIT_EVENT_TYPES = {
   USER_REGISTERED: "USER_REGISTERED",
   BUSINESS_CREATED: "BUSINESS_CREATED",
@@ -35,3 +49,82 @@ export type AuthenticationAuditEvent = {
 export interface AuthenticationAuditEmitterPort {
   emit(event: AuthenticationAuditEvent): Promise<void>;
 }
+
+export type AuditFieldChange = {
+  fieldName: string;
+  oldValue: string | null;
+  newValue: string | null;
+};
+
+export type RecordAuditPayload = {
+  businessId: string;
+  partyId?: string | null;
+  entityName: AuditEntityName | string;
+  entityId: string;
+  operation: AuditOperation | string;
+  changes?: AuditFieldChange[];
+  changedBy?: string | null;
+  changedDateTime?: Date;
+  sourceModule: AuditSourceModule | string;
+  correlationId?: string | null;
+  requestId?: string | null;
+  ipAddress?: string | null;
+  browserClient?: string | null;
+  device?: string | null;
+  systemGenerated?: boolean;
+  metadata?: Record<string, unknown> | null;
+  retentionFlag?: boolean;
+};
+
+export type AuditHistoryListFilters = {
+  operation?: string;
+  entityName?: string;
+  changedBy?: string;
+  search?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  limit?: number;
+  offset?: number;
+};
+
+export type AuditHistoryEntryView = {
+  id: string;
+  changedDateTime: string;
+  changedByName: string | null;
+  operation: string;
+  operationLabel: string;
+  entityName: string;
+  entityLabel: string;
+  entityId: string;
+  fieldName: string | null;
+  oldValue: string | null;
+  newValue: string | null;
+  sourceModule: string;
+  sourceModuleLabel: string;
+  correlationId: string | null;
+  systemGenerated: boolean;
+  metadata: Record<string, unknown> | null;
+  ipAddress: string | null;
+  browserClient: string | null;
+  device: string | null;
+};
+
+export type AuditHistoryListResult = {
+  entries: AuditHistoryEntryView[];
+  totalCount: number;
+  hasMore: boolean;
+  pageSize: number;
+  offset: number;
+};
+
+export type AuditHistoryFilterOptions = {
+  operations: Array<{ code: string; label: string }>;
+  entities: Array<{ code: string; label: string }>;
+  users: Array<{ id: string; name: string }>;
+};
+
+export type AuditHistoryDetailView = AuditHistoryEntryView & {
+  changedByUserId: string | null;
+  requestId: string | null;
+  relatedChanges: AuditHistoryEntryView[];
+};

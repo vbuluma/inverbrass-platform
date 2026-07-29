@@ -11,6 +11,18 @@
 
 import type { CurrentBusinessContext } from "@/core/auth/types";
 import {
+  AUDIT_ENTITY_NAMES,
+  AUDIT_OPERATIONS,
+  AUDIT_SOURCE_MODULES,
+  createAuditService,
+} from "@/core/audit";
+import {
+  buildTimelineEventFromContext,
+  createPartyTimelineService,
+  PARTY_TIMELINE_EVENT_CATEGORIES,
+  PARTY_TIMELINE_EVENT_TYPES,
+} from "@/core/party-timeline";
+import {
   GENDER_OPTIONS,
   PARTY_STATUS_CODES,
   PARTY_TYPE_CODES,
@@ -28,6 +40,7 @@ import {
   isPartyTypeCode,
 } from "@/modules/party/services/party-rules";
 import { createPartyRoleService } from "@/modules/party/services/party-role-service";
+import { recordPartyEntityAudit } from "@/modules/party/services/party-audit-helper";
 import type {
   PartyDashboardView,
   PartyDetailView,
@@ -45,7 +58,9 @@ export class PartyService {
     private readonly individualProfileRepository = createIndividualProfileRepository(),
     private readonly organizationProfileRepository = createOrganizationProfileRepository(),
     private readonly referenceRepository = createPartyReferenceRepository(),
-    private readonly partyRoleService = createPartyRoleService()
+    private readonly partyRoleService = createPartyRoleService(),
+    private readonly timelineService = createPartyTimelineService(),
+    private readonly auditService = createAuditService()
   ) {}
 
   async getRegistrationCatalogues(): Promise<PartyRegistrationCatalogues> {
@@ -226,6 +241,15 @@ export class PartyService {
       );
     }
 
+    const individualBefore =
+      partyRow.partyTypeCode === PARTY_TYPE_CODES.INDIVIDUAL
+        ? await this.individualProfileRepository.findByPartyId(partyId)
+        : null;
+    const organizationBefore =
+      partyRow.partyTypeCode === PARTY_TYPE_CODES.ORGANIZATION
+        ? await this.organizationProfileRepository.findByPartyId(partyId)
+        : null;
+
     await this.partyRepository.updateById(context.businessId, partyId, {
       displayName: parsed.data.displayName,
       notes: parsed.data.notes?.trim() || null,
@@ -298,6 +322,55 @@ export class PartyService {
         website: parsed.data.website?.trim() || null,
       });
     }
+
+    await recordPartyEntityAudit(this.auditService, context, {
+      partyId,
+      entityName: AUDIT_ENTITY_NAMES.PARTY,
+      entityId: partyId,
+      operation: AUDIT_OPERATIONS.UPDATE,
+      sourceModule: AUDIT_SOURCE_MODULES.PARTY_MANAGEMENT,
+      before: {
+        displayName: partyRow.displayName,
+        notes: partyRow.notes,
+        ...(individualBefore
+          ? {
+              dateOfBirth: individualBefore.dateOfBirth,
+              gender: individualBefore.gender,
+              preferredLanguageCode: individualBefore.preferredLanguageCode,
+            }
+          : {}),
+        ...(organizationBefore
+          ? {
+              registrationNumber: organizationBefore.registrationNumber,
+              taxNumber: organizationBefore.taxNumber,
+              industryCode: organizationBefore.industryCode,
+              organizationTypeCode: organizationBefore.organizationTypeCode,
+              website: organizationBefore.website,
+            }
+          : {}),
+      },
+      after: {
+        displayName: parsed.data.displayName,
+        notes: parsed.data.notes?.trim() || null,
+        ...(partyRow.partyTypeCode === PARTY_TYPE_CODES.INDIVIDUAL
+          ? {
+              dateOfBirth: parsed.data.dateOfBirth?.trim() || null,
+              gender: parsed.data.gender?.trim() || null,
+              preferredLanguageCode:
+                parsed.data.preferredLanguageCode?.trim() || null,
+            }
+          : {}),
+        ...(partyRow.partyTypeCode === PARTY_TYPE_CODES.ORGANIZATION
+          ? {
+              registrationNumber: parsed.data.registrationNumber?.trim() || null,
+              taxNumber: parsed.data.taxNumber?.trim() || null,
+              industryCode: parsed.data.industryCode,
+              organizationTypeCode: parsed.data.organizationTypeCode,
+              website: parsed.data.website?.trim() || null,
+            }
+          : {}),
+      },
+    });
 
     return this.getParty(context, partyId);
   }
@@ -388,6 +461,40 @@ export class PartyService {
       deletedAt,
       updatedBy: context.platformUserId,
     });
+
+    const operation =
+      nextStatus === PARTY_STATUS_CODES.ACTIVE
+        ? AUDIT_OPERATIONS.ACTIVATE
+        : nextStatus === PARTY_STATUS_CODES.ARCHIVED
+          ? AUDIT_OPERATIONS.ARCHIVE
+          : AUDIT_OPERATIONS.DEACTIVATE;
+
+    await recordPartyEntityAudit(this.auditService, context, {
+      partyId,
+      entityName: AUDIT_ENTITY_NAMES.PARTY,
+      entityId: partyId,
+      operation,
+      sourceModule: AUDIT_SOURCE_MODULES.PARTY_MANAGEMENT,
+      before: { statusCode: partyRow.statusCode },
+      after: { statusCode: nextStatus },
+    });
+
+    const statusLabel = status.name ?? nextStatus;
+    await this.timelineService.recordEvent(
+      buildTimelineEventFromContext(context, {
+        partyId,
+        eventType: PARTY_TIMELINE_EVENT_TYPES.STATUS_CHANGED,
+        eventCategory: PARTY_TIMELINE_EVENT_CATEGORIES.LIFECYCLE,
+        summary: `Status changed to ${statusLabel}`,
+        description: `Previous status was ${partyRow.statusCode}.`,
+        referenceEntity: "party",
+        referenceId: partyId,
+        metadata: {
+          previousStatus: partyRow.statusCode,
+          newStatus: nextStatus,
+        },
+      })
+    );
 
     return this.getParty(context, partyId);
   }
