@@ -12,6 +12,7 @@ import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { getDb } from "@/db/client";
 import * as schema from "@/db/schema";
 import { requiredDocument } from "@/db/schema/required-document";
+import { requiredIdentifier } from "@/db/schema/required-identifier";
 import { regulatoryRuleSet } from "@/db/schema/regulatory-rule-set";
 
 type DbClient = PostgresJsDatabase<typeof schema>;
@@ -85,6 +86,29 @@ export class RegulatoryConfigRepository {
         )
       )
       .orderBy(asc(requiredDocument.displayOrder), asc(requiredDocument.documentTypeCode));
+  }
+
+  async listRequiredIdentifiersByRuleSetCode(
+    ruleSetCode: string,
+    dbClient: DbClient = getDb()
+  ) {
+    return dbClient
+      .select({
+        identifierTypeCode: requiredIdentifier.identifierTypeCode,
+        requirementLevel: requiredIdentifier.requirementLevel,
+        displayOrder: requiredIdentifier.displayOrder,
+      })
+      .from(requiredIdentifier)
+      .where(
+        and(
+          eq(requiredIdentifier.ruleSetCode, ruleSetCode),
+          eq(requiredIdentifier.isActive, true)
+        )
+      )
+      .orderBy(
+        asc(requiredIdentifier.displayOrder),
+        asc(requiredIdentifier.identifierTypeCode)
+      );
   }
 }
 

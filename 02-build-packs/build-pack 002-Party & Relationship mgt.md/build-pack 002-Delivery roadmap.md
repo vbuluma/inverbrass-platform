@@ -295,7 +295,29 @@ Quick Actions
 
 ---
 
-# IP-013 — Approval Workflow
+# IP-013 — Identity & Regulatory Information
+
+Deliver
+
+ENG-003j Identity & Regulatory Identification Engine
+
+`party_identity_identifier` master data entity
+
+ENG-003b `identifier_type` + `required_identifier` configuration
+
+Identity & Regulatory workspace tab
+
+Onboarding guided step (Registration → Identity & Regulatory → Documents)
+
+Timeline + Audit integration
+
+Verification provider abstraction (interfaces only)
+
+OCR comparison abstraction (interfaces only)
+
+---
+
+# IP-014 — Approval Workflow
 
 Deliver
 
@@ -313,7 +335,7 @@ Integrates with your Workflow Engine.
 
 ---
 
-# IP-014 — AI Insights
+# IP-015 — AI Insights
 
 Deliver
 

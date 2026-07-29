@@ -45,6 +45,7 @@ export const AUDIT_ENTITY_NAMES = {
   PARTY_GROUP_MEMBER: "party_group_member",
   PARTY_TIMELINE: "party_timeline",
   PARTY_COMMUNICATION_PREFERENCE: "party_communication_preference",
+  PARTY_IDENTITY_IDENTIFIER: "party_identity_identifier",
 } as const;
 
 export type AuditEntityName =
@@ -64,6 +65,7 @@ export const AUDIT_ENTITY_LABELS: Record<AuditEntityName, string> = {
   party_group_member: "Group Member",
   party_timeline: "Timeline",
   party_communication_preference: "Communication & Consent Preferences",
+  party_identity_identifier: "Identity Identifier",
 };
 
 export const AUDIT_SOURCE_MODULES = {
@@ -77,6 +79,7 @@ export const AUDIT_SOURCE_MODULES = {
   PARTY_GROUPS: "party_groups",
   PARTY_TIMELINE: "party_timeline",
   PARTY_COMMUNICATION_PREFERENCES: "party_communication_preferences",
+  PARTY_IDENTITY_REGULATORY: "party_identity_regulatory",
 } as const;
 
 export type AuditSourceModule =
@@ -93,6 +96,7 @@ export const AUDIT_SOURCE_MODULE_LABELS: Record<AuditSourceModule, string> = {
   party_groups: "Party Groups",
   party_timeline: "Party Timeline",
   party_communication_preferences: "Party Communication & Consent Preferences",
+  party_identity_regulatory: "Party Identity & Regulatory",
 };
 
 export const AUDIT_DEFAULT_PAGE_SIZE = 25;

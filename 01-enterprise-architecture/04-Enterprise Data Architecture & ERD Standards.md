@@ -163,6 +163,20 @@ ________________________________________
 
 **Implementation location:** `03-platform/src/modules/party/services/organizational-unit-service.ts`, `organizational-unit-repository.ts`, Party Workspace **Organization Structure** tab.
 
+### ENG-003j – Identity & Regulatory Identification Engine
+
+**Purpose:** Capture official regulatory identifiers (National ID, KRA PIN, VAT Number, Business Registration Number, etc.) as Party master data.
+
+**Canonical entity:** `party_identity_identifier` (tenant-scoped, soft-deletable, optimistic locking via `version`).
+
+**Configuration entities (ENG-003b):** `identifier_type`, `required_identifier` — no country-specific identifier types hardcoded in consumer modules.
+
+**Evidence separation:** `linked_document_id` references `party_document` for uploaded evidence. Document binaries and metadata remain owned by the Document & Compliance capability — never duplicated on the identifier row.
+
+**Security:** Identifier values shall be masked in UI by default. Full-value viewing requires explicit authorization.
+
+**Implementation location:** `03-platform/src/core/identity-regulatory/`, Party Workspace **Identity & Regulatory** tab, onboarding step `/parties/[partyId]/onboarding/identity-regulatory`.
+
 ________________________________________
 Architect's Recommendation
 This document should be treated as the enterprise data standard, not as the implementation database design.

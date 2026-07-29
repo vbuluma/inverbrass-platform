@@ -11,7 +11,12 @@ export function partyCreatedNextActions(
   partyTypeCode: PartyTypeCode
 ): PlatformActionLink[] {
   const workspace = `/parties/${partyId}`;
+  const onboardingIdentity = `/parties/${partyId}/onboarding/identity-regulatory`;
   const base: PlatformActionLink[] = [
+    {
+      label: "Capture Identity & Regulatory",
+      href: onboardingIdentity,
+    },
     { label: "Create Contact", href: `${workspace}?tab=contacts` },
     { label: "Create Address", href: `${workspace}?tab=addresses` },
     { label: "Upload Documents", href: `${workspace}?tab=documents` },
@@ -50,6 +55,26 @@ export function documentUploadedNextActions(partyId: string): PlatformActionLink
     { label: "Verify Document", href: workspace },
     { label: "Upload Another", href: workspace },
     { label: "Return to Party", href: `/parties/${partyId}`, variant: "outline" },
+  ];
+}
+
+export function identityRegulatoryOnboardingNextActions(
+  partyId: string
+): PlatformActionLink[] {
+  return [
+    {
+      label: "Continue to Documents",
+      href: `/parties/${partyId}?tab=documents`,
+    },
+    {
+      label: "Open Identity & Regulatory Tab",
+      href: `/parties/${partyId}?tab=identity-regulatory`,
+    },
+    {
+      label: "Finish — Go to Party Workspace",
+      href: `/parties/${partyId}`,
+      variant: "outline",
+    },
   ];
 }
 

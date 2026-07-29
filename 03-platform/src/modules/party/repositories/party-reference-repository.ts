@@ -17,6 +17,7 @@ import { organizationalUnitType } from "@/db/schema/organizational-unit-type";
 import { relationshipType } from "@/db/schema/relationship-type";
 import { addressType } from "@/db/schema/address-type";
 import { documentType } from "@/db/schema/document-type";
+import { identifierType } from "@/db/schema/identifier-type";
 import { contactType } from "@/db/schema/contact-type";
 import { business } from "@/db/schema/business";
 import { country } from "@/db/schema/country";
@@ -337,6 +338,27 @@ export class PartyReferenceRepository {
       .select({ code: documentType.code, name: documentType.name })
       .from(documentType)
       .where(and(eq(documentType.code, code), eq(documentType.isActive, true)))
+      .limit(1);
+
+    return row ?? null;
+  }
+
+  async listActiveIdentifierTypes(dbClient: DbClient = getDb()) {
+    return dbClient
+      .select({
+        code: identifierType.code,
+        name: identifierType.name,
+      })
+      .from(identifierType)
+      .where(eq(identifierType.isActive, true))
+      .orderBy(asc(identifierType.displayOrder), asc(identifierType.name));
+  }
+
+  async findIdentifierTypeByCode(code: string, dbClient: DbClient = getDb()) {
+    const [row] = await dbClient
+      .select({ code: identifierType.code, name: identifierType.name })
+      .from(identifierType)
+      .where(and(eq(identifierType.code, code), eq(identifierType.isActive, true)))
       .limit(1);
 
     return row ?? null;

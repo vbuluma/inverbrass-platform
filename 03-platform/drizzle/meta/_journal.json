@@ -183,6 +183,20 @@
       "when": 1784564588826,
       "tag": "0025_eng003b_consent_sources_and_events",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1784564588827,
+      "tag": "0026_eng003b_required_identifiers",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1784564588828,
+      "tag": "0027_bp002_ip013_party_identity_identifier",
+      "breakpoints": true
     }
   ]
 }

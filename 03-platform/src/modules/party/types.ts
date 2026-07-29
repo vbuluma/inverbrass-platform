@@ -677,3 +677,70 @@ export type PartyCommunicationPreferencesPanelView =
   import("@/core/communication-preference/types").CommunicationPreferencePanelView & {
     consentEvents: import("@/core/consent/services/consent-engine-service").ConsentEventView[];
   };
+
+export type PartyIdentityRegulatorySummaryView = {
+  countryCode: string;
+  countryName: string;
+  ruleSetCode: string;
+  ruleSetName: string;
+  verificationPercent: number;
+  requiredCount: number;
+  capturedCount: number;
+  verifiedCount: number;
+  missingCount: number;
+  expiredCount: number;
+};
+
+export type PartyIdentifierRequirementView = {
+  identifierTypeCode: string;
+  identifierTypeName: string;
+  isRequired: boolean;
+  displayStatus: string;
+  capturedIdentifierId: string | null;
+  maskedValue: string | null;
+  expiryDate: string | null;
+  verificationStatus: string | null;
+};
+
+export type PartyCapturedIdentifierView = {
+  id: string;
+  identifierTypeCode: string;
+  identifierTypeName: string;
+  maskedValue: string;
+  fullValueAvailable: boolean;
+  verificationStatus: string;
+  verificationMethod: string | null;
+  linkedDocumentId: string | null;
+  linkedDocumentName: string | null;
+  expiryDate: string | null;
+  statusCode: string;
+  primaryIdentifier: boolean;
+  version: number;
+};
+
+export type PartyIdentifierVerificationView = {
+  identifierId: string;
+  identifierTypeName: string;
+  maskedValue: string;
+  verificationStatus: string;
+  verificationMethod: string;
+  verifiedByDisplay: string | null;
+  verifiedAt: string | null;
+  linkedDocumentName: string | null;
+};
+
+export type PartyIdentityRegulatoryPanelView = {
+  summary: PartyIdentityRegulatorySummaryView;
+  requiredIdentifiers: PartyIdentifierRequirementView[];
+  capturedIdentifiers: PartyCapturedIdentifierView[];
+  verifications: PartyIdentifierVerificationView[];
+  availableIdentifierTypes: ReferenceOption[];
+  availableDocuments: Array<{
+    id: string;
+    name: string;
+    documentTypeCode: string;
+  }>;
+  canViewFullValues: boolean;
+  viewFullPermissionCode: string;
+  loadError?: string | null;
+};

@@ -50,6 +50,7 @@ Every reusable processing capability is owned by exactly one Core Platform Engin
 | **ENG-003g** | Business Presence Engine | Countries and legal jurisdictions in which a business operates | Planned |
 | **ENG-003h** | Platform Performance & Scalability Engine | Caching, queues, rate limiting, observability, circuit breakers | Planned |
 | **ENG-003i** | Consent Engine | Event-driven regulatory consent capture; updates communication preferences read model | Implemented |
+| **ENG-003j** | Identity & Regulatory Identification Engine | Captures and verifies official regulatory identifiers (master data); consumes ENG-003b configuration | Implemented (BP-002) |
 
 ### Layer 2 – Business Processing Engines
 

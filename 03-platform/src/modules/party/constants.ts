@@ -176,6 +176,11 @@ export const PARTY_WORKSPACE_TABS = [
     available: true,
   },
   { id: "groups", label: "Groups & Membership", available: true },
+  {
+    id: "identity-regulatory",
+    label: "Identity & Regulatory",
+    available: true,
+  },
   { id: "timeline", label: "Party Timeline & Activity History", available: true },
   {
     id: "communication-preferences",

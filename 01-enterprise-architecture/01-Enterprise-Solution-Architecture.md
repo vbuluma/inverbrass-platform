@@ -154,6 +154,7 @@ Product Design Principles, containing the philosophies  defined below:
 | **ENG-003g** | Business Presence Engine | Countries and legal jurisdictions in which a business operates |
 | **ENG-003h** | Platform Performance & Scalability Engine | Caching, queues, observability, circuit breakers |
 | **ENG-003i** | Consent Engine | Event-driven regulatory consent capture |
+| **ENG-003j** | Identity & Regulatory Identification Engine | Captures, validates, and verifies official regulatory identifiers (master data) |
 | **ENG-004** | Rules Engine | Executes deterministic business rules |
 | **ENG-005** | Workflow Engine | Maker-checker, approvals |
 | **ENG-006** | Payment Engine | Cash, M-Pesa, cards, credit, split payments |
@@ -263,6 +264,30 @@ Channel → Consent Engine → party_consent_event + party_communication_prefere
 - Manual consent entry permitted only for **Branch**
 
 **Implementation:** `03-platform/src/core/consent/services/consent-engine-service.ts`
+
+### ENG-003j — Identity & Regulatory Identification Engine
+
+Captures official regulatory identifiers belonging to a Party as **master data**. Uploaded documents remain **evidence only** (ENG-015a). Configuration of required identifier types, applicability, and validation rules is owned by **ENG-003b**.
+
+```
+ENG-003b (configuration) → ENG-003j (captured identifiers) → Party Module (consumer)
+                                                      ↘ party_document (evidence link)
+```
+
+**Core responsibilities**
+
+1. Resolve required identifiers from ENG-003b rule sets (country, party type, industry)
+2. Store, update, and soft-delete captured identifier values
+3. Validate uniqueness per business tenant and identifier type
+4. Mask sensitive values; authorize full-value viewing via permission
+5. Link uploaded document evidence without duplicating document metadata
+6. Manual verification today; verification provider abstraction for future government/partner APIs
+7. OCR comparison interface (no implementation in IP-013)
+8. Emit timeline events and audit records on all mutations
+
+**Canonical entity:** `party_identity_identifier`
+
+**Implementation location:** `03-platform/src/core/identity-regulatory/`
 
 
 |                                         |                                                                                                                                                                                                                                                                                                                                                                    |

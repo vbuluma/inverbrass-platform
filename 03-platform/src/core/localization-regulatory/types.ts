@@ -21,6 +21,12 @@ export type RequiredDocumentConfig = {
   displayOrder: number;
 };
 
+export type RequiredIdentifierConfig = {
+  identifierTypeCode: string;
+  requirementLevel: "REQUIRED" | "OPTIONAL";
+  displayOrder: number;
+};
+
 /** @deprecated Use RequiredDocumentConfig */
 export type RegulatoryDocumentRequirementConfig = RequiredDocumentConfig;
 
@@ -31,4 +37,13 @@ export type ResolvedRegulatoryRuleSet = {
   partyTypeCode: string;
   industryCode: string | null;
   requirements: RequiredDocumentConfig[];
+};
+
+export type ResolvedIdentifierRuleSet = {
+  code: string;
+  name: string;
+  countryCode: string;
+  partyTypeCode: string;
+  industryCode: string | null;
+  requirements: RequiredIdentifierConfig[];
 };

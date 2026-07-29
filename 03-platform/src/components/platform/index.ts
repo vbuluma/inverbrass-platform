@@ -49,6 +49,7 @@ export {
   organizationCreatedNextActions,
   partyCreatedNextActions,
   documentUploadedNextActions,
+  identityRegulatoryOnboardingNextActions,
   contactCreatedNextActions,
   addressCreatedNextActions,
   groupCreatedNextActions,

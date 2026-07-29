@@ -295,6 +295,15 @@ export const permissions: PermissionSeed[] = [
     "Export audit records.",
     420
   ),
+
+  // PartyManagement — Identity & Regulatory (IP-013)
+  permission(
+    "PartyManagement",
+    "PartyIdentityIdentifier",
+    "Read",
+    "View unmasked regulatory identifier values (full value access).",
+    430
+  ),
 ];
 
 export function getPermissionActionCode(seed: PermissionSeed): string {

@@ -14,6 +14,7 @@
  * BP-002 / IP-010 – Party Timeline & Activity History
  * BP-002 / IP-011 – Enterprise Audit History
  * BP-002 / IP-012 – Party Communication & Consent Preferences
+ * BP-002 / IP-013 – Identity & Regulatory Information
  */
 
 "use client";
@@ -62,6 +63,7 @@ import { PartyAddressesPanel } from "@/modules/party/components/party-addresses-
 import { PartyOrganizationStructurePanel } from "@/modules/party/components/party-organization-structure-panel";
 import { PartyContactsPanel } from "@/modules/party/components/party-contacts-panel";
 import { PartyDocumentsPanel } from "@/modules/party/components/party-documents-panel";
+import { PartyIdentityRegulatoryPanel } from "@/modules/party/components/party-identity-regulatory-panel";
 import { PartyGroupsPanel } from "@/modules/party/components/party-groups-panel";
 import { PartyAuditHistoryPanel } from "@/modules/party/components/party-audit-history-panel";
 import { PartyCommunicationPreferencesPanel } from "@/modules/party/components/party-communication-preferences-panel";
@@ -81,6 +83,7 @@ import type {
   PartyDetailView,
   PartyDocumentsPanelView,
   PartyGroupsPanelView,
+  PartyIdentityRegulatoryPanelView,
   PartyTimelinePanelView,
   PartyAuditHistoryPanelView,
   PartyCommunicationPreferencesPanelView,
@@ -99,6 +102,7 @@ type PartyWorkspaceProps = {
   relationships: PartyRelationshipsPanelView;
   documents: PartyDocumentsPanelView;
   groups: PartyGroupsPanelView;
+  identityRegulatory: PartyIdentityRegulatoryPanelView;
   timeline: PartyTimelinePanelView;
   auditHistory: PartyAuditHistoryPanelView;
   communicationPreferences: PartyCommunicationPreferencesPanelView;
@@ -144,6 +148,7 @@ export function PartyWorkspace({
   relationships,
   documents,
   groups,
+  identityRegulatory,
   timeline,
   auditHistory,
   communicationPreferences,
@@ -743,6 +748,11 @@ export function PartyWorkspace({
         <PartyDocumentsPanel partyId={party.id} initialData={documents} />
       ) : activeTab === "groups" ? (
         <PartyGroupsPanel partyId={party.id} initialData={groups} />
+      ) : activeTab === "identity-regulatory" ? (
+        <PartyIdentityRegulatoryPanel
+          partyId={party.id}
+          initialData={identityRegulatory}
+        />
       ) : activeTab === "timeline" ? (
         <PartyTimelinePanel partyId={party.id} initialData={timeline} />
       ) : activeTab === "communication-preferences" ? (

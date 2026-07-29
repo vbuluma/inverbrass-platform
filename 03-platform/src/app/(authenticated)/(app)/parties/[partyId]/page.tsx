@@ -16,6 +16,7 @@ import { listOrganizationStructureAction } from "@/modules/party/actions/organiz
 import { listPartyAddressesAction } from "@/modules/party/actions/party-address-actions";
 import { listPartyContactsAction } from "@/modules/party/actions/party-contact-actions";
 import { listPartyDocumentsAction } from "@/modules/party/actions/party-document-actions";
+import { listPartyIdentityRegulatoryAction } from "@/modules/party/actions/party-identity-regulatory-actions";
 import { listPartyGroupsAction } from "@/modules/party/actions/party-group-actions";
 import { listPartyAuditHistoryAction } from "@/modules/party/actions/party-audit-actions";
 import { getPartyCommunicationPreferencesAction } from "@/modules/party/actions/party-communication-preference-actions";
@@ -23,6 +24,7 @@ import { listPartyTimelineAction } from "@/modules/party/actions/party-timeline-
 import { listPartyRelationshipsAction } from "@/modules/party/actions/party-relationship-actions";
 import { listPartyRolesAction } from "@/modules/party/actions/party-role-actions";
 import { PartyWorkspace } from "@/modules/party/components/party-workspace";
+import { buildEmptyIdentityRegulatoryPanelView } from "@/modules/party/services/party-identity-regulatory-fallback";
 
 type PageProps = {
   params: Promise<{ partyId: string }>;
@@ -45,6 +47,7 @@ export default async function PartyWorkspacePage({
     relationshipsResult,
     documentsResult,
     groupsResult,
+    identityRegulatoryResult,
     timelineResult,
     auditHistoryResult,
     communicationPreferencesResult,
@@ -58,6 +61,7 @@ export default async function PartyWorkspacePage({
     listPartyRelationshipsAction(partyId),
     listPartyDocumentsAction(partyId),
     listPartyGroupsAction(partyId),
+    listPartyIdentityRegulatoryAction(partyId),
     listPartyTimelineAction(partyId),
     listPartyAuditHistoryAction(partyId),
     getPartyCommunicationPreferencesAction(partyId),
@@ -169,6 +173,10 @@ export default async function PartyWorkspacePage({
     );
   }
 
+  const identityRegulatory = identityRegulatoryResult.success
+    ? identityRegulatoryResult.data
+    : buildEmptyIdentityRegulatoryPanelView(identityRegulatoryResult.error.message);
+
   if (!timelineResult.success) {
     return (
       <main className="mx-auto max-w-3xl px-4 py-8">
@@ -216,6 +224,7 @@ export default async function PartyWorkspacePage({
       relationships={relationshipsResult.data}
       documents={documentsResult.data}
       groups={groupsResult.data}
+      identityRegulatory={identityRegulatory}
       timeline={timelineResult.data}
       auditHistory={auditHistoryResult.data}
       communicationPreferences={communicationPreferencesResult.data}

@@ -36,6 +36,8 @@ import { seedGroupMembershipRoles } from "@/db/seeds/group-membership-roles-seed
 import { seedGroupTypes } from "@/db/seeds/group-types-seed";
 import { seedConsentSources } from "@/db/seeds/consent-sources-seed";
 import { seedRegulatoryDocumentRequirements } from "@/db/seeds/regulatory-document-requirements-seed";
+import { seedIdentifierTypes } from "@/db/seeds/identifier-types-seed";
+import { seedRequiredIdentifiers } from "@/db/seeds/required-identifiers-seed";
 import { seedVerificationMethods } from "@/db/seeds/verification-methods-seed";
 import { seedSecurityQuestions } from "@/db/seeds/security-questions-seed";
 
@@ -169,6 +171,18 @@ async function runSeed() {
     const regulatoryResults = await seedRegulatoryDocumentRequirements(db);
     console.log(
       `requiredDocument: inserted=${regulatoryResults.inserted}, updated=${regulatoryResults.updated}, skipped=${regulatoryResults.skipped}`
+    );
+
+    console.log("Seeding identifier types...");
+    const identifierTypeResults = await seedIdentifierTypes(db);
+    console.log(
+      `identifierTypes: inserted=${identifierTypeResults.inserted}, updated=${identifierTypeResults.updated}, skipped=${identifierTypeResults.skipped}`
+    );
+
+    console.log("Seeding ENG-003b required identifiers...");
+    const requiredIdentifierResults = await seedRequiredIdentifiers(db);
+    console.log(
+      `requiredIdentifier: inserted=${requiredIdentifierResults.inserted}, updated=${requiredIdentifierResults.updated}, skipped=${requiredIdentifierResults.skipped}`
     );
 
     console.log("Seeding ENG-003b consent sources...");
