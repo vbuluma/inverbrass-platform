@@ -11,6 +11,7 @@ import { eq } from "drizzle-orm";
 import { createAuthService } from "@/core/auth/services/auth-service";
 import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { resolveUserDisplayName } from "@/core/auth/utils/resolve-user-display-name";
+import { createIndustryExperienceService } from "@/core/industry-experience";
 import type { PlatformChromeContext } from "@/lib/navigation/types";
 import { getDb } from "@/db/client";
 import { business } from "@/db/schema/business";
@@ -83,6 +84,18 @@ export class PlatformNavigationService {
       businessStatusCode = row?.statusCode ?? null;
     }
 
+    let navLabelOverrides: PlatformChromeContext["navLabelOverrides"];
+    if (currentContext) {
+      const industryExperience = createIndustryExperienceService();
+      const industryContext =
+        await industryExperience.getBusinessIndustryContext(
+          currentContext.businessId
+        );
+      navLabelOverrides = {
+        products: industryContext.offeringCatalogueNavLabel,
+      };
+    }
+
     return {
       mode: "platform",
       userDisplayName: buildDisplayName(
@@ -99,6 +112,7 @@ export class PlatformNavigationService {
       canSwitchBusiness,
       businessCount,
       showSidebar: false,
+      navLabelOverrides,
     };
   }
 }

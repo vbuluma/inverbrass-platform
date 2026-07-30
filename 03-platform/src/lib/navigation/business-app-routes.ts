@@ -7,6 +7,7 @@ export const BUSINESS_APP_PREFIXES = [
   "/dashboard",
   "/parties",
   "/groups",
+  "/products",
   "/settings",
 ];
 

@@ -11,6 +11,7 @@ import type { BreadcrumbItem } from "@/lib/navigation/types";
 const STATIC_SEGMENTS: Record<string, string> = {
   dashboard: "Dashboard",
   parties: "Parties",
+  products: "Products",
   new: "Registration",
   settings: "Settings",
   setup: "Business Setup",

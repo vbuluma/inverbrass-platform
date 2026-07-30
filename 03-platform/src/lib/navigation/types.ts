@@ -36,4 +36,6 @@ export type PlatformChromeContext = {
   canSwitchBusiness: boolean;
   businessCount: number;
   showSidebar: boolean;
+  /** ENG-003k — override static nav labels per business industry edition */
+  navLabelOverrides?: Partial<Record<string, string>>;
 };

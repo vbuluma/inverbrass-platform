@@ -34,7 +34,11 @@ export function PlatformAppShell({ context, children }: PlatformAppShellProps) {
       />
 
       <div className="flex flex-1">
-        {context.showSidebar ? <PlatformSidebarDesktop /> : null}
+        {context.showSidebar ? (
+          <PlatformSidebarDesktop
+            navLabelOverrides={context.navLabelOverrides}
+          />
+        ) : null}
 
         <div className="platform-workspace-main flex min-w-0 flex-1 flex-col shadow-[inset_1px_0_0_0_rgba(0,0,0,0.04)]">
           {context.showSidebar ? (
@@ -58,6 +62,7 @@ export function PlatformAppShell({ context, children }: PlatformAppShellProps) {
             <PlatformSidebar
               mobile
               onNavigate={() => setMobileNavOpen(false)}
+              navLabelOverrides={context.navLabelOverrides}
             />
           </SheetContent>
         </Sheet>

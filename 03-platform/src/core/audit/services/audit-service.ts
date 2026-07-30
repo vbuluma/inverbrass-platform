@@ -220,6 +220,90 @@ export class AuditService {
     };
   }
 
+  async listByEntityId(
+    businessId: string,
+    entityName: string,
+    entityId: string,
+    filters: AuditHistoryListFilters = {}
+  ): Promise<AuditHistoryListResult> {
+    const pageSize = filters.limit ?? AUDIT_DEFAULT_PAGE_SIZE;
+    const offset = filters.offset ?? 0;
+    const listFilters = { ...filters, limit: pageSize, offset };
+
+    const [rows, totalCount] = await Promise.all([
+      this.repository.listByEntityId(
+        businessId,
+        entityName,
+        entityId,
+        listFilters
+      ),
+      this.repository.countByEntityId(businessId, entityName, entityId, {
+        operation: filters.operation,
+        entityName: filters.entityName,
+        changedBy: filters.changedBy,
+        search: filters.search,
+        dateFrom: filters.dateFrom,
+        dateTo: filters.dateTo,
+      }),
+    ]);
+
+    const userIds = rows
+      .map((row) => row.changedBy)
+      .filter((id): id is string => Boolean(id));
+
+    const userNames = await this.loadUserNames(userIds);
+    const entries = rows.map((row) => this.toEntryView(row, userNames));
+
+    return {
+      entries,
+      totalCount,
+      hasMore: offset + entries.length < totalCount,
+      pageSize,
+      offset,
+    };
+  }
+
+  async getFilterOptionsByEntityId(
+    businessId: string,
+    entityName: string,
+    entityId: string
+  ): Promise<AuditHistoryFilterOptions> {
+    const [operations, entities, userIds] = await Promise.all([
+      this.repository.listDistinctOperationsByEntityId(
+        businessId,
+        entityName,
+        entityId
+      ),
+      this.repository.listDistinctEntitiesByEntityScope(
+        businessId,
+        entityName,
+        entityId
+      ),
+      this.repository.listDistinctUsersByEntityId(
+        businessId,
+        entityName,
+        entityId
+      ),
+    ]);
+
+    const userNames = await this.loadUserNames(userIds);
+
+    return {
+      operations: operations.map((code) => ({
+        code,
+        label: this.operationLabel(code),
+      })),
+      entities: entities.map((code) => ({
+        code,
+        label: this.entityLabel(code),
+      })),
+      users: userIds.map((id) => ({
+        id,
+        name: userNames.get(id) ?? id,
+      })),
+    };
+  }
+
   private operationLabel(code: string): string {
     return (
       AUDIT_OPERATION_LABELS[

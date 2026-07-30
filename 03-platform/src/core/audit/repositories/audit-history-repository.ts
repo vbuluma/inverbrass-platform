@@ -265,6 +265,163 @@ export class AuditHistoryRepository {
       .map((row) => row.changedBy)
       .filter((id): id is string => Boolean(id));
   }
+
+  private buildEntityListConditions(
+    businessId: string,
+    entityName: string,
+    entityId: string,
+    filters: AuditHistoryListFilters
+  ) {
+    const conditions = [
+      eq(auditHistory.businessId, businessId),
+      eq(auditHistory.entityName, entityName),
+      eq(auditHistory.entityId, entityId),
+    ];
+
+    if (filters.operation?.trim()) {
+      conditions.push(eq(auditHistory.operation, filters.operation.trim()));
+    }
+
+    if (filters.entityName?.trim()) {
+      conditions.push(
+        eq(auditHistory.entityName, filters.entityName.trim())
+      );
+    }
+
+    if (filters.changedBy?.trim()) {
+      conditions.push(eq(auditHistory.changedBy, filters.changedBy.trim()));
+    }
+
+    if (filters.dateFrom?.trim()) {
+      conditions.push(
+        gte(auditHistory.changedDateTime, new Date(filters.dateFrom.trim()))
+      );
+    }
+
+    if (filters.dateTo?.trim()) {
+      const end = new Date(filters.dateTo.trim());
+      end.setHours(23, 59, 59, 999);
+      conditions.push(lte(auditHistory.changedDateTime, end));
+    }
+
+    if (filters.search?.trim()) {
+      const term = `%${filters.search.trim()}%`;
+      conditions.push(
+        or(
+          ilike(auditHistory.fieldName, term),
+          ilike(auditHistory.oldValue, term),
+          ilike(auditHistory.newValue, term),
+          ilike(auditHistory.entityName, term),
+          ilike(auditHistory.operation, term)
+        )!
+      );
+    }
+
+    return and(...conditions);
+  }
+
+  async countByEntityId(
+    businessId: string,
+    entityName: string,
+    entityId: string,
+    filters: AuditHistoryListFilters = {},
+    dbClient: DbClient = getDb()
+  ) {
+    const [result] = await dbClient
+      .select({ value: count() })
+      .from(auditHistory)
+      .where(
+        this.buildEntityListConditions(businessId, entityName, entityId, filters)
+      );
+
+    return Number(result?.value ?? 0);
+  }
+
+  async listByEntityId(
+    businessId: string,
+    entityName: string,
+    entityId: string,
+    filters: AuditHistoryListFilters = {},
+    dbClient: DbClient = getDb()
+  ) {
+    const limit = filters.limit ?? AUDIT_DEFAULT_PAGE_SIZE;
+    const offset = filters.offset ?? 0;
+
+    return dbClient
+      .select()
+      .from(auditHistory)
+      .where(
+        this.buildEntityListConditions(businessId, entityName, entityId, filters)
+      )
+      .orderBy(desc(auditHistory.changedDateTime), desc(auditHistory.id))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async listDistinctOperationsByEntityId(
+    businessId: string,
+    entityName: string,
+    entityId: string,
+    dbClient: DbClient = getDb()
+  ) {
+    const rows = await dbClient
+      .selectDistinct({ operation: auditHistory.operation })
+      .from(auditHistory)
+      .where(
+        and(
+          eq(auditHistory.businessId, businessId),
+          eq(auditHistory.entityName, entityName),
+          eq(auditHistory.entityId, entityId)
+        )
+      )
+      .orderBy(auditHistory.operation);
+
+    return rows.map((row) => row.operation);
+  }
+
+  async listDistinctEntitiesByEntityScope(
+    businessId: string,
+    entityName: string,
+    entityId: string,
+    dbClient: DbClient = getDb()
+  ) {
+    const rows = await dbClient
+      .selectDistinct({ entityName: auditHistory.entityName })
+      .from(auditHistory)
+      .where(
+        and(
+          eq(auditHistory.businessId, businessId),
+          eq(auditHistory.entityName, entityName),
+          eq(auditHistory.entityId, entityId)
+        )
+      )
+      .orderBy(auditHistory.entityName);
+
+    return rows.map((row) => row.entityName);
+  }
+
+  async listDistinctUsersByEntityId(
+    businessId: string,
+    entityName: string,
+    entityId: string,
+    dbClient: DbClient = getDb()
+  ) {
+    const rows = await dbClient
+      .selectDistinct({ changedBy: auditHistory.changedBy })
+      .from(auditHistory)
+      .where(
+        and(
+          eq(auditHistory.businessId, businessId),
+          eq(auditHistory.entityName, entityName),
+          eq(auditHistory.entityId, entityId)
+        )
+      )
+      .orderBy(auditHistory.changedBy);
+
+    return rows
+      .map((row) => row.changedBy)
+      .filter((id): id is string => Boolean(id));
+  }
 }
 
 export function createAuditHistoryRepository(): AuditHistoryRepository {

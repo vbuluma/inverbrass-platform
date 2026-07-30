@@ -44,6 +44,10 @@ export { requiredDocument, regulatoryDocumentRequirement } from "./required-docu
 export { identifierType } from "./identifier-type";
 export { requiredIdentifier } from "./required-identifier";
 export { partyIdentityIdentifier } from "./party-identity-identifier";
+export { productType } from "./product-type";
+export { productStatus } from "./product-status";
+export { product } from "./product";
+export { productTimeline } from "./product-timeline";
 export { verificationMethod } from "./verification-method";
 export { paymentChannel } from "./payment-channel";
 export { paymentMethod } from "./payment-method";

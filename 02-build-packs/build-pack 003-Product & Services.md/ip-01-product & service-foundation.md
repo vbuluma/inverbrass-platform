@@ -23,6 +23,8 @@ It is not a sales module.
 
 It is the authoritative source of product master data that every future Build Pack consumes.
 
+**Offering Engine (internal architecture):** Developers refer to this capability as the **Offering Engine** — the generic master record for products, services, subscriptions, loans, memberships, courses, rental units, and every other business offering. Database tables retain the frozen `product_*` naming from IP-001. Users never see "Offering"; they see industry-native labels ("Loan Products", "Medical Services", "Courses") resolved by **ENG-003k Industry Experience Engine**.
+
 **Industry Edition integration:** The foundation supports all product types in the data model. The Industry Experience Engine (ENG-003k) controls which types appear in the UI for each edition. Examples:
 
 | Industry Edition | Product types shown | Hidden |
@@ -181,6 +183,9 @@ BR-006	Active products cannot be deleted.
 BR-007	Duplicate products are not allowed.
 BR-008	Existing migrated products retain their original identifiers.
 11. User Interface
+
+**Presentation principle:** Same Offering Engine; industry-native labels via ENG-003k. Navigation shows edition-specific catalogue names (e.g. "Loan Products" for Banking, "Rental Units" for Property). Database field `owner_party_id` is labelled **Responsible Business Owner** in the UI — Delivery Owner, Reporting Owner, and Operational Owner arrive in IP-013.
+
 Dashboard
 
 Displays:
@@ -188,8 +193,11 @@ Displays:
 Total Products
 Active Products
 Draft Products
-Retired Products
+Archived Products
+Discontinued Products
+By Product Type (counts per visible type)
 Recently Updated
+Quick Actions (Create, Search)
 Product List
 
 Supports:
@@ -205,27 +213,29 @@ Code
 Name
 Type
 Status
-Owner
+Responsible Business Owner
 Updated
 Create Product
 
-Sections
+Sections (grouped cards — not one long form)
 
-Basic Information
-Product Name
-Product Code
-Description
-Product Type
-Ownership
-Product Owner
-Business Sponsor
+Identity — Product Name, Product Code, Short Name, Description, Product Type
+Ownership — Responsible Business Owner
+Lifecycle — Status, Default Currency, Launch Date, Retirement Date
+Capabilities — Sellable, Purchasable, Bookable, Rentable, Insurable (derived from type), Loan Product (derived from type), Subscription, Digital
+Migration — Existing Product?, Legacy Code, Legacy System, Migration Batch
+
+Product Workspace — Overview tab
+
+Overview is composed of the same grouped sections as registration:
+
+Identity
 Lifecycle
-Status
-Effective Date
-Migration
-Existing Product?
-Legacy Code
-Legacy System
+Ownership
+Capabilities
+Migration (read-only when migrated)
+
+Implemented tabs: Overview, Timeline, Audit. Remaining tabs are placeholders for future IPs.
 12. Process Flow
 Create Product
       │
@@ -656,15 +666,23 @@ Use existing Timeline Engine.
 
 Generate events
 
+**IP-001 (active):**
+
 PRODUCT_CREATED
-
 PRODUCT_UPDATED
-
 PRODUCT_ACTIVATED
-
 PRODUCT_SUSPENDED
-
 PRODUCT_ARCHIVED
+
+**Reserved for future IPs (taxonomy only — no schema change):**
+
+PRODUCT_PRICE_CHANGED
+PRODUCT_OWNER_CHANGED
+PRODUCT_STATUS_CHANGED
+PRODUCT_ATTRIBUTE_ADDED
+PRODUCT_BUNDLE_ADDED
+PRODUCT_DOCUMENT_UPLOADED
+PRODUCT_PUBLISHED
 
 ==========================================================
 AUDIT
@@ -791,6 +809,42 @@ Provide the implementation handover in the standard format including:
 9. Future Enhancements
 
 Do NOT start IP-002.
+
+==========================================================
+IP-001 REFINEMENTS (Industry Experience alignment)
+==========================================================
+
+Applied after initial implementation review (2026-07-30):
+
+| Refinement | Priority | Status |
+|------------|----------|--------|
+| Group Overview into Identity / Lifecycle / Ownership / Capabilities / Migration | High | Implemented |
+| Rename UI "Owner" → "Responsible Business Owner" | High | Implemented |
+| Filter Product Types by Industry Experience (ENG-003k stub) | High | Implemented |
+| Enhanced dashboard KPIs (status breakdown, by type, recently updated) | Medium | Implemented |
+| Internal Offering terminology (`product_*` schema frozen) | Medium | Documented |
+| Richer timeline event taxonomy (future events reserved) | Low | Implemented |
+
+Implementation locations:
+
+- `src/core/industry-experience/` — nav labels, product type profiles, industry resolution
+- `src/modules/product/ui-labels.ts` — user-facing labels (no database terminology)
+- `src/modules/product/components/product-capabilities-panel.tsx` — grouped capabilities
+
+==========================================================
+FOUNDATION FREEZE
+==========================================================
+
+**BP-003 IP-001 is frozen** as of 2026-07-30 alongside BP-001 and BP-002 foundations.
+
+From this point forward:
+
+- Do not change foundational `product_*` schemas unless a genuine architectural gap is discovered.
+- Apply industry-specific presentation through ENG-003k and the UI layer.
+- Complete remaining IPs (IP-002 onward) without restructuring the core offering master.
+
+See also: Platform Module Catalog §3.2 Foundation Freeze Registry.
+
 One addition I'd recommend
 
 Since you've already established the concept of migration/onboarding for Parties, I'd include one requirement in IP-001:

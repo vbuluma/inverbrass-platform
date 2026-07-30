@@ -9,8 +9,9 @@
 
 import {
   ClockIcon,
-  LayoutDashboardIcon,
   LayersIcon,
+  LayoutDashboardIcon,
+  PackageIcon,
   SettingsIcon,
   StarIcon,
   UsersIcon,
@@ -43,6 +44,12 @@ export const BUSINESS_APP_NAV_ITEMS: PlatformNavItem[] = [
     label: "Groups",
     href: "/groups",
     icon: UsersRoundIcon,
+  },
+  {
+    id: "products",
+    label: "Products",
+    href: "/products",
+    icon: PackageIcon,
   },
   {
     id: "solutions",

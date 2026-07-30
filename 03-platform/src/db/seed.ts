@@ -40,6 +40,8 @@ import { seedIdentifierTypes } from "@/db/seeds/identifier-types-seed";
 import { seedRequiredIdentifiers } from "@/db/seeds/required-identifiers-seed";
 import { seedVerificationMethods } from "@/db/seeds/verification-methods-seed";
 import { seedSecurityQuestions } from "@/db/seeds/security-questions-seed";
+import { seedProductTypes } from "@/db/seeds/product-types-seed";
+import { seedProductStatuses } from "@/db/seeds/product-statuses-seed";
 
 async function runSeed() {
   const connectionString = process.env.DATABASE_URL;
@@ -195,6 +197,18 @@ async function runSeed() {
     const verificationMethodResults = await seedVerificationMethods(db);
     console.log(
       `verificationMethods: inserted=${verificationMethodResults.inserted}, updated=${verificationMethodResults.updated}, skipped=${verificationMethodResults.skipped}`
+    );
+
+    console.log("Seeding product types...");
+    const productTypeResults = await seedProductTypes(db);
+    console.log(
+      `productTypes: inserted=${productTypeResults.inserted}, updated=${productTypeResults.updated}, skipped=${productTypeResults.skipped}`
+    );
+
+    console.log("Seeding product statuses...");
+    const productStatusResults = await seedProductStatuses(db);
+    console.log(
+      `productStatuses: inserted=${productStatusResults.inserted}, updated=${productStatusResults.updated}, skipped=${productStatusResults.skipped}`
     );
 
     console.log("✅ Seed completed.");

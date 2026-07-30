@@ -20,6 +20,7 @@ type PlatformSidebarProps = {
   onCollapsedChange?: (collapsed: boolean) => void;
   mobile?: boolean;
   onNavigate?: () => void;
+  navLabelOverrides?: Partial<Record<string, string>>;
 };
 
 export function PlatformSidebar({
@@ -27,6 +28,7 @@ export function PlatformSidebar({
   onCollapsedChange,
   mobile = false,
   onNavigate,
+  navLabelOverrides,
 }: PlatformSidebarProps) {
   const pathname = usePathname();
   const [placeholder, setPlaceholder] = useState<{
@@ -71,6 +73,7 @@ export function PlatformSidebar({
         <ul className="flex-1 space-y-1 overflow-y-auto p-2">
           {BUSINESS_APP_NAV_ITEMS.map((item) => {
             const Icon = item.icon;
+            const label = navLabelOverrides?.[item.id] ?? item.label;
             const isActive =
               item.href != null &&
               (pathname === item.href || pathname.startsWith(`${item.href}/`));
@@ -82,20 +85,20 @@ export function PlatformSidebar({
                     type="button"
                     onClick={() =>
                       setPlaceholder({
-                        title: item.label,
+                        title: label,
                         message:
                           PLACEHOLDER_MESSAGES[item.id] ??
-                          `${item.label} will be available in a future release.`,
+                          `${label} will be available in a future release.`,
                       })
                     }
                     className={cn(
                       "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                       collapsed && !mobile && "justify-center px-2"
                     )}
-                    title={collapsed && !mobile ? item.label : undefined}
+                    title={collapsed && !mobile ? label : undefined}
                   >
                     <Icon className="size-4 shrink-0" aria-hidden />
-                    {(!collapsed || mobile) && <span>{item.label}</span>}
+                    {(!collapsed || mobile) && <span>{label}</span>}
                   </button>
                 </li>
               );
@@ -114,11 +117,11 @@ export function PlatformSidebar({
                       : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                     collapsed && !mobile && "justify-center px-2"
                   )}
-                  title={collapsed && !mobile ? item.label : undefined}
+                  title={collapsed && !mobile ? label : undefined}
                   aria-current={isActive ? "page" : undefined}
                 >
                   <Icon className="size-4 shrink-0" aria-hidden />
-                  {(!collapsed || mobile) && <span>{item.label}</span>}
+                  {(!collapsed || mobile) && <span>{label}</span>}
                 </Link>
               </li>
             );
@@ -143,7 +146,11 @@ export function PlatformSidebar({
 }
 
 /** Desktop sidebar with persisted collapse state. */
-export function PlatformSidebarDesktop() {
+export function PlatformSidebarDesktop({
+  navLabelOverrides,
+}: {
+  navLabelOverrides?: Partial<Record<string, string>>;
+}) {
   const [collapsed, setCollapsed] = useState(readSidebarCollapsed);
 
   function handleCollapsedChange(next: boolean) {
@@ -161,6 +168,7 @@ export function PlatformSidebarDesktop() {
         <PlatformSidebar
           collapsed={collapsed}
           onCollapsedChange={handleCollapsedChange}
+          navLabelOverrides={navLabelOverrides}
         />
       </div>
     </aside>

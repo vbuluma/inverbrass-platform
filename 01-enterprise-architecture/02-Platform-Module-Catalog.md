@@ -192,7 +192,17 @@ When two engine IDs describe the same capability, merge into **one canonical eng
 
 > **Localization First Principle:** All country-, region-, and jurisdiction-specific behaviour shall be implemented through **ENG-003b** (not the retired Localization duplicate ENG-017, not inline `if country == "KE"` checks). External integrations shall use **ENG-003e Enterprise Integration Engine** (not the retired ENG-010).
 
+### 3.2 Foundation Freeze Registry
 
+Frozen implementation packages define stable schemas and core patterns. Avoid revisiting them unless a genuine architectural gap is discovered. Industry-specific presentation belongs in **ENG-003k Industry Experience Engine** and the UI layer.
+
+| Build Pack | Frozen Scope | Frozen Date | Notes |
+| ---------- | ------------ | ----------- | ----- |
+| **BP-001** | IP-001 — Business Setup & Onboarding foundation | 2026-07-30 | Business registration, profile, configuration |
+| **BP-002** | IP-001–IP-012 — Party & Relationship foundation | 2026-07-30 | Party master, timeline, audit, documents |
+| **BP-003** | IP-001 — Product & Service Foundation (Offering Engine) | 2026-07-30 | `product_*` tables frozen; internal **Offering** terminology; UI labels via ENG-003k |
+
+**Rule:** Complete remaining IPs without restructuring frozen foundations. Enhance through configuration, Industry Experience profiles, and UI — not schema churn.
 
 ### Engine Ownership Rules
 

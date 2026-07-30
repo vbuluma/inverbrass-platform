@@ -180,3 +180,18 @@ I would split BP-003 into two logical workstreams while keeping it as a single B
 2.	Product Intelligence & Governance (IP-013 to IP-015) – Manages product strategy: business cases, roadmaps, ownership, budgets, releases, KPIs, GTM, customer feedback, AI insights, and retirement decisions. 
 This separation keeps the catalogue lean and reusable, while giving you the specialized end-to-end product management capability you wanted as both a Business Analyst and Product Manager. It also aligns perfectly with your vision of building an enterprise-grade digitalization platform rather than just another ERP.
 
+________________________________________
+Foundation Freeze (BP-001, BP-002, BP-003 IP-001)
+
+The following implementation packages are **frozen** — foundational schemas and core patterns should not be revisited unless a genuine architectural gap is identified:
+
+| Build Pack | Frozen IP | Scope |
+|------------|-----------|-------|
+| BP-001 | IP-001 | Business registration, onboarding, profile, configuration |
+| BP-002 | IP-001 through IP-012 | Party master, relationships, timeline, audit, documents |
+| BP-003 | IP-001 | Offering master (`product_*` tables), timeline, audit, migration |
+
+**Discipline:** Complete remaining IPs and apply improvements through **ENG-003k Industry Experience Engine** and UI presentation rather than restructuring frozen foundations.
+
+**BP-003 internal term:** Developers use **Offering Engine**; users see industry-native catalogue labels. Database retains `product_*` naming.
+
