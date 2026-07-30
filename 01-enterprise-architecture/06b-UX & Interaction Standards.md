@@ -411,3 +411,42 @@ Event-driven consent via Consent Engine; ENG-003b owns `consent_source`; Party W
 14. Consistent search states  
 15. Visual workspace zoning  
 
+---
+
+## UX-001.3 — Industry-Native Experience (AP-001)
+
+**Architectural principle:** [01 – Enterprise Solution Architecture](./01-Enterprise-Solution-Architecture.md) AP-001.
+
+Users must never see capabilities, terminology, or configuration options from unrelated industries. The platform presents an Industry Edition — not a generic multi-industry interface with hidden menus.
+
+### Rule
+
+Every authenticated business operates within exactly one **Industry Edition**. Navigation, labels, dashboards, product types, workflow templates, and configuration forms are generated from that edition's Industry Experience Profile (ENG-003k).
+
+### Visibility examples
+
+| Industry Edition | User sees | User never sees |
+|-----------------|-----------|-----------------|
+| **Banking** | Customers, Loans, Deposits, Cards, Treasury, Branches, Compliance | Patients, Classrooms, Bedrooms, Rental Units |
+| **Healthcare** | Patients, Doctors, Appointments, Procedures, Laboratory, Pharmacy | Loan Products, Collateral, Classrooms, Mortgages |
+| **Property** | Properties, Units, Tenants, Leases, Rent, Maintenance | Patients, Loan Installments, Students, Deposits |
+| **Education** | Students, Teachers, Classes, Subjects, Fees, Examinations | Patients, Mortgages, Loan Products, Rental Units |
+| **Retail** | Products, Inventory, Sales, Customers, Promotions | Patients, Loan Products, Tenants, Procedures |
+
+### UX implementation requirements
+
+1. **Navigation** — Left navigation is generated from the Industry Profile, not from a global module list.
+2. **Terminology** — Labels adapt by edition (Customer / Patient / Tenant / Student; Product / Service / Procedure).
+3. **Product creation** — Product type picker shows only edition-relevant types (Loan Product for Banking; Rental Unit for Property; Medical Service for Healthcare).
+4. **Dashboards** — Landing pages and KPI widgets are edition-specific.
+5. **Empty states and guided actions** — Next-step prompts reference edition-relevant modules only.
+6. **Search** — Global search results are scoped to edition-visible modules.
+
+### Relationship to existing UX standards
+
+All UX-001 standards (action naming, empty states, breadcrumbs, workspace chrome) apply within the edition boundary. Industry-native experience is an additional constraint — not a replacement for enterprise interaction patterns.
+
+**Rule file (planned):** `.cursor/rules/ui-std-007-industry-native-experience.mdc`
+
+**Engine owner:** ENG-003k Industry Experience Engine; metadata stored via ENG-003a Configuration Engine.
+

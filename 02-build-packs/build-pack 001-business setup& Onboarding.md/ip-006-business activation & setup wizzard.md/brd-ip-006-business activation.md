@@ -81,7 +81,9 @@ Optional
 
 No tax information on this step.
 
-Registration already captures: Business Name, Business Type / Industry Template, Country, Owner Mobile, Owner Account.
+Registration already captures: Business Name, **Industry Edition** (formerly Business Type / Industry Template), Country, Owner Mobile, Owner Account.
+
+The selected Industry Edition binds the business to its Industry Experience Profile (ENG-003k) for the lifetime of the tenant. This determines navigation, terminology, product types, and feature visibility.
 
 5. Business Configuration Scope
 
@@ -176,13 +178,13 @@ Stabilize BP-001 after smoke-test-1 gaps by completing platform reference-data i
 
 ### Scope
 1. **Reference data (idempotent seeds)**  
-   Countries, Industries → Business Types, Currencies, Security Questions, Roles, Permissions, and Business Membership Statuses.
+   Countries, **Industry Editions** (catalogued as Industries → Business Types), Currencies, Security Questions, Roles, Permissions, and Business Membership Statuses.
 2. **Lookup services**  
    Registration, Login, Forgot Password, and Business Setup Wizard consume active catalogues. Empty catalogues return `[]`, log informatively, and surface a friendly UI message (no unhandled exceptions).
 3. **Security hardening**  
    Security answers are hashed with the platform-approved algorithm (bcrypt, 12 rounds) before persistence. Verification compares hashes only. Show/Hide for answers remains UI-only.
 4. **Startup validation**  
-   On Node.js boot, validate Welcome message, Countries, Business Types, Currencies, and Security Questions. Development logs warnings; production logs errors; the application does not crash.
+   On Node.js boot, validate Welcome message, Countries, **Industry Editions** (Business Types catalogue), Currencies, and Security Questions. Development logs warnings; production logs errors; the application does not crash.
 5. **Smoke coverage**  
    Extended IP-006A smoke verifies catalogue presence, lookup population, hashed answers, and seed idempotency.
 

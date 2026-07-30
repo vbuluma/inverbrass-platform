@@ -13,10 +13,13 @@ Build Pack ID	BP-001
 Primary Capability	Business Activation
 Release	Release 1
 Users	Business Owner
-Objective	Enable a new business to configure and activate the platform without external support.
+Objective	Enable a new business to configure and activate the platform without external support. Business registration selects an **Industry Edition** (Banking, Property, Healthcare, Education, etc.) that binds the tenant to an industry-native experience via ENG-003k.
 ________________________________________
 2. Business Objective
 The Business Setup & Onboarding feature enables an SME to register, configure, and activate their business in a guided self-service process.
+
+Upon registration, the business selects an **Industry Edition**. That selection determines navigation, terminology, product types, and feature visibility for the lifetime of the tenant — users perceive a purpose-built solution, not a generic platform.
+
 Upon completion, the business shall be immediately ready to perform operational activities such as creating products, registering customers, and processing sales.
 The onboarding experience shall be mobile-first, intuitive, and designed to minimize setup time while allowing advanced configuration where required.
 

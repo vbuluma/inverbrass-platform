@@ -1,8 +1,10 @@
 Objective
 
-Implement IP-006 – Global Navigation & Session Management.
+Implement IP-007 – Global Navigation & Session Management.
 
 The implementation must become the standard navigation framework for the entire platform.
+
+**Industry-native navigation (AP-001):** Left navigation entries are generated from the business's **Industry Experience Profile (ENG-003k)**, not from a global module list. A bank sees Loans, Deposits, Treasury; a hospital sees Patients, Appointments, Laboratory. The navigation framework is reusable; the menu content is edition-specific.
 
 Functional Requirements
 
@@ -38,7 +40,17 @@ Sign Out must terminate the session correctly and redirect to the Login page.
 
 Provide a collapsible navigation drawer.
 
-Minimum entries:
+Navigation entries are generated from the business's Industry Edition profile (ENG-003k).
+
+**Banking edition example:** Dashboard, Customers, Products, Loans, Deposits, Cards, Treasury, Branches, Compliance, Reports, Settings
+
+**Healthcare edition example:** Dashboard, Patients, Doctors, Appointments, Procedures, Laboratory, Pharmacy, Billing, Insurance, Reports, Settings
+
+**Property edition example:** Dashboard, Properties, Units, Tenants, Leases, Rent, Maintenance, Utilities, Reports, Settings
+
+**Education edition example:** Dashboard, Students, Teachers, Classes, Subjects, Fees, Examinations, Attendance, Reports, Settings
+
+Minimum framework entries (when edition profile is not yet loaded):
 
 Dashboard
 Parties
@@ -47,7 +59,7 @@ Favorites (placeholder)
 Recent Items (placeholder)
 Settings
 
-Must be reusable across all Build Packs.
+Must be reusable across all Build Packs and Industry Editions.
 
 4. Breadcrumb Navigation
 
@@ -168,4 +180,4 @@ Stop after IP-006 is complete.
 
 Do not proceed to any additional Platform Foundation work without approval.
 
-One additional recommendation: since your vision is a Digitalization Platform rather than an ERP, I'd rename the left navigation item "Modules" to "Solutions" or "Workspace". This reinforces that users are accessing platform capabilities (e.g., Property, Healthcare, Schools, NGOs, SMEs) rather than traditional ERP modules. It aligns better with the long-term positioning of InverBrass as a multi-industry digital platform.
+**Industry-native navigation (AP-001):** Navigation is generated from the business's Industry Edition profile (ENG-003k), not from a global module list. The framework (header, drawer, breadcrumbs, session management) is shared; menu content is edition-specific. See [01 – Enterprise Solution Architecture](../../01-enterprise-architecture/01-Enterprise-Solution-Architecture.md) AP-001.

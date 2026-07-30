@@ -94,7 +94,7 @@ No employee invitations, password recovery, MFA, or registration UI were impleme
 1. Validate payload (Zod + BP-001 password policy)
 2. Normalize owner and business mobile numbers to E.164
 3. Assert phone not already registered
-4. Validate business type, country, and security question catalog entry
+4. Validate **Industry Edition** (business type / industry template), country, and security question catalog entry
 5. Supabase Auth `signUp` (password hashed by provider)
 6. **BEGIN TRANSACTION**
    - INSERT `platform_user` (linked via `auth_user_id`)

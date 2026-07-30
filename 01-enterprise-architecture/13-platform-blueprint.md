@@ -16,7 +16,9 @@ It provides the technical blueprint that guides where capabilities belong, how m
 
 # Platform Vision
 
-## Build a configurable, enterprise-grade, multi-tenant business platform that serves multiple industries through reusable platform capabilities rather than industry-specific custom development.
+## Build a configurable, enterprise-grade, multi-tenant business platform delivered as **Industry Editions powered by a shared enterprise platform** — reusable platform capabilities rather than industry-specific custom development.
+
+Each edition (InverBrass Banking, InverBrass Property, InverBrass Healthcare, etc.) presents a purpose-built experience while sharing the same engines underneath.
 The platform shall support cloud-native deployment while remaining deployable within customer-managed environments.
 
 
@@ -45,7 +47,7 @@ The platform shall:
 
 # Platform Layers
 
-The platform consists of five logical layers.
+The platform consists of six logical layers.
 
 ## Layer 1
 
@@ -56,10 +58,9 @@ Responsibilities
 - Mobile PWA
 - Responsive Design
 - Accessibility
+- Industry-native navigation and terminology (driven by ENG-003k)
 
 ---
-
-
 
 ## Layer 2
 
@@ -74,18 +75,17 @@ Responsibilities
 
 ---
 
-
-
 ## Layer 3
 
-Core Platform Services
+Core Platform Services (Shared Platform Engines)
 
-Shared capabilities used by all industries.
+Shared capabilities used by all Industry Editions.
 
 Includes
 
 - Identity
-- Configuration
+- Configuration (including Industry Profiles)
+- Industry Experience (ENG-003k)
 - Workflow
 - Notification
 - Payment
@@ -99,31 +99,44 @@ Includes
 
 ---
 
-
-
 ## Layer 4
 
-Industry Modules
+Industry Experience Layer (ENG-003k)
 
-Examples
+Responsibilities
 
-- SME(Small and medium businesses)
-- Property Management
-- School Management
-- Healthcare
-- Hospitality
-- Manufacturing
-- NGO/Donor
-- SACCO
--Agriculture
+- Industry Edition binding at onboarding
+- Edition-specific navigation and menu visibility
+- Terminology mapping (Customer / Patient / Tenant / Student)
+- Dashboard layouts and landing pages
+- Product type and workflow template filtering
+- Feature visibility per edition
 
-Industry modules consume Core Platform Services rather than duplicating them.
+This layer sits between shared engines and tenant configuration. Build Packs remain shared; the Industry Experience Layer decides exposure and presentation.
 
 ---
 
-
-
 ## Layer 5
+
+Industry Editions
+
+Purpose-built product experiences assembled from Build Packs.
+
+Examples
+
+- InverBrass Banking (VS-009)
+- InverBrass Property (VS-002)
+- InverBrass Education (VS-003)
+- InverBrass Healthcare (VS-004)
+- InverBrass Retail (VS-001)
+- InverBrass Agriculture (VS-005)
+- InverBrass Hospitality (VS-006)
+
+Each edition consumes Core Platform Services and Build Packs rather than duplicating them. Customers perceive each edition as a dedicated product.
+
+---
+
+## Layer 6
 
 Infrastructure
 
@@ -197,13 +210,17 @@ Application
 
 ↓
 
+Industry Experience Layer (ENG-003k)
+
+↓
+
 Platform Services
 
 ↓
 
 Infrastructure
 
-Industry modules communicate through approved services rather than direct coupling.
+Industry Editions communicate through approved services and Build Packs rather than direct coupling.
 
 Circular dependencies are prohibited.
 
@@ -257,8 +274,9 @@ AI-assisted development shall:
 
 The platform is successful when:
 
-- New industries can be onboarded primarily through configuration.
-- Core services are reused across all verticals.
+- New Industry Editions can be onboarded primarily through configuration.
+- Core services are reused across all editions.
+- Each customer perceives their edition as purpose-built for their industry — never as a generic platform.
 - Platform quality improves with each release.
 - Technical debt remains controlled.
 - Enterprise customers can deploy the platform confidently.

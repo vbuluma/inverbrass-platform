@@ -137,6 +137,54 @@ Product Design Principles, containing the philosophies  defined below:
 
 ## 5 – Platform Layer Architecture
 
+### Architectural Principle AP-001 — Industry-Native Experience
+
+The InverBrass Platform shall present an **industry-specific user experience**. Every business operates within an **Industry Edition** that exposes only the capabilities, terminology, configuration options, workflows, dashboards, and navigation relevant to that industry.
+
+While all editions share a common set of enterprise platform engines, users and administrators must perceive the system as **purpose-built for their domain** — not as a generic multi-industry platform.
+
+**Positioning:** Industry Editions powered by a shared enterprise platform.
+
+| What stays generic | What feels specialized |
+|--------------------|------------------------|
+| Platform engines (auth, workflow, payments, audit, search, etc.) | Navigation menus and module labels |
+| Build Pack capabilities (Party, Product, Payments, etc.) | Terminology (Customer vs Patient vs Tenant vs Student) |
+| Data models and APIs | Product type templates and configuration forms |
+| Multi-tenant isolation | Dashboard layouts and landing pages |
+| | Workflow and report templates |
+| | Feature and menu visibility |
+
+A bank administrator never sees Patients, Classrooms, or Bedrooms. A hospital administrator never sees Loan Products, Collateral, or Mortgage Installments. A landlord never sees Patients or Deposits unless those are genuinely part of their business model.
+
+### Platform Layer Stack
+
+```
+Shared Platform Engines (ENG-001 – ENG-016, ENG-003k)
+              │
+              ▼
+    Industry Experience Layer (ENG-003k)
+              │
+              ▼
+       Business Configuration
+              │
+              ▼
+            Users
+```
+
+**Build Packs** are shared platform capabilities consumed by Industry Editions — they are not a separate customer-facing layer. Each edition composes the Build Packs it needs and presents them through its Industry Experience Profile.
+
+#### Industry Editions (Examples)
+
+| Edition | Administration Label | Example Navigation | Example Product Types |
+|---------|---------------------|-------------------|----------------------|
+| **InverBrass Banking** | Banking Administration | Products, Customers, Loans, Deposits, Cards, Treasury, Branches, Compliance | Loan Product, Savings Product, Card Product |
+| **InverBrass Healthcare** | Healthcare Administration | Patients, Doctors, Appointments, Procedures, Laboratory, Pharmacy, Billing | Medical Service, Procedure, Medication |
+| **InverBrass Property** | Property Administration | Properties, Units, Tenants, Leases, Rent, Maintenance, Utilities | Rental Unit, Property, Parking Space |
+| **InverBrass Education** | Education Administration | Students, Teachers, Classes, Subjects, Fees, Examinations, Attendance | Course, Fee Item, Examination |
+| **InverBrass Retail** | Retail Administration | Products, Inventory, Sales, Customers, Promotions | Physical Product, Service, Bundle |
+
+Same engines underneath. Different experience above the Industry Edition boundary.
+
 ### v1.0 Platform Engine Baseline
 
 > **Canonical engine catalog:** [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3.
@@ -145,7 +193,7 @@ Product Design Principles, containing the philosophies  defined below:
 |-----------|-----------------|---------|-----------------|
 | **ENG-001** | Authentication Engine | Establishes user identity and secure access to the platform. | Login, logout, password management, PIN, MFA, SSO, session management, password reset, account lockout, identity providers (Google, Microsoft, Azure AD), token issuance. |
 | **ENG-002** | Authorization Engine | Controls what authenticated users can access and perform. | Roles, permissions, RBAC, ABAC (future), business access, module access, feature access, data visibility, delegated access, segregation of duties. |
-| **ENG-003a** | Configuration Engine | Central metadata engine that makes the platform configurable instead of hardcoded. | System parameters, dropdowns, feature toggles, metadata, dynamic forms, numbering rules, statuses, configurable workflows, validation parameters, business settings. |
+| **ENG-003a** | Configuration Engine | Central metadata engine that makes the platform configurable instead of hardcoded. | System parameters, dropdowns, feature toggles, metadata, dynamic forms, numbering rules, statuses, configurable workflows, validation parameters, business settings, Industry Profiles, visible menus, navigation layouts. |
 | **ENG-003b** | Localization & Regulatory Engine | Enables country-specific behaviour without changing application code. | Countries, languages, currencies, taxes, date/time formats, address formats, identity document definitions, regulatory rules, invoicing rules, fiscal requirements, compliance configuration. |
 | **ENG-003c** | Organization Structure Engine | Manages internal organizational hierarchy for Organization Parties. | Branches, departments, divisions, regions, campuses, organizational units, reporting hierarchy, head office designation, internal ownership structures. |
 | **ENG-003d** | Event Ingestion Engine | Receives and standardizes events entering the platform. | Business events, webhooks, queues, event validation, event routing, event normalization, asynchronous processing, event publishing. |
@@ -155,6 +203,7 @@ Product Design Principles, containing the philosophies  defined below:
 | **ENG-003h** | Platform Performance & Scalability Engine | Ensures enterprise-grade reliability and scalability. | Caching, queues, observability, monitoring, telemetry, performance metrics, distributed tracing, load management, rate limiting, resilience, health monitoring. |
 | **ENG-003i** | Consent Engine | Captures and manages customer consent as immutable business events. | Marketing consent, communication consent, regulatory consent, consent events, consent evidence, consent history, consent withdrawals, consent channels, compliance tracking. |
 | **ENG-003j** | Identity & Regulatory Identification Engine | Captures and manages official regulatory identifiers independent of uploaded documents. | National IDs, passports, tax numbers, business registration numbers, VAT numbers, licences, issuing authorities, verification status, identifier lifecycle, linkage to supporting evidence. |
+| **ENG-003k** | Industry Experience Engine | Presents an industry-native user experience on top of shared platform engines. | Industry Editions, navigation generation, menu visibility, terminology mapping, dashboard layouts, feature visibility, configuration visibility, product templates, workflow templates, report templates, landing pages, optional branding/themes. |
 | **ENG-004** | Rules Engine | Executes deterministic business rules. | Eligibility rules, validations, calculations, decision tables, configurable rule execution, business policies, rule versioning. |
 | **ENG-005** | Workflow Engine | Orchestrates business processes requiring approvals or multiple steps. | Maker-checker, approvals, escalations, routing, SLA monitoring, workflow history, task assignment, decision points. |
 | **ENG-006** | Payment Engine | Processes all incoming and outgoing financial transactions. | Cash, mobile money, bank transfers, cards, split payments, partial payments, refunds, credits, payment gateways. |
@@ -297,6 +346,38 @@ ENG-003b (configuration) → ENG-003j (captured identifiers) → Party Module (c
 
 **Implementation location:** `03-platform/src/core/identity-regulatory/`
 
+### ENG-003k — Industry Experience Engine
+
+**Purpose**
+
+Provides the Industry Experience Layer that makes the shared platform feel like a dedicated product for each industry. Every business is onboarded into exactly one Industry Edition. The edition determines what users see, how it is labelled, and which capabilities are available — without forking the underlying engines or Build Packs.
+
+**Core responsibilities**
+
+1. **Industry Editions** — Banking, Property, Healthcare, Education, Agriculture, Hospitality, Retail, and future editions
+2. **Navigation generation** — Edition-specific menus (e.g. Loans & Deposits for Banking; Patients & Appointments for Healthcare)
+3. **Menu and feature visibility** — Hide capabilities irrelevant to the edition
+4. **Terminology mapping** — Customer vs Patient vs Tenant vs Student; Product vs Service vs Procedure
+5. **Dashboard layouts** — Edition-specific landing pages and KPI widgets
+6. **Configuration visibility** — Edition-specific product types, attribute sets, and setup forms
+7. **Product templates** — Predefined product type schemas per edition (Loan Product, Rental Unit, Medical Service, Course)
+8. **Workflow templates** — Edition-specific approval flows (Loan Approval, Lease Approval, Patient Admission)
+9. **Report templates** — Edition-specific operational and compliance reports
+10. **Landing pages and branding** — Optional edition-specific themes and welcome experiences
+
+**Relationship to other engines**
+
+- **ENG-003a Configuration Engine** stores Industry Profiles, visible menus, feature toggles, and navigation layouts as metadata
+- **ENG-003b Localization & Regulatory Engine** applies country rules within the edition context
+- **ENG-002 Authorization Engine** enforces edition-scoped module access
+- Build Packs (Party, Product, Workflow, etc.) remain shared — the Industry Experience Engine decides exposure and presentation
+
+**Onboarding integration**
+
+Business registration selects an **Industry Edition** (not a generic business type). That selection binds the business to its Industry Experience Profile for the lifetime of the tenant.
+
+**Implementation location:** `03-platform/src/core/industry-experience/` (planned)
+
 
 |                                         |                                                                                                                                                                                                                                                                                                                                                                    |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -326,7 +407,10 @@ ENG-003d Event Ingestion Engine
 Workflow Engine
                 │
                 ▼
-Platform Services & Industry Solutions
+Industry Experience Layer (ENG-003k)
+                │
+                ▼
+Platform Services & Industry Editions
 ```
 
 
@@ -377,15 +461,17 @@ EDS-003 – All telephone numbers shall be stored in canonical E.164 format. Use
 
 # What we have designed that supports this vision
 
-The platform already has the core building blocks.
+The platform already has the core building blocks. The Industry Experience Layer (ENG-003k) adds a presentation boundary — it does not replace anything already built.
 
 ### Enterprise Engines
 
-✔ Configuration Engine
+✔ Configuration Engine (extended to store Industry Profiles)
 
 ✔ Localization & Regulatory Engine
 
 ✔ Organization Structure Engine
+
+✔ Industry Experience Engine (ENG-003k — planned)
 
 ✔ Event Ingestion Engine (planned)
 
@@ -399,13 +485,26 @@ The platform already has the core building blocks.
 
 ✔ Reporting Engine
 
-✔ Enterprise Integration Engine (planned — ENG-003e)
-
 These are exactly the kinds of engines a digital platform needs.
 
+### Implications for work already completed
+
+| Completed capability | Status | Industry Edition impact |
+|---------------------|--------|-------------------------|
+| Party Workspace | ✔ Reusable | Terminology filtered by edition (Customer / Patient / Tenant / Student) |
+| Product Workspace | ✔ Reusable | Product types shown come from edition profile |
+| Timeline | ✔ Reusable | No change — events remain cross-cutting |
+| Audit | ✔ Reusable | No change |
+| Documents & Compliance | ✔ Reusable | Requirement sets may vary by edition |
+| Consent | ✔ Reusable | No change |
+| Search | ✔ Reusable | Results scoped to edition-visible modules |
+| Authentication & Onboarding | ✔ Reusable | Registration selects Industry Edition instead of generic business type |
+| Global Navigation | ✔ Reusable | Menus generated from Industry Profile |
+| Organization Structure | ✔ Reusable | No change |
+
+Nothing is wasted. The Industry Experience Layer decides whether capabilities are exposed and how they are presented.
+
 ---
-
-
 
 ### Core Data Foundations
 

@@ -384,15 +384,17 @@ The following authentication and onboarding events **shall automatically produce
 
 #### 3.1.1 Capture
 
+**Architecture note (AP-001 — Industry-Native Experience):** The registration field labelled **Business Type** maps to an **Industry Edition** selection (Banking, Property, Healthcare, Education, etc.). The stored `business_type_id` binds the tenant to its Industry Experience Profile (ENG-003k). No schema redesign is required — the catalogue semantics evolve from generic business types to Industry Editions. See [01 – Enterprise Solution Architecture](../../01-enterprise-architecture/01-Enterprise-Solution-Architecture.md) AP-001.
+
 **Business information**
 
-| Field | Required |
-|-------|----------|
-| Business Name | Yes |
-| Business Type | Yes |
-| Country | Yes |
-| Mobile Number (business contact) | Yes |
-| Email | No |
+| Field | Required | Notes |
+|-------|----------|-------|
+| Business Name | Yes | |
+| Industry Edition (Business Type) | Yes | Determines Industry Experience Profile (ENG-003k) |
+| Country | Yes | |
+| Mobile Number (business contact) | Yes | |
+| Email | No | |
 
 **Owner account**
 
