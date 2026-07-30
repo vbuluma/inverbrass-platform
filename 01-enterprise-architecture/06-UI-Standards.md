@@ -167,7 +167,7 @@ ________________________________________
 Rule	Description
 Business Alignment	User interfaces must support approved business processes and requirements.
 Architecture Compliance	Screens must align with the Enterprise Solution Architecture, Platform Module Catalog and Domain Model.
-Core Platform Engines	All reusable processing belongs to **ENG-001 – ENG-016** (active) plus extensions (ENG-003a–i, ENG-015a). Retired IDs are in the Merge Registry — see [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3 and §3.1. Governed by `.cursor/rules/eng-catalog-governance.mdc`.
+Core Platform Engines	All reusable processing belongs to the **v1.0 Platform Engine Baseline** (**ENG-001 – ENG-016** active) plus extensions (**ENG-003a–j**, **ENG-015a**) and Phase 2 engines (**ENG-017 – ENG-019**, introduce only when needed). Retired IDs are in the Merge Registry — see [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3 and §3.1. Governed by `.cursor/rules/eng-catalog-governance.mdc`.
 Cursor Rules Compliance	Generated UI code must comply with the project's .cursorrules and coding standards.
 Component Standards	Only approved design system components should be used unless explicitly justified.
 Self-Service Validation	Every new feature should be evaluated against the Self-Service First principle.

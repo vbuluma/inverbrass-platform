@@ -9,6 +9,9 @@ Version	1.0
 Purpose	Defines the architecture, governance and operational principles for Business Rules, Machine Learning and Generative AI across the InverBrass Business Platform.
 Scope	Entire InverBrass Business Platform
 Audience	Product Owner, Solution Architects, Developers, Data Scientists, AI Engineers, AI Coding Assistants
+
+> **Platform mapping:** Business Rules, Machine Learning, and Generative AI capabilities described in this document are delivered through **ENG-004 Rules Engine** and **ENG-012 Intelligence Engine** (v1.0 Platform Engine Baseline). See [01 – Enterprise Solution Architecture](./01-Enterprise-Solution-Architecture.md) §5.
+
 ________________________________________
 2. Enterprise Intelligence Vision
 Principle	Description

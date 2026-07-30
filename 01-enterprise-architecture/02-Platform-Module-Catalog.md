@@ -29,49 +29,54 @@ Audit & Activity Logging	Track all business activities	All	No	Yes
 File & Document Management	Store files and attachments	All	Yes	Yes
 Document & Compliance	Required-document matching, evidence verification, compliance scoring	All Build Packs	Yes	Yes
 ________________________________________
-3. Core Platform Engines (ENG-001 – ENG-016)
+3. Core Platform Engines — v1.0 Baseline
 
 Every reusable processing capability is owned by exactly one Core Platform Engine. Build Packs and Industry Solutions **consume** engines — they do not reimplement them.
 
-**Canonical specification:** [01 – Enterprise Solution Architecture](./01-Enterprise-Solution-Architecture.md) §5 (Layer 1 – Core Platform Services).
+**Canonical specification:** [01 – Enterprise Solution Architecture](./01-Enterprise-Solution-Architecture.md) §5 (v1.0 Platform Engine Baseline).
 
-### Layer 1 – Foundation Engines
+### v1.0 Platform Engine Baseline
 
-| Engine ID | Core Engine | Purpose | Status |
-|-----------|-------------|---------|--------|
-| **ENG-001** | Authentication Engine | Identity, login, PIN, MFA | Implemented (BP-001) |
-| **ENG-002** | Authorization Engine | Roles and permissions | Implemented |
-| **ENG-003a** | Configuration Engine | Stores configurable platform behaviour | Partial |
-| **ENG-003b** | Localization & Regulatory Engine | Country-, region-, and jurisdiction-specific configuration and regulatory behaviour | Partial (BP-002) |
-| **ENG-003c** | Organization Structure Engine | Internal organizational units (departments, branches, campuses) owned by Organization Parties | Implemented (BP-002) |
-| **ENG-003d** | Event Ingestion Engine | Receives, validates, normalizes, and routes business events from internal and external sources | Planned |
-| **ENG-003e** | Partner Integration Engine | Connectors, OAuth, webhooks, rate limiting, connector health for external platforms | Planned |
-| **ENG-003f** | Product Intelligence Engine | Product governance, roadmap, analytics, AI-assisted product insights | Planned |
-| **ENG-003g** | Business Presence Engine | Countries and legal jurisdictions in which a business operates | Planned |
-| **ENG-003h** | Platform Performance & Scalability Engine | Caching, queues, rate limiting, observability, circuit breakers | Planned |
-| **ENG-003i** | Consent Engine | Event-driven regulatory consent capture; updates communication preferences read model | Implemented |
-| **ENG-003j** | Identity & Regulatory Identification Engine | Captures and verifies official regulatory identifiers (master data); consumes ENG-003b configuration | Implemented (BP-002) |
+| Engine ID | Platform Engine | Purpose | What it Handles | Status |
+|-----------|-----------------|---------|-----------------|--------|
+| **ENG-001** | Authentication Engine | Establishes user identity and secure access to the platform. | Login, logout, password management, PIN, MFA, SSO, session management, password reset, account lockout, identity providers (Google, Microsoft, Azure AD), token issuance. | Implemented (BP-001) |
+| **ENG-002** | Authorization Engine | Controls what authenticated users can access and perform. | Roles, permissions, RBAC, ABAC (future), business access, module access, feature access, data visibility, delegated access, segregation of duties. | Implemented |
+| **ENG-003a** | Configuration Engine | Central metadata engine that makes the platform configurable instead of hardcoded. | System parameters, dropdowns, feature toggles, metadata, dynamic forms, numbering rules, statuses, configurable workflows, validation parameters, business settings. | Partial |
+| **ENG-003b** | Localization & Regulatory Engine | Enables country-specific behaviour without changing application code. | Countries, languages, currencies, taxes, date/time formats, address formats, identity document definitions, regulatory rules, invoicing rules, fiscal requirements, compliance configuration. | Partial (BP-002) |
+| **ENG-003c** | Organization Structure Engine | Manages internal organizational hierarchy for Organization Parties. | Branches, departments, divisions, regions, campuses, organizational units, reporting hierarchy, head office designation, internal ownership structures. | Implemented (BP-002) |
+| **ENG-003d** | Event Ingestion Engine | Receives and standardizes events entering the platform. | Business events, webhooks, queues, event validation, event routing, event normalization, asynchronous processing, event publishing. | Planned |
+| **ENG-003e** | Enterprise Integration Engine | Provides a single integration layer between the platform and all external systems. | REST APIs, SOAP, GraphQL, OAuth, API keys, webhooks, polling, retries, circuit breakers, provider routing, banking APIs, payment gateways, government APIs, CRM integrations, AI providers, connector health monitoring. | Planned |
+| **ENG-003f** | Product Intelligence Engine | Governs products throughout their lifecycle using analytics and AI. | Product portfolio, product lifecycle, roadmaps, business cases, feature tracking, MVPs, KPIs, adoption metrics, AI recommendations, product retirement analysis, GTM support. | Planned |
+| **ENG-003g** | Business Presence Engine | Defines where an organization legally and operationally exists. | Countries of operation, legal entities, operating jurisdictions, registrations, branches by country, licensing jurisdictions, market presence. | Planned |
+| **ENG-003h** | Platform Performance & Scalability Engine | Ensures enterprise-grade reliability and scalability. | Caching, queues, observability, monitoring, telemetry, performance metrics, distributed tracing, load management, rate limiting, resilience, health monitoring. | Planned |
+| **ENG-003i** | Consent Engine | Captures and manages customer consent as immutable business events. | Marketing consent, communication consent, regulatory consent, consent events, consent evidence, consent history, consent withdrawals, consent channels, compliance tracking. | Implemented |
+| **ENG-003j** | Identity & Regulatory Identification Engine | Captures and manages official regulatory identifiers independent of uploaded documents. | National IDs, passports, tax numbers, business registration numbers, VAT numbers, licences, issuing authorities, verification status, identifier lifecycle, linkage to supporting evidence. | Implemented (BP-002) |
+| **ENG-004** | Rules Engine | Executes deterministic business rules. | Eligibility rules, validations, calculations, decision tables, configurable rule execution, business policies, rule versioning. | Planned |
+| **ENG-005** | Workflow Engine | Orchestrates business processes requiring approvals or multiple steps. | Maker-checker, approvals, escalations, routing, SLA monitoring, workflow history, task assignment, decision points. | Planned |
+| **ENG-006** | Payment Engine | Processes all incoming and outgoing financial transactions. | Cash, mobile money, bank transfers, cards, split payments, partial payments, refunds, credits, payment gateways. | Planned |
+| **ENG-007** | Receipting Engine | Produces legally compliant financial documents. | Receipts, invoices, quotations, credit notes, debit notes, numbering, fiscal compliance, digital delivery. | Planned |
+| **ENG-008** | Reconciliation Engine | Matches financial movements across systems. | Bank reconciliation, payment reconciliation, settlement matching, cash balancing, exception management, reconciliation reports. | Planned |
+| **ENG-009** | Notification Engine | Delivers communications across multiple channels. | SMS, email, WhatsApp, push notifications, in-app notifications, reminders, templates, scheduling, delivery tracking. | Planned |
+| **ENG-011** | Reporting Engine | Produces operational and management information. | Operational reports, dashboards, exports, scheduled reports, management reports, compliance reports, BI data feeds. | Planned |
+| **ENG-012** | Intelligence Engine | Provides platform-wide intelligent capabilities. | Machine Learning, GenAI, OCR, RAG, NLP, recommendations, predictive analytics, decision support, document intelligence, conversational AI. | Planned |
+| **ENG-013** | Audit Engine | Maintains immutable records of system changes. | CRUD audit, field-level audit, user activity, change history, correlation IDs, compliance audit, forensic investigation. | Partial (emitter interface) |
+| **ENG-014** | Offline Sync Engine | Enables offline-first operation for unreliable connectivity. | Local storage, synchronization, conflict resolution, retry mechanisms, synchronization queues, offline validation. | Planned |
+| **ENG-015** | Document Engine | Manages all documents and digital evidence across the platform. | Uploads, storage, preview, OCR readiness, versioning, digital signatures, classification, compliance evidence, verification, document lifecycle, retention, archival, AI extraction. | Partial (BP-002) |
+| **ENG-016** | Search Engine | Provides unified enterprise search across all modules. | Global search, indexing, filters, relevance ranking, autocomplete, faceted search, cross-module search, saved searches. | Planned |
 
-### Layer 2 – Business Processing Engines
+> **Extension ID:** **ENG-015a** — Document & Compliance Engine (compliance scoring and requirement matching layer on ENG-015). Partial (BP-002). Not a separate baseline row; implements the compliance-evidence slice of ENG-015.
 
-| Engine ID | Core Engine | Purpose | Status |
-|-----------|-------------|---------|--------|
-| **ENG-004** | Rules Engine | Executes deterministic business rules | Planned |
-| **ENG-005** | Workflow Engine | Maker-checker, approvals | Planned |
-| **ENG-006** | Payment Engine | Cash, M-Pesa, cards, credit, split payments | Planned |
-| **ENG-007** | Receipting Engine | Receipts, invoices, credit notes | Planned |
-| **ENG-008** | Reconciliation Engine | Cash balancing and payment reconciliation | Planned |
-| **ENG-009** | Notification Engine | SMS, email, WhatsApp, push | Planned |
-| **ENG-010** | Integration Engine | APIs, Daraja, banks, eTIMS | Planned |
-| **ENG-011** | Reporting Engine | Operational and management reports | Planned |
-| **ENG-012** | AI Engine | Rules → ML → GenAI (Enterprise Intelligence) | Planned |
-| **ENG-013** | Audit Engine | Immutable audit trail | Partial (emitter interface) |
-| **ENG-014** | Offline Sync Engine | Offline-first synchronization | Planned |
-| **ENG-015** | Document Engine | PDF generation, attachments, contracts | Planned |
-| **ENG-015a** | Document & Compliance Engine | Evidence storage, requirement matching, verification, compliance scoring | Partial (BP-002) |
-| **ENG-016** | Search Engine | Global search | Planned |
+> **ENG-001 – ENG-016** are the active v1.0 baseline engine IDs. Retired or merged IDs are recorded in §3.1 below — not as separate active catalog rows.
 
-> **ENG-001 – ENG-016** are the active engine IDs. Retired or merged IDs are recorded in §3.1 below — not as separate catalog rows.
+### Phase 2 Engines (Introduce Only When Needed)
+
+| Engine ID | Platform Engine | Purpose | What it Handles | Status |
+|-----------|-----------------|---------|-----------------|--------|
+| **ENG-017** | Identity Resolution Engine | Maintains a single trusted identity across duplicate records. | Deduplication, matching, golden record management, survivorship rules, CIF resolution, merge/split operations, similarity scoring. | Planned |
+| **ENG-018** | Scheduling & Calendar Engine | Central scheduling capability shared by multiple domains. | Appointments, bookings, reservations, recurring schedules, availability, reminders, calendars, resource allocation. | Planned |
+| **ENG-019** | Analytics & Insights Engine | Generates analytical and predictive insights beyond operational reporting. | KPI analytics, trend analysis, forecasting, benchmarking, anomaly detection, performance scoring, executive insights. | Planned |
+
+> **Note:** The retired Localization & Regulatory duplicate **ENG-017** was merged into **ENG-003b** (see §3.1). The Phase 2 **ENG-017 Identity Resolution Engine** is a distinct future capability — not a reinstatement of the retired ID.
 
 ### 3.1 Engine Merge Registry
 
@@ -79,11 +84,12 @@ When two engine IDs describe the same capability, merge into **one canonical eng
 
 | Retired ID | Canonical ID | Status | Merge Rationale | Content Absorbed |
 |------------|--------------|--------|-----------------|------------------|
-| **ENG-017** | **ENG-003b** | Approved 2026-07-29 | Duplicate Localization & Regulatory Engine numbering | Tax policies, invoice policies, receipt numbering, country integrations (eTIMS, KRA, URA, TRA, ZRA), feature policy matrix (Kenya/Uganda/Tanzania), feature toggle dimensions (country, industry, business type, subscription) |
+| **ENG-017** (Localization duplicate) | **ENG-003b** | Approved 2026-07-29 | Duplicate Localization & Regulatory Engine numbering | Tax policies, invoice policies, receipt numbering, country integrations (eTIMS, KRA, URA, TRA, ZRA), feature policy matrix (Kenya/Uganda/Tanzania), feature toggle dimensions (country, industry, business type, subscription) |
+| **ENG-010** | **ENG-003e** | Approved 2026-07-30 | Integration scope consolidated under Enterprise Integration Engine (v1.0 baseline) | APIs, Daraja, banks, eTIMS, external system connectors, webhook and API integration patterns |
 
 **Rule:** Before recording a merge, compare both engine definitions side-by-side, port any missing responsibilities into the canonical engine, present the **single merged output** for user approval, then update this registry. See `.cursor/rules/eng-catalog-governance.mdc`.
 
-> **Localization First Principle:** All country-, region-, and jurisdiction-specific behaviour shall be implemented through **ENG-003b** (not ENG-017, not inline `if country == "KE"` checks).
+> **Localization First Principle:** All country-, region-, and jurisdiction-specific behaviour shall be implemented through **ENG-003b** (not the retired Localization duplicate ENG-017, not inline `if country == "KE"` checks). External integrations shall use **ENG-003e Enterprise Integration Engine** (not the retired ENG-010).
 
 ### Engine Ownership Rules
 

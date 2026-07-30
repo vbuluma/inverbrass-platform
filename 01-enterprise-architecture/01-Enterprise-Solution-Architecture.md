@@ -137,42 +137,50 @@ Product Design Principles, containing the philosophies  defined below:
 
 ## 5 – Platform Layer Architecture
 
-### Layer 1 – Core Platform Services (ENG-001 – ENG-016)
+### v1.0 Platform Engine Baseline
 
 > **Canonical engine catalog:** [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3.
 
-| Engine ID | Core Engine | Purpose |
-|-----------|-------------|---------|
-| **ENG-001** | Authentication Engine | Identity, login, PIN, MFA |
-| **ENG-002** | Authorization Engine | Roles and permissions |
-| **ENG-003a** | Configuration Engine | Stores configurable behaviour |
-| **ENG-003b** | Localization & Regulatory Engine | Country-, region-, and jurisdiction-specific configuration and regulatory behaviour |
-| **ENG-003c** | Organization Structure Engine | Internal organizational units (departments, branches, campuses) owned by Organization Parties; future Build Packs reference `organizational_unit_id` |
-| **ENG-003d** | Event Ingestion Engine | Receives, validates, normalizes, and routes business events |
-| **ENG-003e** | Partner Integration Engine | External platform connectors, OAuth, webhooks, rate limiting |
-| **ENG-003f** | Product Intelligence Engine | Product governance, roadmap, analytics, AI-assisted insights |
-| **ENG-003g** | Business Presence Engine | Countries and legal jurisdictions in which a business operates |
-| **ENG-003h** | Platform Performance & Scalability Engine | Caching, queues, observability, circuit breakers |
-| **ENG-003i** | Consent Engine | Event-driven regulatory consent capture |
-| **ENG-003j** | Identity & Regulatory Identification Engine | Captures, validates, and verifies official regulatory identifiers (master data) |
-| **ENG-004** | Rules Engine | Executes deterministic business rules |
-| **ENG-005** | Workflow Engine | Maker-checker, approvals |
-| **ENG-006** | Payment Engine | Cash, M-Pesa, cards, credit, split payments |
-| **ENG-007** | Receipting Engine | Receipts, invoices, credit notes |
-| **ENG-008** | Reconciliation Engine | Cash balancing and payment reconciliation |
-| **ENG-009** | Notification Engine | SMS, email, WhatsApp, push |
-| **ENG-010** | Integration Engine | APIs, Daraja, banks, eTIMS |
-| **ENG-011** | Reporting Engine | Operational and management reports |
-| **ENG-012** | AI Engine | Rules → ML → GenAI |
-| **ENG-013** | Audit Engine | Immutable audit trail |
-| **ENG-014** | Offline Sync Engine | Offline-first synchronization |
-| **ENG-015** | Document Engine | PDF, attachments, contracts |
-| **ENG-015a** | Document & Compliance Engine | Evidence storage, requirement matching, verification, compliance scoring |
-| **ENG-016** | Search Engine | Global search |
+| Engine ID | Platform Engine | Purpose | What it Handles |
+|-----------|-----------------|---------|-----------------|
+| **ENG-001** | Authentication Engine | Establishes user identity and secure access to the platform. | Login, logout, password management, PIN, MFA, SSO, session management, password reset, account lockout, identity providers (Google, Microsoft, Azure AD), token issuance. |
+| **ENG-002** | Authorization Engine | Controls what authenticated users can access and perform. | Roles, permissions, RBAC, ABAC (future), business access, module access, feature access, data visibility, delegated access, segregation of duties. |
+| **ENG-003a** | Configuration Engine | Central metadata engine that makes the platform configurable instead of hardcoded. | System parameters, dropdowns, feature toggles, metadata, dynamic forms, numbering rules, statuses, configurable workflows, validation parameters, business settings. |
+| **ENG-003b** | Localization & Regulatory Engine | Enables country-specific behaviour without changing application code. | Countries, languages, currencies, taxes, date/time formats, address formats, identity document definitions, regulatory rules, invoicing rules, fiscal requirements, compliance configuration. |
+| **ENG-003c** | Organization Structure Engine | Manages internal organizational hierarchy for Organization Parties. | Branches, departments, divisions, regions, campuses, organizational units, reporting hierarchy, head office designation, internal ownership structures. |
+| **ENG-003d** | Event Ingestion Engine | Receives and standardizes events entering the platform. | Business events, webhooks, queues, event validation, event routing, event normalization, asynchronous processing, event publishing. |
+| **ENG-003e** | Enterprise Integration Engine | Provides a single integration layer between the platform and all external systems. | REST APIs, SOAP, GraphQL, OAuth, API keys, webhooks, polling, retries, circuit breakers, provider routing, banking APIs, payment gateways, government APIs, CRM integrations, AI providers, connector health monitoring. |
+| **ENG-003f** | Product Intelligence Engine | Governs products throughout their lifecycle using analytics and AI. | Product portfolio, product lifecycle, roadmaps, business cases, feature tracking, MVPs, KPIs, adoption metrics, AI recommendations, product retirement analysis, GTM support. |
+| **ENG-003g** | Business Presence Engine | Defines where an organization legally and operationally exists. | Countries of operation, legal entities, operating jurisdictions, registrations, branches by country, licensing jurisdictions, market presence. |
+| **ENG-003h** | Platform Performance & Scalability Engine | Ensures enterprise-grade reliability and scalability. | Caching, queues, observability, monitoring, telemetry, performance metrics, distributed tracing, load management, rate limiting, resilience, health monitoring. |
+| **ENG-003i** | Consent Engine | Captures and manages customer consent as immutable business events. | Marketing consent, communication consent, regulatory consent, consent events, consent evidence, consent history, consent withdrawals, consent channels, compliance tracking. |
+| **ENG-003j** | Identity & Regulatory Identification Engine | Captures and manages official regulatory identifiers independent of uploaded documents. | National IDs, passports, tax numbers, business registration numbers, VAT numbers, licences, issuing authorities, verification status, identifier lifecycle, linkage to supporting evidence. |
+| **ENG-004** | Rules Engine | Executes deterministic business rules. | Eligibility rules, validations, calculations, decision tables, configurable rule execution, business policies, rule versioning. |
+| **ENG-005** | Workflow Engine | Orchestrates business processes requiring approvals or multiple steps. | Maker-checker, approvals, escalations, routing, SLA monitoring, workflow history, task assignment, decision points. |
+| **ENG-006** | Payment Engine | Processes all incoming and outgoing financial transactions. | Cash, mobile money, bank transfers, cards, split payments, partial payments, refunds, credits, payment gateways. |
+| **ENG-007** | Receipting Engine | Produces legally compliant financial documents. | Receipts, invoices, quotations, credit notes, debit notes, numbering, fiscal compliance, digital delivery. |
+| **ENG-008** | Reconciliation Engine | Matches financial movements across systems. | Bank reconciliation, payment reconciliation, settlement matching, cash balancing, exception management, reconciliation reports. |
+| **ENG-009** | Notification Engine | Delivers communications across multiple channels. | SMS, email, WhatsApp, push notifications, in-app notifications, reminders, templates, scheduling, delivery tracking. |
+| **ENG-011** | Reporting Engine | Produces operational and management information. | Operational reports, dashboards, exports, scheduled reports, management reports, compliance reports, BI data feeds. |
+| **ENG-012** | Intelligence Engine | Provides platform-wide intelligent capabilities. | Machine Learning, GenAI, OCR, RAG, NLP, recommendations, predictive analytics, decision support, document intelligence, conversational AI. |
+| **ENG-013** | Audit Engine | Maintains immutable records of system changes. | CRUD audit, field-level audit, user activity, change history, correlation IDs, compliance audit, forensic investigation. |
+| **ENG-014** | Offline Sync Engine | Enables offline-first operation for unreliable connectivity. | Local storage, synchronization, conflict resolution, retry mechanisms, synchronization queues, offline validation. |
+| **ENG-015** | Document Engine | Manages all documents and digital evidence across the platform. | Uploads, storage, preview, OCR readiness, versioning, digital signatures, classification, compliance evidence, verification, document lifecycle, retention, archival, AI extraction. |
+| **ENG-016** | Search Engine | Provides unified enterprise search across all modules. | Global search, indexing, filters, relevance ranking, autocomplete, faceted search, cross-module search, saved searches. |
+
+#### Phase 2 Engines (Introduce Only When Needed)
+
+| Engine ID | Platform Engine | Purpose | What it Handles |
+|-----------|-----------------|---------|-----------------|
+| **ENG-017** | Identity Resolution Engine | Maintains a single trusted identity across duplicate records. | Deduplication, matching, golden record management, survivorship rules, CIF resolution, merge/split operations, similarity scoring. |
+| **ENG-018** | Scheduling & Calendar Engine | Central scheduling capability shared by multiple domains. | Appointments, bookings, reservations, recurring schedules, availability, reminders, calendars, resource allocation. |
+| **ENG-019** | Analytics & Insights Engine | Generates analytical and predictive insights beyond operational reporting. | KPI analytics, trend analysis, forecasting, benchmarking, anomaly detection, performance scoring, executive insights. |
+
+> **Note:** The retired Localization & Regulatory duplicate **ENG-017** was merged into **ENG-003b** (see [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3.1). The Phase 2 **ENG-017 Identity Resolution Engine** above is a distinct future capability — not a reinstatement of the retired ID.
 
 ### ENG-003b – Localization & Regulatory Engine
 
-> **Merge note:** ENG-017 was merged into ENG-003b (see [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3.1). Use **ENG-003b** in all new references.
+> **Merge note:** The retired Localization duplicate **ENG-017** was merged into ENG-003b (see [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3.1). Phase 2 **ENG-017 Identity Resolution Engine** is a distinct future capability. Use **ENG-003b** for all localization and regulatory configuration references.
 
 **Purpose**
 
@@ -293,7 +301,7 @@ ENG-003b (configuration) → ENG-003j (captured identifiers) → Party Module (c
 |                                         |                                                                                                                                                                                                                                                                                                                                                                    |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **ENG-003d Event Ingestion Engine**     | Receives, validates, normalizes, and routes business events from internal and external sources (e.g., Gmail, Outlook, WhatsApp, SMS, APIs, webhooks, payment platforms, IoT devices) into the Workflow Engine and other platform services.                                                                                                                         |
-| **ENG-003e Partner Integration Engine** | Provides a centralized framework for integrating with external platforms and partners. Manages connectors, OAuth, API keys, webhooks, polling, rate limiting, retries, connector health monitoring, configuration, and lifecycle management. Connectors (e.g., Gmail, Outlook, Banks, Insurers, M-Pesa) publish standardized events to the Event Ingestion Engine. |
+| **ENG-003e Enterprise Integration Engine** | Provides a centralized integration layer between the platform and all external systems. Manages connectors, OAuth, API keys, webhooks, polling, rate limiting, retries, circuit breakers, connector health monitoring, configuration, and lifecycle management. Connectors (e.g., Gmail, Outlook, Banks, Insurers, M-Pesa) publish standardized events to the Event Ingestion Engine. |
 
 
 
@@ -309,7 +317,7 @@ External Systems
 (Gmail, Outlook, WhatsApp, APIs, Banks, M-Pesa, IoT)
                 │
                 ▼
-ENG-003e Partner Integration Engine
+ENG-003e Enterprise Integration Engine
                 │
                 ▼
 ENG-003d Event Ingestion Engine
@@ -381,17 +389,17 @@ The platform already has the core building blocks.
 
 ✔ Event Ingestion Engine (planned)
 
-✔ Partner Integration Engine (planned)
+✔ Enterprise Integration Engine (planned)
 
 ✔ Workflow Engine
 
-✔ AI Services
+✔ Intelligence Engine (ENG-012)
 
 ✔ Notification Engine
 
 ✔ Reporting Engine
 
-✔ Integration Engine
+✔ Enterprise Integration Engine (planned — ENG-003e)
 
 These are exactly the kinds of engines a digital platform needs.
 

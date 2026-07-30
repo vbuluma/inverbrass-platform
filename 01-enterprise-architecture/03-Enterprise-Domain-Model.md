@@ -73,9 +73,9 @@ Support programme-driven operations, field activities, inspections, and outcome 
 ________________________________________
 13. Enterprise Intelligence Domain
 Business Domain	Purpose	Owning Capability	Key Business Entities	Used By	Configuration Driven
-Business Rules	Execute configurable business rules	Business Rules Engine	Rule, Condition, Action	All Industry Solutions	Yes
-Machine Learning	Predict outcomes and detect anomalies	Machine Learning Engine	Model, Prediction, Forecast	All Industry Solutions	Yes
-Generative AI	Provide conversational assistance and recommendations	Generative AI Engine	Prompt, Conversation, Recommendation	All Industry Solutions	Yes
+Business Rules	Execute configurable business rules	ENG-004 Rules Engine	Rule, Condition, Action	All Industry Solutions	Yes
+Machine Learning	Predict outcomes and detect anomalies	ENG-012 Intelligence Engine	Model, Prediction, Forecast	All Industry Solutions	Yes
+Generative AI	Provide conversational assistance and recommendations	ENG-012 Intelligence Engine	Prompt, Conversation, Recommendation	All Industry Solutions	Yes
 
 
 14. Product Strategy & Lifecycle Management domain

@@ -1,5 +1,5 @@
 ---
-description: Core Platform Engine catalog governance — preserve ENG-001–017, merge duplicates with approval
+description: Core Platform Engine catalog governance — preserve ENG-001–019, merge duplicates with approval
 globs:
   - 01-enterprise-architecture/**/*.md
   - 02-build-packs/**/*.md
@@ -11,10 +11,16 @@ alwaysApply: true
 
 ## Preserve the Catalog
 
-1. **Never remove ENG-001 – ENG-017** from architecture documentation.
+1. **Never remove ENG-001 – ENG-019** from architecture documentation.
    - Canonical catalog: `01-enterprise-architecture/02-Platform-Module-Catalog.md` §3
-   - Architecture detail: `01-enterprise-architecture/01-Enterprise-Solution-Architecture.md` §5
+   - Architecture detail: `01-enterprise-architecture/01-Enterprise-Solution-Architecture.md` §5 (v1.0 Platform Engine Baseline)
 2. Do not collapse, rename, or delete engine IDs without following the merge workflow below.
+
+## v1.0 Platform Engine Baseline
+
+- **Active baseline:** ENG-001 – ENG-016 (see catalog §3)
+- **Phase 2 (introduce only when needed):** ENG-017 – ENG-019
+- **Extension IDs:** ENG-015a (compliance layer on ENG-015); ENG-003a–j (regulatory sub-engines)
 
 ## Duplicate Detection & Merge Workflow
 
@@ -74,9 +80,11 @@ After approval:
 
 | Pattern | Treatment |
 |---------|-----------|
-| ENG-003a–i | Sub-engines under ENG-003; keep as separate rows |
+| ENG-003a–j | Sub-engines under ENG-003; keep as separate rows |
 | ENG-015a | Extension of ENG-015 (compliance layer); keep both unless user approves merge |
-| ENG-017 → ENG-003b | Merged; ENG-017 lives only in §3.1 Merge Registry |
+| ENG-017 (Localization duplicate) → ENG-003b | Merged; retired ID lives only in §3.1 Merge Registry |
+| ENG-017 (Phase 2) | Identity Resolution Engine — distinct future capability; not the retired ID |
+| ENG-010 → ENG-003e | Merged; integration scope under Enterprise Integration Engine |
 
 ## Related Engines (not duplicates)
 

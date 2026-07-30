@@ -215,7 +215,7 @@ This becomes a strategic release rather than a feature.
 | **BP-031** | Consent & Data Sharing Engine                   | Allow SMEs to control what data is shared, with whom, for what purpose, and for how long.                              |
 | **BP-032** | Finance Marketplace                             | Connect banks, SACCOs, MFIs, and fintechs to receive financing offers based on the Business Profile.                   |
 | **BP-033** | Insurance Marketplace                           | Connect insurers to provide business, medical, motor, asset, and liability insurance offers.                           |
-| **BP-034** | Partner Integration Hub                         | Standard APIs/webhooks for banks, insurers, payment providers, CRBs, tax authorities, etc.                             |
+| **BP-034** | Enterprise Integration Hub (ENG-003e)              | Standard APIs/webhooks for banks, insurers, payment providers, CRBs, tax authorities, etc.                             |
 | **BP-035** | AI Business Advisor                             | Recommend financing, insurance, grants, and financial products based on the Business Profile and business performance. |
 
 

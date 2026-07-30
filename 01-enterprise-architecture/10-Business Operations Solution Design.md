@@ -131,7 +131,7 @@ Inherited Shared Platform Services
 •	Integration Engine 
 •	Audit Engine 
 •	API Gateway 
-•	AI Engine 
+•	Intelligence Engine (ENG-012) 
 •	Reporting Engine 
 •	Workflow Engine 
 
@@ -343,7 +343,7 @@ Configuration Engine
 Notification Engine
 Reporting Engine
 Integration Engine
-AI Engine
+Intelligence Engine (ENG-012)
 Audit Engine
 API Gateway
 Offline Synchronization Engine
@@ -501,10 +501,10 @@ VS-007 Intelligence & Continuous Improvement
 Process ID	Business Process	Primary Owner
 PROC-060	Dashboard Generation	System
 PROC-061	KPI Monitoring	Business Owner
-PROC-062	Business Health Assessment	AI Engine
-PROC-063	AI Recommendation Generation	AI Engine
+PROC-062	Business Health Assessment	Intelligence Engine (ENG-012)
+PROC-063	AI Recommendation Generation	Intelligence Engine (ENG-012)
 PROC-064	Scheduled Report Generation	System
-PROC-065	Predictive Forecasting	AI Engine
+PROC-065	Predictive Forecasting	Intelligence Engine (ENG-012)
 ________________________________________
 5. Cross-Value Stream Process Interaction
 From	To	Business Outcome
@@ -701,7 +701,7 @@ Notification Engine
 Integration Engine
        │
        ▼
-AI Engine (Optional)
+Intelligence Engine (ENG-012) (Optional)
        │
        ▼
 Reporting & Audit Engine
@@ -1381,7 +1381,7 @@ Principle	Approach
 AI shall augment—not replace—business decision-making.	
 The Rules Engine remains the authoritative source for deterministic decisions.	
 AI features shall be modular and configurable through the AI Configuration Engine.	
-New AI services should integrate via the AI Engine defined in Document 01 rather than being embedded within business modules.	
+New AI services should integrate via the Intelligence Engine (ENG-012) defined in Document 01 rather than being embedded within business modules.	
 AI implementations shall follow security, privacy, and tenant isolation standards defined in Documents 08 and 09.	
 ________________________________________
 13. Business Digital Twin
