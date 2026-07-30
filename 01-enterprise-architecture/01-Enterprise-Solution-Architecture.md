@@ -1,5 +1,8 @@
 🏛️ InverBrass Platform: Final Blueprint (v1.0 Architecture & Documentation)
-This is the frozen, enterprise-ready InverBrass v1.0 Architecture Blueprint. It maximizes your velocity as a solo developer by prioritizing extreme modular uniformity and configuration over one-off custom code. [1] 
+This is the frozen, enterprise-ready InverBrass v1.0 Architecture Blueprint. It maximizes your velocity as a solo developer by prioritizing extreme modular uniformity and configuration over one-off custom code. [1]
+
+**Architecture Version:** AV-1.3 — see [01b – Architecture Versions](./01b-Architecture-Versions.md) for the full change history (from → to, reasoning).
+
 T**his & future architecture changes MUST support My core VISSION below**:
 ****Platform Principle & Vission PP-001 – Digital Business Platform**
 

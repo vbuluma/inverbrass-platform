@@ -591,22 +591,16 @@ Modular Development
 Metadata Driven
 Logging Required
 
-Rule: Architecture Decision Documentation
+Rule: Architecture Version Documentation
 
-Whenever Cursor introduces a new architectural mechanism (for example a cookie, cache, route guard, event, state store, background job, etc.), it must justify it.
+Enterprise architecture changes are recorded in [01b – Architecture Versions](./01b-Architecture-Versions.md). Each version entry must state **from → to** and **reasoning**. Build-pack ADRs (e.g. BP-001 ADR-009–021) remain in their deliverable documents.
 
-For example:
+Whenever Cursor introduces a new cross-cutting architectural mechanism (for example a cookie, cache, route guard, event, state store, background job, new core engine, etc.), it must justify it:
 
-Architecture Decision
+- Why does this exist?
+- Why can't existing components perform this responsibility?
+- What is the single source of truth?
+- How does this align with the current Architecture Version (AV-x.y)?
+- What future extension does it support?
 
-Why does this exist?
-
-Why can't existing components perform this responsibility?
-
-What is the single source of truth?
-
-How does this align with AD-009?
-
-What future extension does it support?
-
-If Cursor cannot answer these questions, it should not introduce the mechanism.
+If the change is material (engine ID, platform layer, foundation freeze, ownership rule), add an AV entry before or with the change. If Cursor cannot answer these questions, it should not introduce the mechanism.

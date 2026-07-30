@@ -95,6 +95,7 @@ This structure clearly distinguishes the platform layers:
 Attribute	Value
 Document Name	Platform Module Catalog
 Version	1.0
+Architecture Version	AV-1.3 (see [01b – Architecture Versions](./01b-Architecture-Versions.md))
 Purpose	Defines every platform capability, ownership, dependencies and reuse strategy.
 Scope	Entire InverBrass Business Platform
 Audience	Product Owner, Solution Architect, Developers, AI Coding Assistants

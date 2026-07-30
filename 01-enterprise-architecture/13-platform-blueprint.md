@@ -5,6 +5,7 @@ PLATFORM_BLUEPRINT.md
 # InverBrass Platform Blueprint
 
 ## Version: 1.0
+Architecture Version: AV-1.3 (see [01b – Architecture Versions](./01b-Architecture-Versions.md))
 Status: Approved
 
 # Purpose
