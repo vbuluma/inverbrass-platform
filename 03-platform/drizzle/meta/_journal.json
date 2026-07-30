@@ -197,6 +197,27 @@
       "when": 1784564588828,
       "tag": "0027_bp002_ip013_party_identity_identifier",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1784564588829,
+      "tag": "0028_bp003_ip001_product_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1784564588830,
+      "tag": "0029_bp003_ip002_product_classification",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1784564588831,
+      "tag": "0030_bp003_ip002_classification_enhancements",
+      "breakpoints": true
     }
   ]
 }

@@ -11,7 +11,7 @@
 
 import "@/lib/env/load-env";
 
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { count, eq } from "drizzle-orm";
@@ -52,6 +52,10 @@ import {
 } from "@/modules/product/validators/product-validators";
 
 const ROOT = path.resolve(__dirname, "..");
+
+const MIGRATION_TAGS = [
+  "0028_bp003_ip001_product_foundation",
+] as const;
 
 const REQUIRED_FILES = [
   "src/db/schema/product-type.ts",
@@ -106,6 +110,37 @@ function checkRequiredFiles(): SmokeResult[] {
       name: `file:${relativePath}`,
       ok,
       detail: ok ? undefined : "Missing required Product Foundation file.",
+    };
+  });
+}
+
+function checkMigrationJournal(): SmokeResult[] {
+  const journalPath = path.join(ROOT, "drizzle/meta/_journal.json");
+  if (!existsSync(journalPath)) {
+    return [
+      {
+        name: "migration:journal",
+        ok: false,
+        detail: "Missing drizzle/meta/_journal.json.",
+      },
+    ];
+  }
+
+  const journal = JSON.parse(readFileSync(journalPath, "utf8")) as {
+    entries?: Array<{ tag?: string }>;
+  };
+  const registeredTags = new Set(
+    (journal.entries ?? []).map((entry) => entry.tag).filter(Boolean),
+  );
+
+  return MIGRATION_TAGS.map((tag) => {
+    const ok = registeredTags.has(tag);
+    return {
+      name: `migration:journal:${tag}`,
+      ok,
+      detail: ok
+        ? undefined
+        : `Migration ${tag} is not registered in drizzle/meta/_journal.json — npm run db:migrate will skip it.`,
     };
   });
 }
@@ -203,8 +238,8 @@ function checkWorkspaceTabs(): SmokeResult[] {
       ok: audit?.available === true,
     },
     {
-      name: "workspace:classification placeholder",
-      ok: classification?.available === false && classification?.futureIp === "IP-002",
+      name: "workspace:classification available",
+      ok: classification?.available === true,
     },
   ];
 }
@@ -348,6 +383,7 @@ async function main() {
   console.log("BP-003 / IP-001 Product Foundation — read-only smoke validation");
   const results = [
     ...checkRequiredFiles(),
+    ...checkMigrationJournal(),
     ...checkValidators(),
     ...checkRules(),
     ...checkWorkspaceTabs(),
