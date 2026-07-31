@@ -11,8 +11,10 @@
 import {
   ArchiveIcon,
   FilePlusIcon,
+  FolderTreeIcon,
   PackageIcon,
   PlusIcon,
+  RulerIcon,
   SearchIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -208,6 +210,22 @@ export function ProductDashboard({ data }: ProductDashboardProps) {
           >
             <FilePlusIcon className="size-4" aria-hidden />
             Register Offering
+          </Link>
+          <Link
+            href="/products/classifications"
+            prefetch={false}
+            className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
+          >
+            <FolderTreeIcon className="size-4" aria-hidden />
+            Classifications
+          </Link>
+          <Link
+            href="/products/units"
+            prefetch={false}
+            className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
+          >
+            <RulerIcon className="size-4" aria-hidden />
+            Units of Measure
           </Link>
           <Link
             href="/products/new"

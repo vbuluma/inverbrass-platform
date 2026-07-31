@@ -5,6 +5,7 @@ ________________________________________
 Attribute	Value
 Document Name	Enterprise Domain Model
 Version	1.0
+Architecture Version	AV-1.5 (see [01b – Architecture Versions](./01b-Architecture-Versions.md))
 Purpose	Defines the business domains, ownership, key entities and relationships that form the foundation of the InverBrass Business Platform.
 Scope	Entire InverBrass Business Platform
 Audience	Product Owner, Solution Architect, Developers, AI Coding Assistants
@@ -48,7 +49,8 @@ ________________________________________
 7. Operations Domain
 Business Domain	Purpose	Owning Capability	Key Business Entities	Used By	Configuration Driven
 Scheduling	Manage appointments and bookings	Scheduling	Appointment, Booking	Property, Academy, Future Solutions	Yes
-Task Management	Manage operational activities	Task Management	Task, Checklist	All Industry Solutions	Yes
+Task Management	Manage operational activities and process completion (ENG-003l)	ENG-003l Checklist & Completion Engine	Checklist Definition, Checklist Instance, Checklist Item Completion	All Industry Solutions	Yes
+Portfolio & Roadmap Planning	Plan releases, initiatives, and controlled evolution (ENG-003m)	ENG-003m Portfolio & Roadmap Engine	Portfolio Release, Roadmap Item, Release History, Milestone	All Industry Solutions	Yes
 Asset Management	Manage business assets	Asset Management	Asset, Asset Category	Business Operations, Property	Yes
 Document Management	Store operational documents	Document Management	Document, Attachment	All Industry Solutions	Yes
 ________________________________________

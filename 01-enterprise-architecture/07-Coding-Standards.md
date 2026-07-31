@@ -4,6 +4,7 @@ ________________________________________
 Attribute	Value
 Document Name	Development Standards & Coding Guidelines
 Version	1.0
+Architecture Version	AV-1.5 (see [01b – Architecture Versions](./01b-Architecture-Versions.md))
 Purpose	Defines the software engineering, coding, testing and maintainability standards for the InverBrass Business Platform.
 Scope	Entire InverBrass Business Platform
 Audience	Developers, Solution Architects, AI Coding Assistants
@@ -198,6 +199,7 @@ ________________________________________
 Attribute	Value
 Document Name	Development Standards & Coding Guidelines
 Version	1.0
+Architecture Version	AV-1.5 (see [01b – Architecture Versions](./01b-Architecture-Versions.md))
 Purpose	Defines the software engineering, coding, testing and maintainability standards for the InverBrass Business Platform.
 Scope	Entire InverBrass Business Platform
 Audience	Developers, Solution Architects, AI Coding Assistants
@@ -600,7 +602,8 @@ Whenever Cursor introduces a new cross-cutting architectural mechanism (for exam
 - Why does this exist?
 - Why can't existing components perform this responsibility?
 - What is the single source of truth?
-- How does this align with the current Architecture Version (AV-x.y)?
+- How does this align with the current Architecture Version (**AV-1.5**)?
+- For new Core Platform Engines: assign **ENG-003n** (next available sub-engine ID) — record in catalog §3 before implementation. No renumbering or regrouping under AV-1.5 lock.
 - What future extension does it support?
 
 If the change is material (engine ID, platform layer, foundation freeze, ownership rule), add an AV entry before or with the change. If Cursor cannot answer these questions, it should not introduce the mechanism.

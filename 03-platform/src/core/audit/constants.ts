@@ -47,6 +47,10 @@ export const AUDIT_ENTITY_NAMES = {
   PARTY_COMMUNICATION_PREFERENCE: "party_communication_preference",
   PARTY_IDENTITY_IDENTIFIER: "party_identity_identifier",
   PRODUCT: "product",
+  PRODUCT_CLASSIFICATION: "product_classification",
+  PRODUCT_CLASSIFICATION_ASSIGNMENT: "product_classification_assignment",
+  UNIT_OF_MEASURE: "unit_of_measure",
+  UNIT_CATEGORY: "unit_category",
 } as const;
 
 export type AuditEntityName =
@@ -68,6 +72,10 @@ export const AUDIT_ENTITY_LABELS: Record<AuditEntityName, string> = {
   party_communication_preference: "Communication & Consent Preferences",
   party_identity_identifier: "Identity Identifier",
   product: "Product",
+  product_classification: "Product Classification",
+  product_classification_assignment: "Classification Assignment",
+  unit_of_measure: "Unit of Measure",
+  unit_category: "Unit Category",
 };
 
 export const AUDIT_SOURCE_MODULES = {

@@ -42,6 +42,7 @@ import { seedVerificationMethods } from "@/db/seeds/verification-methods-seed";
 import { seedSecurityQuestions } from "@/db/seeds/security-questions-seed";
 import { seedProductTypes } from "@/db/seeds/product-types-seed";
 import { seedProductStatuses } from "@/db/seeds/product-statuses-seed";
+import { seedProductClassificationTypes } from "@/db/seeds/product-classification-types-seed";
 
 async function runSeed() {
   const connectionString = process.env.DATABASE_URL;
@@ -209,6 +210,12 @@ async function runSeed() {
     const productStatusResults = await seedProductStatuses(db);
     console.log(
       `productStatuses: inserted=${productStatusResults.inserted}, updated=${productStatusResults.updated}, skipped=${productStatusResults.skipped}`
+    );
+
+    console.log("Seeding product classification types...");
+    const classificationTypeResults = await seedProductClassificationTypes(db);
+    console.log(
+      `productClassificationTypes: inserted=${classificationTypeResults.inserted}, updated=${classificationTypeResults.updated}, skipped=${classificationTypeResults.skipped}`
     );
 
     console.log("✅ Seed completed.");

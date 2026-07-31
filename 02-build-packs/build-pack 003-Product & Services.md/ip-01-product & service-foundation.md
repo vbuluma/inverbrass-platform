@@ -277,9 +277,9 @@ IP-009	Product Documents
 IP-010	Product Timeline
 IP-011	Product Audit
 IP-012	Product Relationships
-IP-013	Product Governance
-IP-014	Product Roadmap
-IP-015	Product Intelligence
+IP-013	Offering Governance (final BP-003 IP)
+IP-014	Retired → ENG-003m Portfolio & Roadmap Engine
+IP-015	Deferred → ENG-003f / BP-013 Product Intelligence
 15. Acceptance Criteria
 AC ID	Acceptance Criteria
 AC-001	Users can create both products and services.

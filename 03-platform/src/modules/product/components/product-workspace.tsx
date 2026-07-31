@@ -45,6 +45,7 @@ import {
 } from "@/modules/product/actions/product-actions";
 import { ProductAuditHistoryPanel } from "@/modules/product/components/product-audit-history-panel";
 import { ProductCapabilitiesPanel } from "@/modules/product/components/product-capabilities-panel";
+import { ProductClassificationPanel } from "@/modules/product/components/product-classification-panel";
 import { ProductTimelinePanel } from "@/modules/product/components/product-timeline-panel";
 import {
   PRODUCT_STATUS_CODES,
@@ -53,6 +54,7 @@ import {
 import { PRODUCT_UI_LABELS } from "@/modules/product/ui-labels";
 import type {
   ProductAuditHistoryPanelView,
+  ProductClassificationPanelView,
   ProductDetailView,
   ProductRegistrationCatalogues,
 } from "@/modules/product/types";
@@ -60,6 +62,7 @@ import type {
 type ProductWorkspaceProps = {
   product: ProductDetailView;
   catalogues: ProductRegistrationCatalogues;
+  classification: ProductClassificationPanelView;
   timeline: ProductTimelinePanelView;
   auditHistory: ProductAuditHistoryPanelView;
   initialTab?: string;
@@ -97,6 +100,7 @@ function formatDate(iso: string | null): string {
 export function ProductWorkspace({
   product: initialProduct,
   catalogues,
+  classification,
   timeline,
   auditHistory,
   initialTab = "overview",
@@ -223,8 +227,15 @@ export function ProductWorkspace({
             completed: Boolean(product.description?.trim()),
             href: `/products/${product.id}?tab=overview`,
           },
+          {
+            id: "classification",
+            label: "Primary classification assigned",
+            completed: Boolean(classification.primaryClassification),
+            href: `/products/${product.id}?tab=classification`,
+          },
         ]}
         quickActions={[
+          { label: "Catalogue Structure", href: `/products/${product.id}?tab=classification` },
           { label: "View Timeline", href: `/products/${product.id}?tab=timeline` },
           { label: "View Audit", href: `/products/${product.id}?tab=audit-history` },
         ]}
@@ -286,7 +297,7 @@ export function ProductWorkspace({
             <CardHeader>
               <CardTitle>{PRODUCT_UI_LABELS.identityHeading}</CardTitle>
               <CardDescription>
-                Core identifiers for this offering. Classification arrives in IP-002.
+                Core identifiers for this offering.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -526,6 +537,14 @@ export function ProductWorkspace({
             </PlatformFormActionFooter>
           ) : null}
         </form>
+      ) : null}
+
+      {activeTab === "classification" ? (
+        <ProductClassificationPanel
+          productId={product.id}
+          initialData={classification}
+          disabled={isArchived}
+        />
       ) : null}
 
       {activeTab === "timeline" ? (

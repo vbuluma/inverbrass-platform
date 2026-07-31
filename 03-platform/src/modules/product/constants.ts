@@ -46,15 +46,60 @@ export const PRODUCT_RECORD_SOURCE_CODES = {
 export type ProductRecordSourceCode =
   (typeof PRODUCT_RECORD_SOURCE_CODES)[keyof typeof PRODUCT_RECORD_SOURCE_CODES];
 
+export const PRODUCT_CLASSIFICATION_STATUS_CODES = {
+  DRAFT: "DRAFT",
+  ACTIVE: "ACTIVE",
+  SUSPENDED: "SUSPENDED",
+  ARCHIVED: "ARCHIVED",
+  DEPRECATED: "DEPRECATED",
+} as const;
+
+export type ProductClassificationStatusCode =
+  (typeof PRODUCT_CLASSIFICATION_STATUS_CODES)[keyof typeof PRODUCT_CLASSIFICATION_STATUS_CODES];
+
+export const PRODUCT_CLASSIFICATION_APPROVAL_STATUS_CODES = {
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+  NOT_REQUIRED: "NOT_REQUIRED",
+} as const;
+
+export type ProductClassificationApprovalStatusCode =
+  (typeof PRODUCT_CLASSIFICATION_APPROVAL_STATUS_CODES)[keyof typeof PRODUCT_CLASSIFICATION_APPROVAL_STATUS_CODES];
+
+export const PRODUCT_CLASSIFICATION_TYPE_CODES = {
+  CATEGORY: "CATEGORY",
+  SUB_CATEGORY: "SUB_CATEGORY",
+  COLLECTION: "COLLECTION",
+  BRAND: "BRAND",
+  PRODUCT_FAMILY: "PRODUCT_FAMILY",
+  PRODUCT_LINE: "PRODUCT_LINE",
+  DEPARTMENT: "DEPARTMENT",
+  SEGMENT: "SEGMENT",
+  SERIES: "SERIES",
+  MODEL: "MODEL",
+} as const;
+
+export type ProductClassificationTypeCode =
+  (typeof PRODUCT_CLASSIFICATION_TYPE_CODES)[keyof typeof PRODUCT_CLASSIFICATION_TYPE_CODES];
+
+export const PRODUCT_CLASSIFICATION_WORKSPACE_TABS = [
+  { id: "overview", label: "Overview", available: true },
+  { id: "children", label: "Child Categories", available: true },
+  { id: "assigned-products", label: "Assigned Products", available: true },
+  { id: "timeline", label: "Timeline", available: true },
+  { id: "audit-history", label: "Audit History", available: true },
+] as const;
+
 export const PRODUCT_WORKSPACE_TABS = [
   { id: "overview", label: "Overview", available: true, futureIp: null },
   {
     id: "classification",
-    label: "Classification",
-    available: false,
-    futureIp: "IP-002",
+    label: "Catalogue Structure",
+    available: true,
+    futureIp: null,
   },
-  { id: "units", label: "Units", available: false, futureIp: "IP-003" },
+  { id: "units", label: "Units", available: true, futureIp: null },
   {
     id: "attributes",
     label: "Attributes",
@@ -90,5 +135,35 @@ export const PRODUCT_WORKSPACE_TABS = [
     futureIp: "IP-015",
   },
 ] as const;
+
+export const UNIT_STATUS_CODES = {
+  DRAFT: "DRAFT",
+  ACTIVE: "ACTIVE",
+  SUSPENDED: "SUSPENDED",
+  ARCHIVED: "ARCHIVED",
+} as const;
+
+export type UnitStatusCode =
+  (typeof UNIT_STATUS_CODES)[keyof typeof UNIT_STATUS_CODES];
+
+export const UNIT_CATEGORY_STATUS_CODES = {
+  ACTIVE: "ACTIVE",
+  SUSPENDED: "SUSPENDED",
+  ARCHIVED: "ARCHIVED",
+} as const;
+
+export type UnitCategoryStatusCode =
+  (typeof UNIT_CATEGORY_STATUS_CODES)[keyof typeof UNIT_CATEGORY_STATUS_CODES];
+
+export const UNIT_ROUNDING_RULES = {
+  HALF_UP: "HALF_UP",
+  HALF_DOWN: "HALF_DOWN",
+  CEILING: "CEILING",
+  FLOOR: "FLOOR",
+  TRUNCATE: "TRUNCATE",
+} as const;
+
+export type UnitRoundingRule =
+  (typeof UNIT_ROUNDING_RULES)[keyof typeof UNIT_ROUNDING_RULES];
 
 export const PRODUCT_DEFAULT_PAGE_SIZE = 25;

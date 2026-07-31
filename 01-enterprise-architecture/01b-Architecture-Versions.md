@@ -5,7 +5,7 @@
 | Attribute | Value |
 |-----------|-------|
 | Document Name | Architecture Versions |
-| Current Version | **AV-1.3** |
+| Current Version | **AV-1.5** |
 | Former Name | Architecture Decision Record (ADR) — enterprise scope |
 | Scope | Entire InverBrass Enterprise Architecture |
 | Audience | Product Owner, Solution Architect, Developers, AI Coding Assistants |
@@ -33,7 +33,8 @@ Build-pack–scoped decisions (e.g. ADR-009–021 in BP-001) remain in their del
 | **From / To required** | Every version entry must state what existed before and what exists after. Vague summaries are not sufficient. |
 | **Reasoning required** | Every version entry must explain why the change was made and what problem it solves. |
 | **Increment on material change** | Bump the minor version (AV-1.x) when engine IDs, platform layers, ownership rules, foundation freeze status, or cross-document principles change. |
-| **Major version** | Bump AV-2.0 only for breaking platform-wide restructuring (e.g. monolith → microservices, tenant model change). |
+| **Major version** | Bump AV-2.0 only for breaking platform-wide restructuring (e.g. monolith → microservices, tenant model change, **engine family regrouping**). |
+| **AV-1.5 engine catalog lock** | **Locked.** No renumbering. No regrouping. New platform capabilities continue as **ENG-003n**, **ENG-003o**, etc. until an **AV-2.0** review is deliberately initiated. See [AV-1.5 Engine Catalog Lock](#av-15-engine-catalog-lock). |
 | **Engine merges** | Engine ID merges are recorded here **and** in [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3.1 Engine Merge Registry. |
 | **Foundation freeze** | Foundation freeze declarations are recorded here **and** in [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3.2 Foundation Freeze Registry. |
 | **Build-pack ADRs** | BP-specific ADRs (authentication, IAM, etc.) stay in build-pack deliverables; reference them from implementation notes when relevant. |
@@ -42,7 +43,7 @@ Build-pack–scoped decisions (e.g. ADR-009–021 in BP-001) remain in their del
 
 Add a new AV entry when any of the following change:
 
-- Platform engine baseline (ENG-001 – ENG-019, ENG-003a–k, ENG-015a)
+- Platform engine baseline (ENG-001 – ENG-019, ENG-003a–m, ENG-015a)
 - Platform design principles (AP-001 onward)
 - Industry Edition model or ENG-003k Industry Experience Engine
 - Foundation freeze scope or status
@@ -50,6 +51,8 @@ Add a new AV entry when any of the following change:
 - Technology baseline (Document 01 § Technology Baseline)
 
 Do **not** add an AV entry for routine build-pack IP completion unless it introduces a new cross-cutting architectural mechanism.
+
+Do **not** regroup or renumber ENG-003 sub-engines under AV-1.x — **AV-1.5 Engine Catalog Lock** is in force. New IDs: ENG-003n, ENG-003o, …
 
 ---
 
@@ -168,7 +171,7 @@ A generic ERP-style menu exposes unrelated industry capabilities (e.g. Patients 
 | Field | Value |
 |-------|-------|
 | **Date** | 2026-07-30 |
-| **Status** | **Current** |
+| **Status** | Superseded by AV-1.4 |
 | **Author** | Solution Architect |
 
 #### From → To
@@ -203,6 +206,177 @@ BP-001 and BP-002 foundations are complete and stable. BP-003 IP-001 establishes
 #### Foundation Freeze Rule (effective AV-1.3)
 
 Complete remaining IPs without restructuring frozen foundations. Enhance through configuration, Industry Experience profiles, and UI — not schema churn.
+
+---
+
+### AV-1.4 — Checklist & Completion Engine (ENG-003l)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-07-31 |
+| **Status** | Superseded by AV-1.5 |
+| **Author** | Solution Architect |
+
+#### From → To
+
+| Area | From | To |
+|------|------|-----|
+| Checklist capability | Ad-hoc module task lists; "Checklists" in Operations Domain marked "Future Solutions"; document matrix UI proposed inside BP-003 only | **ENG-003l — Checklist & Completion Engine** as a Core Platform sub-engine under ENG-003 |
+| Ownership | Implicit in Document Engine / Build Pack UI | Single engine owner: metadata-driven definitions, instances, auto-complete, blocking rules, progress calculation |
+| Build Pack consumption | No cross-cutting checklist service | All Build Packs consume ENG-003l (BP-001 onboarding, BP-002 party onboarding, BP-003 product creation, BP-004 pricing setup, etc.) |
+| Document relationship | Document compliance matrix treated as UI-only concern | ENG-015a remains document matching owner; ENG-003l checklist items consume compliance state — checklist logic is not embedded in Document Engine |
+| UX pattern | `PlatformCompletionMeter` used ad-hoc for profile completion | Completion meter and card components (UX-001.1) fed by ENG-003l service API |
+
+#### Reasoning
+
+Virtually every business process has a "have I completed everything?" requirement. Elevating checklists to a metadata-driven Core Platform Engine avoids reinventing guided-process UX in every Build Pack and Industry Edition. The engine supports mandatory blocking, optional warnings, auto-complete from platform events (document upload, identifier capture, approval), and manual attestation (site inspection). This is a platform differentiator: metadata-driven and reusable across Banking, Healthcare, Property, Education, and all verticals.
+
+#### Affected Documents
+
+- [01 – Enterprise Solution Architecture](./01-Enterprise-Solution-Architecture.md) §5 — ENG-003l specification
+- [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3 — engine row, Build Pack consumption, Operations Domain
+- [03 – Enterprise Domain Model](./03-Enterprise-Domain-Model.md) — Operations Domain ownership
+- [06 – UI Standards](./06-UI-Standards.md) — extension ID reference
+- [06b – UX & Interaction Standards](./06b-UX%20%26%20Interaction%20Standards.md) — UX-001.2h checklist patterns
+- [13 – Platform Blueprint](./13-platform-blueprint.md) — Core Platform Services
+- `.cursor/rules/eng-catalog-governance.mdc` — ENG-003a–l extension IDs
+- BP-001 Business Setup requirements — setup checklist consumes ENG-003l
+- BP-003 offering documents & compliance — document matrix powered by ENG-003l + ENG-015a
+
+#### Implementation Notes (planned)
+
+- Module: `03-platform/src/core/checklist-completion/` (not yet implemented)
+- Existing UX components: `platform-completion-meter.tsx`, `platform-completion-card.tsx` — to be wired to ENG-003l
+- Not in scope for BP-003 IP delivery — engine consumed by Build Packs when implemented
+
+---
+
+### AV-1.5 — Portfolio & Roadmap Engine (ENG-003m); BP-003 IP-014 Retired
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-07-31 |
+| **Status** | **Current** |
+| **Author** | Solution Architect |
+
+#### From → To
+
+| Area | From | To |
+|------|------|-----|
+| BP-003 IP-014 | Offering Roadmap & Release Management as a Product module IP with `offering_release`, `offering_roadmap_item` tables | **Retired from BP-003** — requirements absorbed into **ENG-003m Portfolio & Roadmap Engine** |
+| BP-003 delivery boundary | IP-001 through IP-015 planned (governance, roadmap, intelligence) | **BP-003 freezes after IP-013 (Offering Governance)** for operational catalogue scope; roadmap and intelligence deferred to platform engines |
+| Roadmap ownership | Implied in ENG-003f Product Intelligence ("roadmaps, releases, MVPs") | **ENG-003m** owns roadmap, release, milestone, and retirement planning; **ENG-003f** refocused on analytics and AI insights consuming ENG-003m data |
+| Engine ID proposal | ENG-017 suggested for Portfolio & Roadmap | **ENG-003m** assigned — ENG-017 remains reserved for Phase 2 Identity Resolution Engine |
+| Entity model | Product-specific `offering_*` roadmap tables | Generic `portfolio_release`, `portfolio_roadmap_item`, `portfolio_release_history`, `portfolio_milestone` with subject binding |
+
+#### Reasoning
+
+Roadmap and release management is not unique to products. The same capability is needed for customer onboarding journeys, loan products, hospital services, school programmes, property offerings, NGO programmes, and business processes. Implementing it inside BP-003 would duplicate planning logic across Build Packs. Elevating it to ENG-003m keeps the architecture aligned with "implement once, reuse everywhere" while allowing BP-003 to freeze after IP-013 as a complete operational offering master. ENG-017 cannot be reused — it is the Phase 2 Identity Resolution Engine per the v1.0 baseline.
+
+#### Affected Documents
+
+- [01 – Enterprise Solution Architecture](./01-Enterprise-Solution-Architecture.md) §5 — ENG-003m specification; ENG-003f scope refined
+- [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3 — ENG-003m row; BP-003/BP-013 consumption
+- BP-003 Scope — IP table updated; delivery freeze after IP-013
+- BP-003 IP-014 — retired; redirected to ENG-003m
+- `.cursor/rules/eng-catalog-governance.mdc` — ENG-003a–m
+
+#### Implementation Notes (planned)
+
+- Module: `03-platform/src/core/portfolio-roadmap/` (not yet implemented)
+- BP-003 Product Workspace Roadmap tab will consume ENG-003m when implemented — no BP-003 IP-014 delivery
+- IP-015 Product Intelligence remains future scope under ENG-003f / BP-013
+
+#### AV-1.5 Engine Catalog Lock
+
+**Status: LOCKED** — effective with AV-1.5; remains in force until AV-2.0 is deliberately initiated.
+
+| Rule | Requirement |
+|------|-------------|
+| **No renumbering** | Existing engine IDs (ENG-001 – ENG-016, ENG-003a–m, ENG-015a, Phase 2 ENG-017 – ENG-019) must not be renamed or reassigned under AV-1.x |
+| **No regrouping** | ENG-003 sub-engines remain a flat family — no engine families, no parent/child restructure under AV-1.x |
+| **New capabilities** | Assign the next sequential sub-engine ID: **ENG-003n**, **ENG-003o**, … Record in [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3 before implementation |
+| **AV-2.0 only** | Engine family regrouping, ID migration, or taxonomy restructure requires explicit **AV-2.0** approval, migration map, and Merge Registry updates |
+
+This lock preserves implementation stability while the platform grows. Defer family regrouping to AV-2.0 — see [Future Architecture Considerations (AV-2.0)](#future-architecture-considerations-av-20).
+
+---
+
+## Future Architecture Considerations (AV-2.0)
+
+> **Status:** Recorded for planning only. **Not in effect.** Current v1.0 IDs (ENG-003a–m, ENG-017 Identity Resolution, etc.) remain canonical until an explicit **AV-2.0** approval and migration plan.
+
+### Context — ENG-003 family growth
+
+ENG-003 was originally intended to represent **Platform Foundation / Metadata** engines. The family has grown to **13 sub-engines** (ENG-003a through ENG-003m):
+
+| ID | Engine |
+|----|--------|
+| ENG-003a | Configuration |
+| ENG-003b | Localization & Regulatory |
+| ENG-003c | Organization Structure |
+| ENG-003d | Event Ingestion |
+| ENG-003e | Enterprise Integration |
+| ENG-003f | Product Intelligence |
+| ENG-003g | Business Presence |
+| ENG-003h | Platform Performance & Scalability |
+| ENG-003i | Consent |
+| ENG-003j | Identity & Regulatory Identification |
+| ENG-003k | Industry Experience |
+| ENG-003l | Checklist & Completion |
+| ENG-003m | Portfolio & Roadmap |
+
+This remains **technically valid for v1.0** — flat sub-engine IDs under ENG-003 are governed by `.cursor/rules/eng-catalog-governance.mdc`. As the platform matures, the breadth of the family may warrant **logical grouping** into engine families with clearer domain boundaries.
+
+### Draft proposal — engine family regrouping (AV-2.0)
+
+When the platform reaches a scale where catalog navigation and ownership clarity suffer, consider grouping sub-engines into **families** rather than one flat ENG-003 list:
+
+**Family 1 — Platform Metadata Services (ENG-003)**
+
+| Sub-ID | Engine (current v1.0 ID) |
+|--------|--------------------------|
+| 003a | Configuration |
+| 003b | Localization & Regulatory |
+| 003c | Organization Structure |
+| *(TBD)* | Business Presence (003g), Consent (003i), Identity & Regulatory (003j), Industry Experience (003k), Integration (003e), etc. |
+
+**Family 2 — Platform Intelligence Services (illustrative — ID TBD)**
+
+| Sub-ID | Engine (current v1.0 ID) |
+|--------|--------------------------|
+| 017a | Checklist & Completion (ENG-003l) |
+| 017b | Portfolio & Roadmap (ENG-003m) |
+| 017c | Product Intelligence (ENG-003f) |
+| 017d | Event Intelligence / Event Ingestion (ENG-003d) |
+
+Additional families (e.g. **Platform Operations Services** for Performance 003h, Integration 003e) may emerge as the catalog is rationalized.
+
+### ID conflict to resolve before AV-2.0
+
+**ENG-017 is currently reserved** for the Phase 2 **Identity Resolution Engine** (deduplication, golden record, CIF). Repurposing ENG-017 as "Platform Intelligence Services" in AV-2.0 would require either:
+
+1. Relocating Identity Resolution to a new baseline or Phase 2 ID, or
+2. Using a different family parent ID (e.g. ENG-020+) for Intelligence Services
+
+Any AV-2.0 regrouping must include a **full ID migration map**, Merge Registry updates, and code-path aliases — not a documentation-only rename.
+
+### AV-2.0 review triggers (measurable)
+
+Formal AV-2.0 engine-taxonomy review is **required** when any trigger below is met. Until a trigger fires, the [AV-1.5 Engine Catalog Lock](#av-15-engine-catalog-lock) remains in force.
+
+| Trigger | Action |
+|---------|--------|
+| ENG-003 reaches **20 sub-engines** | Architecture review **required** |
+| More than **3 distinct capability domains** under ENG-003 | Consider regrouping |
+| Multiple implementation teams require ownership boundaries | Create engine families |
+| AI prompts frequently misclassify engines | Review engine taxonomy |
+
+**Current count (AV-1.5):** 13 sub-engines (ENG-003a – ENG-003m). Next assigned ID: **ENG-003n**.
+
+**Capability domain examples** (for the "3 domains" trigger): Metadata & Configuration, Regulatory & Identity, Integration & Events, Intelligence & Analytics, Experience & Presentation, Operations & Performance. More than three of these actively represented under ENG-003 warrants regrouping consideration.
+
+Until an AV-2.0 review is deliberately initiated: **continue adding sub-engines as ENG-003n, ENG-003o, …** per the AV-1.5 lock. Record each new ID in the catalog before implementation.
 
 ---
 

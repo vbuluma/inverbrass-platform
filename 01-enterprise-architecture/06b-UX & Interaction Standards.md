@@ -6,6 +6,7 @@
 |-----------|-------|
 | Document Name | UX & Interaction Standards |
 | Version | 1.1 |
+| Architecture Version | AV-1.5 (see [01b – Architecture Versions](./01b-Architecture-Versions.md)) |
 | Standard ID | UX-001 Enterprise Interaction Standard |
 | Scope | Entire Digitalization Platform |
 | Audience | Product Owner, UX Designers, Developers, AI Coding Assistants |
@@ -370,6 +371,7 @@ Sprint UX-001.2 delivers enterprise-grade workspace patterns:
 | UX-001.2e | Consent Capture Architecture | `ConsentEngineService` |
 | UX-001.2f | Event-driven Consent Model | `party_consent_event` + ENG-003b sources |
 | UX-001.2g | Consent Sources (ENG-003b) | `consent_source` reference entity |
+| UX-001.2h | Checklist & Completion (ENG-003l) | `PlatformCompletionMeter`, `PlatformCompletionCard` |
 
 **Rule file:** `.cursor/rules/ui-std-006-enterprise-experience.mdc`
 
@@ -403,6 +405,27 @@ Identity resolution via `resolveUserGreetingName`: Preferred Name → First Name
 
 Event-driven consent via Consent Engine; ENG-003b owns `consent_source`; Party Workspace displays only.
 
+### Checklist & Completion Standard (ENG-003l)
+
+Every multi-step business process shall expose progress through ENG-003l — not ad-hoc module calculations.
+
+**Required UI elements**
+
+- Progress bar with percentage (e.g. `80% — 8 of 10 completed`)
+- Distinction between mandatory (blocking) and optional (advisory) items
+- Missing mandatory items listed with actionable links where applicable
+- "Cannot Submit" state with explicit blocking reason when mandatory completion is below 100%
+- Optional incomplete items may show advisory warnings without blocking
+
+**Components**
+
+- `PlatformCompletionMeter` — workspace sidebar / guidance panel progress
+- `PlatformCompletionCard` — post-action summary with next steps
+
+**Data source:** ENG-003l Checklist & Completion Engine services — Build Packs must not duplicate completion logic locally.
+
+**Document matrix example (Product Compliance tab):** Required vs provided document rows are checklist items whose auto-complete rules consume ENG-015a compliance state.
+
 ### Platform UX Principles (UX-001.2)
 
 11. Identity-first dashboards  
@@ -410,6 +433,7 @@ Event-driven consent via Consent Engine; ENG-003b owns `consent_source`; Party W
 13. In-app document preview  
 14. Consistent search states  
 15. Visual workspace zoning  
+16. Checklist progress from ENG-003l — never module-local completion math  
 
 ---
 

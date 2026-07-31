@@ -19,11 +19,11 @@ The Build Packs are **shared platform capabilities consumed by Industry Editions
 
 | **Build Pack ID** | **Build Pack Name**                        | **Primary Purpose**                                                             | **Key Capabilities**                                                                                                                                                                                 | **Primary Core Engines Consumed**                                                          |
 | ----------------- | ------------------------------------------ | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **BP-001**        | **Business Setup & Onboarding**            | Establish businesses on the platform and configure their operating environment. | Business registration, onboarding wizard, business profile, operating countries, users, initial configuration                                                                                        | Authentication, Authorization, Configuration, Business Presence, Localization & Regulatory |
-| **BP-002**        | **Party & Relationship Management**        | Manage all people, organizations and business relationships.                    | Individuals, organizations, groups, contacts, addresses, roles, relationships, identity & regulatory identification, communication preferences, documents & compliance, timeline, audit history      | Identity & Regulatory Identification, Consent, Document & Compliance, Audit, Search        |
-| **BP-003**        | **Product & Service Catalogue**            | Create and manage everything a business offers.                                 | Products, services, digital products, subscriptions, memberships, insurance products, loan products, rental assets, variants, bundles, attributes, lifecycle, documents, relationships               | Product Intelligence, Configuration, AI, Search                                            |
-| **BP-004**        | **Pricing, Tax & Commercial Rules**        | Define commercial policies that govern products and services.                   | Pricing, taxes, discounts, promotions, commissions, pricing rules, commercial policies                                                                                                               | Rules Engine, Localization & Regulatory                                                    |
-| **BP-005**        | **Sales, Orders & Service Delivery**       | Manage customer demand from quotation through fulfilment.                       | Quotations, orders, bookings, appointments, work orders, fulfilment, delivery tracking                                                                                                               | Workflow, Notification, Audit                                                              |
+| **BP-001**        | **Business Setup & Onboarding**            | Establish businesses on the platform and configure their operating environment. | Business registration, onboarding wizard, business profile, operating countries, users, initial configuration                                                                                        | Authentication, Authorization, Configuration, Business Presence, Localization & Regulatory, Checklist & Completion |
+| **BP-002**        | **Party & Relationship Management**        | Manage all people, organizations and business relationships.                    | Individuals, organizations, groups, contacts, addresses, roles, relationships, identity & regulatory identification, communication preferences, documents & compliance, timeline, audit history      | Identity & Regulatory Identification, Consent, Document & Compliance, Audit, Search, Checklist & Completion        |
+| **BP-003**        | **Product & Service Catalogue**            | Create and manage everything a business offers.                                 | Products, services, digital products, subscriptions, memberships, insurance products, loan products, rental assets, variants, bundles, attributes, lifecycle, documents, relationships               | Product Intelligence, Configuration, AI, Search, Checklist & Completion, Portfolio & Roadmap (consumption)         |
+| **BP-004**        | **Pricing, Tax & Commercial Rules**        | Define commercial policies that govern products and services.                   | Pricing, taxes, discounts, promotions, commissions, pricing rules, commercial policies                                                                                                               | Rules Engine, Localization & Regulatory, Checklist & Completion                                                    |
+| **BP-005**        | **Sales, Orders & Service Delivery**       | Manage customer demand from quotation through fulfilment.                       | Quotations, orders, bookings, appointments, work orders, fulfilment, delivery tracking                                                                                                               | Workflow, Notification, Audit, Checklist & Completion                                                              |
 | **BP-006**        | **Payments, Billing & Receipting**         | Process and manage financial transactions.                                      | Billing, invoicing, receipts, collections, refunds, payment allocation, reconciliation                                                                                                               | Payment, Receipting, Reconciliation, Integration                                           |
 | **BP-007**        | **Inventory & Resource Management**        | Manage inventory, operational assets and resources.                             | Inventory, warehouses, stock movement, assets, rentals, consumables, resource allocation                                                                                                             | Workflow, Search, Audit                                                                    |
 | **BP-008**        | **CRM & Customer Engagement**              | Manage customer relationships and engagement.                                   | Leads, opportunities, campaigns, customer interactions, communication history, engagement management                                                                                                 | Notification, AI, Search                                                                   |
@@ -31,7 +31,7 @@ The Build Packs are **shared platform capabilities consumed by Industry Editions
 | **BP-010**        | **Finance & Accounting Foundation**        | Provide operational financial management capabilities.                          | Journals, cost centres, accounting periods, budgets, financial integration, reporting foundation                                                                                                     | Reporting, Reconciliation                                                                  |
 | **BP-011**        | **Workflow & Business Process Automation** | Automate business processes across the platform.                                | Maker-checker, approvals, SLAs, escalations, task routing, workflow designer                                                                                                                         | Workflow, Notification, Audit                                                              |
 | **BP-012**        | **Analytics, AI & Decision Intelligence**  | Transform operational data into business intelligence.                          | Dashboards, KPIs, forecasting, OCR, RAG, anomaly detection, AI recommendations, predictive analytics                                                                                                 | AI, Reporting, Event Ingestion                                                             |
-| **BP-013**        | **Product Management & Innovation**        | Manage products from ideation to retirement.                                    | Product vision, business cases, personas, roadmaps, releases, MVPs, feature backlog, GTM planning, product analytics, customer feedback, AI product health, resource, budget and delivery management | Product Intelligence, AI, Workflow, Reporting                                              |
+| **BP-013**        | **Product Management & Innovation**        | Manage products from ideation to retirement.                                    | Product vision, business cases, personas, roadmaps, releases, MVPs, feature backlog, GTM planning, product analytics, customer feedback, AI product health, resource, budget and delivery management | Product Intelligence, Portfolio & Roadmap, AI, Workflow, Reporting                                              |
 
 
 ---
@@ -72,7 +72,7 @@ Each edition is bound at business onboarding. The **Industry Experience Engine (
 | **Engine-Driven Architecture**       | Build Packs orchestrate the Core Platform Engines; engines remain technology and capability providers.                                         |
 | **Configuration over Customization** | Business, regulatory and country-specific behaviour is driven by metadata and configuration.                                                   |
 | **Industry Editions, Shared Engines** | The architecture is generic; the experience is specialized. Specialization is delivered through ENG-003k Industry Experience Engine — not through engine forks or duplicate modules. |
-| **Single Source of Truth**           | Parties, Products, Documents, Identity, Consent and Workflow are shared across all editions.                                                  |
+| **Single Source of Truth**           | Parties, Products, Documents, Identity, Consent, Checklists and Workflow are shared across all editions.                                        |
 | **Event-Driven Platform**            | Business events flow through the Event Ingestion Engine, enabling integrations, automation, reporting and AI.                                  |
 | **AI-Native Architecture**           | Every Build Pack publishes structured data and events that can be consumed by AI for insights, recommendations and automation.                 |
 | **Enterprise Scalability**           | The platform supports multi-business, multi-country, multi-tenant, multi-role and future cloud-scale deployment without architectural changes. |
@@ -80,7 +80,7 @@ Each edition is bound at business onboarding. The **Industry Experience Engine (
 
 This structure clearly distinguishes the platform layers:
 
-1. **Core Platform Engines (ENG-001 to ENG-016, ENG-003k)** – foundational and experience capabilities.
+1. **Core Platform Engines (ENG-001 to ENG-016, ENG-003k, ENG-003l, ENG-003m)** – foundational, experience, completion, and portfolio planning capabilities.
 2. **Build Packs (BP-001 to BP-013)** – reusable business capabilities consumed by Industry Editions.
 3. **Industry Editions (VS-001 onward)** – industry-native products (InverBrass Banking, InverBrass Property, etc.).
 4. **Business Configuration** – tenant-specific settings within an edition.
@@ -95,7 +95,7 @@ This structure clearly distinguishes the platform layers:
 Attribute	Value
 Document Name	Platform Module Catalog
 Version	1.0
-Architecture Version	AV-1.3 (see [01b – Architecture Versions](./01b-Architecture-Versions.md))
+Architecture Version	AV-1.5 (see [01b – Architecture Versions](./01b-Architecture-Versions.md))
 Purpose	Defines every platform capability, ownership, dependencies and reuse strategy.
 Scope	Entire InverBrass Business Platform
 Audience	Product Owner, Solution Architect, Developers, AI Coding Assistants
@@ -136,12 +136,14 @@ Every reusable processing capability is owned by exactly one Core Platform Engin
 | **ENG-003c** | Organization Structure Engine               | Manages internal organizational hierarchy for Organization Parties.                     | Branches, departments, divisions, regions, campuses, organizational units, reporting hierarchy, head office designation, internal ownership structures.                                                                  | Implemented (BP-002)        |
 | **ENG-003d** | Event Ingestion Engine                      | Receives and standardizes events entering the platform.                                 | Business events, webhooks, queues, event validation, event routing, event normalization, asynchronous processing, event publishing.                                                                                      | Planned                     |
 | **ENG-003e** | Enterprise Integration Engine               | Provides a single integration layer between the platform and all external systems.      | REST APIs, SOAP, GraphQL, OAuth, API keys, webhooks, polling, retries, circuit breakers, provider routing, banking APIs, payment gateways, government APIs, CRM integrations, AI providers, connector health monitoring. | Planned                     |
-| **ENG-003f** | Product Intelligence Engine                 | Governs products throughout their lifecycle using analytics and AI.                     | Product portfolio, product lifecycle, roadmaps, business cases, feature tracking, MVPs, KPIs, adoption metrics, AI recommendations, product retirement analysis, GTM support.                                            | Planned                     |
+| **ENG-003f** | Product Intelligence Engine                 | Analyses offerings and portfolio performance using analytics and AI.                    | Offering analytics, performance KPIs, adoption metrics, portfolio health scoring, decline detection, AI recommendations, retirement recommendations, customer feedback analysis, GTM insights — consumes roadmap and release data from ENG-003m. | Planned                     |
 | **ENG-003g** | Business Presence Engine                    | Defines where an organization legally and operationally exists.                         | Countries of operation, legal entities, operating jurisdictions, registrations, branches by country, licensing jurisdictions, market presence.                                                                           | Planned                     |
 | **ENG-003h** | Platform Performance & Scalability Engine   | Ensures enterprise-grade reliability and scalability.                                   | Caching, queues, observability, monitoring, telemetry, performance metrics, distributed tracing, load management, rate limiting, resilience, health monitoring.                                                          | Planned                     |
 | **ENG-003i** | Consent Engine                              | Captures and manages customer consent as immutable business events.                     | Marketing consent, communication consent, regulatory consent, consent events, consent evidence, consent history, consent withdrawals, consent channels, compliance tracking.                                             | Implemented                 |
 | **ENG-003j** | Identity & Regulatory Identification Engine | Captures and manages official regulatory identifiers independent of uploaded documents. | National IDs, passports, tax numbers, business registration numbers, VAT numbers, licences, issuing authorities, verification status, identifier lifecycle, linkage to supporting evidence.                              | Implemented (BP-002)        |
 | **ENG-003k** | Industry Experience Engine                  | Presents an industry-native user experience on top of shared platform engines.          | Industry Editions, navigation generation, menu visibility, terminology mapping, dashboard layouts, feature visibility, configuration visibility, product templates, workflow templates, report templates, landing pages. | Planned                     |
+| **ENG-003l** | Checklist & Completion Engine               | Provides metadata-driven operational checklists that guide processes and enforce completion. | Checklist definitions, checklist instances, mandatory and optional items, sequence, blocking rules, auto-complete rules, completion expressions, progress calculation, submission gates, warnings, manual completion, event-driven item completion. | Planned                     |
+| **ENG-003m** | Portfolio & Roadmap Engine                  | Provides structured planning and controlled evolution of any portfolio subject.         | Roadmap items, releases, milestones, implementation progress, release history, retirement plans, timeline views, portfolio initiatives — offerings, services, programmes, projects, regulatory and strategic initiatives. | Planned                     |
 | **ENG-004**  | Rules Engine                                | Executes deterministic business rules.                                                  | Eligibility rules, validations, calculations, decision tables, configurable rule execution, business policies, rule versioning.                                                                                          | Planned                     |
 | **ENG-005**  | Workflow Engine                             | Orchestrates business processes requiring approvals or multiple steps.                  | Maker-checker, approvals, escalations, routing, SLA monitoring, workflow history, task assignment, decision points.                                                                                                      | Planned                     |
 | **ENG-006**  | Payment Engine                              | Processes all incoming and outgoing financial transactions.                             | Cash, mobile money, bank transfers, cards, split payments, partial payments, refunds, credits, payment gateways.                                                                                                         | Planned                     |
@@ -158,7 +160,9 @@ Every reusable processing capability is owned by exactly one Core Platform Engin
 
 > **Extension ID:** **ENG-015a** — Document & Compliance Engine (compliance scoring and requirement matching layer on ENG-015). Partial (BP-002). Not a separate baseline row; implements the compliance-evidence slice of ENG-015.
 
-> **Extension ID:** **ENG-003k** — Industry Experience Engine (industry-native presentation layer on shared engines). Planned. Sub-engine under ENG-003 alongside ENG-003a–j.
+> **Extension IDs:** **ENG-003k** — Industry Experience Engine. **ENG-003l** — Checklist & Completion Engine. **ENG-003m** — Portfolio & Roadmap Engine. All planned. Sub-engines under ENG-003 alongside ENG-003a–m. **Next ID (AV-1.5 lock): ENG-003n.**
+
+> **ENG-003 family note:** ENG-003 originally represented Platform Foundation / Metadata; the family now spans 13 sub-engines (003a–m). **AV-1.5 Engine Catalog Lock:** no renumbering, no regrouping — new capabilities use **ENG-003n**, **ENG-003o**, … until AV-2.0 is deliberately initiated. Possible AV-2.0 regrouping is recorded in [01b – Architecture Versions](./01b-Architecture-Versions.md) — Future Architecture Considerations.
 
 > **ENG-001 – ENG-016** are the active v1.0 baseline engine IDs. Retired or merged IDs are recorded in §3.1 below — not as separate active catalog rows.
 
@@ -205,6 +209,16 @@ Frozen implementation packages define stable schemas and core patterns. Avoid re
 
 **Rule:** Complete remaining IPs without restructuring frozen foundations. Enhance through configuration, Industry Experience profiles, and UI — not schema churn.
 
+### 3.3 Build Pack Delivery Boundaries (AV-1.5)
+
+Delivery boundaries define when a Build Pack stops accepting new IPs — distinct from schema foundation freeze (§3.2).
+
+| Build Pack | Delivery boundary | Status |
+| ---------- | ----------------- | ------ |
+| **BP-003** | **IP-013 (Offering Governance)** — final IP | IP-014 retired → ENG-003m; IP-015 deferred → ENG-003f / BP-013 |
+
+New platform capabilities (checklist, portfolio roadmap, etc.) are implemented as **Core Platform Engines** (ENG-003l, ENG-003m, …) consumed by Build Packs — not as additional BP-003 IPs.
+
 ### Engine Ownership Rules
 
 
@@ -213,6 +227,7 @@ Frozen implementation packages define stable schemas and core patterns. Avoid re
 | Single Owner             | Every engine has one owning service in `03-platform/src/core/`                 |
 | Consume, Don't Duplicate | Domain modules call engine services; they never reimplement engine logic       |
 | Configuration First      | Engine behaviour adapts through configuration (`ENG-003a`) before code changes |
+| AV-1.5 Catalog Lock      | New sub-engines: ENG-003n, ENG-003o, … — no renumbering or regrouping until AV-2.0 |
 | Audit Cross-Cut          | All mutating engine operations emit events via **ENG-013**                     |
 
 
@@ -269,7 +284,7 @@ Scheduling	Appointments and bookings	Yes	Property, Academy, Future Solutions
 Work Orders	Service job management	Yes	Property, Business Operations
 Asset Management	Business assets	Yes	Business Operations, Property
 Document Management	Business documents	Yes	All Solutions
-Checklists	Operational task lists	Yes	Future Solutions
+Checklists	Operational process completion and guided steps (ENG-003l)	Yes	All Industry Solutions
 
 ---
 

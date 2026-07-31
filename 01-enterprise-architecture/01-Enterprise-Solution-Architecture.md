@@ -1,7 +1,7 @@
 🏛️ InverBrass Platform: Final Blueprint (v1.0 Architecture & Documentation)
 This is the frozen, enterprise-ready InverBrass v1.0 Architecture Blueprint. It maximizes your velocity as a solo developer by prioritizing extreme modular uniformity and configuration over one-off custom code. [1]
 
-**Architecture Version:** AV-1.3 — see [01b – Architecture Versions](./01b-Architecture-Versions.md) for the full change history (from → to, reasoning).
+**Architecture Version:** AV-1.5 — see [01b – Architecture Versions](./01b-Architecture-Versions.md) for the full change history (from → to, reasoning). **Engine catalog locked** under AV-1.5 — next sub-engine ID: ENG-003n.
 
 T**his & future architecture changes MUST support My core VISSION below**:
 ****Platform Principle & Vission PP-001 – Digital Business Platform**
@@ -192,6 +192,8 @@ Same engines underneath. Different experience above the Industry Edition boundar
 
 > **Canonical engine catalog:** [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3.
 
+> **v1.0 note:** ENG-003 sub-engines (003a–m) use flat extension IDs under one family. **AV-1.5 lock:** next ID is ENG-003n; no regrouping until AV-2.0. See [01b – Architecture Versions](./01b-Architecture-Versions.md) — AV-1.5 Engine Catalog Lock and Future Architecture Considerations.
+
 | Engine ID | Platform Engine | Purpose | What it Handles |
 |-----------|-----------------|---------|-----------------|
 | **ENG-001** | Authentication Engine | Establishes user identity and secure access to the platform. | Login, logout, password management, PIN, MFA, SSO, session management, password reset, account lockout, identity providers (Google, Microsoft, Azure AD), token issuance. |
@@ -201,12 +203,14 @@ Same engines underneath. Different experience above the Industry Edition boundar
 | **ENG-003c** | Organization Structure Engine | Manages internal organizational hierarchy for Organization Parties. | Branches, departments, divisions, regions, campuses, organizational units, reporting hierarchy, head office designation, internal ownership structures. |
 | **ENG-003d** | Event Ingestion Engine | Receives and standardizes events entering the platform. | Business events, webhooks, queues, event validation, event routing, event normalization, asynchronous processing, event publishing. |
 | **ENG-003e** | Enterprise Integration Engine | Provides a single integration layer between the platform and all external systems. | REST APIs, SOAP, GraphQL, OAuth, API keys, webhooks, polling, retries, circuit breakers, provider routing, banking APIs, payment gateways, government APIs, CRM integrations, AI providers, connector health monitoring. |
-| **ENG-003f** | Product Intelligence Engine | Governs products throughout their lifecycle using analytics and AI. | Product portfolio, product lifecycle, roadmaps, business cases, feature tracking, MVPs, KPIs, adoption metrics, AI recommendations, product retirement analysis, GTM support. |
+| **ENG-003f** | Product Intelligence Engine | Analyses offerings and portfolio performance using analytics and AI. | Offering analytics, performance KPIs, adoption metrics, portfolio health scoring, decline detection, AI recommendations, retirement recommendations, customer feedback analysis, GTM insights — consumes roadmap and release data from ENG-003m. |
 | **ENG-003g** | Business Presence Engine | Defines where an organization legally and operationally exists. | Countries of operation, legal entities, operating jurisdictions, registrations, branches by country, licensing jurisdictions, market presence. |
 | **ENG-003h** | Platform Performance & Scalability Engine | Ensures enterprise-grade reliability and scalability. | Caching, queues, observability, monitoring, telemetry, performance metrics, distributed tracing, load management, rate limiting, resilience, health monitoring. |
 | **ENG-003i** | Consent Engine | Captures and manages customer consent as immutable business events. | Marketing consent, communication consent, regulatory consent, consent events, consent evidence, consent history, consent withdrawals, consent channels, compliance tracking. |
 | **ENG-003j** | Identity & Regulatory Identification Engine | Captures and manages official regulatory identifiers independent of uploaded documents. | National IDs, passports, tax numbers, business registration numbers, VAT numbers, licences, issuing authorities, verification status, identifier lifecycle, linkage to supporting evidence. |
 | **ENG-003k** | Industry Experience Engine | Presents an industry-native user experience on top of shared platform engines. | Industry Editions, navigation generation, menu visibility, terminology mapping, dashboard layouts, feature visibility, configuration visibility, product templates, workflow templates, report templates, landing pages, optional branding/themes. |
+| **ENG-003l** | Checklist & Completion Engine | Provides metadata-driven operational checklists that guide users through business processes, enforce mandatory steps, calculate completion, and prevent progression when required items are incomplete. | Checklist definitions, checklist instances, mandatory and optional items, sequence, blocking and warning rules, auto-complete rules, completion expressions, progress calculation, submission gates, manual completion, event-driven item completion. |
+| **ENG-003m** | Portfolio & Roadmap Engine | Provides structured planning and controlled evolution of portfolio subjects across the platform. | Roadmap items, releases, milestones, implementation progress, release history, retirement plans, timeline views — offerings, services, programmes, projects, regulatory initiatives, strategic initiatives. |
 | **ENG-004** | Rules Engine | Executes deterministic business rules. | Eligibility rules, validations, calculations, decision tables, configurable rule execution, business policies, rule versioning. |
 | **ENG-005** | Workflow Engine | Orchestrates business processes requiring approvals or multiple steps. | Maker-checker, approvals, escalations, routing, SLA monitoring, workflow history, task assignment, decision points. |
 | **ENG-006** | Payment Engine | Processes all incoming and outgoing financial transactions. | Cash, mobile money, bank transfers, cards, split payments, partial payments, refunds, credits, payment gateways. |
@@ -381,6 +385,188 @@ Business registration selects an **Industry Edition** (not a generic business ty
 
 **Implementation location:** `03-platform/src/core/industry-experience/` (planned)
 
+### ENG-003l — Checklist & Completion Engine
+
+**Purpose**
+
+Provides configurable, metadata-driven operational checklists that guide users through business processes, enforce mandatory steps, calculate completion, and prevent progression when required items are incomplete. This is a **cross-cutting platform capability** — not a document-only feature. Every Build Pack and Industry Edition consumes it rather than implementing module-specific task lists.
+
+**Core responsibilities**
+
+1. **Checklist definitions** — Business administrators configure checklist templates by module, entity type, country, industry, and sequence
+2. **Checklist instances** — Bind a definition to a business object (Party, Product, Loan Application, Property, etc.) and track live completion state
+3. **Mandatory and optional items** — Each item may be required or advisory; blocking rules determine whether incomplete mandatory items prevent submission
+4. **Auto-complete** — Items complete automatically when underlying platform events occur (document uploaded, identifier captured, pricing saved, approval granted)
+5. **Manual completion** — Items that require human attestation (e.g. physical site inspection) remain manually ticked by authorized users
+6. **Completion rules** — Expression-based rules evaluate whether an item is complete (consumed from ENG-004 Rules Engine where appropriate)
+7. **Progress calculation** — Compute completed count, percentage, and missing mandatory items for any bound instance
+8. **Submission gates** — Block workflow progression or return structured blocking reasons when mandatory completion is below 100%
+9. **Advisory warnings** — Allow submission with warnings when optional items remain incomplete
+10. **Event emission** — Publish checklist item completion and instance readiness events for Workflow, Notification, and Audit consumers
+
+**Configuration dimensions (business-admin configurable)**
+
+| Field | Example |
+|-------|---------|
+| Checklist Name | Loan Product Creation |
+| Applicable Module | Product |
+| Applicable Type | Loan Product |
+| Country | Kenya |
+| Industry | Banking |
+| Sequence | 1, 2, 3… |
+| Mandatory | Yes / No |
+| Blocking | Yes / No |
+| Auto-complete | Yes / No |
+| Completion Rule | Expression (e.g. document uploaded, field populated, approval granted) |
+
+**Where it is used (examples)**
+
+| Module / Process | Checklist Example |
+|------------------|-------------------|
+| Party Onboarding | Identity captured, Address, KRA PIN, Documents uploaded |
+| Loan Origination | Payslips, CRB, ID, Guarantor, Income verified |
+| Account Opening | KYC, FATCA, Signature, Consent |
+| Product Creation | Pricing, Documents, Attributes, Approval |
+| Insurance | Medical Report, Proposal Form, Beneficiary |
+| Healthcare | Patient registered, Insurance validated, Consent |
+| School Admission | Birth Certificate, KCPE Result, Parent Details |
+| Property Onboarding | Ownership Documents, Inspection, Photos |
+| Procurement | Quotations, Approval, Budget |
+| HR Recruitment | CV, Interview, Offer Letter |
+| Business Setup (BP-001) | Business Profile, Industry Edition, Payments, Tax, Activation |
+
+**Relationship to other engines**
+
+```
+ENG-003b (country/industry rules)
+        ↓
+ENG-003a (checklist definition metadata)
+        ↓
+ENG-003l (instance + completion state)
+        ↓
+Build Pack modules (Party, Product, Workflow, etc.)
+        ↓
+ENG-005 Workflow Engine → Approval
+ENG-015 Document Engine → auto-complete document items
+ENG-015a Document & Compliance → required vs provided matrix
+ENG-003j Identity & Regulatory → auto-complete identifier items
+ENG-012 Intelligence Engine → future recommendations ("customers often forget KRA PIN")
+```
+
+**Explicit non-ownership**
+
+- **ENG-015 Document Engine** stores and manages documents — it does not own checklist logic
+- **ENG-015a Document & Compliance** evaluates document requirement matching — checklist items may *consume* compliance state but compliance scoring remains in ENG-015a
+- **ENG-005 Workflow Engine** orchestrates approvals and routing — checklists gate progression; they do not replace workflow
+- Build Packs display checklist UI and call ENG-003l services — they do not embed checklist business rules
+
+**Canonical entities (planned)**
+
+| Entity | Purpose |
+|--------|---------|
+| `checklist_definition` | Template: name, module, type, country, industry, version |
+| `checklist_item_definition` | Item within template: label, sequence, mandatory, blocking, auto-complete rule |
+| `checklist_instance` | Live checklist bound to a business object |
+| `checklist_item_completion` | Per-item state: complete, incomplete, auto-completed, manually completed, blocked reason |
+
+**Implementation location:** `03-platform/src/core/checklist-completion/` (planned)
+
+**UX integration:** `PlatformCompletionMeter` and `PlatformCompletionCard` (UX-001.1) render checklist progress; data sourced from ENG-003l services rather than ad-hoc module calculations.
+
+### ENG-003m — Portfolio & Roadmap Engine
+
+**Purpose**
+
+Provides structured planning and controlled evolution of portfolio subjects across the platform. Answers: *What improvements are planned? What is being released? What has changed? When will changes go live? Which customers are affected?*
+
+This is a **cross-cutting platform capability** — not a Product Catalogue module. Roadmap and release management applies equally to offerings, customer onboarding journeys, loan products, hospital services, school programmes, property listings, NGO programmes, and business processes. Build Packs **consume** ENG-003m; they do not implement module-local roadmap tables.
+
+> **Architecture note (AV-1.5):** BP-003 IP-014 (Offering Roadmap & Release Management) is **retired as a Build Pack IP**. Its requirements are absorbed into ENG-003m. BP-003 delivery **freezes after IP-013 (Offering Governance)** for the operational catalogue scope.
+
+**Core responsibilities**
+
+1. **Roadmap items** — Create and manage initiatives linked to a portfolio subject (offering, programme, service, project)
+2. **Releases** — Group roadmap items into planned releases (e.g. Release 2027-Q1)
+3. **Milestones** — Track progress through standard phases (Idea → Business Approval → Analysis → Development → Testing → Training → Pilot → Production → Retirement)
+4. **Implementation progress** — Track status and completion of roadmap items within a release
+5. **Release history** — Immutable record of completed releases and what changed
+6. **Retirement plans** — Plan controlled end-of-life; retirement cannot occur before active release
+7. **Timeline views** — Display current roadmap, upcoming releases, and milestone progress
+8. **Search** — Find roadmap items by release, milestone, status, owner, or subject
+9. **Event emission** — Publish roadmap item created, release planned, release completed, retirement planned events
+
+**Roadmap item types (examples)**
+
+| Type | Example |
+|------|---------|
+| Enhancement | Add overdraft |
+| Feature | Mobile repayments |
+| Regulatory | CBK reporting update |
+| Compliance | GDPR support |
+| Pricing Change | New pricing model |
+| Channel Expansion | WhatsApp onboarding |
+| Integration | CRM integration |
+| Retirement | End product |
+
+**Release status (examples)**
+
+Planned → Approved → In Progress → Ready → Released | Cancelled
+
+**Business rules**
+
+| Rule | Description |
+|------|-------------|
+| Subject binding | Roadmap items belong to one portfolio subject |
+| Release grouping | Releases may contain multiple roadmap items |
+| Immutability | Released items become read-only |
+| History | Cancelled items remain historical |
+| Retirement gate | Retirement cannot occur before active release |
+
+**Where it is used (examples)**
+
+| Consumer | Roadmap Example |
+|----------|-----------------|
+| BP-003 Product Catalogue | Offering enhancements, pricing changes, channel expansion |
+| BP-002 Party | Customer onboarding journey improvements |
+| BP-013 Product Management | Strategic product initiatives, MVPs, GTM releases |
+| Banking Edition | Loan product releases, regulatory updates |
+| Healthcare Edition | Service line expansions, procedure updates |
+| Education Edition | Programme and curriculum releases |
+| NGO Edition | Field programme rollouts |
+
+**Relationship to other engines**
+
+```
+ENG-003a (configuration) → ENG-003m (roadmap + releases)
+        ↓
+Build Pack modules (Product, Party, Programme, etc.) — display Roadmap tab
+        ↓
+ENG-005 Workflow Engine → release approvals
+ENG-011 Reporting Engine → portfolio planning reports
+ENG-012 Intelligence Engine → prioritization recommendations
+ENG-003f Product Intelligence → analytics on roadmap outcomes (consumes ENG-003m data)
+ENG-013 Audit Engine → release and milestone change history
+```
+
+**Explicit non-ownership**
+
+- **ENG-003f Product Intelligence** analyses performance and recommends actions — it consumes roadmap/release data; it does not own planning entities
+- **BP-003 Product module** owns offering master data — roadmap UI binds to offerings via ENG-003m subject references
+- **ENG-005 Workflow Engine** orchestrates release approvals — roadmap defines *what*; workflow defines *how* approval proceeds
+
+**Canonical entities (planned)**
+
+| Entity | Purpose |
+|--------|---------|
+| `portfolio_release` | A named release (e.g. 2027-Q1) with status and target date |
+| `portfolio_roadmap_item` | An initiative linked to subject type, subject id, and optional release |
+| `portfolio_release_history` | Immutable history of release completions and changes |
+| `portfolio_milestone` | Milestone progress within a roadmap item or release |
+
+**Implementation location:** `03-platform/src/core/portfolio-roadmap/` (planned)
+
+**BP-003 consumption pattern:** Product Workspace **Roadmap** tab renders ENG-003m data for `subject_type = offering`. No `offering_release` or `offering_roadmap_item` tables in the Product module.
+
 
 |                                         |                                                                                                                                                                                                                                                                                                                                                                    |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -419,7 +605,7 @@ Platform Services & Industry Editions
 
 | Engine                                   | Purpose                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **ENG-003f Product Intelligence Engine** | Provides product governance, roadmap management, product analytics, feature prioritization, AI-assisted product insights, and lifecycle management. Integrates with Workflow, Reporting, AI, Document Management, and Collaboration services to support end-to-end product management.(ideation to retirement). Capability to analyse the products through it's live, and propose when it is declining and how to manage(Re-invent, retire etc)-AI will shine here.Product │ ├── Vision ├── Objectives ├── Business Case ├── Personas ├── Roadmap ├── Releases │ ├── BP-001 │ ├── BP-002 │ └── BP-003 ├── KPIs ├── Go-to-Market ├── Customer Feedback ├── Product Analytics ├── AI Product Insights ├── Recommendations └── Lifecycle Decisions |
+| **ENG-003f Product Intelligence Engine** | Analyses offering and portfolio performance using analytics and AI. Consumes roadmap and release data from ENG-003m. Answers: which offerings are declining, which need reinvestment, which features drive adoption, which releases affected satisfaction, which roadmap items to prioritize. Integrates with Workflow, Reporting, and Intelligence engines. Does not own roadmap or release planning entities. |
 
 
 
@@ -475,6 +661,10 @@ The platform already has the core building blocks. The Industry Experience Layer
 ✔ Organization Structure Engine
 
 ✔ Industry Experience Engine (ENG-003k — planned)
+
+✔ Checklist & Completion Engine (ENG-003l — planned)
+
+✔ Portfolio & Roadmap Engine (ENG-003m — planned)
 
 ✔ Event Ingestion Engine (planned)
 

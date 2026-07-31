@@ -12,7 +12,9 @@ import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { getDb } from "@/db/client";
 import * as schema from "@/db/schema";
 import { currency } from "@/db/schema/currency";
+import { industry } from "@/db/schema/industry";
 import { party } from "@/db/schema/party";
+import { productClassificationType } from "@/db/schema/product-classification-type";
 import { productStatus } from "@/db/schema/product-status";
 import { productType } from "@/db/schema/product-type";
 
@@ -122,6 +124,51 @@ export class ProductReferenceRepository {
       .limit(1);
 
     return row ?? null;
+  }
+
+  async listActiveClassificationTypes(dbClient: DbClient = getDb()) {
+    return dbClient
+      .select({
+        code: productClassificationType.code,
+        name: productClassificationType.name,
+        description: productClassificationType.description,
+      })
+      .from(productClassificationType)
+      .where(eq(productClassificationType.isActive, true))
+      .orderBy(
+        asc(productClassificationType.displayOrder),
+        asc(productClassificationType.name)
+      );
+  }
+
+  async findClassificationTypeByCode(code: string, dbClient: DbClient = getDb()) {
+    const [row] = await dbClient
+      .select({
+        code: productClassificationType.code,
+        name: productClassificationType.name,
+      })
+      .from(productClassificationType)
+      .where(
+        and(
+          eq(productClassificationType.code, code),
+          eq(productClassificationType.isActive, true)
+        )
+      )
+      .limit(1);
+
+    return row ?? null;
+  }
+
+  async listActiveIndustries(dbClient: DbClient = getDb()) {
+    return dbClient
+      .select({
+        code: industry.code,
+        name: industry.name,
+        description: industry.description,
+      })
+      .from(industry)
+      .where(eq(industry.isActive, true))
+      .orderBy(asc(industry.name));
   }
 }
 

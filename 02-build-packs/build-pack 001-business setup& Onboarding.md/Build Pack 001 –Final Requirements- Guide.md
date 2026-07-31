@@ -488,6 +488,9 @@ ________________________________________
 ________________________________________
 18. Set Up Checklist
 Rather than a traditional "Next, Next, Next" onboarding wizard, I need  a "Business Setup Checklist" experience.
+
+> **Architecture (AV-1.5):** The Business Setup Checklist is powered by **ENG-003l Checklist & Completion Engine** — not a BP-001-local implementation. BP-001 configures and consumes checklist definitions for business activation; the engine owns completion state, blocking rules, and progress calculation.
+
 Business Owner sees:
 ✓ Business Profile
 ✓ Industry Selected

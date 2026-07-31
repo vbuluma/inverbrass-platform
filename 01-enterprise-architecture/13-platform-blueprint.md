@@ -5,8 +5,10 @@ PLATFORM_BLUEPRINT.md
 # InverBrass Platform Blueprint
 
 ## Version: 1.0
-Architecture Version: AV-1.3 (see [01b – Architecture Versions](./01b-Architecture-Versions.md))
+Architecture Version: AV-1.5 (see [01b – Architecture Versions](./01b-Architecture-Versions.md))
 Status: Approved
+
+> **AV-1.5 Engine Catalog Lock:** ENG-003 sub-engines remain flat (003a–m); next ID **ENG-003n**. No renumbering or regrouping until AV-2.0.
 
 # Purpose
 
@@ -87,6 +89,8 @@ Includes
 - Identity
 - Configuration (including Industry Profiles)
 - Industry Experience (ENG-003k)
+- Checklist & Completion (ENG-003l)
+- Portfolio & Roadmap (ENG-003m)
 - Workflow
 - Notification
 - Payment

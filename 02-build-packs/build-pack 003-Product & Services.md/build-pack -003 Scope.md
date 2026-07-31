@@ -21,7 +21,7 @@ OBJ-004	Support product governance and lifecycle management.
 OBJ-005	Enable omnichannel digital catalogues.
 OBJ-006	Support AI-driven product analytics and recommendations.
 OBJ-007	Support migration of existing products and onboarding of new products.
-OBJ-008	Support complete product ownership, delivery responsibility, budgeting and roadmap management.
+OBJ-008	Support complete product ownership, delivery responsibility, budgeting and roadmap management (roadmap via ENG-003m when implemented).
 ________________________________________
 Supported Product Types
 Category	Examples
@@ -40,22 +40,24 @@ Healthcare	Procedures, Medicines
 Government Services	Licences, Permits
 ________________________________________
 Implementation Packages
-IP	Name	Purpose
-IP-001	Product & Service Foundation	Master product catalogue
-IP-002	Categories & Classification	Product hierarchy
-IP-003	Units of Measure	Standard measurement engine
-IP-004	Product Attributes Engine	Metadata-driven attributes
-IP-005	Product Variants	Size, colour, storage etc.
-IP-006	Bundles & Packages	Composite offerings
-IP-007	Digital Catalogue	Website, Mobile, WhatsApp
-IP-008	Product Lifecycle	Draft → Active → Retired
-IP-009	Product Documents	Images, manuals, certificates
-IP-010	Product Timeline	Business event history
-IP-011	Product Audit History	Immutable audit
-IP-012	Product Relationships	Compatible, Accessory, Cross-sell
-IP-013	Product Governance	Owners, approvals, accountability
-IP-014	Product Roadmap	Vision, releases, MVPs
-IP-015	Product Intelligence	AI analytics, performance, recommendations
+IP	Name	Purpose	Status
+IP-001	Product & Service Foundation	Master product catalogue	Frozen
+IP-002	Categories & Classification	Product hierarchy	Complete
+IP-003	Units of Measure	Standard measurement engine	Complete
+IP-004	Product Attributes Engine	Metadata-driven attributes	Complete
+IP-005	Product Variants	Size, colour, storage etc.	Complete
+IP-006	Bundles & Packages	Composite offerings	Complete
+IP-007	Digital Catalogue	Website, Mobile, WhatsApp	Complete
+IP-008	Product Lifecycle	Draft → Active → Retired	Complete
+IP-009	Product Documents & Compliance	Images, manuals, certificates, compliance matrix	Complete
+IP-010	Product Relationships	Compatible, Accessory, Cross-sell	Complete
+IP-011	Pricing & Pricing Rules	Commercial pricing configuration	Complete
+IP-012	Offering Analytics & Performance	Performance KPIs and dashboard	Complete
+IP-013	Offering Governance	Owners, readiness, stewardship	**In scope — final BP-003 IP**
+IP-014	Offering Roadmap & Release Management	~~Product roadmap and releases~~	**Retired → ENG-003m**
+IP-015	Product Intelligence	AI analytics, recommendations	**Deferred → ENG-003f / BP-013**
+
+> **Delivery boundary (AV-1.5):** BP-003 **freezes after IP-013**. Roadmap and release planning moves to **ENG-003m Portfolio & Roadmap Engine** (platform). Product intelligence analytics moves to **ENG-003f** and **BP-013 Product Management & Innovation** when operational data from Sales, Inventory, and CRM Build Packs is available.
 ________________________________________
 Product Lifecycle
 Idea
@@ -164,7 +166,9 @@ Engine	Purpose
 ENG-003a Configuration Engine	Product configuration, Industry Profiles
 ENG-003k Industry Experience Engine	Product type visibility and edition-specific templates
 ENG-003b Localization & Regulatory Engine	Country-specific rules
-ENG-003f Product Intelligence Engine	Governance and analytics
+ENG-003l Checklist & Completion Engine	Product creation and compliance checklists (document matrix, readiness gates)
+ENG-003m Portfolio & Roadmap Engine	Offering roadmap and release planning (consumption — not implemented in BP-003)
+ENG-003f Product Intelligence Engine	Offering analytics and AI insights (deferred to BP-013 / post-freeze)
 ENG-004 Rules Engine	Pricing and eligibility
 ENG-005 Workflow Engine	Product approvals
 ENG-009 Notification Engine	Product notifications
@@ -177,8 +181,8 @@ ________________________________________
 One recommendation before we start building BP-003
 I would split BP-003 into two logical workstreams while keeping it as a single Build Pack for governance:
 1.	Catalogue Foundation (IP-001 to IP-012) – Defines products, categories, attributes, variants, lifecycle, documents, timeline, audit, and relationships. This is the reusable engine consumed by all verticals. 
-2.	Product Intelligence & Governance (IP-013 to IP-015) – Manages product strategy: business cases, roadmaps, ownership, budgets, releases, KPIs, GTM, customer feedback, AI insights, and retirement decisions. 
-This separation keeps the catalogue lean and reusable, while giving you the specialized end-to-end product management capability you wanted as both a Business Analyst and Product Manager. It also aligns perfectly with your vision of building an enterprise-grade digitalization platform rather than just another ERP.
+2.	Offering Governance (IP-013) – Ensures every offering is enterprise-ready with ownership, readiness scoring, and stewardship. **This is the final BP-003 delivery scope (AV-1.5).**
+3.	**Deferred to platform engines:** Roadmap and release planning → **ENG-003m**. Product intelligence and AI → **ENG-003f / BP-013**.
 
 ________________________________________
 Foundation Freeze (BP-001, BP-002, BP-003 IP-001)
