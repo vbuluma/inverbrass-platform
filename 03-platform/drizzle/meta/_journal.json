@@ -225,6 +225,76 @@
       "when": 1784564588832,
       "tag": "0031_bp003_ip003_unit_engine",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1784564588833,
+      "tag": "0032_bp003_ip004_product_attributes",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1784564588834,
+      "tag": "0033_bp003_ip005_product_variants",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1784564588835,
+      "tag": "0034_bp003_ip006_product_bundles",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1784564588836,
+      "tag": "0035_bp003_ip007_digital_catalogue",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1784564588837,
+      "tag": "0036_bp003_ip008_product_lifecycle",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1784564588838,
+      "tag": "0037_bp003_ip009_offering_documents",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1784564588839,
+      "tag": "0038_bp003_ip010_offering_relationships",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1784564588840,
+      "tag": "0039_bp003_ip011_offering_pricing",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1784564588841,
+      "tag": "0040_bp003_ip012_offering_analytics",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1784564588842,
+      "tag": "0041_bp003_ip013_offering_governance",
+      "breakpoints": true
     }
   ]
 }
