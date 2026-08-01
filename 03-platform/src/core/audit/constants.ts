@@ -51,6 +51,9 @@ export const AUDIT_ENTITY_NAMES = {
   PRODUCT_CLASSIFICATION_ASSIGNMENT: "product_classification_assignment",
   UNIT_OF_MEASURE: "unit_of_measure",
   UNIT_CATEGORY: "unit_category",
+  PRODUCT_LIFECYCLE: "product_lifecycle",
+  OFFERING_DOCUMENT: "offering_document",
+  OFFERING_RELATIONSHIP: "offering_relationship",
 } as const;
 
 export type AuditEntityName =
@@ -76,6 +79,9 @@ export const AUDIT_ENTITY_LABELS: Record<AuditEntityName, string> = {
   product_classification_assignment: "Classification Assignment",
   unit_of_measure: "Unit of Measure",
   unit_category: "Unit Category",
+  product_lifecycle: "Product Lifecycle",
+  offering_document: "Offering Document",
+  offering_relationship: "Offering Relationship",
 };
 
 export const AUDIT_SOURCE_MODULES = {
@@ -91,6 +97,9 @@ export const AUDIT_SOURCE_MODULES = {
   PARTY_COMMUNICATION_PREFERENCES: "party_communication_preferences",
   PARTY_IDENTITY_REGULATORY: "party_identity_regulatory",
   PRODUCT_MANAGEMENT: "product_management",
+  PRODUCT_LIFECYCLE: "product_lifecycle",
+  OFFERING_DOCUMENTS: "offering_documents",
+  OFFERING_RELATIONSHIPS: "offering_relationships",
 } as const;
 
 export type AuditSourceModule =
@@ -109,6 +118,9 @@ export const AUDIT_SOURCE_MODULE_LABELS: Record<AuditSourceModule, string> = {
   party_communication_preferences: "Party Communication & Consent Preferences",
   party_identity_regulatory: "Party Identity & Regulatory",
   product_management: "Product Management",
+  product_lifecycle: "Product Lifecycle",
+  offering_documents: "Offering Documents",
+  offering_relationships: "Offering Relationships",
 };
 
 export const AUDIT_DEFAULT_PAGE_SIZE = 25;

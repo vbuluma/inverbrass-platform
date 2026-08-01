@@ -109,10 +109,22 @@ export const PRODUCT_WORKSPACE_TABS = [
   { id: "variants", label: "Variants", available: false, futureIp: "IP-005" },
   { id: "bundles", label: "Bundles", available: false, futureIp: "IP-006" },
   {
+    id: "lifecycle",
+    label: "Lifecycle",
+    available: true,
+    futureIp: null,
+  },
+  {
     id: "documents",
     label: "Documents",
-    available: false,
-    futureIp: "IP-009",
+    available: true,
+    futureIp: null,
+  },
+  {
+    id: "compliance",
+    label: "Compliance",
+    available: true,
+    futureIp: null,
   },
   { id: "timeline", label: "Timeline", available: true, futureIp: null },
   {
@@ -124,8 +136,8 @@ export const PRODUCT_WORKSPACE_TABS = [
   {
     id: "relationships",
     label: "Relationships",
-    available: false,
-    futureIp: "IP-012",
+    available: true,
+    futureIp: null,
   },
   { id: "pricing", label: "Pricing", available: false, futureIp: null },
   {
@@ -167,3 +179,120 @@ export type UnitRoundingRule =
   (typeof UNIT_ROUNDING_RULES)[keyof typeof UNIT_ROUNDING_RULES];
 
 export const PRODUCT_DEFAULT_PAGE_SIZE = 25;
+
+/** IP-008 — Product Lifecycle Management */
+export const PRODUCT_LIFECYCLE_STATE_CODES = {
+  DRAFT: "DRAFT",
+  PENDING_APPROVAL: "PENDING_APPROVAL",
+  APPROVED: "APPROVED",
+  ACTIVE: "ACTIVE",
+  SUSPENDED: "SUSPENDED",
+  DEPRECATED: "DEPRECATED",
+  DISCONTINUED: "DISCONTINUED",
+  ARCHIVED: "ARCHIVED",
+} as const;
+
+export type ProductLifecycleStateCode =
+  (typeof PRODUCT_LIFECYCLE_STATE_CODES)[keyof typeof PRODUCT_LIFECYCLE_STATE_CODES];
+
+export const PRODUCT_LIFECYCLE_APPROVAL_STATUS_CODES = {
+  NOT_REQUIRED: "NOT_REQUIRED",
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+} as const;
+
+export type ProductLifecycleApprovalStatusCode =
+  (typeof PRODUCT_LIFECYCLE_APPROVAL_STATUS_CODES)[keyof typeof PRODUCT_LIFECYCLE_APPROVAL_STATUS_CODES];
+
+export const PRODUCT_LIFECYCLE_RETIREMENT_REASONS = {
+  REPLACEMENT: "REPLACEMENT",
+  REGULATORY: "REGULATORY",
+  BUSINESS_DECISION: "BUSINESS_DECISION",
+  EXPIRED: "EXPIRED",
+  MERGED: "MERGED",
+  OTHER: "OTHER",
+} as const;
+
+export type ProductLifecycleRetirementReason =
+  (typeof PRODUCT_LIFECYCLE_RETIREMENT_REASONS)[keyof typeof PRODUCT_LIFECYCLE_RETIREMENT_REASONS];
+
+export const PRODUCT_LIFECYCLE_SCHEDULED_ACTIONS = {
+  ACTIVATE: "ACTIVATE",
+  SUSPEND: "SUSPEND",
+  ARCHIVE: "ARCHIVE",
+} as const;
+
+export type ProductLifecycleScheduledAction =
+  (typeof PRODUCT_LIFECYCLE_SCHEDULED_ACTIONS)[keyof typeof PRODUCT_LIFECYCLE_SCHEDULED_ACTIONS];
+
+export const PRODUCT_LIFECYCLE_EVENT_TYPES = {
+  LIFECYCLE_CREATED: "LIFECYCLE_CREATED",
+  SUBMITTED: "SUBMITTED",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+  ACTIVATED: "ACTIVATED",
+  SUSPENDED: "SUSPENDED",
+  REACTIVATED: "REACTIVATED",
+  DEPRECATED: "DEPRECATED",
+  DISCONTINUED: "DISCONTINUED",
+  ARCHIVED: "ARCHIVED",
+  VERSION_CREATED: "VERSION_CREATED",
+  REPLACEMENT_ASSIGNED: "REPLACEMENT_ASSIGNED",
+  SCHEDULE_SET: "SCHEDULE_SET",
+} as const;
+
+export type ProductLifecycleEventType =
+  (typeof PRODUCT_LIFECYCLE_EVENT_TYPES)[keyof typeof PRODUCT_LIFECYCLE_EVENT_TYPES];
+
+/** Configuration-driven lifecycle policies (ENG-003a target) */
+export const DEFAULT_PRODUCT_LIFECYCLE_POLICIES = {
+  approvalRequiredBeforeActivation: true,
+  allowDirectActivation: false,
+  maximumActiveVersions: 1,
+  allowReactivationFromSuspended: true,
+} as const;
+
+export type ProductLifecyclePolicies = typeof DEFAULT_PRODUCT_LIFECYCLE_POLICIES;
+
+/** IP-009 — Offering Documents */
+export const OFFERING_DOCUMENT_STATUS_CODES = {
+  ACTIVE: "ACTIVE",
+  INACTIVE: "INACTIVE",
+  EXPIRED: "EXPIRED",
+} as const;
+
+export type OfferingDocumentStatusCode =
+  (typeof OFFERING_DOCUMENT_STATUS_CODES)[keyof typeof OFFERING_DOCUMENT_STATUS_CODES];
+
+export const OFFERING_DOCUMENT_ALLOWED_MIME_TYPES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+] as const;
+
+export const OFFERING_DOCUMENT_MAX_SIZE_BYTES = 10 * 1024 * 1024;
+
+export const OFFERING_DOCUMENT_STORAGE_BUCKET = "offering-documents";
+
+export const OFFERING_TYPE_CODES = {
+  PRODUCT: "PRODUCT",
+} as const;
+
+/** IP-010 — Offering Relationships */
+export const OFFERING_RELATIONSHIP_STATUS_CODES = {
+  ACTIVE: "ACTIVE",
+  INACTIVE: "INACTIVE",
+} as const;
+
+export type OfferingRelationshipStatusCode =
+  (typeof OFFERING_RELATIONSHIP_STATUS_CODES)[keyof typeof OFFERING_RELATIONSHIP_STATUS_CODES];
+
+export const STORAGE_PROVIDER_CODES = {
+  SUPABASE: "SUPABASE",
+} as const;
