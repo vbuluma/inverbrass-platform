@@ -40,7 +40,7 @@ import {
 const ROOT = path.resolve(__dirname, "..");
 
 const REQUIRED_FILES = [
-  "drizzle/0034_bp003_ip013_offering_governance.sql",
+  "drizzle/0041_bp003_ip013_offering_governance.sql",
   "src/db/schema/offering-governance-status.ts",
   "src/db/schema/offering-governance-checklist-definition.ts",
   "src/db/schema/offering-governance.ts",
@@ -61,7 +61,7 @@ const REQUIRED_FILES = [
   "scripts/bp003-ip013-offering-governance-smoke-validation.ts",
 ];
 
-const MIGRATION_TAG = "0034_bp003_ip013_offering_governance";
+const MIGRATION_TAG = "0041_bp003_ip013_offering_governance";
 
 type SmokeResult = { name: string; ok: boolean; detail?: string };
 
@@ -78,7 +78,7 @@ function checkRequiredFiles(): SmokeResult[] {
 function checkMigrationSql(): SmokeResult[] {
   const migrationPath = path.join(
     ROOT,
-    "drizzle/0034_bp003_ip013_offering_governance.sql"
+    "drizzle/0041_bp003_ip013_offering_governance.sql"
   );
   if (!existsSync(migrationPath)) {
     return [{ name: "migration:sql", ok: false, detail: "Migration SQL missing." }];
@@ -109,7 +109,7 @@ function checkMigrationJournal(): SmokeResult[] {
 
   return [
     {
-      name: "journal:0034_bp003_ip013",
+      name: "journal:0041_bp003_ip013",
       ok: tags.has(MIGRATION_TAG),
       detail: tags.has(MIGRATION_TAG)
         ? undefined
@@ -280,7 +280,7 @@ async function main() {
 
   if (failed.length > 0) {
     const journalOnly =
-      failed.length === 1 && failed[0]?.name === "journal:0034_bp003_ip013";
+      failed.length === 1 && failed[0]?.name === "journal:0041_bp003_ip013";
     if (journalOnly) {
       console.log("\nJournal failure is expected until shared integration.");
     }

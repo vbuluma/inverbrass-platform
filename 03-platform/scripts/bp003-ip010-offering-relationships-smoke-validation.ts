@@ -23,7 +23,7 @@ import { addOfferingRelationshipSchema } from "@/modules/product/validators/offe
 const ROOT = path.resolve(__dirname, "..");
 
 const REQUIRED_FILES = [
-  "drizzle/0035_bp003_ip010_offering_relationships.sql",
+  "drizzle/0038_bp003_ip010_offering_relationships.sql",
   "src/db/schema/offering-relationship-type.ts",
   "src/db/schema/offering-relationship.ts",
   "src/db/seeds/offering-relationship-types.ts",

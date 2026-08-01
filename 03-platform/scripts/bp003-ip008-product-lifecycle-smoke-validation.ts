@@ -29,7 +29,7 @@ import {
 const ROOT = path.resolve(__dirname, "..");
 
 const REQUIRED_FILES = [
-  "drizzle/0033_bp003_ip008_product_lifecycle.sql",
+  "drizzle/0036_bp003_ip008_product_lifecycle.sql",
   "src/db/schema/product-lifecycle.ts",
   "src/db/schema/product-lifecycle-event.ts",
   "src/modules/product/repositories/product-lifecycle-repository.ts",

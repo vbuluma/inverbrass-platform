@@ -39,7 +39,7 @@ import {
 const ROOT = path.resolve(__dirname, "..");
 
 const REQUIRED_FILES = [
-  "drizzle/0033_bp003_ip012_offering_analytics.sql",
+  "drizzle/0040_bp003_ip012_offering_analytics.sql",
   "src/db/schema/offering-metric-definition.ts",
   "src/db/schema/offering-metric-snapshot.ts",
   "src/db/seeds/offering-metric-defaults.ts",
@@ -57,7 +57,7 @@ const REQUIRED_FILES = [
   "scripts/bp003-ip012-offering-analytics-smoke-validation.ts",
 ];
 
-const MIGRATION_TAG = "0033_bp003_ip012_offering_analytics";
+const MIGRATION_TAG = "0040_bp003_ip012_offering_analytics";
 
 type SmokeResult = { name: string; ok: boolean; detail?: string };
 
@@ -74,7 +74,7 @@ function checkRequiredFiles(): SmokeResult[] {
 function checkMigrationSql(): SmokeResult[] {
   const migrationPath = path.join(
     ROOT,
-    "drizzle/0033_bp003_ip012_offering_analytics.sql"
+    "drizzle/0040_bp003_ip012_offering_analytics.sql"
   );
   if (!existsSync(migrationPath)) {
     return [{ name: "migration:sql", ok: false, detail: "Migration SQL missing." }];

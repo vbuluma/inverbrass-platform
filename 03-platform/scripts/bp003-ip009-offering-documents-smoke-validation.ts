@@ -21,7 +21,7 @@ import { uploadOfferingDocumentMetadataSchema } from "@/modules/product/validato
 const ROOT = path.resolve(__dirname, "..");
 
 const REQUIRED_FILES = [
-  "drizzle/0034_bp003_ip009_offering_documents.sql",
+  "drizzle/0037_bp003_ip009_offering_documents.sql",
   "src/db/schema/offering-document.ts",
   "src/db/schema/offering-document-link.ts",
   "src/modules/product/repositories/offering-document-repository.ts",
