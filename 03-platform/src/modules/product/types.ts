@@ -986,3 +986,182 @@ export type PublishedCatalogueProductView = {
   recommended: boolean;
 };
 
+/** IP-008 — Product Lifecycle */
+export type ProductLifecycleEventView = {
+  id: string;
+  eventType: string;
+  oldState: string | null;
+  newState: string | null;
+  reason: string | null;
+  performedAt: string;
+};
+
+export type ProductLifecyclePanelView = {
+  lifecycleId: string;
+  productId: string;
+  currentState: string;
+  previousState: string | null;
+  effectiveFrom: string | null;
+  effectiveTo: string | null;
+  approvalRequired: boolean;
+  approvalStatus: string | null;
+  retirementReason: string | null;
+  replacementProductId: string | null;
+  replacementProductName: string | null;
+  replacementProductCode: string | null;
+  versionNumber: string;
+  majorVersion: number;
+  minorVersion: number;
+  scheduledAction: string | null;
+  scheduledAt: string | null;
+  availableActions: string[];
+  events: ProductLifecycleEventView[];
+  isReadOnly: boolean;
+};
+
+export type ProductLifecycleDashboardView = {
+  kpis: Array<{ state: string; count: number }>;
+  recentlyChanged: Array<{
+    productId: string;
+    productCode: string;
+    productName: string;
+    currentState: string;
+    versionNumber: string;
+    updatedAt: string;
+  }>;
+};
+
+export type SetReplacementProductPayload = {
+  replacementProductId: string;
+  retirementReason?: string;
+};
+
+export type ScheduleLifecycleActionPayload = {
+  scheduledAction: string;
+  scheduledAt: string;
+};
+
+/** IP-009 — Offering Documents */
+export type OfferingDocumentView = {
+  id: string;
+  documentTypeCode: string;
+  documentTypeName: string;
+  originalFileName: string;
+  mimeType: string;
+  fileSizeBytes: number;
+  fileSizeDisplay: string;
+  issueDate: string | null;
+  expiryDate: string | null;
+  statusCode: string;
+  isVerified: boolean;
+  verificationMethodCode: string | null;
+  verifiedBy: string | null;
+  verifiedAt: string | null;
+  notes: string | null;
+  uploadedAt: string;
+  supersedesDocumentId: string | null;
+};
+
+export type OfferingDocumentRequirementView = {
+  documentTypeCode: string;
+  documentTypeName: string;
+  isRequired: boolean;
+  status: string;
+  offeringDocumentId: string | null;
+  issueDate: string | null;
+  expiryDate: string | null;
+};
+
+export type OfferingComplianceSummaryView = {
+  complianceScore: number;
+  complianceStatus: string;
+  countryCode: string;
+  countryName: string;
+  ruleSetCode: string | null;
+  ruleSetName: string | null;
+  mandatoryCount: number;
+  uploadedCount: number;
+  missingCount: number;
+  expiredCount: number;
+  verifiedCount: number;
+};
+
+export type OfferingDocumentsPanelView = {
+  documents: OfferingDocumentView[];
+  documentTypes: ReferenceOption[];
+  requiredDocuments: OfferingDocumentRequirementView[];
+  complianceSummary: OfferingComplianceSummaryView;
+  verifications: Array<{
+    offeringDocumentId: string;
+    documentTypeName: string;
+    originalFileName: string;
+    verificationStatus: string;
+    verifiedByDisplay: string | null;
+    verifiedAt: string | null;
+    verificationMethodName: string | null;
+  }>;
+  summaryCards: {
+    totalDocuments: number;
+    verified: number;
+    pending: number;
+    expired: number;
+    complianceScore: number;
+  };
+};
+
+export type UploadOfferingDocumentMetadata = {
+  documentTypeCode: string;
+  issueDate?: string;
+  expiryDate?: string;
+  notes?: string;
+};
+
+export type VerifyOfferingDocumentPayload = {
+  verificationMethodCode?: string;
+  notes?: string;
+};
+
+/** IP-010 — Offering Relationships */
+export type OfferingRelationshipView = {
+  id: string;
+  sourceOfferingId: string;
+  targetOfferingId: string;
+  relatedOfferingId: string;
+  relatedOfferingCode: string;
+  relatedOfferingName: string;
+  relationshipTypeCode: string;
+  relationshipTypeName: string;
+  direction: "OUTGOING" | "INCOMING";
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  statusCode: string;
+  notes: string | null;
+};
+
+export type OfferingRelationshipsPanelView = {
+  relationships: OfferingRelationshipView[];
+  availableRelationshipTypes: ReferenceOption[];
+  sections: {
+    required: OfferingRelationshipView[];
+    optional: OfferingRelationshipView[];
+    crossSell: OfferingRelationshipView[];
+    upgradePath: OfferingRelationshipView[];
+    alternatives: OfferingRelationshipView[];
+    compatibility: OfferingRelationshipView[];
+    dependencies: OfferingRelationshipView[];
+  };
+};
+
+export type AddOfferingRelationshipPayload = {
+  targetOfferingId: string;
+  relationshipTypeCode: string;
+  effectiveFrom?: string;
+  effectiveTo?: string;
+  notes?: string;
+};
+
+export type UpdateOfferingRelationshipPayload = {
+  effectiveFrom?: string;
+  effectiveTo?: string;
+  notes?: string;
+};

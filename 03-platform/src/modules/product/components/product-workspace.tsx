@@ -49,6 +49,10 @@ import { ProductBundlesPanel } from "@/modules/product/components/product-bundle
 import { ProductCapabilitiesPanel } from "@/modules/product/components/product-capabilities-panel";
 import { ProductCataloguePanel } from "@/modules/product/components/product-catalogue-panel";
 import { ProductClassificationPanel } from "@/modules/product/components/product-classification-panel";
+import { ProductLifecyclePanel } from "@/modules/product/components/product-lifecycle-panel";
+import { OfferingCompliancePanel } from "@/modules/product/components/offering-compliance-panel";
+import { OfferingDocumentsPanel } from "@/modules/product/components/offering-documents-panel";
+import { OfferingRelationshipsPanel } from "@/modules/product/components/offering-relationships-panel";
 import { ProductTimelinePanel } from "@/modules/product/components/product-timeline-panel";
 import { ProductVariantsPanel } from "@/modules/product/components/product-variants-panel";
 import {
@@ -61,6 +65,9 @@ import type {
   ProductAttributesPanelView,
   ProductClassificationPanelView,
   ProductDetailView,
+  ProductLifecyclePanelView,
+  OfferingDocumentsPanelView,
+  OfferingRelationshipsPanelView,
   ProductRegistrationCatalogues,
   ProductVariantsPanelView,
   ProductBundlesPanelView,
@@ -71,6 +78,9 @@ type ProductWorkspaceProps = {
   product: ProductDetailView;
   catalogues: ProductRegistrationCatalogues;
   classification: ProductClassificationPanelView;
+  lifecycle: ProductLifecyclePanelView;
+  documents: OfferingDocumentsPanelView;
+  relationships: OfferingRelationshipsPanelView;
   timeline: ProductTimelinePanelView;
   auditHistory: ProductAuditHistoryPanelView;
   attributes: ProductAttributesPanelView;
@@ -113,6 +123,9 @@ export function ProductWorkspace({
   product: initialProduct,
   catalogues,
   classification,
+  lifecycle,
+  documents,
+  relationships,
   timeline,
   auditHistory,
   attributes,
@@ -581,6 +594,28 @@ export function ProductWorkspace({
 
       {activeTab === "catalogue" ? (
         <ProductCataloguePanel initialData={catalogue} />
+      ) : null}
+
+      {activeTab === "lifecycle" ? (
+        <ProductLifecyclePanel productId={product.id} initialData={lifecycle} />
+      ) : null}
+
+      {activeTab === "documents" ? (
+        <OfferingDocumentsPanel
+          productId={product.id}
+          initialData={documents}
+        />
+      ) : null}
+
+      {activeTab === "compliance" ? (
+        <OfferingCompliancePanel initialData={documents} />
+      ) : null}
+
+      {activeTab === "relationships" ? (
+        <OfferingRelationshipsPanel
+          productId={product.id}
+          initialData={relationships}
+        />
       ) : null}
 
       {activeTab === "timeline" ? (

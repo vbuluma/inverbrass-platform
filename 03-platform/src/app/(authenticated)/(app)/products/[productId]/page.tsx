@@ -9,6 +9,9 @@
 import { redirect } from "next/navigation";
 
 import { getProductClassificationPanelAction } from "@/modules/product/actions/product-classification-actions";
+import { getProductLifecyclePanelAction } from "@/modules/product/actions/product-lifecycle-actions";
+import { getOfferingDocumentsPanelAction } from "@/modules/product/actions/offering-document-actions";
+import { getOfferingRelationshipsPanelAction } from "@/modules/product/actions/offering-relationship-actions";
 import {
   getProductAction,
   getProductRegistrationCataloguesAction,
@@ -33,11 +36,26 @@ export default async function ProductWorkspacePage({
   const { productId } = await params;
   const { tab } = await searchParams;
 
-  const [productResult, cataloguesResult, classificationResult, timelineResult, auditHistoryResult, attributesResult, variantsResult, bundlesResult, catalogueResult] =
-    await Promise.all([
+  const [
+    productResult,
+    cataloguesResult,
+    classificationResult,
+    lifecycleResult,
+    documentsResult,
+    relationshipsResult,
+    timelineResult,
+    auditHistoryResult,
+    attributesResult,
+    variantsResult,
+    bundlesResult,
+    catalogueResult,
+  ] = await Promise.all([
       getProductAction(productId),
       getProductRegistrationCataloguesAction(),
       getProductClassificationPanelAction(productId),
+      getProductLifecyclePanelAction(productId),
+      getOfferingDocumentsPanelAction(productId),
+      getOfferingRelationshipsPanelAction(productId),
       listProductTimelineAction(productId),
       listProductAuditHistoryAction(productId),
       getProductAttributesPanelAction(productId),
@@ -81,6 +99,39 @@ export default async function ProductWorkspacePage({
         <h1 className="text-xl font-semibold">Product Workspace</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {classificationResult.error.message}
+        </p>
+      </main>
+    );
+  }
+
+  if (!lifecycleResult.success) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <h1 className="text-xl font-semibold">Product Workspace</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {lifecycleResult.error.message}
+        </p>
+      </main>
+    );
+  }
+
+  if (!documentsResult.success) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <h1 className="text-xl font-semibold">Product Workspace</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {documentsResult.error.message}
+        </p>
+      </main>
+    );
+  }
+
+  if (!relationshipsResult.success) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <h1 className="text-xl font-semibold">Product Workspace</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {relationshipsResult.error.message}
         </p>
       </main>
     );
@@ -157,6 +208,9 @@ export default async function ProductWorkspacePage({
       product={productResult.data}
       catalogues={cataloguesResult.data}
       classification={classificationResult.data}
+      lifecycle={lifecycleResult.data}
+      documents={documentsResult.data}
+      relationships={relationshipsResult.data}
       timeline={timelineResult.data}
       auditHistory={auditHistoryResult.data}
       attributes={attributesResult.data}
