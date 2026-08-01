@@ -447,3 +447,366 @@ export type ConvertUnitsPayload = {
   toUnitId: string;
   value: number;
 };
+
+export type PricingMethodOption = {
+  code: string;
+  name: string;
+  description?: string | null;
+};
+
+export type PricingCatalogueView = {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  currencyCode: string;
+  status: string;
+  statusLabel: string;
+  effectiveFrom: string | null;
+  effectiveTo: string | null;
+  updatedAt: string;
+  createdAt: string;
+};
+
+export type PricingItemView = {
+  id: string;
+  offeringId: string;
+  offeringCode: string;
+  offeringName: string;
+  pricingCatalogueId: string;
+  catalogueCode: string;
+  catalogueName: string;
+  currencyCode: string;
+  unitPrice: string;
+  minimumPrice: string | null;
+  maximumPrice: string | null;
+  pricingMethod: string;
+  pricingMethodLabel: string;
+  customerSegment: string | null;
+  salesChannel: string | null;
+  region: string | null;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  status: string;
+  statusLabel: string;
+  isActiveNow: boolean;
+  isFuture: boolean;
+  isExpired: boolean;
+  isEditable: boolean;
+  updatedAt: string;
+  createdAt: string;
+};
+
+export type ProductPricingPanelView = {
+  offeringId: string;
+  activePrices: PricingItemView[];
+  futurePrices: PricingItemView[];
+  expiredPrices: PricingItemView[];
+  priceHistory: PricingItemView[];
+  catalogues: PricingCatalogueView[];
+  pricingMethods: PricingMethodOption[];
+  currencies: ReferenceOption[];
+  counts: {
+    active: number;
+    future: number;
+    expired: number;
+    total: number;
+  };
+};
+
+export type PricingDashboardView = {
+  activePrices: number;
+  futurePrices: number;
+  expiredPrices: number;
+  catalogueCount: number;
+  activeCatalogues: number;
+  recentlyUpdated: PricingItemView[];
+  catalogues: PricingCatalogueView[];
+  pricingMethods: PricingMethodOption[];
+  currencies: ReferenceOption[];
+  catalogueLabel: string;
+};
+
+export type PricingRegistrationCataloguesView = {
+  catalogues: Array<{ id: string; code: string; name: string; currencyCode: string }>;
+  pricingMethods: PricingMethodOption[];
+  currencies: ReferenceOption[];
+};
+
+export type CreatePricingCataloguePayload = {
+  code: string;
+  name: string;
+  description?: string;
+  currencyCode: string;
+  effectiveFrom?: string | null;
+  effectiveTo?: string | null;
+};
+
+export type UpdatePricingCataloguePayload = Partial<CreatePricingCataloguePayload>;
+
+export type CreatePricingItemPayload = {
+  offeringId: string;
+  pricingCatalogueId: string;
+  currencyCode: string;
+  unitPrice: number;
+  minimumPrice?: number | null;
+  maximumPrice?: number | null;
+  pricingMethod: string;
+  customerSegment?: string;
+  salesChannel?: string;
+  region?: string;
+  effectiveFrom: string;
+  effectiveTo?: string | null;
+};
+
+export type UpdatePricingItemPayload = Omit<
+  CreatePricingItemPayload,
+  "offeringId"
+> & {
+  offeringId?: string;
+};
+
+export type SearchPricingItemsPayload = {
+  query?: string;
+  offeringId?: string;
+  pricingCatalogueId?: string;
+  currencyCode?: string;
+  customerSegment?: string;
+  salesChannel?: string;
+  region?: string;
+  status?: string;
+};
+
+export type ComparePricingItemsPayload = {
+  itemIds: string[];
+};
+
+export type PricingComparisonView = {
+  items: PricingItemView[];
+  dimensionSummary: string[];
+};
+
+export type OfferingMetricDefinitionView = {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  metricCategory: string;
+  metricCategoryLabel: string;
+  calculationMethod: string;
+  unitOfMeasure: string | null;
+  isActive: boolean;
+};
+
+export type OfferingMetricSnapshotView = {
+  id: string;
+  offeringId: string;
+  offeringCode: string;
+  offeringName: string;
+  metricDefinitionId: string;
+  metricCode: string;
+  metricName: string;
+  metricCategory: string;
+  metricCategoryLabel: string;
+  snapshotPeriod: string;
+  snapshotPeriodLabel: string;
+  snapshotDate: string;
+  metricValue: string;
+  displayValue: string;
+  currencyCode: string | null;
+  unitOfMeasure: string | null;
+  isPendingExternalData: boolean;
+  createdAt: string;
+};
+
+export type OfferingAnalyticsKpiCardView = {
+  metricCode: string;
+  label: string;
+  value: string;
+  category: string;
+  categoryLabel: string;
+  trendDirection: "up" | "down" | "flat" | "pending";
+  helperText?: string | null;
+};
+
+export type OfferingAnalyticsSectionView = {
+  category: string;
+  categoryLabel: string;
+  kpis: OfferingAnalyticsKpiCardView[];
+};
+
+export type ProductAnalyticsPanelView = {
+  offeringId: string;
+  offeringCode: string;
+  offeringName: string;
+  statusCode: string;
+  statusName: string;
+  lastRefreshedAt: string | null;
+  snapshotPeriod: string;
+  snapshotPeriodLabel: string;
+  dateFrom: string;
+  dateTo: string;
+  kpiCards: OfferingAnalyticsKpiCardView[];
+  sections: OfferingAnalyticsSectionView[];
+  snapshots: OfferingMetricSnapshotView[];
+  trends: OfferingMetricSnapshotView[];
+  metricDefinitions: OfferingMetricDefinitionView[];
+  exportReady: boolean;
+};
+
+export type OfferingAnalyticsDashboardView = {
+  metricDefinitionCount: number;
+  snapshotCount: number;
+  offeringsTracked: number;
+  recentlyRefreshed: OfferingMetricSnapshotView[];
+  metricDefinitions: OfferingMetricDefinitionView[];
+  categorySummary: Array<{ category: string; categoryLabel: string; count: number }>;
+  catalogueLabel: string;
+};
+
+export type OfferingAnalyticsFiltersPayload = {
+  dateFrom?: string;
+  dateTo?: string;
+  metricCategory?: string;
+  snapshotPeriod?: string;
+  query?: string;
+};
+
+export type RefreshOfferingAnalyticsPayload = {
+  offeringId: string;
+  snapshotPeriod?: string;
+};
+
+export type CompareOfferingAnalyticsPayload = {
+  offeringIds: string[];
+  dateFrom?: string;
+  dateTo?: string;
+  snapshotPeriod?: string;
+};
+
+export type OfferingAnalyticsComparisonView = {
+  offerings: Array<{
+    offeringId: string;
+    offeringCode: string;
+    offeringName: string;
+    kpis: OfferingAnalyticsKpiCardView[];
+  }>;
+};
+
+export type OfferingAnalyticsExportView = {
+  exportedAt: string;
+  offeringId: string;
+  offeringCode: string;
+  offeringName: string;
+  snapshotPeriod: string;
+  dateFrom: string;
+  dateTo: string;
+  snapshots: OfferingMetricSnapshotView[];
+  note: string;
+};
+
+export type OfferingGovernanceChecklistItemView = {
+  code: string;
+  name: string;
+  description: string | null;
+  sourceModule: string;
+  isMandatory: boolean;
+  weight: number;
+  displayOrder: number;
+  status: string;
+  statusLabel: string;
+  detail: string | null;
+  isPendingExternalModule: boolean;
+};
+
+export type OfferingGovernanceHistoryItemView = {
+  id: string;
+  changeType: string;
+  changeTypeLabel: string;
+  oldValue: string | null;
+  newValue: string | null;
+  changedBy: string | null;
+  changeDate: string;
+};
+
+export type OfferingGovernanceValidationResultView = {
+  label: string;
+  status: string;
+  statusLabel: string;
+  detail: string | null;
+};
+
+export type ProductGovernancePanelView = {
+  offeringId: string;
+  offeringCode: string;
+  offeringName: string;
+  statusCode: string;
+  statusName: string;
+  governanceId: string | null;
+  governanceStatus: string;
+  governanceStatusLabel: string;
+  readinessScore: number;
+  readinessScoreLabel: string;
+  lastValidationDate: string | null;
+  isLocked: boolean;
+  notes: string | null;
+  responsibleBusinessOwnerPartyId: string | null;
+  responsibleBusinessOwnerName: string | null;
+  technicalOwnerPartyId: string | null;
+  technicalOwnerName: string | null;
+  productStewardPartyId: string | null;
+  productStewardName: string | null;
+  ownerOptions: Array<{ id: string; displayName: string }>;
+  statusOptions: Array<{ code: string; name: string }>;
+  checklist: OfferingGovernanceChecklistItemView[];
+  validationResults: OfferingGovernanceValidationResultView[];
+  history: OfferingGovernanceHistoryItemView[];
+  editable: boolean;
+};
+
+export type OfferingGovernanceDashboardView = {
+  governanceCount: number;
+  readyCount: number;
+  nonCompliantCount: number;
+  averageReadiness: number;
+  statusSummary: Array<{ status: string; statusLabel: string; count: number }>;
+  recentGovernance: Array<{
+    offeringId: string;
+    offeringCode: string;
+    offeringName: string;
+    governanceStatus: string;
+    governanceStatusLabel: string;
+    readinessScore: number;
+    businessOwnerName: string | null;
+  }>;
+  catalogueLabel: string;
+};
+
+export type OfferingGovernanceFiltersPayload = {
+  query?: string;
+  governanceStatus?: string;
+  ownerPartyId?: string;
+  readinessMin?: number;
+  readinessMax?: number;
+};
+
+export type UpdateOfferingGovernanceOwnershipPayload = {
+  offeringId: string;
+  responsibleBusinessOwnerPartyId?: string;
+  technicalOwnerPartyId?: string;
+  productStewardPartyId?: string;
+};
+
+export type UpdateOfferingGovernanceNotesPayload = {
+  offeringId: string;
+  notes?: string;
+};
+
+export type RunOfferingGovernanceValidationPayload = {
+  offeringId: string;
+};
+
+export type ToggleOfferingGovernanceLockPayload = {
+  offeringId: string;
+  isLocked: boolean;
+};

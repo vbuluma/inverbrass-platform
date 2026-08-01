@@ -36,6 +36,23 @@ export const PRODUCT_ERROR_CODES = {
   MULTIPLE_BASE_UNITS: "MULTIPLE_BASE_UNITS",
   ARCHIVED_UNIT_IMMUTABLE: "ARCHIVED_UNIT_IMMUTABLE",
   INVALID_UNIT_STATUS_TRANSITION: "INVALID_UNIT_STATUS_TRANSITION",
+  PRICING_CATALOGUE_NOT_FOUND: "PRICING_CATALOGUE_NOT_FOUND",
+  PRICING_ITEM_NOT_FOUND: "PRICING_ITEM_NOT_FOUND",
+  DUPLICATE_PRICING_CATALOGUE_CODE: "DUPLICATE_PRICING_CATALOGUE_CODE",
+  DUPLICATE_ACTIVE_PRICING: "DUPLICATE_ACTIVE_PRICING",
+  OVERLAPPING_PRICING_PERIOD: "OVERLAPPING_PRICING_PERIOD",
+  INVALID_PRICING_METHOD: "INVALID_PRICING_METHOD",
+  INVALID_PRICING_STATUS_TRANSITION: "INVALID_PRICING_STATUS_TRANSITION",
+  EXPIRED_PRICING_IMMUTABLE: "EXPIRED_PRICING_IMMUTABLE",
+  INVALID_PRICE_RANGE: "INVALID_PRICE_RANGE",
+  INVALID_EFFECTIVE_PERIOD: "INVALID_EFFECTIVE_PERIOD",
+  METRIC_DEFINITION_NOT_FOUND: "METRIC_DEFINITION_NOT_FOUND",
+  ANALYTICS_READ_ONLY: "ANALYTICS_READ_ONLY",
+  SNAPSHOT_ALREADY_EXISTS: "SNAPSHOT_ALREADY_EXISTS",
+  GOVERNANCE_NOT_FOUND: "GOVERNANCE_NOT_FOUND",
+  GOVERNANCE_IMMUTABLE: "GOVERNANCE_IMMUTABLE",
+  GOVERNANCE_LOCKED: "GOVERNANCE_LOCKED",
+  BUSINESS_OWNER_REQUIRED: "BUSINESS_OWNER_REQUIRED",
 } as const;
 
 export type ProductErrorCode =
@@ -94,4 +111,24 @@ export const PRODUCT_USER_MESSAGES = {
   MULTIPLE_BASE_UNITS: "Only one base unit is allowed per category.",
   ARCHIVED_UNIT_IMMUTABLE: "Archived units cannot be modified.",
   INVALID_UNIT_STATUS_TRANSITION: "This status change is not allowed.",
+  PRICING_CATALOGUE_NOT_FOUND: "Pricing catalogue not found.",
+  PRICING_ITEM_NOT_FOUND: "Price record not found.",
+  DUPLICATE_PRICING_CATALOGUE_CODE:
+    "A pricing catalogue with this code already exists.",
+  DUPLICATE_ACTIVE_PRICING:
+    "An active price already exists for this offering and dimension combination.",
+  OVERLAPPING_PRICING_PERIOD:
+    "This price overlaps an existing active price for the same dimensions.",
+  INVALID_PRICING_METHOD: "Selected pricing method is not valid.",
+  INVALID_PRICING_STATUS_TRANSITION: "This pricing status change is not allowed.",
+  EXPIRED_PRICING_IMMUTABLE: "Expired prices cannot be modified.",
+  INVALID_PRICE_RANGE: "Price range is not valid.",
+  INVALID_EFFECTIVE_PERIOD: "Effective period is not valid.",
+  METRIC_DEFINITION_NOT_FOUND: "Metric definition not found.",
+  ANALYTICS_READ_ONLY: "Analytics snapshots are read-only.",
+  SNAPSHOT_ALREADY_EXISTS: "A snapshot already exists for this metric and period.",
+  GOVERNANCE_NOT_FOUND: "Governance record not found.",
+  GOVERNANCE_IMMUTABLE: "Archived offerings cannot modify governance.",
+  GOVERNANCE_LOCKED: "Governance is locked and cannot be changed.",
+  BUSINESS_OWNER_REQUIRED: "A Responsible Business Owner is required.",
 } as const;

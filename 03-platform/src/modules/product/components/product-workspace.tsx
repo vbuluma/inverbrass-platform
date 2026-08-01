@@ -46,6 +46,9 @@ import {
 import { ProductAuditHistoryPanel } from "@/modules/product/components/product-audit-history-panel";
 import { ProductCapabilitiesPanel } from "@/modules/product/components/product-capabilities-panel";
 import { ProductClassificationPanel } from "@/modules/product/components/product-classification-panel";
+import { ProductAnalyticsPanel } from "@/modules/product/components/product-analytics-panel";
+import { ProductGovernancePanel } from "@/modules/product/components/product-governance-panel";
+import { ProductPricingPanel } from "@/modules/product/components/product-pricing-panel";
 import { ProductTimelinePanel } from "@/modules/product/components/product-timeline-panel";
 import {
   PRODUCT_STATUS_CODES,
@@ -54,8 +57,11 @@ import {
 import { PRODUCT_UI_LABELS } from "@/modules/product/ui-labels";
 import type {
   ProductAuditHistoryPanelView,
+  ProductAnalyticsPanelView,
   ProductClassificationPanelView,
   ProductDetailView,
+  ProductGovernancePanelView,
+  ProductPricingPanelView,
   ProductRegistrationCatalogues,
 } from "@/modules/product/types";
 
@@ -63,6 +69,9 @@ type ProductWorkspaceProps = {
   product: ProductDetailView;
   catalogues: ProductRegistrationCatalogues;
   classification: ProductClassificationPanelView;
+  pricing: ProductPricingPanelView;
+  analytics: ProductAnalyticsPanelView;
+  governance: ProductGovernancePanelView;
   timeline: ProductTimelinePanelView;
   auditHistory: ProductAuditHistoryPanelView;
   initialTab?: string;
@@ -101,6 +110,9 @@ export function ProductWorkspace({
   product: initialProduct,
   catalogues,
   classification,
+  pricing,
+  analytics,
+  governance,
   timeline,
   auditHistory,
   initialTab = "overview",
@@ -543,6 +555,26 @@ export function ProductWorkspace({
         <ProductClassificationPanel
           productId={product.id}
           initialData={classification}
+          disabled={isArchived}
+        />
+      ) : null}
+
+      {activeTab === "pricing" ? (
+        <ProductPricingPanel
+          productId={product.id}
+          initialData={pricing}
+          disabled={isArchived}
+        />
+      ) : null}
+
+      {activeTab === "analytics" ? (
+        <ProductAnalyticsPanel productId={product.id} initialData={analytics} />
+      ) : null}
+
+      {activeTab === "governance" ? (
+        <ProductGovernancePanel
+          productId={product.id}
+          initialData={governance}
           disabled={isArchived}
         />
       ) : null}

@@ -9,6 +9,9 @@
 import { redirect } from "next/navigation";
 
 import { getProductClassificationPanelAction } from "@/modules/product/actions/product-classification-actions";
+import { getProductAnalyticsPanelAction } from "@/modules/product/actions/offering-analytics-actions";
+import { getProductGovernancePanelAction } from "@/modules/product/actions/offering-governance-actions";
+import { getProductPricingPanelAction } from "@/modules/product/actions/pricing-actions";
 import {
   getProductAction,
   getProductRegistrationCataloguesAction,
@@ -29,11 +32,14 @@ export default async function ProductWorkspacePage({
   const { productId } = await params;
   const { tab } = await searchParams;
 
-  const [productResult, cataloguesResult, classificationResult, timelineResult, auditHistoryResult] =
+  const [productResult, cataloguesResult, classificationResult, pricingResult, analyticsResult, governanceResult, timelineResult, auditHistoryResult] =
     await Promise.all([
       getProductAction(productId),
       getProductRegistrationCataloguesAction(),
       getProductClassificationPanelAction(productId),
+      getProductPricingPanelAction(productId),
+      getProductAnalyticsPanelAction(productId),
+      getProductGovernancePanelAction(productId),
       listProductTimelineAction(productId),
       listProductAuditHistoryAction(productId),
     ]);
@@ -78,6 +84,39 @@ export default async function ProductWorkspacePage({
     );
   }
 
+  if (!pricingResult.success) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <h1 className="text-xl font-semibold">Product Workspace</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {pricingResult.error.message}
+        </p>
+      </main>
+    );
+  }
+
+  if (!analyticsResult.success) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <h1 className="text-xl font-semibold">Product Workspace</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {analyticsResult.error.message}
+        </p>
+      </main>
+    );
+  }
+
+  if (!governanceResult.success) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <h1 className="text-xl font-semibold">Product Workspace</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {governanceResult.error.message}
+        </p>
+      </main>
+    );
+  }
+
   if (!timelineResult.success) {
     return (
       <main className="mx-auto max-w-3xl px-4 py-8">
@@ -105,6 +144,9 @@ export default async function ProductWorkspacePage({
       product={productResult.data}
       catalogues={cataloguesResult.data}
       classification={classificationResult.data}
+      pricing={pricingResult.data}
+      analytics={analyticsResult.data}
+      governance={governanceResult.data}
       timeline={timelineResult.data}
       auditHistory={auditHistoryResult.data}
       initialTab={tab ?? "overview"}

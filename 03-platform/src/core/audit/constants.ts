@@ -51,6 +51,10 @@ export const AUDIT_ENTITY_NAMES = {
   PRODUCT_CLASSIFICATION_ASSIGNMENT: "product_classification_assignment",
   UNIT_OF_MEASURE: "unit_of_measure",
   UNIT_CATEGORY: "unit_category",
+  PRICING_CATALOGUE: "pricing_catalogue",
+  PRICING_ITEM: "pricing_item",
+  OFFERING_METRIC_DEFINITION: "offering_metric_definition",
+  OFFERING_GOVERNANCE: "offering_governance",
 } as const;
 
 export type AuditEntityName =
@@ -76,6 +80,10 @@ export const AUDIT_ENTITY_LABELS: Record<AuditEntityName, string> = {
   product_classification_assignment: "Classification Assignment",
   unit_of_measure: "Unit of Measure",
   unit_category: "Unit Category",
+  pricing_catalogue: "Pricing Catalogue",
+  pricing_item: "Pricing Item",
+  offering_metric_definition: "Offering Metric Definition",
+  offering_governance: "Offering Governance",
 };
 
 export const AUDIT_SOURCE_MODULES = {
