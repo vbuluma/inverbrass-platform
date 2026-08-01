@@ -1,5 +1,7 @@
 BP-003 IP-011 – Pricing & Pricing Rules
 
+> **Implementation status (AV-1.5):** Complete. Pricing is implemented as a **reusable platform capability** (`pricing_catalogue`, `pricing_item`, `pricing_method`). BP-003 consumes it for offerings via the Product Workspace **Pricing** tab. Commercial rules (discounts, promotions, taxes) are deferred to future Build Packs.
+
 This is one of the most important IPs because pricing should never be stored directly on the Product/Offering. The Offering defines what it is, while Pricing defines how it is sold.
 
 Objective

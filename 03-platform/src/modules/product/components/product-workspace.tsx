@@ -53,6 +53,9 @@ import { ProductLifecyclePanel } from "@/modules/product/components/product-life
 import { OfferingCompliancePanel } from "@/modules/product/components/offering-compliance-panel";
 import { OfferingDocumentsPanel } from "@/modules/product/components/offering-documents-panel";
 import { OfferingRelationshipsPanel } from "@/modules/product/components/offering-relationships-panel";
+import { ProductAnalyticsPanel } from "@/modules/product/components/product-analytics-panel";
+import { ProductGovernancePanel } from "@/modules/product/components/product-governance-panel";
+import { ProductPricingPanel } from "@/modules/product/components/product-pricing-panel";
 import { ProductTimelinePanel } from "@/modules/product/components/product-timeline-panel";
 import { ProductVariantsPanel } from "@/modules/product/components/product-variants-panel";
 import {
@@ -63,11 +66,14 @@ import { PRODUCT_UI_LABELS } from "@/modules/product/ui-labels";
 import type {
   ProductAuditHistoryPanelView,
   ProductAttributesPanelView,
+  ProductAnalyticsPanelView,
   ProductClassificationPanelView,
   ProductDetailView,
+  ProductGovernancePanelView,
   ProductLifecyclePanelView,
   OfferingDocumentsPanelView,
   OfferingRelationshipsPanelView,
+  ProductPricingPanelView,
   ProductRegistrationCatalogues,
   ProductVariantsPanelView,
   ProductBundlesPanelView,
@@ -81,6 +87,9 @@ type ProductWorkspaceProps = {
   lifecycle: ProductLifecyclePanelView;
   documents: OfferingDocumentsPanelView;
   relationships: OfferingRelationshipsPanelView;
+  pricing: ProductPricingPanelView;
+  analytics: ProductAnalyticsPanelView;
+  governance: ProductGovernancePanelView;
   timeline: ProductTimelinePanelView;
   auditHistory: ProductAuditHistoryPanelView;
   attributes: ProductAttributesPanelView;
@@ -126,6 +135,9 @@ export function ProductWorkspace({
   lifecycle,
   documents,
   relationships,
+  pricing,
+  analytics,
+  governance,
   timeline,
   auditHistory,
   attributes,
@@ -615,6 +627,26 @@ export function ProductWorkspace({
         <OfferingRelationshipsPanel
           productId={product.id}
           initialData={relationships}
+        />
+      ) : null}
+
+      {activeTab === "pricing" ? (
+        <ProductPricingPanel
+          productId={product.id}
+          initialData={pricing}
+          disabled={isArchived}
+        />
+      ) : null}
+
+      {activeTab === "analytics" ? (
+        <ProductAnalyticsPanel productId={product.id} initialData={analytics} />
+      ) : null}
+
+      {activeTab === "governance" ? (
+        <ProductGovernancePanel
+          productId={product.id}
+          initialData={governance}
+          disabled={isArchived}
         />
       ) : null}
 

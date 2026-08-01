@@ -62,6 +62,10 @@ export const AUDIT_ENTITY_NAMES = {
   PRODUCT_LIFECYCLE: "product_lifecycle",
   OFFERING_DOCUMENT: "offering_document",
   OFFERING_RELATIONSHIP: "offering_relationship",
+  PRICING_CATALOGUE: "pricing_catalogue",
+  PRICING_ITEM: "pricing_item",
+  OFFERING_METRIC_DEFINITION: "offering_metric_definition",
+  OFFERING_GOVERNANCE: "offering_governance",
 } as const;
 
 export type AuditEntityName =
@@ -98,6 +102,10 @@ export const AUDIT_ENTITY_LABELS: Record<AuditEntityName, string> = {
   product_lifecycle: "Product Lifecycle",
   offering_document: "Offering Document",
   offering_relationship: "Offering Relationship",
+  pricing_catalogue: "Pricing Catalogue",
+  pricing_item: "Pricing Item",
+  offering_metric_definition: "Offering Metric Definition",
+  offering_governance: "Offering Governance",
 };
 
 export const AUDIT_SOURCE_MODULES = {
@@ -116,6 +124,9 @@ export const AUDIT_SOURCE_MODULES = {
   PRODUCT_LIFECYCLE: "product_lifecycle",
   OFFERING_DOCUMENTS: "offering_documents",
   OFFERING_RELATIONSHIPS: "offering_relationships",
+  OFFERING_PRICING: "offering_pricing",
+  OFFERING_ANALYTICS: "offering_analytics",
+  OFFERING_GOVERNANCE: "offering_governance",
 } as const;
 
 export type AuditSourceModule =
@@ -137,6 +148,9 @@ export const AUDIT_SOURCE_MODULE_LABELS: Record<AuditSourceModule, string> = {
   product_lifecycle: "Product Lifecycle",
   offering_documents: "Offering Documents",
   offering_relationships: "Offering Relationships",
+  offering_pricing: "Offering Pricing",
+  offering_analytics: "Offering Analytics",
+  offering_governance: "Offering Governance",
 };
 
 export const AUDIT_DEFAULT_PAGE_SIZE = 25;

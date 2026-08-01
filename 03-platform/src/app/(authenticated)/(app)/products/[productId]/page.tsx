@@ -12,6 +12,9 @@ import { getProductClassificationPanelAction } from "@/modules/product/actions/p
 import { getProductLifecyclePanelAction } from "@/modules/product/actions/product-lifecycle-actions";
 import { getOfferingDocumentsPanelAction } from "@/modules/product/actions/offering-document-actions";
 import { getOfferingRelationshipsPanelAction } from "@/modules/product/actions/offering-relationship-actions";
+import { getProductAnalyticsPanelAction } from "@/modules/product/actions/offering-analytics-actions";
+import { getProductGovernancePanelAction } from "@/modules/product/actions/offering-governance-actions";
+import { getProductPricingPanelAction } from "@/modules/product/actions/pricing-actions";
 import {
   getProductAction,
   getProductRegistrationCataloguesAction,
@@ -29,6 +32,15 @@ type PageProps = {
   searchParams: Promise<{ tab?: string }>;
 };
 
+function renderError(message: string) {
+  return (
+    <main className="mx-auto max-w-3xl px-4 py-8">
+      <h1 className="text-xl font-semibold">Product Workspace</h1>
+      <p className="mt-2 text-sm text-muted-foreground">{message}</p>
+    </main>
+  );
+}
+
 export default async function ProductWorkspacePage({
   params,
   searchParams,
@@ -43,6 +55,9 @@ export default async function ProductWorkspacePage({
     lifecycleResult,
     documentsResult,
     relationshipsResult,
+    pricingResult,
+    analyticsResult,
+    governanceResult,
     timelineResult,
     auditHistoryResult,
     attributesResult,
@@ -50,19 +65,22 @@ export default async function ProductWorkspacePage({
     bundlesResult,
     catalogueResult,
   ] = await Promise.all([
-      getProductAction(productId),
-      getProductRegistrationCataloguesAction(),
-      getProductClassificationPanelAction(productId),
-      getProductLifecyclePanelAction(productId),
-      getOfferingDocumentsPanelAction(productId),
-      getOfferingRelationshipsPanelAction(productId),
-      listProductTimelineAction(productId),
-      listProductAuditHistoryAction(productId),
-      getProductAttributesPanelAction(productId),
-      getProductVariantsPanelAction(productId),
-      getProductBundlesPanelAction(productId),
-      getProductCataloguePanelAction(productId),
-    ]);
+    getProductAction(productId),
+    getProductRegistrationCataloguesAction(),
+    getProductClassificationPanelAction(productId),
+    getProductLifecyclePanelAction(productId),
+    getOfferingDocumentsPanelAction(productId),
+    getOfferingRelationshipsPanelAction(productId),
+    getProductPricingPanelAction(productId),
+    getProductAnalyticsPanelAction(productId),
+    getProductGovernancePanelAction(productId),
+    listProductTimelineAction(productId),
+    listProductAuditHistoryAction(productId),
+    getProductAttributesPanelAction(productId),
+    getProductVariantsPanelAction(productId),
+    getProductBundlesPanelAction(productId),
+    getProductCataloguePanelAction(productId),
+  ]);
 
   if (!productResult.success) {
     if (
@@ -72,135 +90,63 @@ export default async function ProductWorkspacePage({
       redirect("/select-business");
     }
 
-    return (
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-xl font-semibold">Product Workspace</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {productResult.error.message}
-        </p>
-      </main>
-    );
+    return renderError(productResult.error.message);
   }
 
   if (!cataloguesResult.success) {
-    return (
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-xl font-semibold">Product Workspace</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {cataloguesResult.error.message}
-        </p>
-      </main>
-    );
+    return renderError(cataloguesResult.error.message);
   }
 
   if (!classificationResult.success) {
-    return (
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-xl font-semibold">Product Workspace</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {classificationResult.error.message}
-        </p>
-      </main>
-    );
+    return renderError(classificationResult.error.message);
   }
 
   if (!lifecycleResult.success) {
-    return (
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-xl font-semibold">Product Workspace</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {lifecycleResult.error.message}
-        </p>
-      </main>
-    );
+    return renderError(lifecycleResult.error.message);
   }
 
   if (!documentsResult.success) {
-    return (
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-xl font-semibold">Product Workspace</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {documentsResult.error.message}
-        </p>
-      </main>
-    );
+    return renderError(documentsResult.error.message);
   }
 
   if (!relationshipsResult.success) {
-    return (
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-xl font-semibold">Product Workspace</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {relationshipsResult.error.message}
-        </p>
-      </main>
-    );
+    return renderError(relationshipsResult.error.message);
+  }
+
+  if (!pricingResult.success) {
+    return renderError(pricingResult.error.message);
+  }
+
+  if (!analyticsResult.success) {
+    return renderError(analyticsResult.error.message);
+  }
+
+  if (!governanceResult.success) {
+    return renderError(governanceResult.error.message);
   }
 
   if (!timelineResult.success) {
-    return (
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-xl font-semibold">Product Workspace</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {timelineResult.error.message}
-        </p>
-      </main>
-    );
+    return renderError(timelineResult.error.message);
   }
 
   if (!auditHistoryResult.success) {
-    return (
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-xl font-semibold">Product Workspace</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {auditHistoryResult.error.message}
-        </p>
-      </main>
-    );
+    return renderError(auditHistoryResult.error.message);
   }
 
   if (!attributesResult.success) {
-    return (
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-xl font-semibold">Product Workspace</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {attributesResult.error.message}
-        </p>
-      </main>
-    );
+    return renderError(attributesResult.error.message);
   }
 
   if (!variantsResult.success) {
-    return (
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-xl font-semibold">Product Workspace</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {variantsResult.error.message}
-        </p>
-      </main>
-    );
+    return renderError(variantsResult.error.message);
   }
 
   if (!bundlesResult.success) {
-    return (
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-xl font-semibold">Product Workspace</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {bundlesResult.error.message}
-        </p>
-      </main>
-    );
+    return renderError(bundlesResult.error.message);
   }
 
   if (!catalogueResult.success) {
-    return (
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-xl font-semibold">Product Workspace</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {catalogueResult.error.message}
-        </p>
-      </main>
-    );
+    return renderError(catalogueResult.error.message);
   }
 
   return (
@@ -211,6 +157,9 @@ export default async function ProductWorkspacePage({
       lifecycle={lifecycleResult.data}
       documents={documentsResult.data}
       relationships={relationshipsResult.data}
+      pricing={pricingResult.data}
+      analytics={analyticsResult.data}
+      governance={governanceResult.data}
       timeline={timelineResult.data}
       auditHistory={auditHistoryResult.data}
       attributes={attributesResult.data}

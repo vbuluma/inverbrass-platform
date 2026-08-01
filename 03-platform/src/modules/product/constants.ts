@@ -140,14 +140,51 @@ export const PRODUCT_WORKSPACE_TABS = [
     available: true,
     futureIp: null,
   },
-  { id: "pricing", label: "Pricing", available: false, futureIp: null },
+  { id: "pricing", label: "Pricing", available: true, futureIp: null },
   {
     id: "analytics",
     label: "Analytics",
-    available: false,
-    futureIp: "IP-015",
+    available: true,
+    futureIp: null,
+  },
+  {
+    id: "governance",
+    label: "Governance",
+    available: true,
+    futureIp: null,
   },
 ] as const;
+
+export const OFFERING_GOVERNANCE_STATUS_CODES = {
+  NOT_STARTED: "NOT_STARTED",
+  IN_PROGRESS: "IN_PROGRESS",
+  READY: "READY",
+  ON_HOLD: "ON_HOLD",
+  NON_COMPLIANT: "NON_COMPLIANT",
+  ARCHIVED: "ARCHIVED",
+} as const;
+
+export type OfferingGovernanceStatusCode =
+  (typeof OFFERING_GOVERNANCE_STATUS_CODES)[keyof typeof OFFERING_GOVERNANCE_STATUS_CODES];
+
+export const OFFERING_GOVERNANCE_CHECKLIST_STATUSES = {
+  COMPLETED: "COMPLETED",
+  INCOMPLETE: "INCOMPLETE",
+  WARNING: "WARNING",
+} as const;
+
+export type OfferingGovernanceChecklistStatus =
+  (typeof OFFERING_GOVERNANCE_CHECKLIST_STATUSES)[keyof typeof OFFERING_GOVERNANCE_CHECKLIST_STATUSES];
+
+export const OFFERING_GOVERNANCE_CHANGE_TYPES = {
+  OWNER_CHANGED: "OWNER_CHANGED",
+  STEWARD_CHANGED: "STEWARD_CHANGED",
+  STATUS_CHANGED: "STATUS_CHANGED",
+  READINESS_CHANGED: "READINESS_CHANGED",
+  VALIDATION_EXECUTED: "VALIDATION_EXECUTED",
+  LOCK_CHANGED: "LOCK_CHANGED",
+  NOTES_CHANGED: "NOTES_CHANGED",
+} as const;
 
 export const UNIT_STATUS_CODES = {
   DRAFT: "DRAFT",
@@ -178,6 +215,26 @@ export const UNIT_ROUNDING_RULES = {
 
 export type UnitRoundingRule =
   (typeof UNIT_ROUNDING_RULES)[keyof typeof UNIT_ROUNDING_RULES];
+
+export const PRICING_CATALOGUE_STATUS_CODES = {
+  DRAFT: "DRAFT",
+  ACTIVE: "ACTIVE",
+  SUSPENDED: "SUSPENDED",
+  ARCHIVED: "ARCHIVED",
+} as const;
+
+export type PricingCatalogueStatusCode =
+  (typeof PRICING_CATALOGUE_STATUS_CODES)[keyof typeof PRICING_CATALOGUE_STATUS_CODES];
+
+export const PRICING_ITEM_STATUS_CODES = {
+  DRAFT: "DRAFT",
+  ACTIVE: "ACTIVE",
+  EXPIRED: "EXPIRED",
+  ARCHIVED: "ARCHIVED",
+} as const;
+
+export type PricingItemStatusCode =
+  (typeof PRICING_ITEM_STATUS_CODES)[keyof typeof PRICING_ITEM_STATUS_CODES];
 
 export const PRODUCT_DEFAULT_PAGE_SIZE = 25;
 
@@ -470,3 +527,36 @@ export type OfferingRelationshipStatusCode =
 export const STORAGE_PROVIDER_CODES = {
   SUPABASE: "SUPABASE",
 } as const;
+
+/** IP-011 — Pricing (reference) / IP-012 — Offering Analytics */
+export const OFFERING_METRIC_CATEGORIES = {
+  COMMERCIAL: "COMMERCIAL",
+  CUSTOMER: "CUSTOMER",
+  OPERATIONAL: "OPERATIONAL",
+  LIFECYCLE: "LIFECYCLE",
+  COMPLIANCE: "COMPLIANCE",
+  INVENTORY: "INVENTORY",
+  FINANCIAL: "FINANCIAL",
+  INDUSTRY_SPECIFIC: "INDUSTRY_SPECIFIC",
+} as const;
+
+export type OfferingMetricCategory =
+  (typeof OFFERING_METRIC_CATEGORIES)[keyof typeof OFFERING_METRIC_CATEGORIES];
+
+export const OFFERING_SNAPSHOT_PERIODS = {
+  DAILY: "DAILY",
+  WEEKLY: "WEEKLY",
+  MONTHLY: "MONTHLY",
+} as const;
+
+export type OfferingSnapshotPeriod =
+  (typeof OFFERING_SNAPSHOT_PERIODS)[keyof typeof OFFERING_SNAPSHOT_PERIODS];
+
+export const OFFERING_METRIC_CALCULATION_METHODS = {
+  PLATFORM_DERIVED: "PLATFORM_DERIVED",
+  EXTERNAL_MODULE: "EXTERNAL_MODULE",
+  MANUAL: "MANUAL",
+} as const;
+
+export type OfferingMetricCalculationMethod =
+  (typeof OFFERING_METRIC_CALCULATION_METHODS)[keyof typeof OFFERING_METRIC_CALCULATION_METHODS];

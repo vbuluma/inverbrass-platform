@@ -219,6 +219,12 @@ Delivery boundaries define when a Build Pack stops accepting new IPs — distinc
 
 New platform capabilities (checklist, portfolio roadmap, etc.) are implemented as **Core Platform Engines** (ENG-003l, ENG-003m, …) consumed by Build Packs — not as additional BP-003 IPs.
 
+**BP-003 IP-011 — Offering Pricing (2026-08-01):** Implemented as reusable platform tables `pricing_catalogue`, `pricing_item`, and reference `pricing_method`. BP-003 consumes via the Product Workspace **Pricing** tab. Prices are never stored on the offering master (`product`). Future commercial capabilities (discounts, promotions, taxes — BP-004) extend the workspace without redesigning the pricing engine.
+
+**BP-003 IP-012 — Offering Analytics (2026-08-01):** Implemented as reusable framework tables `offering_metric_definition` and immutable `offering_metric_snapshot`. BP-003 consumes via the Product Workspace **Analytics** tab. Platform-derived KPIs use existing offering data; transaction metrics await Sales, Inventory, CRM, and Finance Build Packs.
+
+**BP-003 IP-013 — Offering Governance (2026-08-01):** Implemented as `offering_governance`, immutable `offering_governance_history`, and metadata-driven `offering_governance_checklist_definition` (ENG-003l foundation). BP-003 consumes via the Product Workspace **Governance** tab and `/products/governance` dashboard. Readiness score is deterministic from weighted checklist items; workflow approvals remain ENG-005.
+
 ### Engine Ownership Rules
 
 
