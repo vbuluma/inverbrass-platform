@@ -103,11 +103,12 @@ export const PRODUCT_WORKSPACE_TABS = [
   {
     id: "attributes",
     label: "Attributes",
-    available: false,
-    futureIp: "IP-004",
+    available: true,
+    futureIp: null,
   },
-  { id: "variants", label: "Variants", available: false, futureIp: "IP-005" },
-  { id: "bundles", label: "Bundles", available: false, futureIp: "IP-006" },
+  { id: "variants", label: "Variants", available: true, futureIp: null },
+  { id: "bundles", label: "Bundles", available: true, futureIp: null },
+  { id: "catalogue", label: "Catalogue", available: true, futureIp: null },
   {
     id: "documents",
     label: "Documents",
@@ -167,3 +168,176 @@ export type UnitRoundingRule =
   (typeof UNIT_ROUNDING_RULES)[keyof typeof UNIT_ROUNDING_RULES];
 
 export const PRODUCT_DEFAULT_PAGE_SIZE = 25;
+
+export const ATTRIBUTE_GROUP_STATUS_CODES = {
+  ACTIVE: "ACTIVE",
+  SUSPENDED: "SUSPENDED",
+  ARCHIVED: "ARCHIVED",
+} as const;
+
+export type AttributeGroupStatusCode =
+  (typeof ATTRIBUTE_GROUP_STATUS_CODES)[keyof typeof ATTRIBUTE_GROUP_STATUS_CODES];
+
+export const ATTRIBUTE_DEFINITION_STATUS_CODES = {
+  DRAFT: "DRAFT",
+  ACTIVE: "ACTIVE",
+  SUSPENDED: "SUSPENDED",
+  ARCHIVED: "ARCHIVED",
+} as const;
+
+export type AttributeDefinitionStatusCode =
+  (typeof ATTRIBUTE_DEFINITION_STATUS_CODES)[keyof typeof ATTRIBUTE_DEFINITION_STATUS_CODES];
+
+export const ATTRIBUTE_OPTION_STATUS_CODES = {
+  ACTIVE: "ACTIVE",
+  ARCHIVED: "ARCHIVED",
+} as const;
+
+export type AttributeOptionStatusCode =
+  (typeof ATTRIBUTE_OPTION_STATUS_CODES)[keyof typeof ATTRIBUTE_OPTION_STATUS_CODES];
+
+export const ATTRIBUTE_DATA_TYPES = {
+  TEXT: "TEXT",
+  LONG_TEXT: "LONG_TEXT",
+  INTEGER: "INTEGER",
+  DECIMAL: "DECIMAL",
+  CURRENCY: "CURRENCY",
+  PERCENTAGE: "PERCENTAGE",
+  BOOLEAN: "BOOLEAN",
+  DATE: "DATE",
+  DATETIME: "DATETIME",
+  EMAIL: "EMAIL",
+  PHONE: "PHONE",
+  URL: "URL",
+  FILE: "FILE",
+  IMAGE: "IMAGE",
+  JSON: "JSON",
+  SELECT: "SELECT",
+  MULTI_SELECT: "MULTI_SELECT",
+  RADIO: "RADIO",
+  CHECKBOX: "CHECKBOX",
+} as const;
+
+export type AttributeDataType =
+  (typeof ATTRIBUTE_DATA_TYPES)[keyof typeof ATTRIBUTE_DATA_TYPES];
+
+export const ATTRIBUTE_SCOPE_TYPES = {
+  PRODUCT_TYPE: "PRODUCT_TYPE",
+  CLASSIFICATION: "CLASSIFICATION",
+} as const;
+
+export type AttributeScopeType =
+  (typeof ATTRIBUTE_SCOPE_TYPES)[keyof typeof ATTRIBUTE_SCOPE_TYPES];
+
+export const VARIANT_STATUS_CODES = {
+  DRAFT: "DRAFT",
+  ACTIVE: "ACTIVE",
+  SUSPENDED: "SUSPENDED",
+  ARCHIVED: "ARCHIVED",
+} as const;
+
+export type VariantStatusCode =
+  (typeof VARIANT_STATUS_CODES)[keyof typeof VARIANT_STATUS_CODES];
+
+export const BUNDLE_STATUS_CODES = {
+  DRAFT: "DRAFT",
+  ACTIVE: "ACTIVE",
+  SUSPENDED: "SUSPENDED",
+  ARCHIVED: "ARCHIVED",
+} as const;
+
+export type BundleStatusCode =
+  (typeof BUNDLE_STATUS_CODES)[keyof typeof BUNDLE_STATUS_CODES];
+
+export const BUNDLE_TYPE_CODES = {
+  STANDARD_PACKAGE: "STANDARD_PACKAGE",
+  STARTER_KIT: "STARTER_KIT",
+  PROMOTIONAL_BUNDLE: "PROMOTIONAL_BUNDLE",
+  SUBSCRIPTION_BUNDLE: "SUBSCRIPTION_BUNDLE",
+  CROSS_SELL_BUNDLE: "CROSS_SELL_BUNDLE",
+  UPSELL_BUNDLE: "UPSELL_BUNDLE",
+  SERVICE_PACKAGE: "SERVICE_PACKAGE",
+  COMPOSITE_PRODUCT: "COMPOSITE_PRODUCT",
+} as const;
+
+export type BundleTypeCode =
+  (typeof BUNDLE_TYPE_CODES)[keyof typeof BUNDLE_TYPE_CODES];
+
+export const BUNDLE_TYPE_LABELS: Record<BundleTypeCode, string> = {
+  STANDARD_PACKAGE: "Standard Package",
+  STARTER_KIT: "Starter Kit",
+  PROMOTIONAL_BUNDLE: "Promotional Bundle",
+  SUBSCRIPTION_BUNDLE: "Subscription Bundle",
+  CROSS_SELL_BUNDLE: "Cross-Sell Bundle",
+  UPSELL_BUNDLE: "Upsell Bundle",
+  SERVICE_PACKAGE: "Service Package",
+  COMPOSITE_PRODUCT: "Composite Product",
+};
+
+export const BUNDLE_PRICING_STRATEGY_CODES = {
+  SUM_OF_ITEMS: "SUM_OF_ITEMS",
+  FIXED_BUNDLE_PRICE: "FIXED_BUNDLE_PRICE",
+  PERCENTAGE_DISCOUNT: "PERCENTAGE_DISCOUNT",
+  FUTURE_RULE: "FUTURE_RULE",
+} as const;
+
+export type BundlePricingStrategyCode =
+  (typeof BUNDLE_PRICING_STRATEGY_CODES)[keyof typeof BUNDLE_PRICING_STRATEGY_CODES];
+
+export const BUNDLE_PRICING_STRATEGY_LABELS: Record<
+  BundlePricingStrategyCode,
+  string
+> = {
+  SUM_OF_ITEMS: "Sum of Items",
+  FIXED_BUNDLE_PRICE: "Fixed Bundle Price",
+  PERCENTAGE_DISCOUNT: "Percentage Discount",
+  FUTURE_RULE: "Future Rule",
+};
+
+export const BUNDLE_AVAILABILITY_TYPES = {
+  ACTIVE: "ACTIVE",
+  SEASONAL: "SEASONAL",
+  LIMITED_OFFER: "LIMITED_OFFER",
+  PERMANENT: "PERMANENT",
+} as const;
+
+export type BundleAvailabilityType =
+  (typeof BUNDLE_AVAILABILITY_TYPES)[keyof typeof BUNDLE_AVAILABILITY_TYPES];
+
+export const BUNDLE_AVAILABILITY_TYPE_LABELS: Record<
+  BundleAvailabilityType,
+  string
+> = {
+  ACTIVE: "Active",
+  SEASONAL: "Seasonal",
+  LIMITED_OFFER: "Limited Offer",
+  PERMANENT: "Permanent",
+};
+
+export const CATALOGUE_CHANNEL_STATUS_CODES = {
+  ACTIVE: "ACTIVE",
+  ARCHIVED: "ARCHIVED",
+} as const;
+
+export const CATALOGUE_VISIBILITY_CODES = {
+  PUBLIC: "PUBLIC",
+  REGISTERED_CUSTOMERS: "REGISTERED_CUSTOMERS",
+  MEMBERS: "MEMBERS",
+  EMPLOYEES: "EMPLOYEES",
+  PARTNERS: "PARTNERS",
+  BUSINESS_CUSTOMERS: "BUSINESS_CUSTOMERS",
+  CUSTOMER_SEGMENT: "CUSTOMER_SEGMENT",
+} as const;
+
+export type CatalogueVisibilityCode =
+  (typeof CATALOGUE_VISIBILITY_CODES)[keyof typeof CATALOGUE_VISIBILITY_CODES];
+
+export const CATALOGUE_VISIBILITY_LABELS: Record<CatalogueVisibilityCode, string> = {
+  PUBLIC: "Public",
+  REGISTERED_CUSTOMERS: "Registered Customers",
+  MEMBERS: "Members Only",
+  EMPLOYEES: "Employees Only",
+  PARTNERS: "Partners Only",
+  BUSINESS_CUSTOMERS: "Business Customers",
+  CUSTOMER_SEGMENT: "Selected Customer Segments",
+};

@@ -787,3 +787,36 @@ Return implementation handover using the standard format:
 8. Quality Gates
 
 9. Future Integration
+
+---
+
+## Implementation Record — IP-005 (2026-08-01)
+
+**Branch:** `feature/bp003-catalogue`  
+**Migration:** `03-platform/drizzle/0033_bp003_ip005_product_variants.sql`  
+**Smoke script:** `03-platform/scripts/bp003-ip005-product-variants-smoke-validation.ts`
+
+### Delivered
+
+- Product variant CRUD, clone, lifecycle (activate/suspend/archive), and search
+- Variant attribute overrides consuming IP-004 attribute definitions (no duplicate attribute engine)
+- Duplicate combination detection via `combination_fingerprint` (BR-006)
+- Parent product archive cascades variant archive (BR-004)
+- Variant timeline + product timeline events + ENG-013 audit
+- Industry Experience variant terminology (`variant-terminology.ts`)
+- Dashboard at `/products/variants`, registration at `/products/variants/new`, workspace at `/products/variants/[variantId]`
+- Product Workspace **Variants** tab via `ProductVariantsPanel`
+
+### Integration handover (shared files — not edited per agent rules)
+
+1. `03-platform/src/db/schema/index.ts` — export `product-variant`, `product-variant-attribute`, `variant-timeline` schemas (plus IP-004 schemas if not yet integrated)
+2. `03-platform/drizzle/meta/_journal.json` — register `0032_bp003_ip004_product_attributes` and `0033_bp003_ip005_product_variants`
+3. Run migrations against Supabase PostgreSQL before runtime use
+
+### Quality gates
+
+| Gate | Result |
+|------|--------|
+| ESLint | Pass (0 errors; pre-existing warnings in other IPs) |
+| Production build | Pass |
+| Smoke validation | 51/52 pass (journal registration pending integration) |

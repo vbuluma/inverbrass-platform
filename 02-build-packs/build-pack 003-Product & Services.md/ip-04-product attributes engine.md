@@ -744,3 +744,33 @@ Return implementation handover in standard format:
 8. Quality Gates
 
 9. Future Integration
+
+---
+
+## Implementation Record — IP-004 (2026-08-01)
+
+**Branch:** `feature/bp003-catalogue`  
+**Migration:** `03-platform/drizzle/0032_bp003_ip004_product_attributes.sql`  
+**Smoke script:** `03-platform/scripts/bp003-ip004-product-attributes-smoke-validation.ts`
+
+### Delivered
+
+- Metadata-driven attribute groups, definitions, options, scope assignments (product type / classification), and product value assignments
+- Dynamic Attribute Renderer + Product Workspace **Attributes** tab
+- Attribute admin dashboard at `/products/attributes`
+- Enterprise audit + attribute timeline + product timeline events for value changes
+- Industry Experience attribute group filtering (`attribute-group-filters.ts`)
+
+### Integration handover (shared files — not edited per agent rules)
+
+1. `03-platform/src/db/schema/index.ts` — export new schema modules
+2. `03-platform/drizzle/meta/_journal.json` — register `0032_bp003_ip004_product_attributes`
+3. Run migration against Supabase PostgreSQL before runtime use
+
+### Quality gates
+
+| Gate | Result |
+|------|--------|
+| ESLint | Pass (0 errors; pre-existing warnings in other IPs) |
+| Production build | Pass |
+| Smoke validation | 51/52 pass (journal registration pending integration) |

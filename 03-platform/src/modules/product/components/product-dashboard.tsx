@@ -10,12 +10,16 @@
 
 import {
   ArchiveIcon,
+  BoxesIcon,
   FilePlusIcon,
   FolderTreeIcon,
+  GlobeIcon,
+  LayersIcon,
   PackageIcon,
   PlusIcon,
   RulerIcon,
   SearchIcon,
+  TagsIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
@@ -226,6 +230,38 @@ export function ProductDashboard({ data }: ProductDashboardProps) {
           >
             <RulerIcon className="size-4" aria-hidden />
             Units of Measure
+          </Link>
+          <Link
+            href="/products/attributes"
+            prefetch={false}
+            className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
+          >
+            <TagsIcon className="size-4" aria-hidden />
+            Product Attributes
+          </Link>
+          <Link
+            href="/products/variants"
+            prefetch={false}
+            className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
+          >
+            <BoxesIcon className="size-4" aria-hidden />
+            Product Variants
+          </Link>
+          <Link
+            href="/products/bundles"
+            prefetch={false}
+            className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
+          >
+            <LayersIcon className="size-4" aria-hidden />
+            Product Bundles
+          </Link>
+          <Link
+            href="/products/catalogue"
+            prefetch={false}
+            className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
+          >
+            <GlobeIcon className="size-4" aria-hidden />
+            Digital Catalogue
           </Link>
           <Link
             href="/products/new"

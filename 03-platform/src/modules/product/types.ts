@@ -447,3 +447,542 @@ export type ConvertUnitsPayload = {
   toUnitId: string;
   value: number;
 };
+
+// ---------------------------------------------------------------------------
+// BP-003 / IP-004 – Product Attributes Engine
+// ---------------------------------------------------------------------------
+
+export type AttributeGroupView = {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  displayOrder: number;
+  status: string;
+  statusLabel: string;
+  definitionCount: number;
+  createdAt: string;
+  updatedAt: string;
+  version: number;
+};
+
+export type AttributeDefinitionView = {
+  id: string;
+  attributeGroupId: string;
+  groupCode: string;
+  groupName: string;
+  code: string;
+  name: string;
+  description: string | null;
+  dataType: string;
+  dataTypeLabel: string;
+  validationRule: Record<string, unknown> | null;
+  defaultValue: string | null;
+  displayOrder: number;
+  isMandatory: boolean;
+  isReadOnly: boolean;
+  isHidden: boolean;
+  status: string;
+  statusLabel: string;
+  createdAt: string;
+  updatedAt: string;
+  version: number;
+};
+
+export type AttributeOptionView = {
+  id: string;
+  optionCode: string;
+  optionLabel: string;
+  displayOrder: number;
+  status: string;
+  version: number;
+};
+
+export type AttributeScopeView = {
+  id: string;
+  scopeType: string;
+  productTypeCode: string | null;
+  classificationId: string | null;
+  displayOrder: number;
+};
+
+export type AttributeDashboardView = {
+  totalGroups: number;
+  totalAttributes: number;
+  activeAttributes: number;
+  archivedAttributes: number;
+  recentlyUpdated: AttributeDefinitionView[];
+  groups: AttributeGroupView[];
+  definitions: AttributeDefinitionView[];
+  dataTypes: Array<{ code: string; label: string }>;
+  catalogueLabel: string;
+  industryCode: string | null;
+};
+
+export type AttributeGroupWorkspaceView = {
+  group: AttributeGroupView;
+  definitions: AttributeDefinitionView[];
+  timeline: import("@/core/attribute-timeline").AttributeTimelinePanelView;
+  audit: AttributeAuditHistoryPanelView;
+};
+
+export type AttributeDefinitionWorkspaceView = {
+  definition: AttributeDefinitionView;
+  options: AttributeOptionView[];
+  scopes: AttributeScopeView[];
+  productTypes: ReferenceOption[];
+  classifications: Array<{ id: string; code: string; name: string }>;
+  timeline: import("@/core/attribute-timeline").AttributeTimelinePanelView;
+  audit: AttributeAuditHistoryPanelView;
+};
+
+export type ProductAttributeFieldView = {
+  definition: AttributeDefinitionView;
+  options: AttributeOptionView[];
+  value: unknown;
+  assignmentId: string | null;
+  version: number | null;
+};
+
+export type ProductAttributesPanelView = {
+  productId: string;
+  groups: Array<{
+    group: AttributeGroupView;
+    fields: ProductAttributeFieldView[];
+  }>;
+};
+
+export type AttributeAuditHistoryPanelView = {
+  entries: import("@/core/audit/types").AuditHistoryEntryView[];
+  totalCount: number;
+  hasMore: boolean;
+  pageSize: number;
+  offset: number;
+  filterOptions: import("@/core/audit/types").AuditHistoryFilterOptions;
+};
+
+export type CreateAttributeGroupPayload = {
+  code: string;
+  name: string;
+  description?: string;
+  displayOrder?: number;
+  status?: string;
+};
+
+export type UpdateAttributeGroupPayload = Partial<CreateAttributeGroupPayload>;
+
+export type CreateAttributeDefinitionPayload = {
+  attributeGroupId: string;
+  code: string;
+  name: string;
+  description?: string;
+  dataType: string;
+  validationRule?: Record<string, unknown>;
+  defaultValue?: string | null;
+  displayOrder?: number;
+  isMandatory?: boolean;
+  isReadOnly?: boolean;
+  isHidden?: boolean;
+  status?: string;
+};
+
+export type UpdateAttributeDefinitionPayload = Partial<
+  Omit<CreateAttributeDefinitionPayload, "attributeGroupId">
+>;
+
+export type CreateAttributeOptionPayload = {
+  optionCode: string;
+  optionLabel: string;
+  displayOrder?: number;
+  status?: string;
+};
+
+export type UpdateAttributeOptionPayload = Partial<CreateAttributeOptionPayload>;
+
+export type AssignAttributeScopePayload =
+  | {
+      attributeDefinitionId: string;
+      scopeType: "PRODUCT_TYPE";
+      productTypeCode: string;
+      displayOrder?: number;
+    }
+  | {
+      attributeDefinitionId: string;
+      scopeType: "CLASSIFICATION";
+      classificationId: string;
+      displayOrder?: number;
+    };
+
+export type SaveProductAttributeValuesPayload = {
+  values: Record<string, unknown>;
+};
+
+export type SearchAttributesPayload = {
+  query?: string;
+  groupId?: string;
+  productTypeCode?: string;
+  classificationId?: string;
+  status?: string;
+};
+
+export type SearchProductsByAttributePayload = {
+  attributeCode: string;
+  attributeValue: unknown;
+};
+
+// ---------------------------------------------------------------------------
+// BP-003 / IP-005 – Product Variants Engine
+// ---------------------------------------------------------------------------
+
+export type ProductVariantView = {
+  id: string;
+  productId: string;
+  productCode: string;
+  productName: string;
+  variantCode: string;
+  variantName: string;
+  status: string;
+  statusLabel: string;
+  displayOrder: number;
+  recordSource: string;
+  combinationFingerprint: string | null;
+  createdAt: string;
+  updatedAt: string;
+  version: number;
+};
+
+export type ProductVariantAttributeView = {
+  id: string;
+  attributeDefinitionId: string;
+  attributeCode: string;
+  attributeName: string;
+  dataType: string;
+  value: unknown;
+  version: number;
+};
+
+export type VariantDashboardView = {
+  totalVariants: number;
+  activeVariants: number;
+  draftVariants: number;
+  archivedVariants: number;
+  parentOfferingCount: number;
+  recentlyUpdated: ProductVariantView[];
+  variants: ProductVariantView[];
+  variantLabel: string;
+  catalogueLabel: string;
+  industryCode: string | null;
+};
+
+export type VariantRegistrationCataloguesView = {
+  products: Array<{ id: string; productCode: string; productName: string }>;
+  attributeFields: ProductAttributeFieldView[];
+  defaultStatus: string;
+  variantLabel: string;
+};
+
+export type VariantWorkspaceView = {
+  variant: ProductVariantView;
+  attributes: ProductVariantAttributeView[];
+  attributeFields: ProductAttributeFieldView[];
+  timeline: import("@/core/variant-timeline").VariantTimelinePanelView;
+  audit: VariantAuditHistoryPanelView;
+};
+
+export type ProductVariantsPanelView = {
+  productId: string;
+  variantLabel: string;
+  variants: ProductVariantView[];
+  attributeFields: ProductAttributeFieldView[];
+};
+
+export type VariantAuditHistoryPanelView = {
+  entries: import("@/core/audit/types").AuditHistoryEntryView[];
+  totalCount: number;
+  hasMore: boolean;
+  pageSize: number;
+  offset: number;
+  filterOptions: import("@/core/audit/types").AuditHistoryFilterOptions;
+};
+
+export type CreateVariantPayload = {
+  productId: string;
+  variantCode: string;
+  variantName: string;
+  displayOrder?: number;
+  status?: string;
+  recordSource?: string;
+  attributes: Array<{ attributeDefinitionId: string; value: unknown }>;
+};
+
+export type UpdateVariantPayload = {
+  variantName?: string;
+  displayOrder?: number;
+  status?: string;
+  attributes?: Array<{ attributeDefinitionId: string; value: unknown }>;
+};
+
+export type CloneVariantPayload = {
+  variantCode?: string;
+  variantName?: string;
+};
+
+export type SearchVariantsPayload = {
+  query?: string;
+  productId?: string;
+  status?: string;
+  attributeCode?: string;
+  attributeValue?: unknown;
+};
+
+// ---------------------------------------------------------------------------
+// BP-003 / IP-006 – Bundles & Packages Engine
+// ---------------------------------------------------------------------------
+
+export type ProductBundleView = {
+  id: string;
+  bundleCode: string;
+  bundleName: string;
+  bundleType: string;
+  bundleTypeLabel: string;
+  statusCode: string;
+  statusLabel: string;
+  ownerPartyId: string | null;
+  description: string | null;
+  effectiveFrom: string | null;
+  effectiveTo: string | null;
+  pricingStrategy: string;
+  pricingStrategyLabel: string;
+  availabilityType: string;
+  availabilityTypeLabel: string;
+  itemCount: number;
+  recordSource: string;
+  createdAt: string;
+  updatedAt: string;
+  version: number;
+};
+
+export type ProductBundleItemView = {
+  id: string;
+  bundleId: string;
+  productId: string;
+  productCode: string;
+  productName: string;
+  variantId: string | null;
+  variantCode: string | null;
+  variantName: string | null;
+  quantity: number;
+  mandatory: boolean;
+  displayOrder: number;
+  version: number;
+};
+
+export type BundleDashboardView = {
+  totalBundles: number;
+  activeBundles: number;
+  draftBundles: number;
+  archivedBundles: number;
+  recentlyUpdated: ProductBundleView[];
+  bundles: ProductBundleView[];
+  bundleLabel: string;
+  industryCode: string | null;
+};
+
+export type BundleRegistrationCataloguesView = {
+  bundleTypes: Array<{ code: string; label: string }>;
+  pricingStrategies: Array<{ code: string; label: string }>;
+  availabilityTypes: Array<{ code: string; label: string }>;
+  defaultStatus: string;
+  bundleLabel: string;
+};
+
+export type BundleWorkspaceView = {
+  bundle: ProductBundleView;
+  items: ProductBundleItemView[];
+  timeline: import("@/core/bundle-timeline").BundleTimelinePanelView;
+  audit: BundleAuditHistoryPanelView;
+};
+
+export type ProductBundlesPanelView = {
+  productId: string;
+  bundleLabel: string;
+  bundles: ProductBundleView[];
+};
+
+export type BundleAuditHistoryPanelView = {
+  entries: import("@/core/audit/types").AuditHistoryEntryView[];
+  totalCount: number;
+  hasMore: boolean;
+  pageSize: number;
+  offset: number;
+  filterOptions: import("@/core/audit/types").AuditHistoryFilterOptions;
+};
+
+export type CreateBundlePayload = {
+  bundleCode: string;
+  bundleName: string;
+  bundleType: string;
+  statusCode?: string;
+  ownerPartyId?: string | null;
+  description?: string | null;
+  effectiveFrom?: string | null;
+  effectiveTo?: string | null;
+  pricingStrategy?: string;
+  availabilityType?: string;
+  recordSource?: string;
+  items: Array<{
+    productId: string;
+    variantId?: string | null;
+    quantity: number;
+    mandatory?: boolean;
+    displayOrder?: number;
+  }>;
+};
+
+export type UpdateBundlePayload = {
+  bundleName?: string;
+  bundleType?: string;
+  statusCode?: string;
+  ownerPartyId?: string | null;
+  description?: string | null;
+  effectiveFrom?: string | null;
+  effectiveTo?: string | null;
+  pricingStrategy?: string;
+  availabilityType?: string;
+};
+
+export type AddBundleItemPayload = {
+  productId: string;
+  variantId?: string | null;
+  quantity: number;
+  mandatory?: boolean;
+  displayOrder?: number;
+};
+
+export type UpdateBundleItemPayload = {
+  quantity?: number;
+  mandatory?: boolean;
+  displayOrder?: number;
+};
+
+export type SearchBundlesPayload = {
+  query?: string;
+  statusCode?: string;
+  ownerPartyId?: string;
+  productId?: string;
+};
+
+export type BundleProductSearchResult = {
+  id: string;
+  productCode: string;
+  productName: string;
+  productTypeCode: string;
+  statusCode: string;
+};
+
+// ---------------------------------------------------------------------------
+// BP-003 / IP-007 – Digital Catalogue Engine
+// ---------------------------------------------------------------------------
+
+export type CatalogueChannelView = {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  displayOrder: number;
+};
+
+export type CataloguePublicationView = {
+  id: string | null;
+  channelId: string;
+  channelCode: string;
+  channelName: string;
+  published: boolean;
+  visibility: string;
+  visibilityLabel: string;
+  publishFrom: string | null;
+  publishTo: string | null;
+  featured: boolean;
+  recommended: boolean;
+  qrEnabled: boolean;
+  qrSlug: string | null;
+  version: number;
+  isLive: boolean;
+};
+
+export type CatalogueDashboardView = {
+  publishedProductCount: number;
+  unpublishedActiveCount: number;
+  scheduledPublicationCount: number;
+  featuredCount: number;
+  channelCount: number;
+  catalogueLabel: string;
+  industryCode: string | null;
+  entries: CatalogueDashboardEntryView[];
+};
+
+export type CatalogueDashboardEntryView = {
+  productId: string;
+  productCode: string;
+  productName: string;
+  productTypeCode: string;
+  statusCode: string;
+  publishedChannelCount: number;
+  featuredChannelCount: number;
+  updatedAt: string;
+};
+
+export type CatalogueWorkspaceView = {
+  productId: string;
+  productCode: string;
+  productName: string;
+  productDescription: string | null;
+  productTypeCode: string;
+  statusCode: string;
+  statusLabel: string;
+  catalogueLabel: string;
+  channels: CatalogueChannelView[];
+  publications: CataloguePublicationView[];
+  publishable: boolean;
+};
+
+export type ProductCataloguePanelView = {
+  productId: string;
+  catalogueLabel: string;
+  publishable: boolean;
+  publications: CataloguePublicationView[];
+  workspaceHref: string;
+};
+
+export type UpsertPublicationPayload = {
+  channelCode: string;
+  published: boolean;
+  visibility?: string;
+  publishFrom?: string | null;
+  publishTo?: string | null;
+  featured?: boolean;
+  recommended?: boolean;
+  qrEnabled?: boolean;
+  qrSlug?: string | null;
+};
+
+export type SearchCataloguePayload = {
+  query?: string;
+  channelCode?: string;
+  visibility?: string;
+  productTypeCode?: string;
+  publishedOnly?: boolean;
+  featuredOnly?: boolean;
+};
+
+export type PublishedCatalogueProductView = {
+  productId: string;
+  productCode: string;
+  productName: string;
+  productTypeCode: string;
+  channelCode: string;
+  visibility: string;
+  featured: boolean;
+  recommended: boolean;
+};
+

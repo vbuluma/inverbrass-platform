@@ -29,6 +29,7 @@ import {
 import { ProductError, PRODUCT_USER_MESSAGES } from "@/modules/product/errors";
 import { createProductReferenceRepository } from "@/modules/product/repositories/product-reference-repository";
 import { createProductRepository } from "@/modules/product/repositories/product-repository";
+import { createProductVariantService } from "@/modules/product/services/product-variant-service";
 import { recordProductEntityAudit } from "@/modules/product/services/product-audit-helper";
 import {
   canTransitionProductStatus,
@@ -674,6 +675,10 @@ export class ProductService {
       before: { statusCode: existing.statusCode },
       after: { statusCode: nextStatus },
     });
+
+    if (nextStatus === PRODUCT_STATUS_CODES.ARCHIVED) {
+      await createProductVariantService().cascadeArchiveForProduct(context, productId);
+    }
 
     return this.getProduct(context, productId);
   }

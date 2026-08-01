@@ -44,9 +44,13 @@ import {
   updateProductAction,
 } from "@/modules/product/actions/product-actions";
 import { ProductAuditHistoryPanel } from "@/modules/product/components/product-audit-history-panel";
+import { ProductAttributesPanel } from "@/modules/product/components/product-attributes-panel";
+import { ProductBundlesPanel } from "@/modules/product/components/product-bundles-panel";
 import { ProductCapabilitiesPanel } from "@/modules/product/components/product-capabilities-panel";
+import { ProductCataloguePanel } from "@/modules/product/components/product-catalogue-panel";
 import { ProductClassificationPanel } from "@/modules/product/components/product-classification-panel";
 import { ProductTimelinePanel } from "@/modules/product/components/product-timeline-panel";
+import { ProductVariantsPanel } from "@/modules/product/components/product-variants-panel";
 import {
   PRODUCT_STATUS_CODES,
   PRODUCT_WORKSPACE_TABS,
@@ -54,9 +58,13 @@ import {
 import { PRODUCT_UI_LABELS } from "@/modules/product/ui-labels";
 import type {
   ProductAuditHistoryPanelView,
+  ProductAttributesPanelView,
   ProductClassificationPanelView,
   ProductDetailView,
   ProductRegistrationCatalogues,
+  ProductVariantsPanelView,
+  ProductBundlesPanelView,
+  ProductCataloguePanelView,
 } from "@/modules/product/types";
 
 type ProductWorkspaceProps = {
@@ -65,6 +73,10 @@ type ProductWorkspaceProps = {
   classification: ProductClassificationPanelView;
   timeline: ProductTimelinePanelView;
   auditHistory: ProductAuditHistoryPanelView;
+  attributes: ProductAttributesPanelView;
+  variants: ProductVariantsPanelView;
+  bundles: ProductBundlesPanelView;
+  catalogue: ProductCataloguePanelView;
   initialTab?: string;
 };
 
@@ -103,6 +115,10 @@ export function ProductWorkspace({
   classification,
   timeline,
   auditHistory,
+  attributes,
+  variants,
+  bundles,
+  catalogue,
   initialTab = "overview",
 }: ProductWorkspaceProps) {
   const [product, setProduct] = useState(initialProduct);
@@ -545,6 +561,26 @@ export function ProductWorkspace({
           initialData={classification}
           disabled={isArchived}
         />
+      ) : null}
+
+      {activeTab === "attributes" ? (
+        <ProductAttributesPanel
+          productId={product.id}
+          initialData={attributes}
+          disabled={isArchived}
+        />
+      ) : null}
+
+      {activeTab === "variants" ? (
+        <ProductVariantsPanel initialData={variants} disabled={isArchived} />
+      ) : null}
+
+      {activeTab === "bundles" ? (
+        <ProductBundlesPanel initialData={bundles} />
+      ) : null}
+
+      {activeTab === "catalogue" ? (
+        <ProductCataloguePanel initialData={catalogue} />
       ) : null}
 
       {activeTab === "timeline" ? (

@@ -15,6 +15,10 @@ import {
 } from "@/modules/product/actions/product-actions";
 import { listProductAuditHistoryAction } from "@/modules/product/actions/product-audit-actions";
 import { listProductTimelineAction } from "@/modules/product/actions/product-timeline-actions";
+import { getProductAttributesPanelAction } from "@/modules/product/actions/attribute-actions";
+import { getProductVariantsPanelAction } from "@/modules/product/actions/variant-actions";
+import { getProductCataloguePanelAction } from "@/modules/product/actions/product-catalogue-actions";
+import { getProductBundlesPanelAction } from "@/modules/product/actions/product-bundle-actions";
 import { ProductWorkspace } from "@/modules/product/components/product-workspace";
 
 type PageProps = {
@@ -29,13 +33,17 @@ export default async function ProductWorkspacePage({
   const { productId } = await params;
   const { tab } = await searchParams;
 
-  const [productResult, cataloguesResult, classificationResult, timelineResult, auditHistoryResult] =
+  const [productResult, cataloguesResult, classificationResult, timelineResult, auditHistoryResult, attributesResult, variantsResult, bundlesResult, catalogueResult] =
     await Promise.all([
       getProductAction(productId),
       getProductRegistrationCataloguesAction(),
       getProductClassificationPanelAction(productId),
       listProductTimelineAction(productId),
       listProductAuditHistoryAction(productId),
+      getProductAttributesPanelAction(productId),
+      getProductVariantsPanelAction(productId),
+      getProductBundlesPanelAction(productId),
+      getProductCataloguePanelAction(productId),
     ]);
 
   if (!productResult.success) {
@@ -100,6 +108,50 @@ export default async function ProductWorkspacePage({
     );
   }
 
+  if (!attributesResult.success) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <h1 className="text-xl font-semibold">Product Workspace</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {attributesResult.error.message}
+        </p>
+      </main>
+    );
+  }
+
+  if (!variantsResult.success) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <h1 className="text-xl font-semibold">Product Workspace</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {variantsResult.error.message}
+        </p>
+      </main>
+    );
+  }
+
+  if (!bundlesResult.success) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <h1 className="text-xl font-semibold">Product Workspace</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {bundlesResult.error.message}
+        </p>
+      </main>
+    );
+  }
+
+  if (!catalogueResult.success) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <h1 className="text-xl font-semibold">Product Workspace</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {catalogueResult.error.message}
+        </p>
+      </main>
+    );
+  }
+
   return (
     <ProductWorkspace
       product={productResult.data}
@@ -107,6 +159,10 @@ export default async function ProductWorkspacePage({
       classification={classificationResult.data}
       timeline={timelineResult.data}
       auditHistory={auditHistoryResult.data}
+      attributes={attributesResult.data}
+      variants={variantsResult.data}
+      bundles={bundlesResult.data}
+      catalogue={catalogueResult.data}
       initialTab={tab ?? "overview"}
     />
   );

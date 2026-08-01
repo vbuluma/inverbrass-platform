@@ -51,6 +51,14 @@ export const AUDIT_ENTITY_NAMES = {
   PRODUCT_CLASSIFICATION_ASSIGNMENT: "product_classification_assignment",
   UNIT_OF_MEASURE: "unit_of_measure",
   UNIT_CATEGORY: "unit_category",
+  ATTRIBUTE_GROUP: "attribute_group",
+  PRODUCT_ATTRIBUTE_DEFINITION: "product_attribute_definition",
+  PRODUCT_ATTRIBUTE_ASSIGNMENT: "product_attribute_assignment",
+  PRODUCT_VARIANT: "product_variant",
+  PRODUCT_VARIANT_ATTRIBUTE: "product_variant_attribute",
+  PRODUCT_BUNDLE: "product_bundle",
+  PRODUCT_BUNDLE_ITEM: "product_bundle_item",
+  PRODUCT_CATALOGUE_PUBLICATION: "product_catalogue_publication",
 } as const;
 
 export type AuditEntityName =
@@ -76,6 +84,14 @@ export const AUDIT_ENTITY_LABELS: Record<AuditEntityName, string> = {
   product_classification_assignment: "Classification Assignment",
   unit_of_measure: "Unit of Measure",
   unit_category: "Unit Category",
+  attribute_group: "Attribute Group",
+  product_attribute_definition: "Attribute Definition",
+  product_attribute_assignment: "Attribute Assignment",
+  product_variant: "Product Variant",
+  product_variant_attribute: "Variant Attribute Override",
+  product_bundle: "Product Bundle",
+  product_bundle_item: "Bundle Item",
+  product_catalogue_publication: "Catalogue Publication",
 };
 
 export const AUDIT_SOURCE_MODULES = {
