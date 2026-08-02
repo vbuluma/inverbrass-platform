@@ -247,7 +247,7 @@ Repositories import these directly via `@/db/schema/<file>` — no `index.ts` ex
 
 | Capability | Engine | Usage |
 |------------|--------|-------|
-| Industry-native catalogue labels | ENG-003k | `offering-terminology.ts` — nav labels by industry (Loan Products, Medical Services, Courses, etc.) |
+| Industry-native catalogue labels | ENG-003k | `offering-terminology.ts` — nav labels by industry (Loan Products, Medical Services, Offerings, etc.) |
 | Product type filtering | ENG-003k | `IndustryExperienceService.filterProductTypesForBusiness()` in product registration |
 | Offering terminology | ENG-003f/003k | Internal "Offering" / UI "Product" separation; frozen `product_*` schema |
 | Regulatory document requirements | ENG-003b | IP-009 compliance resolution by country/industry/classification |

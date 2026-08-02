@@ -25,9 +25,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useControlledForm } from "@/lib/forms";
 import { createAttributeGroupAction } from "@/modules/product/actions/attribute-actions";
-import { ATTRIBUTE_UI_LABELS } from "@/modules/product/attribute-ui-labels";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 
 export function AttributeGroupRegistrationForm() {
+  const labels = useProductUiLabels();
   const router = useRouter();
   const [result, setResult] = useState<PlatformActionResult | null>(null);
   const { isProcessing, run } = useAsyncAction();
@@ -63,13 +64,13 @@ export function AttributeGroupRegistrationForm() {
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-      <PageBackLink href="/products/attributes" label="Back to attributes" />
+      <PageBackLink href="/products/attributes" label={labels.attribute.backToModule} />
       <div className="mt-4 space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">
-          {ATTRIBUTE_UI_LABELS.groupRegistrationTitle}
+          {labels.attribute.groupRegistrationTitle}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {ATTRIBUTE_UI_LABELS.groupRegistrationDescription}
+          {labels.attribute.groupRegistrationDescription}
         </p>
       </div>
 

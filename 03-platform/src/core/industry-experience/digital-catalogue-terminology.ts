@@ -11,7 +11,7 @@ export const INDUSTRY_DIGITAL_CATALOGUE_LABELS: Record<string, string> = {
   FINANCIAL: "Products",
   HEALTHCARE: "Services",
   PROPERTY: "Listings",
-  EDUCATION: "Courses",
+  EDUCATION: "Offerings",
   HOSPITALITY: "Offers",
   AGRICULTURE: "Catalogue",
   TRANSPORT: "Catalogue",

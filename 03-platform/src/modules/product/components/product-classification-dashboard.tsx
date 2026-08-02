@@ -39,7 +39,7 @@ import {
 } from "@/modules/product/actions/product-classification-actions";
 import { ProductClassificationTree } from "@/modules/product/components/product-classification-tree";
 import { PRODUCT_CLASSIFICATION_STATUS_CODES } from "@/modules/product/constants";
-import { CATALOGUE_STRUCTURE_UI_LABELS } from "@/modules/product/catalogue-structure-ui-labels";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import type {
   ProductClassificationDashboardView,
   ProductClassificationTreeNode,
@@ -53,6 +53,7 @@ type ProductClassificationDashboardProps = {
 export function ProductClassificationDashboard({
   data: initialData,
 }: ProductClassificationDashboardProps) {
+  const labels = useProductUiLabels();
   const [data, setData] = useState(initialData);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -188,7 +189,7 @@ export function ProductClassificationDashboard({
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6">
       <div className="space-y-3">
-        <PageBackLink href="/products" label="Back to products" />
+        <PageBackLink href="/products" label={labels.catalogueStructure.backToOfferings} />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-3">
@@ -197,10 +198,10 @@ export function ProductClassificationDashboard({
               </span>
               <div>
                 <h1 className="text-2xl font-semibold tracking-tight">
-                  {CATALOGUE_STRUCTURE_UI_LABELS.dashboardTitle}
+                  {labels.catalogueStructure.dashboardTitle}
                 </h1>
                 <p className="text-xs text-muted-foreground">
-                  {CATALOGUE_STRUCTURE_UI_LABELS.dashboardSubtitle}
+                  {labels.catalogueStructure.dashboardSubtitle}
                 </p>
               </div>
             </div>
@@ -377,7 +378,7 @@ export function ProductClassificationDashboard({
                 </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="createTypeCode">{CATALOGUE_STRUCTURE_UI_LABELS.nodeType}</Label>
+                <Label htmlFor="createTypeCode">{labels.catalogueStructure.nodeType}</Label>
                 <select
                   id="createTypeCode"
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -393,7 +394,7 @@ export function ProductClassificationDashboard({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="createIndustryCode">
-                  {CATALOGUE_STRUCTURE_UI_LABELS.industryVisibility}
+                  {labels.catalogueStructure.industryVisibility}
                 </Label>
                 <select
                   id="createIndustryCode"
@@ -401,7 +402,7 @@ export function ProductClassificationDashboard({
                   value={createIndustryCode}
                   onChange={(event) => setCreateIndustryCode(event.target.value)}
                 >
-                  <option value="">{CATALOGUE_STRUCTURE_UI_LABELS.industryAll}</option>
+                  <option value="">{labels.catalogueStructure.industryAll}</option>
                   {data.industries.map((industry) => (
                     <option key={industry.code} value={industry.code}>
                       {industry.name}
@@ -410,7 +411,7 @@ export function ProductClassificationDashboard({
                 </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="createIcon">{CATALOGUE_STRUCTURE_UI_LABELS.icon}</Label>
+                <Label htmlFor="createIcon">{labels.catalogueStructure.icon}</Label>
                 <Input
                   id="createIcon"
                   value={createIcon}

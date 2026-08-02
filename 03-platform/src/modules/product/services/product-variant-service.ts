@@ -18,6 +18,7 @@ import {
 } from "@/core/audit";
 import { resolveVariantLabel } from "@/core/industry-experience/variant-terminology";
 import { createIndustryExperienceService } from "@/core/industry-experience/services/industry-experience-service";
+import { DEFAULT_OFFERING_WORKSPACE_LABEL } from "@/core/industry-experience/offering-terminology";
 import {
   buildProductTimelineEventFromContext,
   createProductTimelineService,
@@ -37,7 +38,9 @@ import {
   PRODUCT_STATUS_CODES,
   VARIANT_STATUS_CODES,
 } from "@/modules/product/constants";
-import { ProductError, PRODUCT_USER_MESSAGES } from "@/modules/product/errors";
+import { ProductError } from "@/modules/product/errors";
+import type { ProductUserMessages } from "@/modules/product/product-user-messages";
+import { resolveProductUserMessagesForContext } from "@/modules/product/resolve-product-user-messages";
 import { createAttributeDefinitionRepository } from "@/modules/product/repositories/attribute-definition-repository";
 import { createAttributeOptionRepository } from "@/modules/product/repositories/attribute-option-repository";
 import { createAttributeScopeRepository } from "@/modules/product/repositories/attribute-scope-repository";
@@ -134,7 +137,7 @@ export class ProductVariantService {
       recentlyUpdated: variants.slice(0, 8),
       variants,
       variantLabel: resolveVariantLabel(profile.industryCode),
-      catalogueLabel: profile.offeringCatalogueNavLabel ?? "Products",
+      catalogueLabel: profile.offeringWorkspaceLabel ?? DEFAULT_OFFERING_WORKSPACE_LABEL,
       industryCode: profile.industryCode,
     };
   }
@@ -143,6 +146,8 @@ export class ProductVariantService {
     context: CurrentBusinessContext,
     productId?: string
   ): Promise<VariantRegistrationCataloguesView> {
+    const msg = await resolveProductUserMessagesForContext(context);
+
     const profile = await this.industryExperienceService.getBusinessIndustryContext(
       context.businessId
     );
@@ -169,7 +174,7 @@ export class ProductVariantService {
     }
 
     const product = await this.requireProduct(context, productId);
-    this.assertParentAvailable(product.statusCode);
+    this.assertParentAvailable(msg, product.statusCode);
 
     const attributeFields = await this.buildAttributeFieldsForProduct(
       context.businessId,
@@ -217,22 +222,24 @@ export class ProductVariantService {
     context: CurrentBusinessContext,
     payload: CreateVariantPayload
   ): Promise<VariantWorkspaceView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = createVariantSchema.parse(payload);
     const product = await this.requireProduct(context, parsed.productId);
-    this.assertParentAvailable(product.statusCode);
+    this.assertParentAvailable(msg, product.statusCode);
 
     const code = normalizeVariantCode(parsed.variantCode);
     const existingCode = await this.variantRepository.findByCode(context.businessId, code);
     if (existingCode) {
       throw new ProductError(
         "DUPLICATE_VARIANT_CODE",
-        PRODUCT_USER_MESSAGES.DUPLICATE_VARIANT_CODE,
+        msg.DUPLICATE_VARIANT_CODE,
         409,
         "variantCode"
       );
     }
 
     const definitionContexts = await this.loadDefinitionContexts(
+      msg,
       context.businessId,
       parsed.productId,
       product.productTypeCode,
@@ -244,7 +251,7 @@ export class ProductVariantService {
       value: item.value,
     }));
 
-    validateVariantAttributes(definitionContexts, attributePairs);
+    validateVariantAttributes(msg, definitionContexts, attributePairs);
     const fingerprint = computeVariantFingerprint(attributePairs);
 
     if (fingerprint) {
@@ -256,7 +263,7 @@ export class ProductVariantService {
       if (duplicate) {
         throw new ProductError(
           "DUPLICATE_VARIANT_COMBINATION",
-          PRODUCT_USER_MESSAGES.DUPLICATE_VARIANT_COMBINATION,
+          msg.DUPLICATE_VARIANT_COMBINATION,
           409,
           "attributes"
         );
@@ -310,15 +317,16 @@ export class ProductVariantService {
     variantId: string,
     payload: UpdateVariantPayload
   ): Promise<VariantWorkspaceView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = updateVariantSchema.parse(payload);
     const existing = await this.requireVariant(context, variantId);
     const product = await this.requireProduct(context, existing.productId);
-    this.assertParentAvailable(product.statusCode);
+    this.assertParentAvailable(msg, product.statusCode);
 
     if (!isVariantEditable(existing.status)) {
       throw new ProductError(
         "ARCHIVED_VARIANT_IMMUTABLE",
-        PRODUCT_USER_MESSAGES.ARCHIVED_VARIANT_IMMUTABLE,
+        msg.ARCHIVED_VARIANT_IMMUTABLE,
         400
       );
     }
@@ -329,7 +337,7 @@ export class ProductVariantService {
     ) {
       throw new ProductError(
         "INVALID_VARIANT_STATUS_TRANSITION",
-        PRODUCT_USER_MESSAGES.INVALID_VARIANT_STATUS_TRANSITION,
+        msg.INVALID_VARIANT_STATUS_TRANSITION,
         400,
         "status"
       );
@@ -339,6 +347,7 @@ export class ProductVariantService {
 
     if (parsed.attributes) {
       const definitionContexts = await this.loadDefinitionContexts(
+        msg,
         context.businessId,
         existing.productId,
         product.productTypeCode,
@@ -350,7 +359,7 @@ export class ProductVariantService {
         value: item.value,
       }));
 
-      validateVariantAttributes(definitionContexts, attributePairs);
+      validateVariantAttributes(msg, definitionContexts, attributePairs);
       fingerprint = computeVariantFingerprint(attributePairs);
 
       if (fingerprint) {
@@ -363,7 +372,7 @@ export class ProductVariantService {
         if (duplicate) {
           throw new ProductError(
             "DUPLICATE_VARIANT_COMBINATION",
-            PRODUCT_USER_MESSAGES.DUPLICATE_VARIANT_COMBINATION,
+            msg.DUPLICATE_VARIANT_COMBINATION,
             409,
             "attributes"
           );
@@ -433,10 +442,11 @@ export class ProductVariantService {
     variantId: string,
     payload: CloneVariantPayload = {}
   ): Promise<VariantWorkspaceView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = cloneVariantSchema.parse(payload);
     const source = await this.requireVariant(context, variantId);
     const product = await this.requireProduct(context, source.productId);
-    this.assertParentAvailable(product.statusCode);
+    this.assertParentAvailable(msg, product.statusCode);
 
     const sourceAttributes = await this.variantAttributeRepository.listByVariantId(
       context.businessId,
@@ -467,7 +477,7 @@ export class ProductVariantService {
       if (duplicate) {
         throw new ProductError(
           "DUPLICATE_VARIANT_COMBINATION",
-          PRODUCT_USER_MESSAGES.DUPLICATE_VARIANT_COMBINATION,
+          msg.DUPLICATE_VARIANT_COMBINATION,
           409,
           "attributes"
         );
@@ -590,6 +600,7 @@ export class ProductVariantService {
     context: CurrentBusinessContext,
     variantId: string
   ): Promise<VariantWorkspaceView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const variantRow = await this.variantRepository.findById(
       context.businessId,
       variantId
@@ -597,7 +608,7 @@ export class ProductVariantService {
     if (!variantRow) {
       throw new ProductError(
         "VARIANT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.VARIANT_NOT_FOUND,
+        msg.VARIANT_NOT_FOUND,
         404
       );
     }
@@ -660,13 +671,14 @@ export class ProductVariantService {
     productEventType: string,
     auditOperation: string
   ): Promise<VariantWorkspaceView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const existing = await this.requireVariant(context, variantId);
     const product = await this.requireProduct(context, existing.productId);
 
     if (!canTransitionVariantStatus(existing.status, nextStatus)) {
       throw new ProductError(
         "INVALID_VARIANT_STATUS_TRANSITION",
-        PRODUCT_USER_MESSAGES.INVALID_VARIANT_STATUS_TRANSITION,
+        msg.INVALID_VARIANT_STATUS_TRANSITION,
         400
       );
     }
@@ -761,6 +773,7 @@ export class ProductVariantService {
   }
 
   private async loadDefinitionContexts(
+    msg: ProductUserMessages,
     businessId: string,
     productId: string,
     productTypeCode: string,
@@ -779,7 +792,7 @@ export class ProductVariantService {
       if (!applicableSet.has(definitionId)) {
         throw new ProductError(
           "ATTRIBUTE_DEFINITION_NOT_FOUND",
-          PRODUCT_USER_MESSAGES.ATTRIBUTE_DEFINITION_NOT_FOUND,
+          msg.ATTRIBUTE_DEFINITION_NOT_FOUND,
           400,
           definitionId
         );
@@ -922,6 +935,7 @@ export class ProductVariantService {
   }
 
   private async requireProduct(context: CurrentBusinessContext, productId: string) {
+    const msg = await resolveProductUserMessagesForContext(context);
     const product = await this.productRepository.findById(
       context.businessId,
       productId
@@ -929,7 +943,7 @@ export class ProductVariantService {
     if (!product) {
       throw new ProductError(
         "PRODUCT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.PRODUCT_NOT_FOUND,
+        msg.PRODUCT_NOT_FOUND,
         404
       );
     }
@@ -937,6 +951,7 @@ export class ProductVariantService {
   }
 
   private async requireVariant(context: CurrentBusinessContext, variantId: string) {
+    const msg = await resolveProductUserMessagesForContext(context);
     const variant = await this.variantRepository.findById(
       context.businessId,
       variantId
@@ -944,18 +959,21 @@ export class ProductVariantService {
     if (!variant) {
       throw new ProductError(
         "VARIANT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.VARIANT_NOT_FOUND,
+        msg.VARIANT_NOT_FOUND,
         404
       );
     }
     return variant;
   }
 
-  private assertParentAvailable(productStatusCode: string) {
+  private assertParentAvailable(
+    msg: ProductUserMessages,
+    productStatusCode: string
+  ) {
     if (!isParentProductAvailableForVariants(productStatusCode)) {
       throw new ProductError(
         "PARENT_PRODUCT_ARCHIVED",
-        PRODUCT_USER_MESSAGES.PARENT_PRODUCT_ARCHIVED,
+        msg.PARENT_PRODUCT_ARCHIVED,
         400
       );
     }

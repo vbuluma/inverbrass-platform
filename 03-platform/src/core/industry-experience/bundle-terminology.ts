@@ -7,16 +7,17 @@
  */
 
 export const INDUSTRY_BUNDLE_LABELS: Record<string, string> = {
-  COMMERCE: "Bundles",
+  COMMERCE: "Product Bundles",
   FINANCIAL: "Product Packages",
   HEALTHCARE: "Care Packages",
-  PROPERTY: "Rental Packages",
-  EDUCATION: "Programmes",
+  PROPERTY: "Property Packages",
+  EDUCATION: "Learning Packages",
   HOSPITALITY: "Offers",
   AGRICULTURE: "Input Packages",
   TRANSPORT: "Packages",
   MANUFACTURING: "Packages",
-  PROFESSIONAL: "Packages",
+  PROFESSIONAL: "Service Packages",
+  SALON: "Beauty Packages",
 };
 
 export const DEFAULT_BUNDLE_LABEL = "Bundles";

@@ -44,7 +44,8 @@ import {
   moveProductClassificationAction,
   updateProductClassificationAction,
 } from "@/modules/product/actions/product-classification-actions";
-import { CATALOGUE_STRUCTURE_UI_LABELS } from "@/modules/product/catalogue-structure-ui-labels";
+import { useBusinessTerminology } from "@/core/industry-experience/business-terminology-context";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import { PlatformKpiCard } from "@/components/platform/platform-kpi-card";
 import {
   PRODUCT_CLASSIFICATION_STATUS_CODES,
@@ -61,6 +62,10 @@ export function ProductClassificationWorkspace({
   initialData,
   initialTab = "overview",
 }: ProductClassificationWorkspaceProps) {
+  const labels = useProductUiLabels();
+  const terminology = useBusinessTerminology();
+  const offeringsLower = terminology.offerings.plural.toLowerCase();
+  const offeringLower = terminology.offerings.singular.toLowerCase();
   const [workspace, setWorkspace] = useState(initialData);
   const [syncedInitial, setSyncedInitial] = useState(initialData);
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -138,7 +143,7 @@ export function ProductClassificationWorkspace({
       }
 
       setOverviewResult(
-        platformSuccess("Category updated", "Changes saved successfully.")
+        platformSuccess(labels.actions.categoryUpdated, labels.actions.changesSaved)
       );
     });
   }
@@ -155,7 +160,7 @@ export function ProductClassificationWorkspace({
         return;
       }
       setWorkspace(result.data);
-      setHeaderResult(platformSuccess("Status updated", successMessage));
+      setHeaderResult(platformSuccess(labels.actions.statusUpdated, successMessage));
     });
   }
 
@@ -171,7 +176,9 @@ export function ProductClassificationWorkspace({
       }
       setWorkspace(result.data);
       setShowDeactivateConfirm(false);
-      setHeaderResult(platformSuccess("Category archived", "Status updated."));
+      setHeaderResult(
+        platformSuccess(labels.actions.categoryArchived, labels.actions.statusUpdatedDetail)
+      );
     });
   }
 
@@ -179,8 +186,8 @@ export function ProductClassificationWorkspace({
     <main className="platform-workspace-main mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6">
       <SetBreadcrumbs
         items={[
-          { label: "Products", href: "/products" },
-          { label: CATALOGUE_STRUCTURE_UI_LABELS.moduleName, href: "/products/classifications" },
+          labels.workspace.hubBreadcrumb,
+          { label: labels.catalogueStructure.moduleName, href: "/products/classifications" },
           { label: workspace.classification.name },
         ]}
       />
@@ -189,27 +196,27 @@ export function ProductClassificationWorkspace({
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <PlatformKpiCard
-          label={CATALOGUE_STRUCTURE_UI_LABELS.metricsProducts}
+          label={labels.catalogueStructure.metricsProducts}
           value={workspace.summary.assignedProductCount}
         />
         <PlatformKpiCard
-          label={CATALOGUE_STRUCTURE_UI_LABELS.metricsActiveProducts}
+          label={labels.catalogueStructure.metricsActiveProducts}
           value={workspace.summary.activeProductCount}
         />
         <PlatformKpiCard
-          label={CATALOGUE_STRUCTURE_UI_LABELS.metricsArchivedProducts}
+          label={labels.catalogueStructure.metricsArchivedProducts}
           value={workspace.summary.archivedProductCount}
         />
         <PlatformKpiCard
-          label={CATALOGUE_STRUCTURE_UI_LABELS.metricsChildren}
+          label={labels.catalogueStructure.metricsChildren}
           value={workspace.summary.childCount}
         />
       </section>
 
       <PlatformWorkspaceHeader
         backHref="/products/classifications"
-        backLabel={CATALOGUE_STRUCTURE_UI_LABELS.backToCatalogue}
-        workspaceLabel={CATALOGUE_STRUCTURE_UI_LABELS.workspaceLabel}
+        backLabel={labels.catalogueStructure.backToCatalogue}
+        workspaceLabel={labels.catalogueStructure.workspaceLabel}
         title={
           workspace.classification.icon
             ? `${workspace.classification.icon} ${workspace.classification.name}`
@@ -226,7 +233,7 @@ export function ProductClassificationWorkspace({
           },
           {
             id: "products",
-            label: "Products assigned",
+            label: `${terminology.offerings.plural} assigned`,
             completed: workspace.summary.assignedProductCount > 0,
             href: `?tab=assigned-products`,
           },
@@ -269,11 +276,14 @@ export function ProductClassificationWorkspace({
       <PlatformTabs
         tabs={PRODUCT_CLASSIFICATION_WORKSPACE_TABS.map((tab) => ({
           id: tab.id,
-          label: tab.label,
+          label:
+            labels.catalogueStructure.workspaceTabs[
+              tab.id as keyof typeof labels.catalogueStructure.workspaceTabs
+            ] ?? tab.label,
         }))}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        ariaLabel="Classification workspace sections"
+        ariaLabel={labels.catalogueStructure.workspaceAriaLabel}
       />
 
       {activeTab === "overview" ? (
@@ -395,15 +405,15 @@ export function ProductClassificationWorkspace({
       {activeTab === "assigned-products" ? (
         <Card>
           <CardHeader>
-            <CardTitle>Assigned Products</CardTitle>
+            <CardTitle>{labels.catalogueStructure.assignedProducts}</CardTitle>
             <CardDescription>
-              Products linked to this classification node.
+              {terminology.offerings.plural} linked to this classification node.
             </CardDescription>
           </CardHeader>
           <CardContent>
             {workspace.assignedProducts.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No products assigned. Assign from a product workspace Classification tab.
+                No {offeringsLower} assigned. Assign from an {offeringLower} workspace Classification tab.
               </p>
             ) : (
               <ul className="divide-y">

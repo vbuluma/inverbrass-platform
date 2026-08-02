@@ -26,7 +26,8 @@ import {
   PRODUCT_LIFECYCLE_STATE_CODES,
   type ProductLifecycleStateCode,
 } from "@/modules/product/constants";
-import { ProductError, PRODUCT_USER_MESSAGES } from "@/modules/product/errors";
+import { ProductError } from "@/modules/product/errors";
+import { resolveProductUserMessagesForContext } from "@/modules/product/resolve-product-user-messages";
 import { createProductLifecycleEventRepository } from "@/modules/product/repositories/product-lifecycle-event-repository";
 import { createProductLifecycleRepository } from "@/modules/product/repositories/product-lifecycle-repository";
 import { createProductRepository } from "@/modules/product/repositories/product-repository";
@@ -531,12 +532,13 @@ export class ProductLifecycleService {
     productId: string,
     payload: SetReplacementProductPayload
   ): Promise<ProductLifecyclePanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = setReplacementProductSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400,
         first?.path[0] ? String(first.path[0]) : undefined
       );
@@ -603,12 +605,13 @@ export class ProductLifecycleService {
     productId: string,
     payload: ScheduleLifecycleActionPayload
   ): Promise<ProductLifecyclePanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = scheduleLifecycleActionSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400,
         first?.path[0] ? String(first.path[0]) : undefined
       );
@@ -647,12 +650,13 @@ export class ProductLifecycleService {
     extraUpdates: Record<string, unknown> = {},
     reason?: string
   ): Promise<ProductLifecyclePanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const currentState = this.resolveState(lifecycle.currentState);
 
     if (!canTransitionLifecycleState(currentState, nextState)) {
       throw new ProductError(
         "INVALID_LIFECYCLE_TRANSITION",
-        PRODUCT_USER_MESSAGES.INVALID_LIFECYCLE_TRANSITION,
+        msg.INVALID_LIFECYCLE_TRANSITION,
         400
       );
     }
@@ -784,6 +788,7 @@ export class ProductLifecycleService {
     context: CurrentBusinessContext,
     productId: string
   ) {
+    const msg = await resolveProductUserMessagesForContext(context);
     const product = await this.productRepository.findById(
       context.businessId,
       productId
@@ -791,7 +796,7 @@ export class ProductLifecycleService {
     if (!product) {
       throw new ProductError(
         "PRODUCT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.PRODUCT_NOT_FOUND,
+        msg.PRODUCT_NOT_FOUND,
         404
       );
     }

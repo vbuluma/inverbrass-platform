@@ -14,8 +14,8 @@ import {
 } from "@/components/ui/card";
 import {
   CATALOGUE_PREVIEW_CHANNELS,
-  CATALOGUE_UI_LABELS,
-} from "@/modules/product/catalogue-ui-labels";
+} from "@/modules/product/constants";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import type { CatalogueWorkspaceView } from "@/modules/product/types";
 
 type CataloguePreviewPanelProps = {
@@ -27,6 +27,7 @@ export function CataloguePreviewPanel({
   workspace,
   previewChannel,
 }: CataloguePreviewPanelProps) {
+  const labels = useProductUiLabels();
   const channel = CATALOGUE_PREVIEW_CHANNELS.find((item) => item.id === previewChannel);
   const published = workspace.publications.filter((item) => item.published);
 
@@ -34,9 +35,9 @@ export function CataloguePreviewPanel({
     <Card>
       <CardHeader>
         <CardTitle>
-          {CATALOGUE_UI_LABELS.previewHeading} — {channel?.label ?? previewChannel}
+          {labels.catalogue.previewHeading} — {channel?.label ?? previewChannel}
         </CardTitle>
-        <CardDescription>{CATALOGUE_UI_LABELS.previewDescription}</CardDescription>
+        <CardDescription>{labels.catalogue.previewDescription}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="rounded-lg border border-dashed bg-muted/30 p-6">

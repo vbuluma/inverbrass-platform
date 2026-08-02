@@ -8,7 +8,8 @@
 
 import type { CurrentBusinessContext } from "@/core/auth/types";
 import { AUDIT_ENTITY_NAMES, createAuditService } from "@/core/audit";
-import { ProductError, PRODUCT_USER_MESSAGES } from "@/modules/product/errors";
+import { ProductError } from "@/modules/product/errors";
+import { resolveProductUserMessagesForContext } from "@/modules/product/resolve-product-user-messages";
 import { createAttributeDefinitionRepository } from "@/modules/product/repositories/attribute-definition-repository";
 import { createAttributeGroupRepository } from "@/modules/product/repositories/attribute-group-repository";
 import type { AttributeAuditHistoryPanelView } from "@/modules/product/types";
@@ -25,11 +26,12 @@ export class AttributeAuditQueryService {
     groupId: string,
     filters: { limit?: number; offset?: number } = { limit: 25, offset: 0 }
   ): Promise<AttributeAuditHistoryPanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const group = await this.groupRepository.findById(context.businessId, groupId);
     if (!group) {
       throw new ProductError(
         "ATTRIBUTE_GROUP_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.ATTRIBUTE_GROUP_NOT_FOUND,
+        msg.ATTRIBUTE_GROUP_NOT_FOUND,
         404
       );
     }
@@ -47,6 +49,7 @@ export class AttributeAuditQueryService {
     definitionId: string,
     filters: { limit?: number; offset?: number } = { limit: 25, offset: 0 }
   ): Promise<AttributeAuditHistoryPanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const definition = await this.definitionRepository.findById(
       context.businessId,
       definitionId
@@ -54,7 +57,7 @@ export class AttributeAuditQueryService {
     if (!definition) {
       throw new ProductError(
         "ATTRIBUTE_DEFINITION_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.ATTRIBUTE_DEFINITION_NOT_FOUND,
+        msg.ATTRIBUTE_DEFINITION_NOT_FOUND,
         404
       );
     }

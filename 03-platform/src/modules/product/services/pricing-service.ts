@@ -23,6 +23,7 @@ import {
   PRODUCT_TIMELINE_EVENT_TYPES,
 } from "@/core/product-timeline";
 import { createIndustryExperienceService } from "@/core/industry-experience/services/industry-experience-service";
+import { DEFAULT_OFFERING_WORKSPACE_LABEL } from "@/core/industry-experience/offering-terminology";
 import { getDb } from "@/db/client";
 import { seedPricingMethods } from "@/db/seeds/pricing-methods-seed";
 import {
@@ -30,7 +31,8 @@ import {
   type PricingItemStatusCode,
   type ProductStatusCode,
 } from "@/modules/product/constants";
-import { ProductError, PRODUCT_USER_MESSAGES } from "@/modules/product/errors";
+import { ProductError } from "@/modules/product/errors";
+import { resolveProductUserMessagesForContext } from "@/modules/product/resolve-product-user-messages";
 import { createPricingCatalogueRepository } from "@/modules/product/repositories/pricing-catalogue-repository";
 import { createPricingItemRepository } from "@/modules/product/repositories/pricing-item-repository";
 import type { PricingItemRowWithRelations } from "@/modules/product/repositories/pricing-item-repository";
@@ -141,7 +143,7 @@ export class PricingService {
       catalogues: catalogues.map((row) => this.mapCatalogueView(row)),
       pricingMethods,
       currencies,
-      catalogueLabel: profile.offeringCatalogueNavLabel ?? "Products",
+      catalogueLabel: profile.offeringWorkspaceLabel ?? DEFAULT_OFFERING_WORKSPACE_LABEL,
     };
   }
 
@@ -173,7 +175,7 @@ export class PricingService {
     offeringId: string
   ): Promise<ProductPricingPanelView> {
     await this.ensureReferenceData();
-    await this.requireOffering(context.businessId, offeringId);
+    await this.requireOffering(context, offeringId);
 
     const [rows, catalogues, pricingMethods, currencies] = await Promise.all([
       this.itemRepository.listByOfferingId(context.businessId, offeringId),
@@ -219,13 +221,14 @@ export class PricingService {
     context: CurrentBusinessContext,
     payload: CreatePricingCataloguePayload
   ): Promise<PricingCatalogueView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     await this.ensureReferenceData();
     const parsed = createPricingCatalogueSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400,
         first?.path[0]?.toString()
       );
@@ -239,7 +242,7 @@ export class PricingService {
     if (existing) {
       throw new ProductError(
         "DUPLICATE_PRICING_CATALOGUE_CODE",
-        PRODUCT_USER_MESSAGES.DUPLICATE_PRICING_CATALOGUE_CODE,
+        msg.DUPLICATE_PRICING_CATALOGUE_CODE,
         409,
         "code"
       );
@@ -294,18 +297,19 @@ export class PricingService {
     catalogueId: string,
     payload: UpdatePricingCataloguePayload
   ): Promise<PricingCatalogueView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = updatePricingCatalogueSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400,
         first?.path[0]?.toString()
       );
     }
 
-    const existing = await this.requireCatalogue(context.businessId, catalogueId);
+    const existing = await this.requireCatalogue(context, catalogueId);
     const before = this.catalogueAuditSnapshot(existing);
 
     const row = await this.catalogueRepository.updateById(
@@ -337,7 +341,7 @@ export class PricingService {
     if (!row) {
       throw new ProductError(
         "PRICING_CATALOGUE_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.PRICING_CATALOGUE_NOT_FOUND,
+        msg.PRICING_CATALOGUE_NOT_FOUND,
         404
       );
     }
@@ -360,24 +364,25 @@ export class PricingService {
     context: CurrentBusinessContext,
     payload: CreatePricingItemPayload
   ): Promise<PricingItemView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     await this.ensureReferenceData();
     const parsed = createPricingItemSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400,
         first?.path[0]?.toString()
       );
     }
 
     const offering = await this.requireEditableOffering(
-      context.businessId,
+      context,
       parsed.data.offeringId
     );
     await this.requireCatalogue(
-      context.businessId,
+      context,
       parsed.data.pricingCatalogueId
     );
 
@@ -387,7 +392,7 @@ export class PricingService {
     if (!methodValid) {
       throw new ProductError(
         "INVALID_PRICING_METHOD",
-        PRODUCT_USER_MESSAGES.INVALID_PRICING_METHOD,
+        msg.INVALID_PRICING_METHOD,
         400,
         "pricingMethod"
       );
@@ -401,7 +406,7 @@ export class PricingService {
     if (!isEffectivePeriodValid(effectiveFrom, effectiveTo)) {
       throw new ProductError(
         "INVALID_EFFECTIVE_PERIOD",
-        PRODUCT_USER_MESSAGES.INVALID_EFFECTIVE_PERIOD,
+        msg.INVALID_EFFECTIVE_PERIOD,
         400,
         "effectiveTo"
       );
@@ -416,7 +421,7 @@ export class PricingService {
     ) {
       throw new ProductError(
         "INVALID_PRICE_RANGE",
-        PRODUCT_USER_MESSAGES.INVALID_PRICE_RANGE,
+        msg.INVALID_PRICE_RANGE,
         400,
         "unitPrice"
       );
@@ -479,27 +484,28 @@ export class PricingService {
     itemId: string,
     payload: UpdatePricingItemPayload
   ): Promise<PricingItemView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = updatePricingItemSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400,
         first?.path[0]?.toString()
       );
     }
 
-    const existing = await this.requirePriceItem(context.businessId, itemId);
+    const existing = await this.requirePriceItem(context, itemId);
     const offering = await this.requireEditableOffering(
-      context.businessId,
+      context,
       existing.offeringId
     );
 
     if (!isPricingItemEditable(existing.status as PricingItemStatusCode)) {
       throw new ProductError(
         "EXPIRED_PRICING_IMMUTABLE",
-        PRODUCT_USER_MESSAGES.EXPIRED_PRICING_IMMUTABLE,
+        msg.EXPIRED_PRICING_IMMUTABLE,
         409
       );
     }
@@ -523,7 +529,7 @@ export class PricingService {
     if (!isValidPriceRange(nextUnitPrice, nextMinimum, nextMaximum)) {
       throw new ProductError(
         "INVALID_PRICE_RANGE",
-        PRODUCT_USER_MESSAGES.INVALID_PRICE_RANGE,
+        msg.INVALID_PRICE_RANGE,
         400,
         "unitPrice"
       );
@@ -536,7 +542,7 @@ export class PricingService {
       if (!methodValid) {
         throw new ProductError(
           "INVALID_PRICING_METHOD",
-          PRODUCT_USER_MESSAGES.INVALID_PRICING_METHOD,
+          msg.INVALID_PRICING_METHOD,
           400,
           "pricingMethod"
         );
@@ -590,7 +596,7 @@ export class PricingService {
     if (!row) {
       throw new ProductError(
         "PRICING_ITEM_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.PRICING_ITEM_NOT_FOUND,
+        msg.PRICING_ITEM_NOT_FOUND,
         404
       );
     }
@@ -681,8 +687,8 @@ export class PricingService {
     context: CurrentBusinessContext,
     itemId: string
   ): Promise<PricingItemView> {
-    const existing = await this.requirePriceItem(context.businessId, itemId);
-    await this.requireEditableOffering(context.businessId, existing.offeringId);
+    const existing = await this.requirePriceItem(context, itemId);
+    await this.requireEditableOffering(context, existing.offeringId);
 
     return this.createPriceItem(context, {
       offeringId: existing.offeringId,
@@ -708,13 +714,14 @@ export class PricingService {
     context: CurrentBusinessContext,
     payload: SearchPricingItemsPayload
   ): Promise<PricingItemView[]> {
+    const msg = await resolveProductUserMessagesForContext(context);
     await this.ensureReferenceData();
     const parsed = searchPricingItemsSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400
       );
     }
@@ -738,12 +745,13 @@ export class PricingService {
     context: CurrentBusinessContext,
     payload: ComparePricingItemsPayload
   ): Promise<PricingComparisonView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = comparePricingItemsSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400
       );
     }
@@ -759,7 +767,7 @@ export class PricingService {
       if (!row) {
         throw new ProductError(
           "PRICING_ITEM_NOT_FOUND",
-          PRODUCT_USER_MESSAGES.PRICING_ITEM_NOT_FOUND,
+          msg.PRICING_ITEM_NOT_FOUND,
           404
         );
       }
@@ -789,9 +797,10 @@ export class PricingService {
     auditOperation: string,
     summaryPrefix: string
   ): Promise<PricingItemView> {
-    const existing = await this.requirePriceItem(context.businessId, itemId);
+    const msg = await resolveProductUserMessagesForContext(context);
+    const existing = await this.requirePriceItem(context, itemId);
     const offering = await this.requireEditableOffering(
-      context.businessId,
+      context,
       existing.offeringId
     );
 
@@ -799,13 +808,13 @@ export class PricingService {
     if (!canTransitionPricingItemStatus(currentStatus, nextStatus)) {
       throw new ProductError(
         "INVALID_PRICING_STATUS_TRANSITION",
-        PRODUCT_USER_MESSAGES.INVALID_PRICING_STATUS_TRANSITION,
+        msg.INVALID_PRICING_STATUS_TRANSITION,
         409
       );
     }
 
     if (nextStatus === PRICING_ITEM_STATUS_CODES.ACTIVE) {
-      await this.assertNoDuplicateActivePrice(context.businessId, existing, itemId);
+      await this.assertNoDuplicateActivePrice(context, existing, itemId);
     }
 
     const before = this.itemAuditSnapshot(existing);
@@ -821,7 +830,7 @@ export class PricingService {
     if (!row) {
       throw new ProductError(
         "PRICING_ITEM_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.PRICING_ITEM_NOT_FOUND,
+        msg.PRICING_ITEM_NOT_FOUND,
         404
       );
     }
@@ -856,10 +865,11 @@ export class PricingService {
   }
 
   private async assertNoDuplicateActivePrice(
-    businessId: string,
+    context: CurrentBusinessContext,
     candidate: PricingItemRow,
     excludeItemId?: string
   ): Promise<void> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const key = buildPricingDimensionKey({
       offeringId: candidate.offeringId,
       pricingCatalogueId: candidate.pricingCatalogueId,
@@ -872,7 +882,7 @@ export class PricingService {
     });
 
     const activeItems = await this.itemRepository.listActiveCandidates(
-      businessId,
+      context.businessId,
       candidate.offeringId
     );
 
@@ -903,55 +913,71 @@ export class PricingService {
       ) {
         throw new ProductError(
           "DUPLICATE_ACTIVE_PRICING",
-          PRODUCT_USER_MESSAGES.DUPLICATE_ACTIVE_PRICING,
+          msg.DUPLICATE_ACTIVE_PRICING,
           409
         );
       }
     }
   }
 
-  private async requireOffering(businessId: string, offeringId: string) {
-    const row = await this.productRepository.findById(businessId, offeringId);
+  private async requireOffering(
+    context: CurrentBusinessContext,
+    offeringId: string
+  ) {
+    const msg = await resolveProductUserMessagesForContext(context);
+    const row = await this.productRepository.findById(context.businessId, offeringId);
     if (!row) {
       throw new ProductError(
         "PRODUCT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.PRODUCT_NOT_FOUND,
+        msg.PRODUCT_NOT_FOUND,
         404
       );
     }
     return row;
   }
 
-  private async requireEditableOffering(businessId: string, offeringId: string) {
-    const row = await this.requireOffering(businessId, offeringId);
+  private async requireEditableOffering(
+    context: CurrentBusinessContext,
+    offeringId: string
+  ) {
+    const msg = await resolveProductUserMessagesForContext(context);
+    const row = await this.requireOffering(context, offeringId);
     if (!isProductEditable(row.statusCode as ProductStatusCode)) {
       throw new ProductError(
         "ARCHIVED_PRODUCT_IMMUTABLE",
-        PRODUCT_USER_MESSAGES.ARCHIVED_PRODUCT_IMMUTABLE,
+        msg.ARCHIVED_PRODUCT_IMMUTABLE,
         409
       );
     }
     return row;
   }
 
-  private async requireCatalogue(businessId: string, catalogueId: string) {
-    const row = await this.catalogueRepository.findById(businessId, catalogueId);
+  private async requireCatalogue(
+    context: CurrentBusinessContext,
+    catalogueId: string
+  ) {
+    const msg = await resolveProductUserMessagesForContext(context);
+    const row = await this.catalogueRepository.findById(context.businessId, catalogueId);
     if (!row) {
       throw new ProductError(
         "PRICING_CATALOGUE_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.PRICING_CATALOGUE_NOT_FOUND,
+        msg.PRICING_CATALOGUE_NOT_FOUND,
         404
       );
     }
     return row;
   }
 
-  private async requirePriceItem(businessId: string, itemId: string) {
-    const row = await this.itemRepository.findById(businessId, itemId);
+  private async requirePriceItem(
+    context: CurrentBusinessContext,
+    itemId: string
+  ) {
+    const msg = await resolveProductUserMessagesForContext(context);
+    const row = await this.itemRepository.findById(context.businessId, itemId);
     if (!row) {
       throw new ProductError(
         "PRICING_ITEM_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.PRICING_ITEM_NOT_FOUND,
+        msg.PRICING_ITEM_NOT_FOUND,
         404
       );
     }

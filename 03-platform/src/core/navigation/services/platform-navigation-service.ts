@@ -12,6 +12,7 @@ import { createAuthService } from "@/core/auth/services/auth-service";
 import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { resolveUserDisplayName } from "@/core/auth/utils/resolve-user-display-name";
 import { createIndustryExperienceService } from "@/core/industry-experience";
+import { resolveOfferingNavLabel } from "@/core/industry-experience/offering-terminology";
 import type { PlatformChromeContext } from "@/lib/navigation/types";
 import { getDb } from "@/db/client";
 import { business } from "@/db/schema/business";
@@ -85,6 +86,7 @@ export class PlatformNavigationService {
     }
 
     let navLabelOverrides: PlatformChromeContext["navLabelOverrides"];
+    let terminology: PlatformChromeContext["terminology"];
     if (currentContext) {
       const industryExperience = createIndustryExperienceService();
       const industryContext =
@@ -92,8 +94,9 @@ export class PlatformNavigationService {
           currentContext.businessId
         );
       navLabelOverrides = {
-        products: industryContext.offeringCatalogueNavLabel,
+        products: resolveOfferingNavLabel(),
       };
+      terminology = industryContext.terminology;
     }
 
     return {
@@ -113,6 +116,7 @@ export class PlatformNavigationService {
       businessCount,
       showSidebar: false,
       navLabelOverrides,
+      terminology,
     };
   }
 }

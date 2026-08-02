@@ -40,7 +40,8 @@ import {
   PRODUCT_STATUS_CODES,
   VARIANT_STATUS_CODES,
 } from "@/modules/product/constants";
-import { ProductError, PRODUCT_USER_MESSAGES } from "@/modules/product/errors";
+import { ProductError } from "@/modules/product/errors";
+import { resolveProductUserMessagesForContext } from "@/modules/product/resolve-product-user-messages";
 import { createProductBundleItemRepository } from "@/modules/product/repositories/product-bundle-item-repository";
 import { createProductBundleRepository } from "@/modules/product/repositories/product-bundle-repository";
 import { createProductRepository } from "@/modules/product/repositories/product-repository";
@@ -209,6 +210,7 @@ export class ProductBundleService {
     context: CurrentBusinessContext,
     payload: CreateBundlePayload
   ): Promise<BundleWorkspaceView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = createBundleSchema.parse(payload);
     const code = normalizeBundleCode(parsed.bundleCode);
 
@@ -219,7 +221,7 @@ export class ProductBundleService {
     if (existingCode) {
       throw new ProductError(
         "DUPLICATE_BUNDLE_CODE",
-        PRODUCT_USER_MESSAGES.DUPLICATE_BUNDLE_CODE,
+        msg.DUPLICATE_BUNDLE_CODE,
         409,
         "bundleCode"
       );
@@ -229,7 +231,7 @@ export class ProductBundleService {
     if (duplicateKey) {
       throw new ProductError(
         "DUPLICATE_BUNDLE_ITEM",
-        PRODUCT_USER_MESSAGES.DUPLICATE_BUNDLE_ITEM,
+        msg.DUPLICATE_BUNDLE_ITEM,
         409,
         "items"
       );
@@ -296,13 +298,14 @@ export class ProductBundleService {
     bundleId: string,
     payload: UpdateBundlePayload
   ): Promise<BundleWorkspaceView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = updateBundleSchema.parse(payload);
     const existing = await this.requireBundle(context, bundleId);
 
     if (!isBundleEditable(existing.statusCode)) {
       throw new ProductError(
         "ARCHIVED_BUNDLE_IMMUTABLE",
-        PRODUCT_USER_MESSAGES.ARCHIVED_BUNDLE_IMMUTABLE,
+        msg.ARCHIVED_BUNDLE_IMMUTABLE,
         400
       );
     }
@@ -313,7 +316,7 @@ export class ProductBundleService {
     ) {
       throw new ProductError(
         "INVALID_BUNDLE_STATUS_TRANSITION",
-        PRODUCT_USER_MESSAGES.INVALID_BUNDLE_STATUS_TRANSITION,
+        msg.INVALID_BUNDLE_STATUS_TRANSITION,
         400,
         "statusCode"
       );
@@ -379,13 +382,14 @@ export class ProductBundleService {
     bundleId: string,
     payload: AddBundleItemPayload
   ): Promise<BundleWorkspaceView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = addBundleItemSchema.parse(payload);
     const bundle = await this.requireBundle(context, bundleId);
 
     if (!isBundleEditable(bundle.statusCode)) {
       throw new ProductError(
         "ARCHIVED_BUNDLE_IMMUTABLE",
-        PRODUCT_USER_MESSAGES.ARCHIVED_BUNDLE_IMMUTABLE,
+        msg.ARCHIVED_BUNDLE_IMMUTABLE,
         400
       );
     }
@@ -400,7 +404,7 @@ export class ProductBundleService {
     if (duplicate) {
       throw new ProductError(
         "DUPLICATE_BUNDLE_ITEM",
-        PRODUCT_USER_MESSAGES.DUPLICATE_BUNDLE_ITEM,
+        msg.DUPLICATE_BUNDLE_ITEM,
         409,
         "productId"
       );
@@ -444,13 +448,14 @@ export class ProductBundleService {
     itemId: string,
     payload: UpdateBundleItemPayload
   ): Promise<BundleWorkspaceView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = updateBundleItemSchema.parse(payload);
     const bundle = await this.requireBundle(context, bundleId);
 
     if (!isBundleEditable(bundle.statusCode)) {
       throw new ProductError(
         "ARCHIVED_BUNDLE_IMMUTABLE",
-        PRODUCT_USER_MESSAGES.ARCHIVED_BUNDLE_IMMUTABLE,
+        msg.ARCHIVED_BUNDLE_IMMUTABLE,
         400
       );
     }
@@ -505,12 +510,13 @@ export class ProductBundleService {
     bundleId: string,
     itemId: string
   ): Promise<BundleWorkspaceView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const bundle = await this.requireBundle(context, bundleId);
 
     if (!isBundleEditable(bundle.statusCode)) {
       throw new ProductError(
         "ARCHIVED_BUNDLE_IMMUTABLE",
-        PRODUCT_USER_MESSAGES.ARCHIVED_BUNDLE_IMMUTABLE,
+        msg.ARCHIVED_BUNDLE_IMMUTABLE,
         400
       );
     }
@@ -519,7 +525,7 @@ export class ProductBundleService {
     if (items.length <= 1) {
       throw new ProductError(
         "BUNDLE_REQUIRES_ITEMS",
-        PRODUCT_USER_MESSAGES.BUNDLE_REQUIRES_ITEMS,
+        msg.BUNDLE_REQUIRES_ITEMS,
         400
       );
     }
@@ -622,12 +628,13 @@ export class ProductBundleService {
     timelineEventType: string,
     auditOperation: string
   ): Promise<BundleWorkspaceView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const existing = await this.requireBundle(context, bundleId);
 
     if (!canTransitionBundleStatus(existing.statusCode, nextStatus)) {
       throw new ProductError(
         "INVALID_BUNDLE_STATUS_TRANSITION",
-        PRODUCT_USER_MESSAGES.INVALID_BUNDLE_STATUS_TRANSITION,
+        msg.INVALID_BUNDLE_STATUS_TRANSITION,
         400
       );
     }
@@ -671,13 +678,14 @@ export class ProductBundleService {
     context: CurrentBusinessContext,
     items: BundleItemInput[]
   ) {
+    const msg = await resolveProductUserMessagesForContext(context);
     for (const item of items) {
       const product = await this.requireProduct(context, item.productId);
 
       if (product.statusCode === PRODUCT_STATUS_CODES.ARCHIVED) {
         throw new ProductError(
           "ARCHIVED_PRODUCT_NOT_BUNDLEABLE",
-          PRODUCT_USER_MESSAGES.ARCHIVED_PRODUCT_NOT_BUNDLEABLE,
+          msg.ARCHIVED_PRODUCT_NOT_BUNDLEABLE,
           400,
           "productId"
         );
@@ -686,7 +694,7 @@ export class ProductBundleService {
       if (!isProductBundleable(product.statusCode)) {
         throw new ProductError(
           "INACTIVE_PRODUCT_NOT_BUNDLEABLE",
-          PRODUCT_USER_MESSAGES.INACTIVE_PRODUCT_NOT_BUNDLEABLE,
+          msg.INACTIVE_PRODUCT_NOT_BUNDLEABLE,
           400,
           "productId"
         );
@@ -700,7 +708,7 @@ export class ProductBundleService {
         if (!variant || variant.productId !== item.productId) {
           throw new ProductError(
             "INVALID_BUNDLE_ITEM_VARIANT",
-            PRODUCT_USER_MESSAGES.INVALID_BUNDLE_ITEM_VARIANT,
+            msg.INVALID_BUNDLE_ITEM_VARIANT,
             400,
             "variantId"
           );
@@ -708,7 +716,7 @@ export class ProductBundleService {
         if (variant.status === VARIANT_STATUS_CODES.ARCHIVED) {
           throw new ProductError(
             "ARCHIVED_PRODUCT_NOT_BUNDLEABLE",
-            PRODUCT_USER_MESSAGES.ARCHIVED_PRODUCT_NOT_BUNDLEABLE,
+            msg.ARCHIVED_PRODUCT_NOT_BUNDLEABLE,
             400,
             "variantId"
           );
@@ -721,11 +729,12 @@ export class ProductBundleService {
     context: CurrentBusinessContext,
     bundleId: string
   ): Promise<BundleRow> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const row = await this.bundleRepository.findById(context.businessId, bundleId);
     if (!row) {
       throw new ProductError(
         "BUNDLE_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.BUNDLE_NOT_FOUND,
+        msg.BUNDLE_NOT_FOUND,
         404
       );
     }
@@ -736,11 +745,12 @@ export class ProductBundleService {
     context: CurrentBusinessContext,
     productId: string
   ): Promise<ProductRow> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const row = await this.productRepository.findById(context.businessId, productId);
     if (!row) {
       throw new ProductError(
         "PRODUCT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.PRODUCT_NOT_FOUND,
+        msg.PRODUCT_NOT_FOUND,
         404
       );
     }

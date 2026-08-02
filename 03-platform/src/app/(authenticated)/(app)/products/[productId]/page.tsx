@@ -25,6 +25,7 @@ import { getProductAttributesPanelAction } from "@/modules/product/actions/attri
 import { getProductVariantsPanelAction } from "@/modules/product/actions/variant-actions";
 import { getProductCataloguePanelAction } from "@/modules/product/actions/product-catalogue-actions";
 import { getProductBundlesPanelAction } from "@/modules/product/actions/product-bundle-actions";
+import { ProductModuleErrorPage } from "@/modules/product/components/product-module-error-page";
 import { ProductWorkspace } from "@/modules/product/components/product-workspace";
 
 type PageProps = {
@@ -33,12 +34,7 @@ type PageProps = {
 };
 
 function renderError(message: string) {
-  return (
-    <main className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="text-xl font-semibold">Product Workspace</h1>
-      <p className="mt-2 text-sm text-muted-foreground">{message}</p>
-    </main>
-  );
+  return <ProductModuleErrorPage message={message} titleKind="workspace" />;
 }
 
 export default async function ProductWorkspacePage({

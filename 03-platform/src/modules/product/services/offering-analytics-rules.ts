@@ -74,12 +74,15 @@ export function statusCodeToMetricValue(statusCode: string): number {
   }
 }
 
-export function metricCategoryLabel(category: string): string {
+export function metricCategoryLabel(
+  category: string,
+  customerEntityLabel = "Customer"
+): string {
   switch (category) {
     case OFFERING_METRIC_CATEGORIES.COMMERCIAL:
       return "Commercial";
     case OFFERING_METRIC_CATEGORIES.CUSTOMER:
-      return "Customer";
+      return customerEntityLabel;
     case OFFERING_METRIC_CATEGORIES.OPERATIONAL:
       return "Operational";
     case OFFERING_METRIC_CATEGORIES.LIFECYCLE:

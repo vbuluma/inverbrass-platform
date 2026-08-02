@@ -17,6 +17,8 @@ import {
   createAuditService,
 } from "@/core/audit";
 import { createIndustryExperienceService } from "@/core/industry-experience/services/industry-experience-service";
+import { resolveBusinessTerminology } from "@/core/industry-experience/business-terminology";
+import { DEFAULT_OFFERING_WORKSPACE_LABEL } from "@/core/industry-experience/offering-terminology";
 import {
   buildProductTimelineEventFromContext,
   createProductTimelineService,
@@ -30,7 +32,9 @@ import {
   OFFERING_GOVERNANCE_STATUS_CODES,
   type ProductStatusCode,
 } from "@/modules/product/constants";
-import { ProductError, PRODUCT_USER_MESSAGES } from "@/modules/product/errors";
+import { ProductError } from "@/modules/product/errors";
+import type { ProductUserMessages } from "@/modules/product/product-user-messages";
+import { resolveProductUserMessagesForContext } from "@/modules/product/resolve-product-user-messages";
 import { createOfferingGovernanceChecklistDefinitionRepository } from "@/modules/product/repositories/offering-governance-checklist-definition-repository";
 import { createOfferingGovernanceHistoryRepository } from "@/modules/product/repositories/offering-governance-history-repository";
 import { createOfferingGovernanceRepository } from "@/modules/product/repositories/offering-governance-repository";
@@ -40,6 +44,7 @@ import { createProductClassificationAssignmentRepository } from "@/modules/produ
 import { createProductReferenceRepository } from "@/modules/product/repositories/product-reference-repository";
 import { createProductRepository } from "@/modules/product/repositories/product-repository";
 import { recordProductEntityAudit } from "@/modules/product/services/product-audit-helper";
+import { buildGovernanceUiLabels } from "@/modules/product/product-terminology-labels";
 import {
   buildValidationResults,
   calculateReadinessScore,
@@ -145,7 +150,7 @@ export class OfferingGovernanceService {
         readinessScore: Number(row.governance.readinessScore),
         businessOwnerName: row.businessOwnerName,
       })),
-      catalogueLabel: profile.offeringCatalogueNavLabel ?? "Products",
+      catalogueLabel: profile.offeringWorkspaceLabel ?? DEFAULT_OFFERING_WORKSPACE_LABEL,
     };
   }
 
@@ -154,6 +159,7 @@ export class OfferingGovernanceService {
     offeringId: string,
     payload: OfferingGovernanceFiltersPayload = {}
   ): Promise<ProductGovernancePanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     await this.ensureDefaults(context);
 
     const parsed = offeringGovernanceFiltersSchema.safeParse(payload);
@@ -161,12 +167,12 @@ export class OfferingGovernanceService {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400
       );
     }
 
-    const product = await this.requireOffering(context.businessId, offeringId);
+    const product = await this.requireOffering(context, offeringId);
     let governance = await this.governanceRepository.findByOfferingId(
       context.businessId,
       offeringId
@@ -279,28 +285,29 @@ export class OfferingGovernanceService {
     context: CurrentBusinessContext,
     payload: UpdateOfferingGovernanceOwnershipPayload
   ): Promise<ProductGovernancePanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = updateOfferingGovernanceOwnershipSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400,
         first?.path[0]?.toString()
       );
     }
 
     const product = await this.requireOffering(
-      context.businessId,
+      context,
       parsed.data.offeringId
     );
-    this.assertGovernanceEditable(product.statusCode as ProductStatusCode);
+    this.assertGovernanceEditable(msg, product.statusCode as ProductStatusCode);
 
     const governance = await this.requireGovernance(
-      context.businessId,
+      context,
       parsed.data.offeringId
     );
-    this.assertNotLocked(governance.isLocked);
+    this.assertNotLocked(msg, governance.isLocked);
 
     const businessOwnerId =
       parsed.data.responsibleBusinessOwnerPartyId?.trim() || null;
@@ -308,13 +315,13 @@ export class OfferingGovernanceService {
     const stewardId = parsed.data.productStewardPartyId?.trim() || null;
 
     if (businessOwnerId) {
-      await this.requireParty(context.businessId, businessOwnerId);
+      await this.requireParty(context, businessOwnerId);
     }
     if (technicalOwnerId) {
-      await this.requireParty(context.businessId, technicalOwnerId);
+      await this.requireParty(context, technicalOwnerId);
     }
     if (stewardId) {
-      await this.requireParty(context.businessId, stewardId);
+      await this.requireParty(context, stewardId);
     }
 
     const updated = await this.governanceRepository.updateById(
@@ -331,7 +338,7 @@ export class OfferingGovernanceService {
     if (!updated) {
       throw new ProductError(
         "GOVERNANCE_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.GOVERNANCE_NOT_FOUND,
+        msg.GOVERNANCE_NOT_FOUND,
         404
       );
     }
@@ -350,12 +357,20 @@ export class OfferingGovernanceService {
     }
 
     if (governance.productStewardPartyId !== updated.productStewardPartyId) {
+      const industryContext =
+        await this.industryExperienceService.getBusinessIndustryContext(
+          context.businessId
+        );
+      const governanceLabels = buildGovernanceUiLabels(
+        resolveBusinessTerminology(industryContext.industryCode)
+      );
+
       await this.recordHistoryAndTimeline(context, updated, {
         changeType: OFFERING_GOVERNANCE_CHANGE_TYPES.STEWARD_CHANGED,
         oldValue: governance.productStewardPartyId,
         newValue: updated.productStewardPartyId,
         eventType: PRODUCT_TIMELINE_EVENT_TYPES.GOVERNANCE_STEWARD_CHANGED,
-        summary: "Product Steward changed.",
+        summary: governanceLabels.stewardChangedSummary,
       });
     }
 
@@ -377,27 +392,28 @@ export class OfferingGovernanceService {
     context: CurrentBusinessContext,
     payload: UpdateOfferingGovernanceNotesPayload
   ): Promise<ProductGovernancePanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = updateOfferingGovernanceNotesSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400
       );
     }
 
     const product = await this.requireOffering(
-      context.businessId,
+      context,
       parsed.data.offeringId
     );
-    this.assertGovernanceEditable(product.statusCode as ProductStatusCode);
+    this.assertGovernanceEditable(msg, product.statusCode as ProductStatusCode);
 
     const governance = await this.requireGovernance(
-      context.businessId,
+      context,
       parsed.data.offeringId
     );
-    this.assertNotLocked(governance.isLocked);
+    this.assertNotLocked(msg, governance.isLocked);
 
     const notes = parsed.data.notes?.trim() || null;
     const updated = await this.governanceRepository.updateById(
@@ -412,7 +428,7 @@ export class OfferingGovernanceService {
     if (!updated) {
       throw new ProductError(
         "GOVERNANCE_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.GOVERNANCE_NOT_FOUND,
+        msg.GOVERNANCE_NOT_FOUND,
         404
       );
     }
@@ -434,24 +450,25 @@ export class OfferingGovernanceService {
     context: CurrentBusinessContext,
     payload: ToggleOfferingGovernanceLockPayload
   ): Promise<ProductGovernancePanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = toggleOfferingGovernanceLockSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400
       );
     }
 
     const product = await this.requireOffering(
-      context.businessId,
+      context,
       parsed.data.offeringId
     );
-    this.assertGovernanceEditable(product.statusCode as ProductStatusCode);
+    this.assertGovernanceEditable(msg, product.statusCode as ProductStatusCode);
 
     const governance = await this.requireGovernance(
-      context.businessId,
+      context,
       parsed.data.offeringId
     );
 
@@ -467,7 +484,7 @@ export class OfferingGovernanceService {
     if (!updated) {
       throw new ProductError(
         "GOVERNANCE_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.GOVERNANCE_NOT_FOUND,
+        msg.GOVERNANCE_NOT_FOUND,
         404
       );
     }
@@ -489,23 +506,24 @@ export class OfferingGovernanceService {
     context: CurrentBusinessContext,
     payload: RunOfferingGovernanceValidationPayload
   ): Promise<ProductGovernancePanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = runOfferingGovernanceValidationSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400
       );
     }
 
     const product = await this.requireOffering(
-      context.businessId,
+      context,
       parsed.data.offeringId
     );
 
     const governance = await this.requireGovernance(
-      context.businessId,
+      context,
       parsed.data.offeringId
     );
 
@@ -543,7 +561,7 @@ export class OfferingGovernanceService {
     if (!updated) {
       throw new ProductError(
         "GOVERNANCE_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.GOVERNANCE_NOT_FOUND,
+        msg.GOVERNANCE_NOT_FOUND,
         404
       );
     }
@@ -718,15 +736,19 @@ export class OfferingGovernanceService {
     return party?.displayName ?? null;
   }
 
-  private async requireParty(businessId: string, partyId: string) {
+  private async requireParty(
+    context: CurrentBusinessContext,
+    partyId: string
+  ) {
+    const msg = await resolveProductUserMessagesForContext(context);
     const party = await this.referenceRepository.findOwnerParty(
-      businessId,
+      context.businessId,
       partyId
     );
     if (!party) {
       throw new ProductError(
         "OWNER_PARTY_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.OWNER_PARTY_NOT_FOUND,
+        msg.OWNER_PARTY_NOT_FOUND,
         404,
         "ownerPartyId"
       );
@@ -734,47 +756,58 @@ export class OfferingGovernanceService {
     return party;
   }
 
-  private assertGovernanceEditable(statusCode: ProductStatusCode) {
+  private assertGovernanceEditable(
+    msg: ProductUserMessages,
+    statusCode: ProductStatusCode
+  ) {
     if (!isProductEditable(statusCode)) {
       throw new ProductError(
         "GOVERNANCE_IMMUTABLE",
-        PRODUCT_USER_MESSAGES.GOVERNANCE_IMMUTABLE,
+        msg.GOVERNANCE_IMMUTABLE,
         409
       );
     }
   }
 
-  private assertNotLocked(isLocked: boolean) {
+  private assertNotLocked(msg: ProductUserMessages, isLocked: boolean) {
     if (isLocked) {
       throw new ProductError(
         "GOVERNANCE_LOCKED",
-        PRODUCT_USER_MESSAGES.GOVERNANCE_LOCKED,
+        msg.GOVERNANCE_LOCKED,
         409
       );
     }
   }
 
-  private async requireGovernance(businessId: string, offeringId: string) {
+  private async requireGovernance(
+    context: CurrentBusinessContext,
+    offeringId: string
+  ) {
+    const msg = await resolveProductUserMessagesForContext(context);
     const governance = await this.governanceRepository.findByOfferingId(
-      businessId,
+      context.businessId,
       offeringId
     );
     if (!governance) {
       throw new ProductError(
         "GOVERNANCE_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.GOVERNANCE_NOT_FOUND,
+        msg.GOVERNANCE_NOT_FOUND,
         404
       );
     }
     return governance;
   }
 
-  private async requireOffering(businessId: string, offeringId: string) {
-    const row = await this.productRepository.findById(businessId, offeringId);
+  private async requireOffering(
+    context: CurrentBusinessContext,
+    offeringId: string
+  ) {
+    const msg = await resolveProductUserMessagesForContext(context);
+    const row = await this.productRepository.findById(context.businessId, offeringId);
     if (!row) {
       throw new ProductError(
         "PRODUCT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.PRODUCT_NOT_FOUND,
+        msg.PRODUCT_NOT_FOUND,
         404
       );
     }

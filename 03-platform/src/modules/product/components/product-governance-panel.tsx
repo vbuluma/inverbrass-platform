@@ -41,7 +41,7 @@ import {
   updateOfferingGovernanceOwnershipAction,
 } from "@/modules/product/actions/offering-governance-actions";
 import { OFFERING_GOVERNANCE_CHECKLIST_STATUSES } from "@/modules/product/constants";
-import { OFFERING_GOVERNANCE_UI_LABELS } from "@/modules/product/offering-governance-ui-labels";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import type { ProductGovernancePanelView } from "@/modules/product/types";
 
 type ProductGovernancePanelProps = {
@@ -97,6 +97,7 @@ export function ProductGovernancePanel({
   initialData,
   disabled = false,
 }: ProductGovernancePanelProps) {
+  const { governance: uiLabels } = useProductUiLabels();
   const [panel, setPanel] = useState(initialData);
   const [syncedInitial, setSyncedInitial] = useState(initialData);
   const { isPending, runPanelAction, FormFeedback } =
@@ -189,11 +190,11 @@ export function ProductGovernancePanel({
         <div className="flex items-center gap-2">
           <ShieldCheckIcon className="size-5 text-sky-700" aria-hidden />
           <h2 className="text-lg font-semibold tracking-tight">
-            {OFFERING_GOVERNANCE_UI_LABELS.panelTitle}
+            {uiLabels.panelTitle}
           </h2>
         </div>
         <p className="text-sm text-muted-foreground">
-          {OFFERING_GOVERNANCE_UI_LABELS.panelDescription}
+          {uiLabels.panelDescription}
         </p>
       </div>
 
@@ -204,7 +205,7 @@ export function ProductGovernancePanel({
           type="button"
           isProcessing={isPending}
           processingLabel="Validating…"
-          idleLabel={OFFERING_GOVERNANCE_UI_LABELS.runValidation}
+          idleLabel={uiLabels.runValidation}
           onClick={onRunValidation}
           disabled={disabled}
         />
@@ -215,41 +216,41 @@ export function ProductGovernancePanel({
           onClick={onToggleLock}
         >
           {panel.isLocked
-            ? OFFERING_GOVERNANCE_UI_LABELS.unlockGovernance
-            : OFFERING_GOVERNANCE_UI_LABELS.lockGovernance}
+            ? uiLabels.unlockGovernance
+            : uiLabels.lockGovernance}
         </Button>
       </div>
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <PlatformKpiCard
-          label={OFFERING_GOVERNANCE_UI_LABELS.governanceStatus}
+          label={uiLabels.governanceStatus}
           value={panel.governanceStatusLabel}
         />
         <PlatformKpiCard
-          label={OFFERING_GOVERNANCE_UI_LABELS.readinessScore}
+          label={uiLabels.readinessScore}
           value={panel.readinessScoreLabel}
         />
         <PlatformKpiCard
-          label={OFFERING_GOVERNANCE_UI_LABELS.lastValidation}
+          label={uiLabels.lastValidation}
           value={formatDateTime(panel.lastValidationDate)}
         />
         <PlatformKpiCard
-          label={OFFERING_GOVERNANCE_UI_LABELS.locked}
+          label={uiLabels.locked}
           value={panel.isLocked ? "Yes" : "No"}
         />
       </section>
 
       <Card>
         <CardHeader>
-          <CardTitle>{OFFERING_GOVERNANCE_UI_LABELS.sectionOwnership}</CardTitle>
+          <CardTitle>{uiLabels.sectionOwnership}</CardTitle>
           <CardDescription>
-            Assign responsible owners and stewards for this offering.
+            {uiLabels.ownershipSectionDescription}
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-3">
           <div className="space-y-2">
             <Label htmlFor="governance-business-owner">
-              {OFFERING_GOVERNANCE_UI_LABELS.businessOwner}
+              {uiLabels.businessOwner}
             </Label>
             <select
               id="governance-business-owner"
@@ -273,7 +274,7 @@ export function ProductGovernancePanel({
           </div>
           <div className="space-y-2">
             <Label htmlFor="governance-technical-owner">
-              {OFFERING_GOVERNANCE_UI_LABELS.technicalOwner}
+              {uiLabels.technicalOwner}
             </Label>
             <select
               id="governance-technical-owner"
@@ -294,7 +295,7 @@ export function ProductGovernancePanel({
           </div>
           <div className="space-y-2">
             <Label htmlFor="governance-steward">
-              {OFFERING_GOVERNANCE_UI_LABELS.productSteward}
+              {uiLabels.offeringSteward}
             </Label>
             <select
               id="governance-steward"
@@ -318,7 +319,7 @@ export function ProductGovernancePanel({
               type="button"
               isProcessing={isPending}
               processingLabel="Saving…"
-              idleLabel={OFFERING_GOVERNANCE_UI_LABELS.saveOwnership}
+              idleLabel={uiLabels.saveOwnership}
               onClick={onSaveOwnership}
               disabled={!isEditable}
             />
@@ -328,12 +329,12 @@ export function ProductGovernancePanel({
 
       <Card>
         <CardHeader>
-          <CardTitle>{OFFERING_GOVERNANCE_UI_LABELS.sectionReadinessChecklist}</CardTitle>
+          <CardTitle>{uiLabels.sectionReadinessChecklist}</CardTitle>
         </CardHeader>
         <CardContent>
           {panel.checklist.length === 0 ? (
             <PlatformEmptyState
-              title={OFFERING_GOVERNANCE_UI_LABELS.noChecklist}
+              title={uiLabels.noChecklist}
               description="Configure checklist definitions for this business."
             />
           ) : (
@@ -374,7 +375,7 @@ export function ProductGovernancePanel({
 
       <Card>
         <CardHeader>
-          <CardTitle>{OFFERING_GOVERNANCE_UI_LABELS.sectionValidationResults}</CardTitle>
+          <CardTitle>{uiLabels.sectionValidationResults}</CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="space-y-2">
@@ -393,7 +394,7 @@ export function ProductGovernancePanel({
 
       <Card>
         <CardHeader>
-          <CardTitle>{OFFERING_GOVERNANCE_UI_LABELS.notes}</CardTitle>
+          <CardTitle>{uiLabels.notes}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <Input
@@ -406,7 +407,7 @@ export function ProductGovernancePanel({
             type="button"
             isProcessing={isPending}
             processingLabel="Saving…"
-            idleLabel={OFFERING_GOVERNANCE_UI_LABELS.saveNotes}
+            idleLabel={uiLabels.saveNotes}
             onClick={onSaveNotes}
             disabled={!isEditable}
           />
@@ -415,12 +416,12 @@ export function ProductGovernancePanel({
 
       <Card>
         <CardHeader>
-          <CardTitle>{OFFERING_GOVERNANCE_UI_LABELS.sectionGovernanceHistory}</CardTitle>
+          <CardTitle>{uiLabels.sectionGovernanceHistory}</CardTitle>
         </CardHeader>
         <CardContent>
           {panel.history.length === 0 ? (
             <PlatformEmptyState
-              title={OFFERING_GOVERNANCE_UI_LABELS.noHistory}
+              title={uiLabels.noHistory}
               description="Ownership, readiness, and validation changes will appear here."
             />
           ) : (

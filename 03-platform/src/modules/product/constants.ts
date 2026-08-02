@@ -560,3 +560,56 @@ export const OFFERING_METRIC_CALCULATION_METHODS = {
 
 export type OfferingMetricCalculationMethod =
   (typeof OFFERING_METRIC_CALCULATION_METHODS)[keyof typeof OFFERING_METRIC_CALCULATION_METHODS];
+
+/** Workspace tab ids — display labels come from product-terminology-labels. */
+export const VARIANT_WORKSPACE_TABS = [
+  { id: "overview", available: true },
+  { id: "attributes", available: true },
+  { id: "timeline", available: true },
+  { id: "audit-history", available: true },
+] as const;
+
+export const BUNDLE_WORKSPACE_TABS = [
+  { id: "overview", available: true },
+  { id: "bundle-items", available: true },
+  { id: "timeline", available: true },
+  { id: "audit-history", available: true },
+  { id: "pricing", available: false },
+  { id: "analytics", available: false },
+] as const;
+
+export const BUNDLE_REGISTRATION_STEP_IDS = [
+  "details",
+  "select-products",
+  "configure",
+  "review",
+] as const;
+
+export const ATTRIBUTE_DEFINITION_WORKSPACE_TABS = [
+  { id: "overview", available: true },
+  { id: "options", available: true },
+  { id: "assignment", available: true },
+  { id: "timeline", available: true },
+  { id: "audit-history", available: true },
+] as const;
+
+export const CATALOGUE_WORKSPACE_TABS = [
+  { id: "publications", available: true },
+  { id: "preview", available: true },
+] as const;
+
+export const CATALOGUE_PREVIEW_CHANNELS = [
+  { id: "website", label: "Website" },
+  { id: "mobile", label: "Mobile App" },
+  { id: "whatsapp", label: "WhatsApp" },
+  { id: "qr", label: "QR" },
+  { id: "customer-portal", label: "Customer Portal" },
+  { id: "partner-portal", label: "Partner Portal" },
+] as const;
+
+export const UNIT_WORKSPACE_TABS = [
+  { id: "overview", available: true },
+  { id: "conversion-rules", available: true },
+  { id: "timeline", available: true },
+  { id: "audit-history", available: true },
+] as const;

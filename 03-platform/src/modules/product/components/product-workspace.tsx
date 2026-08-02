@@ -22,6 +22,7 @@ import {
   useFormDraft,
   useUnsavedChangesGuard,
 } from "@/components/platform";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import { useControlledForm } from "@/lib/forms";
 import { platformError, platformSuccess } from "@/core/platform/platform-action-helpers";
 import type { PlatformActionResult } from "@/core/platform/types";
@@ -62,7 +63,6 @@ import {
   PRODUCT_STATUS_CODES,
   PRODUCT_WORKSPACE_TABS,
 } from "@/modules/product/constants";
-import { PRODUCT_UI_LABELS } from "@/modules/product/ui-labels";
 import type {
   ProductAuditHistoryPanelView,
   ProductAttributesPanelView,
@@ -146,6 +146,7 @@ export function ProductWorkspace({
   catalogue,
   initialTab = "overview",
 }: ProductWorkspaceProps) {
+  const labels = useProductUiLabels();
   const [product, setProduct] = useState(initialProduct);
   const [syncedInitialProduct, setSyncedInitialProduct] = useState(initialProduct);
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -181,7 +182,22 @@ export function ProductWorkspace({
   }
 
   const isArchived = product.statusCode === PRODUCT_STATUS_CODES.ARCHIVED;
-  const availableTabs = PRODUCT_WORKSPACE_TABS.filter((tab) => tab.available);
+  const workspaceTabLabel = (tabId: string) => {
+    if (tabId === "audit-history") {
+      return labels.workspace.tabs.auditHistory;
+    }
+    return (
+      labels.workspace.tabs[tabId as keyof typeof labels.workspace.tabs] ??
+      tabId
+    );
+  };
+
+  const availableTabs = PRODUCT_WORKSPACE_TABS.filter((tab) => tab.available).map(
+    (tab) => ({
+      ...tab,
+      label: workspaceTabLabel(tab.id),
+    })
+  );
 
   async function saveOverview(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -206,7 +222,11 @@ export function ProductWorkspace({
 
       if (!result.success) {
         setOverviewResult(
-          platformError("Could not save product", result.error.message, result.error.field)
+          platformError(
+            labels.lifecycle.saveErrorTitle,
+            result.error.message,
+            result.error.field
+          )
         );
         return;
       }
@@ -215,7 +235,11 @@ export function ProductWorkspace({
       clearOverviewDraft();
       setIsDirty(false);
       setOverviewResult(
-        platformSuccess("Product updated", "Changes saved successfully.", result.data)
+        platformSuccess(
+          labels.lifecycle.updatedTitle,
+          "Changes saved successfully.",
+          result.data
+        )
       );
     });
   }
@@ -234,7 +258,9 @@ export function ProductWorkspace({
         return;
       }
       setProduct(result.data);
-      setHeaderResult(platformSuccess("Status updated", successMessage, result.data));
+      setHeaderResult(
+        platformSuccess(labels.actions.statusUpdated, successMessage, result.data)
+      );
     });
   }
 
@@ -242,15 +268,15 @@ export function ProductWorkspace({
     <main className="platform-workspace-main mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6">
       <SetBreadcrumbs
         items={[
-          { label: "Products", href: "/products" },
+          labels.workspace.hubBreadcrumb,
           { label: product.productName },
         ]}
       />
 
       <PlatformWorkspaceHeader
         backHref="/products"
-        backLabel="Back to products"
-        workspaceLabel="Product Workspace"
+        backLabel={labels.workspace.backLabel}
+        workspaceLabel={labels.workspace.workspaceLabel}
         title={product.productName}
         subtitle={product.productCode}
         statusLabel={product.statusName}
@@ -276,7 +302,7 @@ export function ProductWorkspace({
           },
         ]}
         quickActions={[
-          { label: "Catalogue Structure", href: `/products/${product.id}?tab=classification` },
+          { label: labels.catalogueStructure.moduleName, href: `/products/${product.id}?tab=classification` },
           { label: "View Timeline", href: `/products/${product.id}?tab=timeline` },
           { label: "View Audit", href: `/products/${product.id}?tab=audit-history` },
         ]}
@@ -289,7 +315,7 @@ export function ProductWorkspace({
                   size="sm"
                   disabled={isProcessing}
                   onClick={() =>
-                    runLifecycle(activateProductAction, "Product is now active.")
+                    runLifecycle(activateProductAction, labels.lifecycle.nowActiveMessage)
                   }
                 >
                   Activate
@@ -302,7 +328,10 @@ export function ProductWorkspace({
                   variant="outline"
                   disabled={isProcessing}
                   onClick={() =>
-                    runLifecycle(suspendProductAction, "Product has been suspended.")
+                    runLifecycle(
+                      suspendProductAction,
+                      labels.lifecycle.hasBeenSuspendedMessage
+                    )
                   }
                 >
                   Suspend
@@ -314,7 +343,10 @@ export function ProductWorkspace({
                 variant="outline"
                 disabled={isProcessing}
                 onClick={() =>
-                  runLifecycle(archiveProductAction, "Product has been archived.")
+                  runLifecycle(
+                    archiveProductAction,
+                    labels.lifecycle.hasBeenArchivedMessage
+                  )
                 }
               >
                 Archive
@@ -329,25 +361,25 @@ export function ProductWorkspace({
         tabs={availableTabs.map((tab) => ({ id: tab.id, label: tab.label }))}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        ariaLabel="Product workspace sections"
+        ariaLabel={labels.workspace.workspaceAriaLabel}
       />
 
       {activeTab === "overview" ? (
         <form ref={overviewFormRef} onSubmit={saveOverview} className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>{PRODUCT_UI_LABELS.identityHeading}</CardTitle>
+              <CardTitle>{labels.workspace.formSections.identityHeading}</CardTitle>
               <CardDescription>
                 Core identifiers for this offering.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1 sm:col-span-2">
-                <Label>Product Code</Label>
+                <Label>{labels.workspace.codeLabel}</Label>
                 <p className="text-sm font-medium">{product.productCode}</p>
               </div>
               <div className="space-y-1">
-                <Label>Product Type</Label>
+                <Label>{labels.workspace.typeLabel}</Label>
                 <p className="text-sm">{product.productTypeName}</p>
               </div>
               <div className="space-y-1">
@@ -355,7 +387,7 @@ export function ProductWorkspace({
                 <p className="text-sm">{product.recordSourceLabel}</p>
               </div>
               <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="productName">Product Name</Label>
+                <Label htmlFor="productName">{labels.workspace.nameLabel}</Label>
                 <Input
                   id="productName"
                   value={overviewForm.textValue("productName")}
@@ -396,7 +428,7 @@ export function ProductWorkspace({
 
           <Card>
             <CardHeader>
-              <CardTitle>{PRODUCT_UI_LABELS.lifecycleHeading}</CardTitle>
+              <CardTitle>{labels.workspace.formSections.lifecycleHeading}</CardTitle>
               <CardDescription>
                 Status and key dates. Use header actions for activate, suspend, or archive.
               </CardDescription>
@@ -457,15 +489,15 @@ export function ProductWorkspace({
 
           <Card>
             <CardHeader>
-              <CardTitle>{PRODUCT_UI_LABELS.ownershipHeading}</CardTitle>
+              <CardTitle>{labels.workspace.formSections.ownershipHeading}</CardTitle>
               <CardDescription>
-                {PRODUCT_UI_LABELS.responsibleBusinessOwnerHint}
+                {labels.workspace.formSections.responsibleBusinessOwnerHint}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 <Label htmlFor="ownerPartyId">
-                  {PRODUCT_UI_LABELS.responsibleBusinessOwner}
+                  {labels.workspace.formSections.responsibleBusinessOwner}
                 </Label>
                 <select
                   id="ownerPartyId"
@@ -490,7 +522,7 @@ export function ProductWorkspace({
 
           <Card>
             <CardHeader>
-              <CardTitle>{PRODUCT_UI_LABELS.capabilitiesHeading}</CardTitle>
+              <CardTitle>{labels.workspace.formSections.capabilitiesHeading}</CardTitle>
             </CardHeader>
             <CardContent>
               <ProductCapabilitiesPanel
@@ -517,7 +549,7 @@ export function ProductWorkspace({
             product.migrationBatch) && (
             <Card>
               <CardHeader>
-                <CardTitle>{PRODUCT_UI_LABELS.migrationHeading}</CardTitle>
+                <CardTitle>{labels.workspace.formSections.migrationHeading}</CardTitle>
                 <CardDescription>
                   Legacy identifiers retained from import — read only.
                 </CardDescription>

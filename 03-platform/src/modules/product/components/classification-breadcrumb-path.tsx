@@ -9,7 +9,7 @@ import Link from "next/link";
 import { ChevronRightIcon } from "lucide-react";
 
 import type { ProductClassificationBreadcrumbItem } from "@/modules/product/types";
-import { CATALOGUE_STRUCTURE_UI_LABELS } from "@/modules/product/catalogue-structure-ui-labels";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 
 type ClassificationBreadcrumbPathProps = {
   items: ProductClassificationBreadcrumbItem[];
@@ -18,6 +18,8 @@ type ClassificationBreadcrumbPathProps = {
 export function ClassificationBreadcrumbPath({
   items,
 }: ClassificationBreadcrumbPathProps) {
+  const labels = useProductUiLabels();
+
   if (items.length === 0) {
     return null;
   }
@@ -30,7 +32,7 @@ export function ClassificationBreadcrumbPath({
             href="/products/classifications"
             className="hover:text-foreground hover:underline"
           >
-            {CATALOGUE_STRUCTURE_UI_LABELS.breadcrumbRoot}
+            {labels.catalogueStructure.breadcrumbRoot}
           </Link>
         </li>
         {items.map((item, index) => (

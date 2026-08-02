@@ -25,11 +25,13 @@ import {
 import { getDb } from "@/db/client";
 import { seedDefaultUnitsForBusiness } from "@/db/seeds/unit-defaults-seed";
 import { createIndustryExperienceService } from "@/core/industry-experience/services/industry-experience-service";
+import { DEFAULT_OFFERING_WORKSPACE_LABEL } from "@/core/industry-experience/offering-terminology";
 import {
   UNIT_ROUNDING_RULES,
   UNIT_STATUS_CODES,
 } from "@/modules/product/constants";
-import { ProductError, PRODUCT_USER_MESSAGES } from "@/modules/product/errors";
+import { ProductError } from "@/modules/product/errors";
+import { resolveProductUserMessagesForContext } from "@/modules/product/resolve-product-user-messages";
 import { createUnitCategoryRepository } from "@/modules/product/repositories/unit-category-repository";
 import { createUnitRepository } from "@/modules/product/repositories/unit-repository";
 import { recordProductEntityAudit } from "@/modules/product/services/product-audit-helper";
@@ -139,7 +141,7 @@ export class UnitService {
         code,
         label: roundingRuleLabel(code),
       })),
-      catalogueLabel: profile.offeringCatalogueNavLabel ?? "Products",
+      catalogueLabel: profile.offeringWorkspaceLabel ?? DEFAULT_OFFERING_WORKSPACE_LABEL,
     };
   }
 
@@ -169,13 +171,14 @@ export class UnitService {
     context: CurrentBusinessContext,
     payload: SearchUnitsPayload
   ): Promise<UnitView[]> {
+    const msg = await resolveProductUserMessagesForContext(context);
     await this.ensureDefaults(context);
     const parsed = searchUnitsSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400
       );
     }
@@ -192,7 +195,7 @@ export class UnitService {
     unitId: string
   ): Promise<UnitWorkspaceView> {
     await this.ensureDefaults(context);
-    const unit = await this.requireUnit(context.businessId, unitId);
+    const unit = await this.requireUnit(context, unitId);
     const view = await this.mapSingleUnitView(context.businessId, unit);
 
     const categoryUnits = (
@@ -243,13 +246,14 @@ export class UnitService {
     context: CurrentBusinessContext,
     payload: CreateUnitPayload
   ): Promise<UnitWorkspaceView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     await this.ensureDefaults(context);
     const parsed = createUnitSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400,
         first?.path[0] ? String(first.path[0]) : undefined
       );
@@ -266,7 +270,7 @@ export class UnitService {
     if (!category) {
       throw new ProductError(
         "UNIT_CATEGORY_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.UNIT_CATEGORY_NOT_FOUND,
+        msg.UNIT_CATEGORY_NOT_FOUND,
         404,
         "categoryId"
       );
@@ -277,7 +281,7 @@ export class UnitService {
     ) {
       throw new ProductError(
         "DUPLICATE_UNIT_CODE",
-        PRODUCT_USER_MESSAGES.DUPLICATE_UNIT_CODE,
+        msg.DUPLICATE_UNIT_CODE,
         409,
         "code"
       );
@@ -292,7 +296,7 @@ export class UnitService {
     ) {
       throw new ProductError(
         "DUPLICATE_UNIT_SYMBOL",
-        PRODUCT_USER_MESSAGES.DUPLICATE_UNIT_SYMBOL,
+        msg.DUPLICATE_UNIT_SYMBOL,
         409,
         "symbol"
       );
@@ -307,7 +311,7 @@ export class UnitService {
       if (existingBase > 0) {
         throw new ProductError(
           "MULTIPLE_BASE_UNITS",
-          PRODUCT_USER_MESSAGES.MULTIPLE_BASE_UNITS,
+          msg.MULTIPLE_BASE_UNITS,
           400,
           "isBaseUnit"
         );
@@ -318,7 +322,7 @@ export class UnitService {
     if (!isValidConversionFactor(data.conversionFactor)) {
       throw new ProductError(
         "INVALID_CONVERSION_FACTOR",
-        PRODUCT_USER_MESSAGES.INVALID_CONVERSION_FACTOR,
+        msg.INVALID_CONVERSION_FACTOR,
         400,
         "conversionFactor"
       );
@@ -384,21 +388,22 @@ export class UnitService {
     unitId: string,
     payload: UpdateUnitPayload
   ): Promise<UnitWorkspaceView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = updateUnitSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400
       );
     }
 
-    const before = await this.requireUnit(context.businessId, unitId);
+    const before = await this.requireUnit(context, unitId);
     if (!isUnitEditable(before.status)) {
       throw new ProductError(
         "ARCHIVED_UNIT_IMMUTABLE",
-        PRODUCT_USER_MESSAGES.ARCHIVED_UNIT_IMMUTABLE,
+        msg.ARCHIVED_UNIT_IMMUTABLE,
         400
       );
     }
@@ -421,7 +426,7 @@ export class UnitService {
       if (duplicate) {
         throw new ProductError(
           "DUPLICATE_UNIT_SYMBOL",
-          PRODUCT_USER_MESSAGES.DUPLICATE_UNIT_SYMBOL,
+          msg.DUPLICATE_UNIT_SYMBOL,
           409,
           "symbol"
         );
@@ -432,7 +437,7 @@ export class UnitService {
       if (!isValidConversionFactor(parsed.data.conversionFactor)) {
         throw new ProductError(
           "INVALID_CONVERSION_FACTOR",
-          PRODUCT_USER_MESSAGES.INVALID_CONVERSION_FACTOR,
+          msg.INVALID_CONVERSION_FACTOR,
           400,
           "conversionFactor"
         );
@@ -455,7 +460,7 @@ export class UnitService {
         if (existingBase > 0) {
           throw new ProductError(
             "MULTIPLE_BASE_UNITS",
-            PRODUCT_USER_MESSAGES.MULTIPLE_BASE_UNITS,
+            msg.MULTIPLE_BASE_UNITS,
             400,
             "isBaseUnit"
           );
@@ -481,7 +486,7 @@ export class UnitService {
     if (!updated) {
       throw new ProductError(
         "UNIT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.UNIT_NOT_FOUND,
+        msg.UNIT_NOT_FOUND,
         404
       );
     }
@@ -591,18 +596,19 @@ export class UnitService {
     context: CurrentBusinessContext,
     payload: ConvertUnitsPayload
   ) {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = convertUnitsSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400
       );
     }
 
     return this.conversionService.convertByIds(
-      context.businessId,
+      context,
       parsed.data.fromUnitId,
       parsed.data.toUnitId,
       parsed.data.value
@@ -616,12 +622,13 @@ export class UnitService {
     eventType: string,
     summary: string
   ): Promise<UnitWorkspaceView> {
-    const unit = await this.requireUnit(context.businessId, unitId);
+    const msg = await resolveProductUserMessagesForContext(context);
+    const unit = await this.requireUnit(context, unitId);
 
     if (!canTransitionUnitStatus(unit.status, nextStatus)) {
       throw new ProductError(
         "INVALID_UNIT_STATUS_TRANSITION",
-        PRODUCT_USER_MESSAGES.INVALID_UNIT_STATUS_TRANSITION,
+        msg.INVALID_UNIT_STATUS_TRANSITION,
         400
       );
     }
@@ -635,7 +642,7 @@ export class UnitService {
     if (!updated) {
       throw new ProductError(
         "UNIT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.UNIT_NOT_FOUND,
+        msg.UNIT_NOT_FOUND,
         404
       );
     }
@@ -663,12 +670,16 @@ export class UnitService {
     return this.getUnitWorkspace(context, unitId);
   }
 
-  private async requireUnit(businessId: string, unitId: string) {
-    const unit = await this.unitRepository.findById(businessId, unitId);
+  private async requireUnit(
+    context: CurrentBusinessContext,
+    unitId: string
+  ) {
+    const msg = await resolveProductUserMessagesForContext(context);
+    const unit = await this.unitRepository.findById(context.businessId, unitId);
     if (!unit) {
       throw new ProductError(
         "UNIT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.UNIT_NOT_FOUND,
+        msg.UNIT_NOT_FOUND,
         404
       );
     }

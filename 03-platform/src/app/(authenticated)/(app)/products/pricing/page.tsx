@@ -9,6 +9,7 @@
 import { redirect } from "next/navigation";
 
 import { getPricingDashboardAction } from "@/modules/product/actions/pricing-actions";
+import { ProductModuleErrorPage } from "@/modules/product/components/product-module-error-page";
 import { PricingDashboard } from "@/modules/product/components/pricing-dashboard";
 
 export default async function PricingDashboardPage() {
@@ -23,10 +24,7 @@ export default async function PricingDashboardPage() {
     }
 
     return (
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-xl font-semibold">Offering Pricing</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{result.error.message}</p>
-      </main>
+      <ProductModuleErrorPage message={result.error.message} titleKind="pricing" />
     );
   }
 

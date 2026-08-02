@@ -8,6 +8,10 @@ import {
   PlatformAppShell,
   PlatformChromeShell,
 } from "@/components/platform/platform-app-shell";
+import {
+  BusinessTerminologyProvider,
+} from "@/core/industry-experience/business-terminology-context";
+import { DEFAULT_BUSINESS_TERMINOLOGY } from "@/core/industry-experience/business-terminology";
 import { isBusinessAppRoute } from "@/lib/navigation/business-app-routes";
 import type {
   PlatformChromeContext,
@@ -33,12 +37,16 @@ export function PlatformChromeClient({
   };
 
   return (
-    <BreadcrumbProvider>
-      {showSidebar ? (
-        <PlatformAppShell context={shellContext}>{children}</PlatformAppShell>
-      ) : (
-        <PlatformChromeShell context={shellContext}>{children}</PlatformChromeShell>
-      )}
-    </BreadcrumbProvider>
+    <BusinessTerminologyProvider
+      terminology={context.terminology ?? DEFAULT_BUSINESS_TERMINOLOGY}
+    >
+      <BreadcrumbProvider>
+        {showSidebar ? (
+          <PlatformAppShell context={shellContext}>{children}</PlatformAppShell>
+        ) : (
+          <PlatformChromeShell context={shellContext}>{children}</PlatformChromeShell>
+        )}
+      </BreadcrumbProvider>
+    </BusinessTerminologyProvider>
   );
 }

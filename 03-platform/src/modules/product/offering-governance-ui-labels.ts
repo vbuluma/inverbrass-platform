@@ -4,6 +4,8 @@
  *
  * Implementation Package:
  * BP-003 / IP-013 – Offering Governance
+ *
+ * @deprecated Prefer `buildGovernanceUiLabels()` from `@/modules/product/product-terminology-labels`.
  */
 
 export const OFFERING_GOVERNANCE_UI_LABELS = {

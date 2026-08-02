@@ -19,6 +19,7 @@ import {
   filterClassificationsForIndustry,
   isClassificationVisibleForIndustry,
 } from "@/core/industry-experience/classification-filters";
+import { resolveBusinessTerminology } from "@/core/industry-experience/business-terminology";
 import {
   PRODUCT_CLASSIFICATION_STATUS_CODES,
   PRODUCT_CLASSIFICATION_TYPE_CODES,
@@ -28,8 +29,8 @@ import {
 import {
   CATALOGUE_STRUCTURE_BULK_OPERATIONS,
   CATALOGUE_STRUCTURE_RELATIONSHIP_TYPES,
-  CATALOGUE_STRUCTURE_UI_LABELS,
 } from "@/modules/product/catalogue-structure-ui-labels";
+import { buildCatalogueStructureUiLabels } from "@/modules/product/product-terminology-labels";
 import {
   buildClassificationBreadcrumbPath,
   buildProductClassificationTree,
@@ -163,7 +164,9 @@ function checkRules(): SmokeResult[] {
   return [
     {
       name: "ui:catalogue structure label",
-      ok: CATALOGUE_STRUCTURE_UI_LABELS.moduleName === "Catalogue Structure",
+      ok:
+        buildCatalogueStructureUiLabels(resolveBusinessTerminology(null))
+          .moduleName === "Catalogue Structure",
     },
     {
       name: "ui:product tab renamed",

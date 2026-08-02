@@ -33,7 +33,7 @@ import {
   getProductAnalyticsPanelAction,
   refreshOfferingAnalyticsAction,
 } from "@/modules/product/actions/offering-analytics-actions";
-import { OFFERING_ANALYTICS_UI_LABELS } from "@/modules/product/offering-analytics-ui-labels";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import {
   OFFERING_METRIC_CATEGORIES,
   OFFERING_SNAPSHOT_PERIODS,
@@ -63,6 +63,7 @@ export function ProductAnalyticsPanel({
   productId,
   initialData,
 }: ProductAnalyticsPanelProps) {
+  const labels = useProductUiLabels();
   const [panel, setPanel] = useState(initialData);
   const [syncedInitial, setSyncedInitial] = useState(initialData);
   const [dateFrom, setDateFrom] = useState(initialData.dateFrom);
@@ -160,11 +161,11 @@ export function ProductAnalyticsPanel({
         <div className="flex items-center gap-2">
           <BarChart3Icon className="size-5 text-sky-700" aria-hidden />
           <h2 className="text-lg font-semibold tracking-tight">
-            {OFFERING_ANALYTICS_UI_LABELS.panelTitle}
+            {labels.analytics.panelTitle}
           </h2>
         </div>
         <p className="text-sm text-muted-foreground">
-          {OFFERING_ANALYTICS_UI_LABELS.panelDescription}
+          {labels.analytics.panelDescription}
         </p>
       </div>
 
@@ -175,12 +176,12 @@ export function ProductAnalyticsPanel({
           type="button"
           isProcessing={isPending}
           processingLabel="Refreshing…"
-          idleLabel={OFFERING_ANALYTICS_UI_LABELS.refreshAnalytics}
+          idleLabel={labels.analytics.refreshAnalytics}
           onClick={onRefresh}
         />
         <Button type="button" variant="outline" onClick={onExport}>
           <DownloadIcon className="mr-1 size-4" aria-hidden />
-          {OFFERING_ANALYTICS_UI_LABELS.exportAnalytics}
+          {labels.analytics.exportAnalytics}
         </Button>
       </div>
 
@@ -195,7 +196,7 @@ export function ProductAnalyticsPanel({
         <CardContent className="grid gap-4 md:grid-cols-4">
           <div className="space-y-2">
             <Label htmlFor="analytics-date-from">
-              {OFFERING_ANALYTICS_UI_LABELS.filterDateFrom}
+              {labels.analytics.filterDateFrom}
             </Label>
             <Input
               id="analytics-date-from"
@@ -206,7 +207,7 @@ export function ProductAnalyticsPanel({
           </div>
           <div className="space-y-2">
             <Label htmlFor="analytics-date-to">
-              {OFFERING_ANALYTICS_UI_LABELS.filterDateTo}
+              {labels.analytics.filterDateTo}
             </Label>
             <Input
               id="analytics-date-to"
@@ -217,7 +218,7 @@ export function ProductAnalyticsPanel({
           </div>
           <div className="space-y-2">
             <Label htmlFor="analytics-category">
-              {OFFERING_ANALYTICS_UI_LABELS.filterCategory}
+              {labels.analytics.filterCategory}
             </Label>
             <select
               id="analytics-category"
@@ -235,7 +236,7 @@ export function ProductAnalyticsPanel({
           </div>
           <div className="space-y-2">
             <Label htmlFor="analytics-period">
-              {OFFERING_ANALYTICS_UI_LABELS.filterPeriod}
+              {labels.analytics.filterPeriod}
             </Label>
             <select
               id="analytics-period"
@@ -260,12 +261,12 @@ export function ProductAnalyticsPanel({
 
       <section className="space-y-3">
         <h3 className="text-base font-semibold">
-          {OFFERING_ANALYTICS_UI_LABELS.sectionPerformanceSummary}
+          {labels.analytics.sectionPerformanceSummary}
         </h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <PlatformKpiCard label="Status" value={panel.statusName} />
           <PlatformKpiCard
-            label={OFFERING_ANALYTICS_UI_LABELS.lastRefreshed}
+            label={labels.analytics.lastRefreshed}
             value={formatDateTime(panel.lastRefreshedAt)}
           />
           <PlatformKpiCard label="Snapshots" value={panel.snapshots.length} />
@@ -275,12 +276,12 @@ export function ProductAnalyticsPanel({
 
       <section className="space-y-3">
         <h3 className="text-base font-semibold">
-          {OFFERING_ANALYTICS_UI_LABELS.sectionKpiCards}
+          {labels.analytics.sectionKpiCards}
         </h3>
         {!hasSnapshots ? (
           <PlatformEmptyState
-            title={OFFERING_ANALYTICS_UI_LABELS.noSnapshots}
-            description={OFFERING_ANALYTICS_UI_LABELS.noSnapshotsHint}
+            title={labels.analytics.noSnapshots}
+            description={labels.analytics.noSnapshotsHint}
           />
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -325,14 +326,14 @@ export function ProductAnalyticsPanel({
 
       <Card>
         <CardHeader>
-          <CardTitle>{OFFERING_ANALYTICS_UI_LABELS.sectionTrends}</CardTitle>
+          <CardTitle>{labels.analytics.sectionTrends}</CardTitle>
           <CardDescription>Recent immutable snapshots</CardDescription>
         </CardHeader>
         <CardContent>
           {panel.trends.length === 0 ? (
             <PlatformEmptyState
-              title={OFFERING_ANALYTICS_UI_LABELS.noSnapshots}
-              description={OFFERING_ANALYTICS_UI_LABELS.noSnapshotsHint}
+              title={labels.analytics.noSnapshots}
+              description={labels.analytics.noSnapshotsHint}
             />
           ) : (
             <div className="overflow-x-auto">

@@ -54,7 +54,8 @@ import {
   PRODUCT_STATUS_CODES,
   STORAGE_PROVIDER_CODES,
 } from "@/modules/product/constants";
-import { ProductError, PRODUCT_USER_MESSAGES } from "@/modules/product/errors";
+import { ProductError } from "@/modules/product/errors";
+import { resolveProductUserMessagesForContext } from "@/modules/product/resolve-product-user-messages";
 import { createOfferingDocumentLinkRepository } from "@/modules/product/repositories/offering-document-link-repository";
 import { createOfferingDocumentRepository } from "@/modules/product/repositories/offering-document-repository";
 import { createProductRepository } from "@/modules/product/repositories/product-repository";
@@ -278,12 +279,13 @@ export class OfferingDocumentService {
     file: UploadFileInput,
     metadata: UploadOfferingDocumentMetadata
   ): Promise<OfferingDocumentsPanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = uploadOfferingDocumentMetadataSchema.safeParse(metadata);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400,
         first?.path[0] ? String(first.path[0]) : undefined
       );
@@ -385,6 +387,7 @@ export class OfferingDocumentService {
     file: UploadFileInput,
     metadata: UploadOfferingDocumentMetadata
   ): Promise<OfferingDocumentsPanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const existing = await this.requireDocument(
       context,
       productId,
@@ -414,7 +417,7 @@ export class OfferingDocumentService {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400
       );
     }
@@ -484,11 +487,12 @@ export class OfferingDocumentService {
     offeringDocumentId: string,
     payload: VerifyOfferingDocumentPayload
   ): Promise<OfferingDocumentsPanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = verifyOfferingDocumentSchema.safeParse(payload);
     if (!parsed.success) {
       throw new ProductError(
         "INVALID_INPUT",
-        PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        msg.INVALID_INPUT,
         400
       );
     }
@@ -763,6 +767,7 @@ export class OfferingDocumentService {
     context: CurrentBusinessContext,
     productId: string
   ) {
+    const msg = await resolveProductUserMessagesForContext(context);
     const product = await this.productRepository.findById(
       context.businessId,
       productId
@@ -770,7 +775,7 @@ export class OfferingDocumentService {
     if (!product) {
       throw new ProductError(
         "PRODUCT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.PRODUCT_NOT_FOUND,
+        msg.PRODUCT_NOT_FOUND,
         404
       );
     }
@@ -781,11 +786,12 @@ export class OfferingDocumentService {
     context: CurrentBusinessContext,
     productId: string
   ) {
+    const msg = await resolveProductUserMessagesForContext(context);
     const product = await this.requireProduct(context, productId);
     if (product.statusCode === PRODUCT_STATUS_CODES.ARCHIVED) {
       throw new ProductError(
         "ARCHIVED_PRODUCT_IMMUTABLE",
-        PRODUCT_USER_MESSAGES.ARCHIVED_PRODUCT_IMMUTABLE,
+        msg.ARCHIVED_PRODUCT_IMMUTABLE,
         400
       );
     }
@@ -797,6 +803,7 @@ export class OfferingDocumentService {
     productId: string,
     offeringDocumentId: string
   ): Promise<DocumentRow> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const document = await this.offeringDocumentRepository.findById(
       context.businessId,
       offeringDocumentId
@@ -805,7 +812,7 @@ export class OfferingDocumentService {
     if (!document || document.productId !== productId) {
       throw new ProductError(
         "OFFERING_DOCUMENT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.OFFERING_DOCUMENT_NOT_FOUND,
+        msg.OFFERING_DOCUMENT_NOT_FOUND,
         404
       );
     }

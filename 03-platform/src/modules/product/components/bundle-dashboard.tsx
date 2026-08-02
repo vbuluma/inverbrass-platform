@@ -24,9 +24,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useBusinessTerminology } from "@/core/industry-experience/business-terminology-context";
 import { cn } from "@/lib/utils";
 import { searchBundlesAction } from "@/modules/product/actions/product-bundle-actions";
-import { BUNDLE_UI_LABELS } from "@/modules/product/bundle-ui-labels";
+import { buildBundleUiLabels } from "@/modules/product/product-terminology-labels";
 import type { BundleDashboardView, ProductBundleView } from "@/modules/product/types";
 
 type BundleDashboardProps = {
@@ -45,6 +46,8 @@ function formatDate(iso: string): string {
 }
 
 export function BundleDashboard({ data }: BundleDashboardProps) {
+  const terminology = useBusinessTerminology();
+  const uiLabels = buildBundleUiLabels(terminology);
   const bundleLabel = data.bundleLabel;
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<ProductBundleView[] | null>(
@@ -86,7 +89,7 @@ export function BundleDashboard({ data }: BundleDashboardProps) {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6">
       <div className="space-y-3">
-        <PageBackLink href="/products" label="Back to products" />
+        <PageBackLink href="/products" label={uiLabels.backLabel} />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex items-center gap-3">
             <span className="flex size-11 items-center justify-center rounded-lg bg-indigo-50 text-indigo-900 ring-1 ring-indigo-200">
@@ -95,7 +98,7 @@ export function BundleDashboard({ data }: BundleDashboardProps) {
             <div>
               <h1 className="text-2xl font-semibold tracking-tight">{bundleLabel}</h1>
               <p className="text-sm text-muted-foreground">
-                {BUNDLE_UI_LABELS.dashboardDescription}
+                {uiLabels.dashboardDescription}
               </p>
             </div>
           </div>
@@ -105,17 +108,17 @@ export function BundleDashboard({ data }: BundleDashboardProps) {
             className={cn(buttonVariants({ variant: "default" }), "gap-2")}
           >
             <PlusIcon className="size-4" aria-hidden />
-            {BUNDLE_UI_LABELS.quickActionRegister}
+            {uiLabels.registrationTitle}
           </Link>
         </div>
       </div>
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <PlatformKpiCard label={BUNDLE_UI_LABELS.metricsTotal} value={data.totalBundles} />
-        <PlatformKpiCard label={BUNDLE_UI_LABELS.metricsActive} value={data.activeBundles} />
-        <PlatformKpiCard label={BUNDLE_UI_LABELS.metricsDraft} value={data.draftBundles} />
+        <PlatformKpiCard label={uiLabels.metricsTotal} value={data.totalBundles} />
+        <PlatformKpiCard label={uiLabels.metricsActive} value={data.activeBundles} />
+        <PlatformKpiCard label={uiLabels.metricsDraft} value={data.draftBundles} />
         <PlatformKpiCard
-          label={BUNDLE_UI_LABELS.metricsArchived}
+          label={uiLabels.metricsArchived}
           value={data.archivedBundles}
         />
       </section>
@@ -152,8 +155,8 @@ export function BundleDashboard({ data }: BundleDashboardProps) {
           errorMessage={searchError ?? undefined}
           onRetry={() => runSearch(searchQuery)}
           emptyTitle={`No ${bundleLabel.toLowerCase()} found`}
-          emptyHints={["Try a different code or name", BUNDLE_UI_LABELS.quickActionRegister]}
-          createLabel={BUNDLE_UI_LABELS.quickActionRegister}
+          emptyHints={["Try a different code or name", uiLabels.quickActionRegister]}
+          createLabel={uiLabels.quickActionRegister}
           onCreate={() => {
             window.location.assign("/products/bundles/new");
           }}
@@ -194,13 +197,13 @@ export function BundleDashboard({ data }: BundleDashboardProps) {
           <PlatformEmptyState
             title={`No ${bundleLabel.toLowerCase()} yet`}
             description="Create a bundle to compose multiple offerings into one commercial package."
-            actionLabel={BUNDLE_UI_LABELS.quickActionRegister}
+            actionLabel={uiLabels.quickActionRegister}
             actionHref="/products/bundles/new"
           />
         ) : (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">{BUNDLE_UI_LABELS.metricsRecent}</CardTitle>
+              <CardTitle className="text-base">{uiLabels.metricsRecent}</CardTitle>
               <CardDescription>Latest bundle updates across your catalogue.</CardDescription>
             </CardHeader>
             <CardContent className="divide-y px-0 py-0">

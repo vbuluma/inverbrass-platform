@@ -7,16 +7,17 @@
  */
 
 export const INDUSTRY_VARIANT_LABELS: Record<string, string> = {
-  COMMERCE: "Variants",
+  COMMERCE: "SKUs",
   FINANCIAL: "Product Options",
-  HEALTHCARE: "Service Options",
+  HEALTHCARE: "Treatment Options",
   PROPERTY: "Unit Types",
-  EDUCATION: "Course Levels",
+  EDUCATION: "Intake Options",
   HOSPITALITY: "Variants",
   AGRICULTURE: "Variants",
   TRANSPORT: "Variants",
   MANUFACTURING: "Variants",
-  PROFESSIONAL: "Variants",
+  PROFESSIONAL: "Service Options",
+  SALON: "Service Options",
 };
 
 export const DEFAULT_VARIANT_LABEL = "Variants";

@@ -37,7 +37,10 @@ import {
   getProductPricingPanelAction,
   updatePricingItemAction,
 } from "@/modules/product/actions/pricing-actions";
-import { PRICING_UI_LABELS } from "@/modules/product/pricing-ui-labels";
+import {
+  useProductUiLabels,
+  type ProductUiLabels,
+} from "@/modules/product/product-terminology-labels";
 import type { PricingItemView, ProductPricingPanelView } from "@/modules/product/types";
 import { useControlledForm } from "@/lib/forms";
 import { dateFieldValue, textFieldValue } from "@/lib/forms/form-field-values";
@@ -126,6 +129,7 @@ function priceFormFromItem(item: PricingItemView): PriceFormValues {
 
 function PriceTable({
   items,
+  pricingLabels,
   disabled,
   onEdit,
   onActivate,
@@ -136,6 +140,7 @@ function PriceTable({
   onToggleCompare,
 }: {
   items: PricingItemView[];
+  pricingLabels: ProductUiLabels["pricing"];
   disabled?: boolean;
   onEdit: (item: PricingItemView) => void;
   onActivate: (itemId: string) => void;
@@ -154,15 +159,15 @@ function PriceTable({
       <table className="min-w-full text-sm">
         <thead>
           <tr className="border-b text-left text-muted-foreground">
-            <th className="px-2 py-2">Catalogue</th>
-            <th className="px-2 py-2">Price</th>
-            <th className="px-2 py-2">Method</th>
-            <th className="px-2 py-2">Segment</th>
-            <th className="px-2 py-2">Channel</th>
-            <th className="px-2 py-2">Region</th>
-            <th className="px-2 py-2">Effective</th>
-            <th className="px-2 py-2">Status</th>
-            <th className="px-2 py-2">Actions</th>
+            <th className="px-2 py-2">{pricingLabels.catalogue}</th>
+            <th className="px-2 py-2">{pricingLabels.price}</th>
+            <th className="px-2 py-2">{pricingLabels.pricingMethod}</th>
+            <th className="px-2 py-2">{pricingLabels.segment}</th>
+            <th className="px-2 py-2">{pricingLabels.channel}</th>
+            <th className="px-2 py-2">{pricingLabels.region}</th>
+            <th className="px-2 py-2">{pricingLabels.effective}</th>
+            <th className="px-2 py-2">{pricingLabels.status}</th>
+            <th className="px-2 py-2">{pricingLabels.actions}</th>
           </tr>
         </thead>
         <tbody>
@@ -198,7 +203,7 @@ function PriceTable({
                     disabled={disabled || !item.isEditable}
                     onClick={() => onEdit(item)}
                   >
-                    {PRICING_UI_LABELS.edit}
+                    {pricingLabels.edit}
                   </Button>
                   {item.status === "DRAFT" ? (
                     <Button
@@ -208,7 +213,7 @@ function PriceTable({
                       disabled={disabled}
                       onClick={() => onActivate(item.id)}
                     >
-                      {PRICING_UI_LABELS.activate}
+                      {pricingLabels.activate}
                     </Button>
                   ) : null}
                   {item.status === "ACTIVE" ? (
@@ -219,7 +224,7 @@ function PriceTable({
                       disabled={disabled}
                       onClick={() => onExpire(item.id)}
                     >
-                      {PRICING_UI_LABELS.expire}
+                      {pricingLabels.expire}
                     </Button>
                   ) : null}
                   <Button
@@ -230,7 +235,7 @@ function PriceTable({
                     onClick={() => onCopy(item.id)}
                   >
                     <CopyIcon className="mr-1 size-3.5" aria-hidden />
-                    {PRICING_UI_LABELS.copy}
+                    {pricingLabels.copy}
                   </Button>
                   {item.status !== "ARCHIVED" ? (
                     <Button
@@ -240,7 +245,7 @@ function PriceTable({
                       disabled={disabled}
                       onClick={() => onArchive(item.id)}
                     >
-                      {PRICING_UI_LABELS.archive}
+                      {pricingLabels.archive}
                     </Button>
                   ) : null}
                   <Button
@@ -250,7 +255,7 @@ function PriceTable({
                     disabled={disabled}
                     onClick={() => onToggleCompare(item.id)}
                   >
-                    {PRICING_UI_LABELS.compare}
+                    {pricingLabels.compare}
                   </Button>
                 </div>
               </td>
@@ -267,6 +272,8 @@ export function ProductPricingPanel({
   initialData,
   disabled = false,
 }: ProductPricingPanelProps) {
+  const labels = useProductUiLabels();
+  const pricingLabels = labels.pricing;
   const [panel, setPanel] = useState(initialData);
   const [syncedInitial, setSyncedInitial] = useState(initialData);
   const [mode, setMode] = useState<"list" | "add" | "edit">("list");
@@ -350,7 +357,7 @@ export function ProductPricingPanel({
 
   function onCompare() {
     if (compareIds.length < 2) {
-      setValidationError("Select at least two prices to compare.");
+      setValidationError(pricingLabels.selectTwoPricesToCompare);
       return;
     }
 
@@ -371,7 +378,7 @@ export function ProductPricingPanel({
     const values = priceForm.values;
 
     if (!values.pricingCatalogueId) {
-      setValidationError("Select a pricing catalogue.");
+      setValidationError(pricingLabels.selectPricingCatalogue);
       return;
     }
 
@@ -392,8 +399,8 @@ export function ProductPricingPanel({
     if (mode === "edit" && editingItemId) {
       runPricingMutation(
         () => updatePricingItemAction(editingItemId, payload),
-        "Price updated.",
-        "The price record was saved."
+        pricingLabels.priceUpdatedTitle,
+        pricingLabels.priceUpdatedMessage
       );
       return;
     }
@@ -404,21 +411,21 @@ export function ProductPricingPanel({
           offeringId: productId,
           ...payload,
         }),
-      "Price created.",
-      "A new price record was added for this offering."
+      pricingLabels.priceCreatedTitle,
+      pricingLabels.priceCreatedMessage
     );
   }
 
   function onActivate(itemId: string) {
     requestConfirm({
-      title: PRICING_UI_LABELS.activateConfirm,
-      description: "This price will become active for its dimension combination.",
-      confirmLabel: PRICING_UI_LABELS.activate,
+      title: pricingLabels.activateConfirm,
+      description: pricingLabels.activateConfirmDescription,
+      confirmLabel: pricingLabels.activate,
       onConfirm: () => {
         runPricingMutation(
           () => activatePricingItemAction(itemId),
-          "Price activated.",
-          "The price is now active."
+          pricingLabels.priceActivatedTitle,
+          pricingLabels.priceActivatedMessage
         );
       },
     });
@@ -426,14 +433,14 @@ export function ProductPricingPanel({
 
   function onExpire(itemId: string) {
     requestConfirm({
-      title: PRICING_UI_LABELS.expireConfirm,
-      description: "Expired prices become read-only.",
-      confirmLabel: PRICING_UI_LABELS.expire,
+      title: pricingLabels.expireConfirm,
+      description: pricingLabels.expireConfirmDescription,
+      confirmLabel: pricingLabels.expire,
       onConfirm: () => {
         runPricingMutation(
           () => expirePricingItemAction(itemId),
-          "Price expired.",
-          "The price is now expired."
+          pricingLabels.priceExpiredTitle,
+          pricingLabels.priceExpiredMessage
         );
       },
     });
@@ -441,14 +448,14 @@ export function ProductPricingPanel({
 
   function onArchive(itemId: string) {
     requestConfirm({
-      title: PRICING_UI_LABELS.archiveConfirm,
-      description: "Archived prices remain in history but cannot be reactivated.",
-      confirmLabel: PRICING_UI_LABELS.archive,
+      title: pricingLabels.archiveConfirm,
+      description: pricingLabels.archiveConfirmDescription,
+      confirmLabel: pricingLabels.archive,
       onConfirm: () => {
         runPricingMutation(
           () => archivePricingItemAction(itemId),
-          "Price archived.",
-          "The price was archived."
+          pricingLabels.priceArchivedTitle,
+          pricingLabels.priceArchivedMessage
         );
       },
     });
@@ -457,12 +464,13 @@ export function ProductPricingPanel({
   function onCopy(itemId: string) {
     runPricingMutation(
       () => copyPricingItemAction(itemId),
-      "Price copied.",
-      "A draft copy of the price was created."
+      pricingLabels.priceCopiedTitle,
+      pricingLabels.priceCopiedMessage
     );
   }
 
   const tableProps = {
+    pricingLabels,
     disabled,
     onEdit: (item: PricingItemView) => {
       setEditingItemId(item.id);
@@ -480,13 +488,13 @@ export function ProductPricingPanel({
     <div className="space-y-6">
       <div className="space-y-1">
         <h2 className="text-lg font-semibold tracking-tight">
-          {PRICING_UI_LABELS.panelTitle}
+          {pricingLabels.panelTitle}
         </h2>
         <p className="text-sm text-muted-foreground">
-          {PRICING_UI_LABELS.panelDescription}
+          {pricingLabels.panelDescription}
         </p>
         <p className="text-xs text-muted-foreground">
-          {PRICING_UI_LABELS.commercialRulesHint}
+          {pricingLabels.commercialRulesHint}
         </p>
       </div>
 
@@ -503,7 +511,7 @@ export function ProductPricingPanel({
           }}
         >
           <PlusIcon className="mr-1 size-4" aria-hidden />
-          {PRICING_UI_LABELS.quickActionAddPrice}
+          {pricingLabels.quickActionAddPrice}
         </Button>
         <Button
           type="button"
@@ -512,7 +520,7 @@ export function ProductPricingPanel({
           onClick={onCompare}
         >
           <ScaleIcon className="mr-1 size-4" aria-hidden />
-          {PRICING_UI_LABELS.quickActionCompare}
+          {pricingLabels.quickActionCompare}
         </Button>
       </div>
 
@@ -521,14 +529,14 @@ export function ProductPricingPanel({
           <CardHeader>
             <CardTitle>
               {mode === "edit"
-                ? PRICING_UI_LABELS.editPriceTitle
-                : PRICING_UI_LABELS.addPriceTitle}
+                ? pricingLabels.editPriceTitle
+                : pricingLabels.addPriceTitle}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <form className="grid gap-4 md:grid-cols-2" onSubmit={onSubmitPrice}>
               <div className="space-y-2">
-                <Label htmlFor="pricingCatalogueId">{PRICING_UI_LABELS.catalogue}</Label>
+                <Label htmlFor="pricingCatalogueId">{pricingLabels.catalogue}</Label>
                 <select
                   id="pricingCatalogueId"
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -538,7 +546,7 @@ export function ProductPricingPanel({
                   }
                   disabled={disabled}
                 >
-                  <option value="">Select catalogue</option>
+                  <option value="">{pricingLabels.selectCatalogue}</option>
                   {panel.catalogues.map((catalogue) => (
                     <option key={catalogue.id} value={catalogue.id}>
                       {catalogue.name} ({catalogue.code})
@@ -547,7 +555,7 @@ export function ProductPricingPanel({
                 </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="currencyCode">{PRICING_UI_LABELS.currency}</Label>
+                <Label htmlFor="currencyCode">{pricingLabels.currency}</Label>
                 <select
                   id="currencyCode"
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -565,7 +573,7 @@ export function ProductPricingPanel({
                 </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="unitPrice">{PRICING_UI_LABELS.unitPrice}</Label>
+                <Label htmlFor="unitPrice">{pricingLabels.unitPrice}</Label>
                 <Input
                   id="unitPrice"
                   type="number"
@@ -579,7 +587,7 @@ export function ProductPricingPanel({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="pricingMethod">{PRICING_UI_LABELS.pricingMethod}</Label>
+                <Label htmlFor="pricingMethod">{pricingLabels.pricingMethod}</Label>
                 <select
                   id="pricingMethod"
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -597,7 +605,7 @@ export function ProductPricingPanel({
                 </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="minimumPrice">{PRICING_UI_LABELS.minimumPrice}</Label>
+                <Label htmlFor="minimumPrice">{pricingLabels.minimumPrice}</Label>
                 <Input
                   id="minimumPrice"
                   type="number"
@@ -611,7 +619,7 @@ export function ProductPricingPanel({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="maximumPrice">{PRICING_UI_LABELS.maximumPrice}</Label>
+                <Label htmlFor="maximumPrice">{pricingLabels.maximumPrice}</Label>
                 <Input
                   id="maximumPrice"
                   type="number"
@@ -625,7 +633,7 @@ export function ProductPricingPanel({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="customerSegment">{PRICING_UI_LABELS.customerSegment}</Label>
+                <Label htmlFor="customerSegment">{pricingLabels.customerSegment}</Label>
                 <Input
                   id="customerSegment"
                   value={priceForm.values.customerSegment}
@@ -636,7 +644,7 @@ export function ProductPricingPanel({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="salesChannel">{PRICING_UI_LABELS.salesChannel}</Label>
+                <Label htmlFor="salesChannel">{pricingLabels.salesChannel}</Label>
                 <Input
                   id="salesChannel"
                   value={priceForm.values.salesChannel}
@@ -647,7 +655,7 @@ export function ProductPricingPanel({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="region">{PRICING_UI_LABELS.region}</Label>
+                <Label htmlFor="region">{pricingLabels.region}</Label>
                 <Input
                   id="region"
                   value={priceForm.values.region}
@@ -658,7 +666,7 @@ export function ProductPricingPanel({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="effectiveFrom">{PRICING_UI_LABELS.effectiveFrom}</Label>
+                <Label htmlFor="effectiveFrom">{pricingLabels.effectiveFrom}</Label>
                 <Input
                   id="effectiveFrom"
                   type="datetime-local"
@@ -673,7 +681,7 @@ export function ProductPricingPanel({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="effectiveTo">{PRICING_UI_LABELS.effectiveTo}</Label>
+                <Label htmlFor="effectiveTo">{pricingLabels.effectiveTo}</Label>
                 <Input
                   id="effectiveTo"
                   type="datetime-local"
@@ -697,8 +705,8 @@ export function ProductPricingPanel({
                 <PlatformProcessingButton
                   type="submit"
                   isProcessing={isPending}
-                  processingLabel="Saving…"
-                  idleLabel={PRICING_UI_LABELS.savePrice}
+                  processingLabel={pricingLabels.saving}
+                  idleLabel={pricingLabels.savePrice}
                   disabled={disabled}
                 />
                 <Button
@@ -710,7 +718,7 @@ export function ProductPricingPanel({
                     setEditingItemId(null);
                   }}
                 >
-                  Cancel
+                  {pricingLabels.cancel}
                 </Button>
               </div>
             </form>
@@ -721,9 +729,9 @@ export function ProductPricingPanel({
       {comparison ? (
         <Card>
           <CardHeader>
-            <CardTitle>{PRICING_UI_LABELS.compareTitle}</CardTitle>
+            <CardTitle>{pricingLabels.compareTitle}</CardTitle>
             <CardDescription>
-              Comparing {comparison.length} price records across dimensions.
+              {pricingLabels.compareDescription(comparison.length)}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -734,7 +742,7 @@ export function ProductPricingPanel({
               className="mt-4"
               onClick={() => setComparison(null)}
             >
-              Close Comparison
+              {pricingLabels.closeComparison}
             </Button>
           </CardContent>
         </Card>
@@ -742,14 +750,14 @@ export function ProductPricingPanel({
 
       <Card>
         <CardHeader>
-          <CardTitle>{PRICING_UI_LABELS.sectionActive}</CardTitle>
-          <CardDescription>{panel.counts.active} active</CardDescription>
+          <CardTitle>{pricingLabels.sectionActive}</CardTitle>
+          <CardDescription>{pricingLabels.activeCount(panel.counts.active)}</CardDescription>
         </CardHeader>
         <CardContent>
           {panel.activePrices.length === 0 ? (
             <PlatformEmptyState
-              title={PRICING_UI_LABELS.noActivePrices}
-              description="Add a price to define how this offering is sold."
+              title={pricingLabels.noActivePrices}
+              description={pricingLabels.noActivePricesDescription}
             />
           ) : (
             <PriceTable items={panel.activePrices} {...tableProps} />
@@ -759,12 +767,12 @@ export function ProductPricingPanel({
 
       <Card>
         <CardHeader>
-          <CardTitle>{PRICING_UI_LABELS.sectionFuture}</CardTitle>
-          <CardDescription>{panel.counts.future} scheduled</CardDescription>
+          <CardTitle>{pricingLabels.sectionFuture}</CardTitle>
+          <CardDescription>{pricingLabels.futureCount(panel.counts.future)}</CardDescription>
         </CardHeader>
         <CardContent>
           {panel.futurePrices.length === 0 ? (
-            <PlatformSearchState status="empty" emptyTitle={PRICING_UI_LABELS.noFuturePrices} />
+            <PlatformSearchState status="empty" emptyTitle={pricingLabels.noFuturePrices} />
           ) : (
             <PriceTable items={panel.futurePrices} {...tableProps} />
           )}
@@ -773,12 +781,12 @@ export function ProductPricingPanel({
 
       <Card>
         <CardHeader>
-          <CardTitle>{PRICING_UI_LABELS.sectionExpired}</CardTitle>
-          <CardDescription>{panel.counts.expired} expired</CardDescription>
+          <CardTitle>{pricingLabels.sectionExpired}</CardTitle>
+          <CardDescription>{pricingLabels.expiredCount(panel.counts.expired)}</CardDescription>
         </CardHeader>
         <CardContent>
           {panel.expiredPrices.length === 0 ? (
-            <PlatformSearchState status="empty" emptyTitle={PRICING_UI_LABELS.noExpiredPrices} />
+            <PlatformSearchState status="empty" emptyTitle={pricingLabels.noExpiredPrices} />
           ) : (
             <PriceTable items={panel.expiredPrices} {...tableProps} />
           )}
@@ -787,14 +795,14 @@ export function ProductPricingPanel({
 
       <Card>
         <CardHeader>
-          <CardTitle>{PRICING_UI_LABELS.sectionHistory}</CardTitle>
-          <CardDescription>{panel.counts.total} total records</CardDescription>
+          <CardTitle>{pricingLabels.sectionHistory}</CardTitle>
+          <CardDescription>{pricingLabels.totalCount(panel.counts.total)}</CardDescription>
         </CardHeader>
         <CardContent>
           {panel.priceHistory.length === 0 ? (
             <PlatformEmptyState
-              title={PRICING_UI_LABELS.noHistory}
-              description="Price changes will appear here as they are recorded."
+              title={pricingLabels.noHistory}
+              description={pricingLabels.noHistoryDescription}
             />
           ) : (
             <PriceTable items={panel.priceHistory} {...tableProps} />

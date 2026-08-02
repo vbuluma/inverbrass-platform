@@ -12,6 +12,7 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { closeDb } from "@/db/client";
+import { resolveBusinessTerminology } from "@/core/industry-experience/business-terminology";
 import { resolveBundleLabel } from "@/core/industry-experience/bundle-terminology";
 import { BUNDLE_TIMELINE_EVENT_TYPES } from "@/core/bundle-timeline/constants";
 import { PRODUCT_TIMELINE_EVENT_TYPES } from "@/core/product-timeline/constants";
@@ -20,7 +21,7 @@ import {
   BUNDLE_TYPE_CODES,
   PRODUCT_WORKSPACE_TABS,
 } from "@/modules/product/constants";
-import { BUNDLE_UI_LABELS } from "@/modules/product/bundle-ui-labels";
+import { buildBundleUiLabels } from "@/modules/product/product-terminology-labels";
 import { createProductBundleService } from "@/modules/product/services/product-bundle-service";
 import {
   bundleTypeOptions,
@@ -204,7 +205,9 @@ function checkWorkspaceTabs(): SmokeResult[] {
     },
     {
       name: "bundle ui labels",
-      ok: BUNDLE_UI_LABELS.dashboardTitle === "Product Bundles",
+      ok:
+        buildBundleUiLabels(resolveBusinessTerminology(null)).dashboardTitle ===
+        "Bundles",
     },
   ];
 }

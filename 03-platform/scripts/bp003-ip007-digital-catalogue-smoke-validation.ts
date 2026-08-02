@@ -12,6 +12,7 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { closeDb } from "@/db/client";
+import { resolveBusinessTerminology } from "@/core/industry-experience/business-terminology";
 import { resolveDigitalCatalogueLabel } from "@/core/industry-experience/digital-catalogue-terminology";
 import { PRODUCT_TIMELINE_EVENT_TYPES } from "@/core/product-timeline/constants";
 import {
@@ -19,7 +20,7 @@ import {
   PRODUCT_STATUS_CODES,
   PRODUCT_WORKSPACE_TABS,
 } from "@/modules/product/constants";
-import { CATALOGUE_UI_LABELS } from "@/modules/product/catalogue-ui-labels";
+import { buildCatalogueUiLabels } from "@/modules/product/product-terminology-labels";
 import { createProductCatalogueService } from "@/modules/product/services/product-catalogue-service";
 import {
   buildQrSlug,
@@ -193,7 +194,9 @@ function checkWorkspaceTabs(): SmokeResult[] {
     },
     {
       name: "catalogue ui labels",
-      ok: CATALOGUE_UI_LABELS.dashboardTitle === "Digital Catalogue",
+      ok:
+        buildCatalogueUiLabels(resolveBusinessTerminology(null)).dashboardTitle ===
+        "Catalogue Catalogue",
     },
   ];
 }

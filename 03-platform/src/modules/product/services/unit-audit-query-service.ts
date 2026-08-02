@@ -8,7 +8,8 @@
 
 import type { CurrentBusinessContext } from "@/core/auth/types";
 import { AUDIT_ENTITY_NAMES, createAuditService } from "@/core/audit";
-import { ProductError, PRODUCT_USER_MESSAGES } from "@/modules/product/errors";
+import { ProductError } from "@/modules/product/errors";
+import { resolveProductUserMessagesForContext } from "@/modules/product/resolve-product-user-messages";
 import { createUnitRepository } from "@/modules/product/repositories/unit-repository";
 import type { UnitAuditHistoryPanelView } from "@/modules/product/types";
 
@@ -23,12 +24,13 @@ export class UnitAuditQueryService {
     unitId: string,
     filters: { limit?: number; offset?: number } = { limit: 25, offset: 0 }
   ): Promise<UnitAuditHistoryPanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const unit = await this.unitRepository.findById(context.businessId, unitId);
 
     if (!unit) {
       throw new ProductError(
         "UNIT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.UNIT_NOT_FOUND,
+        msg.UNIT_NOT_FOUND,
         404
       );
     }

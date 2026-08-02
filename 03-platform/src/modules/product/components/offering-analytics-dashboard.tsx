@@ -20,7 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { OFFERING_ANALYTICS_UI_LABELS } from "@/modules/product/offering-analytics-ui-labels";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import type { OfferingAnalyticsDashboardView } from "@/modules/product/types";
 
 type OfferingAnalyticsDashboardProps = {
@@ -30,12 +30,13 @@ type OfferingAnalyticsDashboardProps = {
 export function OfferingAnalyticsDashboard({
   data,
 }: OfferingAnalyticsDashboardProps) {
+  const labels = useProductUiLabels();
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6">
       <div className="space-y-3">
         <PageBackLink
           href="/products"
-          label={`Back to ${data.catalogueLabel.toLowerCase()}`}
+          label={labels.analytics.backLabel}
         />
         <div className="flex items-center gap-3">
           <span className="flex size-11 items-center justify-center rounded-lg bg-sky-50 text-sky-800 ring-1 ring-sky-200">
@@ -43,10 +44,10 @@ export function OfferingAnalyticsDashboard({
           </span>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">
-              {OFFERING_ANALYTICS_UI_LABELS.dashboardTitle}
+              {labels.analytics.dashboardTitle}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {OFFERING_ANALYTICS_UI_LABELS.dashboardDescription}
+              {labels.analytics.dashboardDescription}
             </p>
           </div>
         </div>
@@ -54,15 +55,15 @@ export function OfferingAnalyticsDashboard({
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <PlatformKpiCard
-          label={OFFERING_ANALYTICS_UI_LABELS.metricsTotal}
+          label={labels.analytics.metricsTotal}
           value={data.metricDefinitionCount}
         />
         <PlatformKpiCard
-          label={OFFERING_ANALYTICS_UI_LABELS.snapshotsTotal}
+          label={labels.analytics.snapshotsTotal}
           value={data.snapshotCount}
         />
         <PlatformKpiCard
-          label={OFFERING_ANALYTICS_UI_LABELS.offeringsTracked}
+          label={labels.analytics.offeringsTracked}
           value={data.offeringsTracked}
         />
         <PlatformKpiCard
@@ -104,8 +105,8 @@ export function OfferingAnalyticsDashboard({
         <CardContent>
           {data.recentlyRefreshed.length === 0 ? (
             <PlatformEmptyState
-              title={OFFERING_ANALYTICS_UI_LABELS.noSnapshots}
-              description={OFFERING_ANALYTICS_UI_LABELS.noSnapshotsHint}
+              title={labels.analytics.noSnapshots}
+              description={labels.analytics.noSnapshotsHint}
             />
           ) : (
             <div className="overflow-x-auto">

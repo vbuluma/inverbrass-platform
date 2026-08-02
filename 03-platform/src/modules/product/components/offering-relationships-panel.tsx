@@ -39,6 +39,7 @@ import {
   updateOfferingRelationshipAction,
 } from "@/modules/product/actions/offering-relationship-actions";
 import { OFFERING_RELATIONSHIP_STATUS_CODES } from "@/modules/product/constants";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import type {
   OfferingRelationshipsPanelView,
   OfferingRelationshipView,
@@ -236,6 +237,7 @@ export function OfferingRelationshipsPanel({
   productId,
   initialData,
 }: OfferingRelationshipsPanelProps) {
+  const labels = useProductUiLabels();
   const [panel, setPanel] = useState(initialData);
   const [syncedInitial, setSyncedInitial] = useState(initialData);
   const [syncedProductId, setSyncedProductId] = useState(productId);
@@ -498,12 +500,12 @@ export function OfferingRelationshipsPanel({
             ) : (
               <>
                 <RelationshipSection
-                  title="Required Offerings"
+                  title={labels.relationships.requiredOfferings}
                   relationships={panel.sections.required}
                   {...sectionProps}
                 />
                 <RelationshipSection
-                  title="Optional Offerings"
+                  title={labels.relationships.optionalOfferings}
                   relationships={panel.sections.optional}
                   {...sectionProps}
                 />
@@ -518,7 +520,7 @@ export function OfferingRelationshipsPanel({
                   {...sectionProps}
                 />
                 <RelationshipSection
-                  title="Alternative Offerings"
+                  title={labels.relationships.alternativeOfferings}
                   relationships={panel.sections.alternatives}
                   {...sectionProps}
                 />
@@ -547,13 +549,13 @@ export function OfferingRelationshipsPanel({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="offeringSearch">Search Products</Label>
+            <Label htmlFor="offeringSearch">{labels.relationships.searchProductsLabel}</Label>
             <div className="flex gap-2">
               <Input
                 id="offeringSearch"
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Product name or code"
+                placeholder={labels.relationships.productNameOrCode}
                 disabled={isPending}
               />
               <PlatformProcessingButton

@@ -29,7 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { searchPricingItemsAction } from "@/modules/product/actions/pricing-actions";
-import { PRICING_UI_LABELS } from "@/modules/product/pricing-ui-labels";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import type { PricingDashboardView, PricingItemView } from "@/modules/product/types";
 
 type PricingDashboardProps = {
@@ -48,6 +48,7 @@ function formatDate(iso: string): string {
 }
 
 export function PricingDashboard({ data }: PricingDashboardProps) {
+  const labels = useProductUiLabels();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<PricingItemView[] | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -86,7 +87,7 @@ export function PricingDashboard({ data }: PricingDashboardProps) {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6">
       <div className="space-y-3">
-        <PageBackLink href="/products" label={`Back to ${data.catalogueLabel.toLowerCase()}`} />
+        <PageBackLink href="/products" label={labels.pricing.backLabel} />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-3">
@@ -95,10 +96,10 @@ export function PricingDashboard({ data }: PricingDashboardProps) {
               </span>
               <div>
                 <h1 className="text-2xl font-semibold tracking-tight">
-                  {PRICING_UI_LABELS.dashboardTitle}
+                  {labels.pricing.dashboardTitle}
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  {PRICING_UI_LABELS.dashboardDescription}
+                  {labels.pricing.dashboardDescription}
                 </p>
               </div>
             </div>
@@ -107,18 +108,18 @@ export function PricingDashboard({ data }: PricingDashboardProps) {
       </div>
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <PlatformKpiCard label={PRICING_UI_LABELS.metricsActive} value={data.activePrices} />
-        <PlatformKpiCard label={PRICING_UI_LABELS.metricsFuture} value={data.futurePrices} />
-        <PlatformKpiCard label={PRICING_UI_LABELS.metricsExpired} value={data.expiredPrices} />
+        <PlatformKpiCard label={labels.pricing.metricsActive} value={data.activePrices} />
+        <PlatformKpiCard label={labels.pricing.metricsFuture} value={data.futurePrices} />
+        <PlatformKpiCard label={labels.pricing.metricsExpired} value={data.expiredPrices} />
         <PlatformKpiCard
-          label={PRICING_UI_LABELS.metricsCatalogues}
+          label={labels.pricing.metricsCatalogues}
           value={data.catalogueCount}
         />
       </section>
 
       <section aria-labelledby="pricing-quick-actions" className="space-y-3">
         <h2 id="pricing-quick-actions" className="text-lg font-semibold tracking-tight">
-          Quick Actions
+          {labels.pricing.quickActionsHeading}
         </h2>
         <div className="flex flex-wrap gap-2">
           <Link
@@ -127,17 +128,15 @@ export function PricingDashboard({ data }: PricingDashboardProps) {
             className={cn(buttonVariants({ variant: "default" }), "gap-2")}
           >
             <PlusIcon className="size-4" aria-hidden />
-            {PRICING_UI_LABELS.quickActionAddPrice}
+            {labels.pricing.quickActionAddPrice}
           </Link>
         </div>
       </section>
 
       <Card>
         <CardHeader>
-          <CardTitle>Search Pricing</CardTitle>
-          <CardDescription>
-            Search by offering, catalogue, currency, segment, channel, or region.
-          </CardDescription>
+          <CardTitle>{labels.pricing.searchHeading}</CardTitle>
+          <CardDescription>{labels.pricing.searchDescription}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <form
@@ -155,19 +154,19 @@ export function PricingDashboard({ data }: PricingDashboardProps) {
               <Input
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder={PRICING_UI_LABELS.searchPlaceholder}
+                placeholder={labels.pricing.searchPlaceholder}
                 className="pl-9"
               />
             </div>
             <button type="submit" className={cn(buttonVariants({ variant: "outline" }))}>
-              Search
+              {labels.pricing.searchButton}
             </button>
           </form>
 
           <PlatformSearchState
             status={searchStatus}
-            emptyTitle={PRICING_UI_LABELS.searchEmptyTitle}
-            emptyHints={[...PRICING_UI_LABELS.searchEmptyHints]}
+            emptyTitle={labels.pricing.searchEmptyTitle}
+            emptyHints={[...labels.pricing.searchEmptyHints]}
             errorMessage={searchError ?? undefined}
             onRetry={() => runSearch(searchQuery)}
           >
@@ -175,11 +174,11 @@ export function PricingDashboard({ data }: PricingDashboardProps) {
               <table className="min-w-full text-sm">
                 <thead>
                   <tr className="border-b text-left text-muted-foreground">
-                    <th className="px-2 py-2">{PRICING_UI_LABELS.offering}</th>
-                    <th className="px-2 py-2">{PRICING_UI_LABELS.catalogue}</th>
-                    <th className="px-2 py-2">{PRICING_UI_LABELS.unitPrice}</th>
-                    <th className="px-2 py-2">{PRICING_UI_LABELS.status}</th>
-                    <th className="px-2 py-2">Updated</th>
+                    <th className="px-2 py-2">{labels.pricing.offering}</th>
+                    <th className="px-2 py-2">{labels.pricing.catalogue}</th>
+                    <th className="px-2 py-2">{labels.pricing.unitPrice}</th>
+                    <th className="px-2 py-2">{labels.pricing.status}</th>
+                    <th className="px-2 py-2">{labels.pricing.updated}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -213,16 +212,16 @@ export function PricingDashboard({ data }: PricingDashboardProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>{PRICING_UI_LABELS.sectionCatalogues}</CardTitle>
+          <CardTitle>{labels.pricing.sectionCatalogues}</CardTitle>
           <CardDescription>
-            {data.activeCatalogues} active of {data.catalogueCount} catalogues
+            {labels.pricing.cataloguesSummary(data.activeCatalogues, data.catalogueCount)}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {data.catalogues.length === 0 ? (
             <PlatformEmptyState
-              title="No pricing catalogues yet"
-              description="Create a pricing catalogue before assigning prices to offerings."
+              title={labels.pricing.noCataloguesTitle}
+              description={labels.pricing.noCataloguesDescription}
             />
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">

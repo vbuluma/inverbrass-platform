@@ -6,6 +6,7 @@
 import { redirect } from "next/navigation";
 
 import { getBundleRegistrationCataloguesAction } from "@/modules/product/actions/product-bundle-actions";
+import { ProductModuleErrorPage } from "@/modules/product/components/product-module-error-page";
 import { BundleRegistrationWizard } from "@/modules/product/components/bundle-registration-wizard";
 
 export default async function BundleRegistrationPage() {
@@ -20,10 +21,7 @@ export default async function BundleRegistrationPage() {
     }
 
     return (
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-xl font-semibold">Register Bundle</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{result.error.message}</p>
-      </main>
+      <ProductModuleErrorPage message={result.error.message} titleKind="bundles" />
     );
   }
 

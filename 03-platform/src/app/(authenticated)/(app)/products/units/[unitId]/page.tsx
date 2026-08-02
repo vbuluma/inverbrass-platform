@@ -9,6 +9,7 @@
 import { redirect } from "next/navigation";
 
 import { getUnitWorkspaceAction } from "@/modules/product/actions/unit-actions";
+import { ProductModuleErrorPage } from "@/modules/product/components/product-module-error-page";
 import { UnitWorkspace } from "@/modules/product/components/unit-workspace";
 
 type UnitWorkspacePageProps = {
@@ -33,10 +34,7 @@ export default async function UnitWorkspacePage({
     }
 
     return (
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-xl font-semibold">Unit Workspace</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{result.error.message}</p>
-      </main>
+      <ProductModuleErrorPage message={result.error.message} titleKind="dashboard" />
     );
   }
 

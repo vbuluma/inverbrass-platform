@@ -8,7 +8,8 @@
 
 import type { CurrentBusinessContext } from "@/core/auth/types";
 import { AUDIT_ENTITY_NAMES, createAuditService } from "@/core/audit";
-import { ProductError, PRODUCT_USER_MESSAGES } from "@/modules/product/errors";
+import { ProductError } from "@/modules/product/errors";
+import { resolveProductUserMessagesForContext } from "@/modules/product/resolve-product-user-messages";
 import { createProductBundleRepository } from "@/modules/product/repositories/product-bundle-repository";
 import type { BundleAuditHistoryPanelView } from "@/modules/product/types";
 
@@ -23,12 +24,13 @@ export class ProductBundleAuditQueryService {
     bundleId: string,
     filters: { limit?: number; offset?: number } = { limit: 25, offset: 0 }
   ): Promise<BundleAuditHistoryPanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const bundle = await this.bundleRepository.findById(context.businessId, bundleId);
 
     if (!bundle) {
       throw new ProductError(
         "BUNDLE_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.BUNDLE_NOT_FOUND,
+        msg.BUNDLE_NOT_FOUND,
         404
       );
     }

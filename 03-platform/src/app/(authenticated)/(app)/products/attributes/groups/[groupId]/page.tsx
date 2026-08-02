@@ -10,7 +10,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getAttributeGroupWorkspaceAction } from "@/modules/product/actions/attribute-actions";
-import { ATTRIBUTE_UI_LABELS } from "@/modules/product/attribute-ui-labels";
+import { ProductModuleErrorPage } from "@/modules/product/components/product-module-error-page";
 
 type PageProps = {
   params: Promise<{ groupId: string }>;
@@ -29,10 +29,7 @@ export default async function AttributeGroupWorkspacePage({ params }: PageProps)
     }
 
     return (
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-xl font-semibold">Attribute Group</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{result.error.message}</p>
-      </main>
+      <ProductModuleErrorPage message={result.error.message} titleKind="attributes" />
     );
   }
 
@@ -66,7 +63,7 @@ export default async function AttributeGroupWorkspacePage({ params }: PageProps)
           <p className="text-sm text-muted-foreground">
             No definitions in this group yet.{" "}
             <Link href="/products/attributes/definitions/new">
-              {ATTRIBUTE_UI_LABELS.quickActionDefinition}
+              Create Definition
             </Link>
           </p>
         ) : null}

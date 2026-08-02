@@ -20,7 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { OFFERING_GOVERNANCE_UI_LABELS } from "@/modules/product/offering-governance-ui-labels";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import type { OfferingGovernanceDashboardView } from "@/modules/product/types";
 
 type OfferingGovernanceDashboardProps = {
@@ -30,12 +30,13 @@ type OfferingGovernanceDashboardProps = {
 export function OfferingGovernanceDashboard({
   data,
 }: OfferingGovernanceDashboardProps) {
+  const labels = useProductUiLabels();
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6">
       <div className="space-y-3">
         <PageBackLink
           href="/products"
-          label={`Back to ${data.catalogueLabel.toLowerCase()}`}
+          label={labels.governance.backLabel}
         />
         <div className="flex items-center gap-3">
           <span className="flex size-11 items-center justify-center rounded-lg bg-sky-50 text-sky-800 ring-1 ring-sky-200">
@@ -43,10 +44,10 @@ export function OfferingGovernanceDashboard({
           </span>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">
-              {OFFERING_GOVERNANCE_UI_LABELS.dashboardTitle}
+              {labels.governance.dashboardTitle}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {OFFERING_GOVERNANCE_UI_LABELS.dashboardDescription}
+              {labels.governance.dashboardDescription}
             </p>
           </div>
         </div>
@@ -54,19 +55,19 @@ export function OfferingGovernanceDashboard({
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <PlatformKpiCard
-          label={OFFERING_GOVERNANCE_UI_LABELS.offeringsGoverned}
+          label={labels.governance.offeringsGoverned}
           value={data.governanceCount}
         />
         <PlatformKpiCard
-          label={OFFERING_GOVERNANCE_UI_LABELS.readyCount}
+          label={labels.governance.readyCount}
           value={data.readyCount}
         />
         <PlatformKpiCard
-          label={OFFERING_GOVERNANCE_UI_LABELS.nonCompliantCount}
+          label={labels.governance.nonCompliantCount}
           value={data.nonCompliantCount}
         />
         <PlatformKpiCard
-          label={OFFERING_GOVERNANCE_UI_LABELS.averageReadiness}
+          label={labels.governance.averageReadiness}
           value={`${data.averageReadiness}%`}
         />
       </section>
@@ -79,7 +80,7 @@ export function OfferingGovernanceDashboard({
           {data.statusSummary.length === 0 ? (
             <PlatformEmptyState
               title="No governance records yet"
-              description="Open a product workspace and run governance validation to begin."
+              description={labels.governance.emptyRecordsDescription}
             />
           ) : (
             <ul className="grid gap-2 sm:grid-cols-2">
@@ -108,7 +109,7 @@ export function OfferingGovernanceDashboard({
           {data.recentGovernance.length === 0 ? (
             <PlatformEmptyState
               title="No recent activity"
-              description="Governance updates will appear here as offerings are validated."
+              description={labels.governance.recentActivityDescription}
             />
           ) : (
             <ul className="space-y-2">

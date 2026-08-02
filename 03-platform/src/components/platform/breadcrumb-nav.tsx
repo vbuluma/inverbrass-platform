@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { buildDefaultBreadcrumbs } from "@/lib/navigation/breadcrumb-utils";
 import type { BreadcrumbItem as Crumb } from "@/lib/navigation/types";
+import { useBusinessTerminology } from "@/core/industry-experience/business-terminology-context";
 
 import { useBreadcrumbContext } from "./breadcrumb-context";
 
@@ -24,6 +25,7 @@ type BreadcrumbNavProps = {
 
 export function BreadcrumbNav({ hideOnDashboard = true }: BreadcrumbNavProps) {
   const pathname = usePathname();
+  const terminology = useBusinessTerminology();
   const { items: overrideItems, setItems } = useBreadcrumbContext();
 
   useEffect(() => {
@@ -34,8 +36,10 @@ export function BreadcrumbNav({ hideOnDashboard = true }: BreadcrumbNavProps) {
     if (overrideItems && overrideItems.length > 0) {
       return overrideItems;
     }
-    return buildDefaultBreadcrumbs(pathname);
-  }, [overrideItems, pathname]);
+    return buildDefaultBreadcrumbs(pathname, {
+      products: terminology.navigation.breadcrumbOfferings,
+    });
+  }, [overrideItems, pathname, terminology.navigation.breadcrumbOfferings]);
 
   if (hideOnDashboard && pathname === "/dashboard") {
     return null;

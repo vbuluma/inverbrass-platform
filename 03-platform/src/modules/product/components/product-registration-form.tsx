@@ -37,8 +37,8 @@ import { useControlledForm } from "@/lib/forms";
 import { createProductAction } from "@/modules/product/actions/product-actions";
 import { ProductCapabilitiesPanel } from "@/modules/product/components/product-capabilities-panel";
 import { PRODUCT_RECORD_SOURCE_CODES } from "@/modules/product/constants";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import type { ProductRegistrationCatalogues } from "@/modules/product/types";
-import { PRODUCT_UI_LABELS } from "@/modules/product/ui-labels";
 
 const DRAFT_STORAGE_KEY = "product-registration-draft";
 
@@ -70,9 +70,9 @@ type ProductRegistrationFormProps = {
 
 export function ProductRegistrationForm({
   catalogues,
-  catalogueLabel = "Products",
 }: ProductRegistrationFormProps) {
-  const singularLabel = catalogueLabel.replace(/s$/, "");
+  const labels = useProductUiLabels();
+  const singularLabel = labels.registration.singularLabel;
   const formRef = useRef<HTMLFormElement>(null);
   const { draftValues, saveDraft, clearDraft, draftSavedAt, isHydrated } =
     useFormDraft<Record<string, string>>(DRAFT_STORAGE_KEY);
@@ -133,9 +133,9 @@ export function ProductRegistrationForm({
 
       if (!actionResult.success) {
         setResult(
-          actionResult.platform ??
+            actionResult.platform ??
             platformError(
-              "Could not create product",
+              labels.registration.createErrorTitle,
               actionResult.error.message,
               actionResult.error.field
             )
@@ -152,10 +152,10 @@ export function ProductRegistrationForm({
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
       <div className="space-y-3">
-        <PageBackLink href="/products" label={`Back to ${catalogueLabel}`} />
+        <PageBackLink href="/products" label={labels.registration.backLabel} />
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">
-            Register {singularLabel}
+            {labels.registration.pageTitle}
           </h1>
           <p className="text-sm text-muted-foreground">
             Create a master {singularLabel.toLowerCase()} record in the enterprise catalogue.
@@ -171,14 +171,14 @@ export function ProductRegistrationForm({
       >
         <Card>
           <CardHeader>
-            <CardTitle>{PRODUCT_UI_LABELS.identityHeading}</CardTitle>
+            <CardTitle>{labels.registration.formSections.identityHeading}</CardTitle>
             <CardDescription>
               Core identifiers and classification for the offering master.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="productName">Product Name</Label>
+              <Label htmlFor="productName">{labels.registration.nameLabel}</Label>
               <Input
                 id="productName"
                 value={form.textValue("productName")}
@@ -189,7 +189,7 @@ export function ProductRegistrationForm({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="productCode">Product Code</Label>
+              <Label htmlFor="productCode">{labels.registration.codeLabel}</Label>
               <Input
                 id="productCode"
                 value={form.textValue("productCode")}
@@ -220,7 +220,7 @@ export function ProductRegistrationForm({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="productTypeCode">Product Type</Label>
+              <Label htmlFor="productTypeCode">{labels.registration.typeLabel}</Label>
               <select
                 id="productTypeCode"
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -240,7 +240,7 @@ export function ProductRegistrationForm({
             </div>
             <div className="space-y-2">
               <Label htmlFor="ownerPartyId">
-                {PRODUCT_UI_LABELS.responsibleBusinessOwner}
+                {labels.registration.formSections.responsibleBusinessOwner}
               </Label>
               <select
                 id="ownerPartyId"
@@ -258,7 +258,7 @@ export function ProductRegistrationForm({
                 ))}
               </select>
               <p className="text-xs text-muted-foreground">
-                {PRODUCT_UI_LABELS.responsibleBusinessOwnerHint}
+                {labels.registration.formSections.responsibleBusinessOwnerHint}
               </p>
             </div>
             <div className="space-y-2">
@@ -295,9 +295,9 @@ export function ProductRegistrationForm({
 
         <Card>
           <CardHeader>
-            <CardTitle>{PRODUCT_UI_LABELS.capabilitiesHeading}</CardTitle>
+            <CardTitle>{labels.registration.formSections.capabilitiesHeading}</CardTitle>
             <CardDescription>
-              {PRODUCT_UI_LABELS.capabilitiesDescription}
+              {labels.registration.formSections.capabilitiesDescription}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -318,7 +318,7 @@ export function ProductRegistrationForm({
 
         <Card>
           <CardHeader>
-            <CardTitle>{PRODUCT_UI_LABELS.migrationHeading}</CardTitle>
+            <CardTitle>{labels.registration.formSections.migrationHeading}</CardTitle>
             <CardDescription>
               Import details for products migrated from legacy systems.
             </CardDescription>

@@ -1,9 +1,8 @@
 /**
- * Purpose:
- * User-facing labels for Offering Analytics UI.
+ * @deprecated Display labels: `buildAnalyticsUiLabels()` / `useProductUiLabels().analytics`
+ * in product-terminology-labels.ts.
  *
- * Implementation Package:
- * BP-003 / IP-012 – Offering Analytics & Performance
+ * Retained temporarily for external references; do not use in new UI code.
  */
 
 export const OFFERING_ANALYTICS_UI_LABELS = {

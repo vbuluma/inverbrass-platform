@@ -30,7 +30,8 @@ import {
   removeProductClassificationAssignmentAction,
   setPrimaryProductClassificationAction,
 } from "@/modules/product/actions/product-classification-actions";
-import { CATALOGUE_STRUCTURE_UI_LABELS } from "@/modules/product/catalogue-structure-ui-labels";
+import { useBusinessTerminology } from "@/core/industry-experience/business-terminology-context";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import type { ProductClassificationPanelView } from "@/modules/product/types";
 
 type ProductClassificationPanelProps = {
@@ -44,6 +45,10 @@ export function ProductClassificationPanel({
   initialData,
   disabled = false,
 }: ProductClassificationPanelProps) {
+  const labels = useProductUiLabels();
+  const terminology = useBusinessTerminology();
+  const offeringLower = terminology.offerings.singular.toLowerCase();
+  const offeringsLower = terminology.offerings.plural.toLowerCase();
   const [panel, setPanel] = useState(initialData);
   const [syncedInitial, setSyncedInitial] = useState(initialData);
   const [selectedClassificationId, setSelectedClassificationId] = useState("");
@@ -83,7 +88,7 @@ export function ProductClassificationPanel({
         }),
       {
         successTitle: "Classification assigned.",
-        successMessage: "This product now belongs to the selected classification.",
+        successMessage: `This ${offeringLower} now belongs to the selected classification.`,
         onSuccess: applySuccess,
       }
     );
@@ -94,7 +99,7 @@ export function ProductClassificationPanel({
       () => setPrimaryProductClassificationAction(productId, { assignmentId }),
       {
         successTitle: "Primary classification updated.",
-        successMessage: "The primary classification for this product was changed.",
+        successMessage: `The primary classification for this ${offeringLower} was changed.`,
         onSuccess: applySuccess,
       }
     );
@@ -104,7 +109,7 @@ export function ProductClassificationPanel({
     requestConfirm({
       title: "Remove classification assignment?",
       description:
-        "This product will no longer belong to this classification. You can reassign it later.",
+        `This ${offeringLower} will no longer belong to this classification. You can reassign it later.`,
       confirmLabel: "Remove",
       onConfirm: () => {
         runPanelAction(
@@ -124,7 +129,7 @@ export function ProductClassificationPanel({
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>{CATALOGUE_STRUCTURE_UI_LABELS.primaryAssignment}</CardTitle>
+          <CardTitle>{labels.catalogueStructure.primaryAssignment}</CardTitle>
           <CardDescription>
             Exactly one primary classification when multiple assignments exist.
           </CardDescription>
@@ -157,7 +162,7 @@ export function ProductClassificationPanel({
       {panel.additionalClassifications.length > 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle>{CATALOGUE_STRUCTURE_UI_LABELS.additionalAssignments}</CardTitle>
+            <CardTitle>{labels.catalogueStructure.additionalAssignments}</CardTitle>
           </CardHeader>
           <CardContent className="divide-y">
             {panel.additionalClassifications.map((assignment) => (
@@ -200,9 +205,9 @@ export function ProductClassificationPanel({
       {!disabled && panel.availableClassifications.length > 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle>{CATALOGUE_STRUCTURE_UI_LABELS.assignCategory}</CardTitle>
+            <CardTitle>{labels.catalogueStructure.assignCategory}</CardTitle>
             <CardDescription>
-              Products may belong to multiple classifications across your hierarchy.
+              {terminology.offerings.plural} may belong to multiple classifications across your hierarchy.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -250,8 +255,8 @@ export function ProductClassificationPanel({
       panel.availableClassifications.length === 0 ? (
         <PlatformEmptyState
           title="No Classifications Available"
-          description="Create classifications from the Classification Dashboard before assigning products."
-          actionLabel={`Open ${CATALOGUE_STRUCTURE_UI_LABELS.moduleName}`}
+          description={`Create classifications from the Classification Dashboard before assigning ${offeringsLower}.`}
+          actionLabel={`Open ${labels.catalogueStructure.moduleName}`}
           actionHref="/products/classifications"
         />
       ) : null}

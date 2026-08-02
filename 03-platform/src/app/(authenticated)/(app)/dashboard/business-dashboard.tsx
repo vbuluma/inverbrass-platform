@@ -10,6 +10,9 @@
 
 "use client";
 
+import Link from "next/link";
+import { useMemo, useState } from "react";
+
 import {
   ActivityIcon,
   BellIcon,
@@ -27,8 +30,6 @@ import {
   WarehouseIcon,
   XIcon,
 } from "lucide-react";
-import Link from "next/link";
-import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -42,6 +43,7 @@ import {
   PlatformEnterpriseDashboardHeader,
   timeBasedGreeting,
 } from "@/components/platform/platform-enterprise-dashboard-header";
+import { useBusinessTerminology } from "@/core/industry-experience/business-terminology-context";
 import type { BusinessDashboardView } from "@/modules/business/onboarding/types";
 
 type BusinessDashboardProps = {
@@ -69,7 +71,7 @@ const AVAILABLE_OPERATION_MODULES = [
 const OPERATION_MODULES: FutureModule[] = [
   {
     id: "products",
-    title: "Products & Services",
+    title: "Offerings",
     description: "Catalogue items your business sells.",
     icon: PackageIcon,
   },
@@ -234,6 +236,7 @@ function ConfigLinkRow({
 }
 
 export function BusinessDashboard({ data }: BusinessDashboardProps) {
+  const terminology = useBusinessTerminology();
   const [futureModule, setFutureModule] = useState<FutureModule | null>(null);
   const greeting = timeBasedGreeting(new Date());
 
@@ -242,7 +245,22 @@ export function BusinessDashboard({ data }: BusinessDashboardProps) {
     [data.baseCurrencyCode]
   );
 
-  const productsModule = OPERATION_MODULES.find((m) => m.id === "products")!;
+  const productsModule = useMemo(
+    () => ({
+      ...OPERATION_MODULES.find((m) => m.id === "products")!,
+      title: `${terminology.offerings.hubTitle} & Services`,
+      description: `${terminology.offerings.plural} your business provides.`,
+    }),
+    [terminology.offerings.hubTitle, terminology.offerings.plural]
+  );
+
+  const operationModules = useMemo(
+    () =>
+      OPERATION_MODULES.map((module) =>
+        module.id === "products" ? productsModule : module
+      ),
+    [productsModule]
+  );
 
   return (
     <main className="platform-workspace-main mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-8 sm:px-6">
@@ -268,7 +286,7 @@ export function BusinessDashboard({ data }: BusinessDashboardProps) {
                   <PackageIcon className="size-5" aria-hidden />
                 </div>
                 <CardTitle id="express-cta-heading" className="text-lg">
-                  Add Products & Services
+                  Add {terminology.offerings.hubTitle} & Services
                 </CardTitle>
                 <CardDescription>
                   You are ready to operate. Start by adding what you sell —
@@ -277,7 +295,7 @@ export function BusinessDashboard({ data }: BusinessDashboardProps) {
               </CardHeader>
               <CardContent className="px-5">
                 <p className="text-xs font-medium text-emerald-900">
-                  Open Products & Services
+                  Open {terminology.offerings.hubTitle} & Services
                 </p>
               </CardContent>
             </Card>
@@ -299,8 +317,8 @@ export function BusinessDashboard({ data }: BusinessDashboardProps) {
             value={salesPlaceholder}
           />
           <KpiCard icon={ReceiptIcon} label="Orders" value="0" />
-          <KpiCard icon={UsersIcon} label="Customers" value="0" />
-          <KpiCard icon={PackageIcon} label="Products" value="0" />
+          <KpiCard icon={UsersIcon} label={terminology.entities.customer.plural} value="0" />
+          <KpiCard icon={PackageIcon} label={terminology.offerings.plural} value="0" />
         </div>
       </section>
 
@@ -335,12 +353,12 @@ export function BusinessDashboard({ data }: BusinessDashboardProps) {
             />
             <SummaryItem
               icon={Building2Icon}
-              label="Branches"
+              label={terminology.entities.branch.plural}
               value={data.branchCount}
             />
             <SummaryItem
               icon={UsersIcon}
-              label="Employees"
+              label={terminology.entities.employee.plural}
               value={data.employeeCount}
             />
           </CardContent>
@@ -381,7 +399,7 @@ export function BusinessDashboard({ data }: BusinessDashboardProps) {
               </Link>
             );
           })}
-          {OPERATION_MODULES.map((action) => {
+          {operationModules.map((action) => {
             const Icon = action.icon;
             return (
               <button

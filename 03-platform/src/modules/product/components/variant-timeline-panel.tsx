@@ -20,7 +20,7 @@ import {
   VARIANT_TIMELINE_EVENT_TYPE_LABELS,
 } from "@/core/variant-timeline/constants";
 import type { VariantTimelinePanelView } from "@/core/variant-timeline/types";
-import { VARIANT_UI_LABELS } from "@/modules/product/variant-ui-labels";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 
 type VariantTimelinePanelProps = {
   initialData: VariantTimelinePanelView;
@@ -38,10 +38,12 @@ function formatDateTime(iso: string): string {
 }
 
 export function VariantTimelinePanel({ initialData }: VariantTimelinePanelProps) {
+  const labels = useProductUiLabels();
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{VARIANT_UI_LABELS.timelineHeading}</CardTitle>
+        <CardTitle>{labels.variant.timelineHeading}</CardTitle>
         <CardDescription>
           Lifecycle and configuration events for this variant.
         </CardDescription>

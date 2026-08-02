@@ -29,7 +29,8 @@ import {
 } from "@/components/ui/card";
 import { saveProductAttributeValuesAction } from "@/modules/product/actions/attribute-actions";
 import { DynamicAttributeRenderer } from "@/modules/product/components/dynamic-attribute-renderer";
-import { ATTRIBUTE_UI_LABELS } from "@/modules/product/attribute-ui-labels";
+import { useBusinessTerminology } from "@/core/industry-experience/business-terminology-context";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import type { ProductAttributesPanelView } from "@/modules/product/types";
 
 type ProductAttributesPanelProps = {
@@ -43,6 +44,9 @@ export function ProductAttributesPanel({
   initialData,
   disabled = false,
 }: ProductAttributesPanelProps) {
+  const labels = useProductUiLabels();
+  const terminology = useBusinessTerminology();
+  const offeringLower = terminology.offerings.singular.toLowerCase();
   const [panel, setPanel] = useState(initialData);
   const [syncedInitialData, setSyncedInitialData] = useState(initialData);
   const [result, setResult] = useState<PlatformActionResult | null>(null);
@@ -88,7 +92,7 @@ export function ProductAttributesPanel({
 
       setPanel(actionResult.data);
       setResult(
-        platformSuccess("Attributes saved", "Product attribute values updated.")
+        platformSuccess(labels.actions.attributesSaved, labels.attribute.valuesUpdatedMessage)
       );
     });
   }
@@ -97,9 +101,9 @@ export function ProductAttributesPanel({
     return (
       <PlatformEmptyState
         title="No attributes configured"
-        description="Assign attribute definitions to this product type or its catalogue classifications, then return here to capture values."
+        description={`Assign attribute definitions to this ${offeringLower} type or its catalogue classifications, then return here to capture values.`}
         actionHref="/products/attributes"
-        actionLabel="Manage Attributes"
+        actionLabel={`Manage ${labels.attribute.moduleName}`}
       />
     );
   }
@@ -108,10 +112,10 @@ export function ProductAttributesPanel({
     <form onSubmit={saveAttributes} className="space-y-6">
       <div className="space-y-1">
         <h2 className="text-lg font-semibold tracking-tight">
-          {ATTRIBUTE_UI_LABELS.productPanelHeading}
+          {labels.attribute.panelHeading}
         </h2>
         <p className="text-sm text-muted-foreground">
-          {ATTRIBUTE_UI_LABELS.productPanelDescription}
+          {labels.attribute.panelDescription}
         </p>
       </div>
 

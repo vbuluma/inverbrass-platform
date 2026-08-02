@@ -45,6 +45,7 @@ import {
   PRODUCT_LIFECYCLE_SCHEDULED_ACTIONS,
   PRODUCT_LIFECYCLE_STATE_CODES,
 } from "@/modules/product/constants";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import type { ProductLifecyclePanelView } from "@/modules/product/types";
 
 type ProductLifecyclePanelProps = {
@@ -83,6 +84,7 @@ export function ProductLifecyclePanel({
   productId,
   initialData,
 }: ProductLifecyclePanelProps) {
+  const labels = useProductUiLabels();
   const [panel, setPanel] = useState(initialData);
   const [result, setResult] = useState<PlatformActionResult | null>(null);
   const [replacementId, setReplacementId] = useState("");
@@ -103,7 +105,9 @@ export function ProductLifecyclePanel({
         return;
       }
       setPanel(response.data);
-      setResult(platformSuccess("Lifecycle updated", successMessage, response.data));
+      setResult(
+        platformSuccess(labels.actions.lifecycleUpdated, successMessage, response.data)
+      );
     });
   }
 
@@ -113,7 +117,7 @@ export function ProductLifecyclePanel({
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Lifecycle Status</CardTitle>
+          <CardTitle>{labels.lifecycle.panelTitle}</CardTitle>
           <CardDescription>
             Governed lifecycle transitions — explicit actions replace free status changes.
           </CardDescription>
@@ -190,7 +194,7 @@ export function ProductLifecyclePanel({
                   onClick={() =>
                     runAction(
                       () => approveProductLifecycleAction(productId),
-                      "Product approved."
+                      labels.lifecycle.approvedMessage
                     )
                   }
                 >
@@ -217,7 +221,7 @@ export function ProductLifecyclePanel({
                   onClick={() =>
                     runAction(
                       () => activateProductLifecycleAction(productId),
-                      "Product activated."
+                      labels.lifecycle.activatedMessage
                     )
                   }
                 >
@@ -231,7 +235,7 @@ export function ProductLifecyclePanel({
                   onClick={() =>
                     runAction(
                       () => suspendProductLifecycleAction(productId),
-                      "Product suspended."
+                      labels.lifecycle.suspendedMessage
                     )
                   }
                 >
@@ -244,7 +248,7 @@ export function ProductLifecyclePanel({
                   onClick={() =>
                     runAction(
                       () => reactivateProductLifecycleAction(productId),
-                      "Product reactivated."
+                      labels.lifecycle.reactivatedMessage
                     )
                   }
                 >
@@ -258,7 +262,7 @@ export function ProductLifecyclePanel({
                   onClick={() =>
                     runAction(
                       () => deprecateProductLifecycleAction(productId),
-                      "Product deprecated."
+                      labels.lifecycle.deprecatedMessage
                     )
                   }
                 >
@@ -272,7 +276,7 @@ export function ProductLifecyclePanel({
                   onClick={() =>
                     runAction(
                       () => archiveProductLifecycleAction(productId),
-                      "Product archived."
+                      labels.lifecycle.archivedMessage
                     )
                   }
                 >

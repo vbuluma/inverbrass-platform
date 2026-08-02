@@ -27,7 +27,8 @@ import {
   PRODUCT_STATUS_CODES,
   type OfferingRelationshipStatusCode,
 } from "@/modules/product/constants";
-import { ProductError, PRODUCT_USER_MESSAGES } from "@/modules/product/errors";
+import { ProductError } from "@/modules/product/errors";
+import { resolveProductUserMessagesForContext } from "@/modules/product/resolve-product-user-messages";
 import { createOfferingRelationshipRepository } from "@/modules/product/repositories/offering-relationship-repository";
 import { createOfferingRelationshipTypeRepository } from "@/modules/product/repositories/offering-relationship-type-repository";
 import { createProductRepository } from "@/modules/product/repositories/product-repository";
@@ -140,6 +141,7 @@ export class OfferingRelationshipService {
     productId: string,
     query: string
   ): Promise<ProductSummaryView[]> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = offeringSearchQuerySchema.safeParse({
       query,
       excludeProductId: productId,
@@ -148,7 +150,7 @@ export class OfferingRelationshipService {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400,
         first?.path[0] ? String(first.path[0]) : undefined
       );
@@ -186,12 +188,13 @@ export class OfferingRelationshipService {
     sourceOfferingId: string,
     payload: AddOfferingRelationshipPayload
   ): Promise<OfferingRelationshipsPanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = addOfferingRelationshipSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400,
         first?.path[0] ? String(first.path[0]) : undefined
       );
@@ -202,7 +205,7 @@ export class OfferingRelationshipService {
     if (isSelfRelationship(sourceOfferingId, parsed.data.targetOfferingId)) {
       throw new ProductError(
         "SELF_RELATIONSHIP_NOT_ALLOWED",
-        PRODUCT_USER_MESSAGES.SELF_RELATIONSHIP_NOT_ALLOWED,
+        msg.SELF_RELATIONSHIP_NOT_ALLOWED,
         400,
         "targetOfferingId"
       );
@@ -245,7 +248,7 @@ export class OfferingRelationshipService {
     if (duplicate) {
       throw new ProductError(
         "DUPLICATE_OFFERING_RELATIONSHIP",
-        PRODUCT_USER_MESSAGES.DUPLICATE_OFFERING_RELATIONSHIP,
+        msg.DUPLICATE_OFFERING_RELATIONSHIP,
         409,
         "relationshipTypeCode"
       );
@@ -284,7 +287,7 @@ export class OfferingRelationshipService {
         ) {
           throw new ProductError(
             "CIRCULAR_DEPENDENCY",
-            PRODUCT_USER_MESSAGES.CIRCULAR_DEPENDENCY,
+            msg.CIRCULAR_DEPENDENCY,
             409,
             "targetOfferingId"
           );
@@ -333,12 +336,13 @@ export class OfferingRelationshipService {
     offeringRelationshipId: string,
     payload: UpdateOfferingRelationshipPayload
   ): Promise<OfferingRelationshipsPanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = updateOfferingRelationshipSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400,
         first?.path[0] ? String(first.path[0]) : undefined
       );
@@ -429,6 +433,7 @@ export class OfferingRelationshipService {
     productId: string,
     offeringRelationshipId: string
   ): Promise<OfferingRelationshipsPanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     await this.requireMutableProduct(context, productId);
     const relationship = await this.requireRelationshipForOffering(
       context,
@@ -458,7 +463,7 @@ export class OfferingRelationshipService {
     if (duplicate && duplicate.id !== offeringRelationshipId) {
       throw new ProductError(
         "DUPLICATE_OFFERING_RELATIONSHIP",
-        PRODUCT_USER_MESSAGES.DUPLICATE_OFFERING_RELATIONSHIP,
+        msg.DUPLICATE_OFFERING_RELATIONSHIP,
         409
       );
     }
@@ -571,6 +576,7 @@ export class OfferingRelationshipService {
     context: CurrentBusinessContext,
     productId: string
   ) {
+    const msg = await resolveProductUserMessagesForContext(context);
     const product = await this.productRepository.findById(
       context.businessId,
       productId
@@ -578,7 +584,7 @@ export class OfferingRelationshipService {
     if (!product) {
       throw new ProductError(
         "PRODUCT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.PRODUCT_NOT_FOUND,
+        msg.PRODUCT_NOT_FOUND,
         404
       );
     }
@@ -589,11 +595,12 @@ export class OfferingRelationshipService {
     context: CurrentBusinessContext,
     productId: string
   ) {
+    const msg = await resolveProductUserMessagesForContext(context);
     const product = await this.requireProduct(context, productId);
     if (product.statusCode === PRODUCT_STATUS_CODES.ARCHIVED) {
       throw new ProductError(
         "ARCHIVED_PRODUCT_IMMUTABLE",
-        PRODUCT_USER_MESSAGES.ARCHIVED_PRODUCT_IMMUTABLE,
+        msg.ARCHIVED_PRODUCT_IMMUTABLE,
         400
       );
     }
@@ -605,6 +612,7 @@ export class OfferingRelationshipService {
     productId: string,
     offeringRelationshipId: string
   ) {
+    const msg = await resolveProductUserMessagesForContext(context);
     const relationship = await this.offeringRelationshipRepository.findById(
       context.businessId,
       offeringRelationshipId
@@ -616,7 +624,7 @@ export class OfferingRelationshipService {
     ) {
       throw new ProductError(
         "OFFERING_RELATIONSHIP_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.OFFERING_RELATIONSHIP_NOT_FOUND,
+        msg.OFFERING_RELATIONSHIP_NOT_FOUND,
         404
       );
     }

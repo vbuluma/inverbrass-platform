@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/card";
 import type { UnitTimelinePanelView } from "@/core/unit-timeline/types";
 import { UNIT_TIMELINE_EVENT_TYPE_LABELS } from "@/core/unit-timeline/constants";
-import { UNIT_UI_LABELS } from "@/modules/product/unit-ui-labels";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 
 type UnitTimelinePanelProps = {
   initialData: UnitTimelinePanelView;
@@ -35,12 +35,13 @@ function formatDateTime(iso: string): string {
 }
 
 export function UnitTimelinePanel({ initialData }: UnitTimelinePanelProps) {
+  const labels = useProductUiLabels();
   const [panel] = useState(initialData);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{UNIT_UI_LABELS.timelineHeading}</CardTitle>
+        <CardTitle>{labels.unit.timelineHeading}</CardTitle>
         <CardDescription>
           Lifecycle events for this unit — create, conversion, activation, archive.
         </CardDescription>

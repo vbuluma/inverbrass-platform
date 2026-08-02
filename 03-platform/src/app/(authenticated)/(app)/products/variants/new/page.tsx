@@ -9,6 +9,7 @@
 import { redirect } from "next/navigation";
 
 import { getVariantRegistrationCataloguesAction } from "@/modules/product/actions/variant-actions";
+import { ProductModuleErrorPage } from "@/modules/product/components/product-module-error-page";
 import { VariantRegistrationForm } from "@/modules/product/components/variant-registration-form";
 
 type PageProps = {
@@ -28,10 +29,7 @@ export default async function VariantRegistrationPage({ searchParams }: PageProp
     }
 
     return (
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-xl font-semibold">Register Variant</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{result.error.message}</p>
-      </main>
+      <ProductModuleErrorPage message={result.error.message} titleKind="variants" />
     );
   }
 

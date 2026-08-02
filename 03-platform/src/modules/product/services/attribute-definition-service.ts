@@ -25,13 +25,15 @@ import {
 } from "@/core/attribute-timeline";
 import { filterAttributeGroupsForIndustry } from "@/core/industry-experience/attribute-group-filters";
 import { createIndustryExperienceService } from "@/core/industry-experience/services/industry-experience-service";
+import { DEFAULT_OFFERING_WORKSPACE_LABEL } from "@/core/industry-experience/offering-terminology";
 import {
   ATTRIBUTE_DATA_TYPES,
   ATTRIBUTE_DEFINITION_STATUS_CODES,
   ATTRIBUTE_OPTION_STATUS_CODES,
   ATTRIBUTE_SCOPE_TYPES,
 } from "@/modules/product/constants";
-import { ProductError, PRODUCT_USER_MESSAGES } from "@/modules/product/errors";
+import { ProductError } from "@/modules/product/errors";
+import { resolveProductUserMessagesForContext } from "@/modules/product/resolve-product-user-messages";
 import { createAttributeDefinitionRepository } from "@/modules/product/repositories/attribute-definition-repository";
 import { createAttributeGroupRepository } from "@/modules/product/repositories/attribute-group-repository";
 import { createAttributeOptionRepository } from "@/modules/product/repositories/attribute-option-repository";
@@ -150,7 +152,7 @@ export class AttributeDefinitionService {
         code,
         label: attributeDataTypeLabel(code),
       })),
-      catalogueLabel: profile.offeringCatalogueNavLabel ?? "Products",
+      catalogueLabel: profile.offeringWorkspaceLabel ?? DEFAULT_OFFERING_WORKSPACE_LABEL,
       industryCode: profile.industryCode,
     };
   }
@@ -159,6 +161,7 @@ export class AttributeDefinitionService {
     context: CurrentBusinessContext,
     payload: CreateAttributeGroupPayload
   ): Promise<AttributeGroupView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = createAttributeGroupSchema.parse(payload);
     const code = normalizeAttributeGroupCode(parsed.code);
 
@@ -166,7 +169,7 @@ export class AttributeDefinitionService {
     if (existing) {
       throw new ProductError(
         "DUPLICATE_ATTRIBUTE_GROUP_CODE",
-        PRODUCT_USER_MESSAGES.DUPLICATE_ATTRIBUTE_GROUP_CODE,
+        msg.DUPLICATE_ATTRIBUTE_GROUP_CODE,
         409,
         "code"
       );
@@ -204,13 +207,14 @@ export class AttributeDefinitionService {
     groupId: string,
     payload: UpdateAttributeGroupPayload
   ): Promise<AttributeGroupView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = updateAttributeGroupSchema.parse(payload);
     const existing = await this.groupRepository.findById(context.businessId, groupId);
 
     if (!existing) {
       throw new ProductError(
         "ATTRIBUTE_GROUP_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.ATTRIBUTE_GROUP_NOT_FOUND,
+        msg.ATTRIBUTE_GROUP_NOT_FOUND,
         404
       );
     }
@@ -221,7 +225,7 @@ export class AttributeDefinitionService {
     ) {
       throw new ProductError(
         "INVALID_ATTRIBUTE_STATUS_TRANSITION",
-        PRODUCT_USER_MESSAGES.INVALID_ATTRIBUTE_STATUS_TRANSITION,
+        msg.INVALID_ATTRIBUTE_STATUS_TRANSITION,
         400,
         "status"
       );
@@ -274,11 +278,12 @@ export class AttributeDefinitionService {
     context: CurrentBusinessContext,
     groupId: string
   ): Promise<AttributeGroupWorkspaceView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const group = await this.groupRepository.findById(context.businessId, groupId);
     if (!group) {
       throw new ProductError(
         "ATTRIBUTE_GROUP_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.ATTRIBUTE_GROUP_NOT_FOUND,
+        msg.ATTRIBUTE_GROUP_NOT_FOUND,
         404
       );
     }
@@ -305,12 +310,13 @@ export class AttributeDefinitionService {
     context: CurrentBusinessContext,
     payload: CreateAttributeDefinitionPayload
   ): Promise<AttributeDefinitionView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = createAttributeDefinitionSchema.parse(payload);
 
     if (!isValidAttributeDataType(parsed.dataType)) {
       throw new ProductError(
         "INVALID_ATTRIBUTE_DATA_TYPE",
-        PRODUCT_USER_MESSAGES.INVALID_ATTRIBUTE_DATA_TYPE,
+        msg.INVALID_ATTRIBUTE_DATA_TYPE,
         400,
         "dataType"
       );
@@ -323,7 +329,7 @@ export class AttributeDefinitionService {
     if (!group) {
       throw new ProductError(
         "ATTRIBUTE_GROUP_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.ATTRIBUTE_GROUP_NOT_FOUND,
+        msg.ATTRIBUTE_GROUP_NOT_FOUND,
         404,
         "attributeGroupId"
       );
@@ -342,7 +348,7 @@ export class AttributeDefinitionService {
     if (existingCode) {
       throw new ProductError(
         "DUPLICATE_ATTRIBUTE_CODE",
-        PRODUCT_USER_MESSAGES.DUPLICATE_ATTRIBUTE_CODE,
+        msg.DUPLICATE_ATTRIBUTE_CODE,
         409,
         "code"
       );
@@ -351,7 +357,7 @@ export class AttributeDefinitionService {
     if (existingName) {
       throw new ProductError(
         "DUPLICATE_ATTRIBUTE_NAME_IN_GROUP",
-        PRODUCT_USER_MESSAGES.DUPLICATE_ATTRIBUTE_NAME_IN_GROUP,
+        msg.DUPLICATE_ATTRIBUTE_NAME_IN_GROUP,
         409,
         "name"
       );
@@ -412,6 +418,7 @@ export class AttributeDefinitionService {
     definitionId: string,
     payload: UpdateAttributeDefinitionPayload
   ): Promise<AttributeDefinitionView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = updateAttributeDefinitionSchema.parse(payload);
     const existing = await this.definitionRepository.findById(
       context.businessId,
@@ -421,7 +428,7 @@ export class AttributeDefinitionService {
     if (!existing) {
       throw new ProductError(
         "ATTRIBUTE_DEFINITION_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.ATTRIBUTE_DEFINITION_NOT_FOUND,
+        msg.ATTRIBUTE_DEFINITION_NOT_FOUND,
         404
       );
     }
@@ -429,7 +436,7 @@ export class AttributeDefinitionService {
     if (!isAttributeDefinitionEditable(existing.status)) {
       throw new ProductError(
         "ARCHIVED_ATTRIBUTE_IMMUTABLE",
-        PRODUCT_USER_MESSAGES.ARCHIVED_ATTRIBUTE_IMMUTABLE,
+        msg.ARCHIVED_ATTRIBUTE_IMMUTABLE,
         400
       );
     }
@@ -440,7 +447,7 @@ export class AttributeDefinitionService {
     ) {
       throw new ProductError(
         "INVALID_ATTRIBUTE_STATUS_TRANSITION",
-        PRODUCT_USER_MESSAGES.INVALID_ATTRIBUTE_STATUS_TRANSITION,
+        msg.INVALID_ATTRIBUTE_STATUS_TRANSITION,
         400,
         "status"
       );
@@ -449,7 +456,7 @@ export class AttributeDefinitionService {
     if (parsed.dataType && !isValidAttributeDataType(parsed.dataType)) {
       throw new ProductError(
         "INVALID_ATTRIBUTE_DATA_TYPE",
-        PRODUCT_USER_MESSAGES.INVALID_ATTRIBUTE_DATA_TYPE,
+        msg.INVALID_ATTRIBUTE_DATA_TYPE,
         400,
         "dataType"
       );
@@ -540,6 +547,7 @@ export class AttributeDefinitionService {
     context: CurrentBusinessContext,
     definitionId: string
   ): Promise<AttributeDefinitionWorkspaceView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const definition = await this.definitionRepository.findById(
       context.businessId,
       definitionId
@@ -547,7 +555,7 @@ export class AttributeDefinitionService {
     if (!definition) {
       throw new ProductError(
         "ATTRIBUTE_DEFINITION_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.ATTRIBUTE_DEFINITION_NOT_FOUND,
+        msg.ATTRIBUTE_DEFINITION_NOT_FOUND,
         404
       );
     }
@@ -595,6 +603,7 @@ export class AttributeDefinitionService {
     definitionId: string,
     payload: CreateAttributeOptionPayload
   ): Promise<AttributeOptionView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = createAttributeOptionSchema.parse(payload);
     const definition = await this.definitionRepository.findById(
       context.businessId,
@@ -604,7 +613,7 @@ export class AttributeDefinitionService {
     if (!definition) {
       throw new ProductError(
         "ATTRIBUTE_DEFINITION_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.ATTRIBUTE_DEFINITION_NOT_FOUND,
+        msg.ATTRIBUTE_DEFINITION_NOT_FOUND,
         404
       );
     }
@@ -612,7 +621,7 @@ export class AttributeDefinitionService {
     if (!dataTypeSupportsOptions(definition.dataType)) {
       throw new ProductError(
         "OPTIONS_NOT_ALLOWED_FOR_DATA_TYPE",
-        PRODUCT_USER_MESSAGES.OPTIONS_NOT_ALLOWED_FOR_DATA_TYPE,
+        msg.OPTIONS_NOT_ALLOWED_FOR_DATA_TYPE,
         400
       );
     }
@@ -624,7 +633,7 @@ export class AttributeDefinitionService {
     if (existing) {
       throw new ProductError(
         "DUPLICATE_ATTRIBUTE_OPTION_CODE",
-        PRODUCT_USER_MESSAGES.DUPLICATE_ATTRIBUTE_OPTION_CODE,
+        msg.DUPLICATE_ATTRIBUTE_OPTION_CODE,
         409,
         "optionCode"
       );
@@ -659,6 +668,7 @@ export class AttributeDefinitionService {
     optionId: string,
     payload: UpdateAttributeOptionPayload
   ): Promise<AttributeOptionView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = updateAttributeOptionSchema.parse(payload);
     const definition = await this.definitionRepository.findById(
       context.businessId,
@@ -668,7 +678,7 @@ export class AttributeDefinitionService {
     if (!definition) {
       throw new ProductError(
         "ATTRIBUTE_DEFINITION_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.ATTRIBUTE_DEFINITION_NOT_FOUND,
+        msg.ATTRIBUTE_DEFINITION_NOT_FOUND,
         404
       );
     }
@@ -677,7 +687,7 @@ export class AttributeDefinitionService {
     if (!existing || existing.attributeDefinitionId !== definitionId) {
       throw new ProductError(
         "ATTRIBUTE_DEFINITION_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.ATTRIBUTE_DEFINITION_NOT_FOUND,
+        msg.ATTRIBUTE_DEFINITION_NOT_FOUND,
         404
       );
     }
@@ -718,6 +728,7 @@ export class AttributeDefinitionService {
     context: CurrentBusinessContext,
     payload: AssignAttributeScopePayload
   ): Promise<AttributeScopeView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = assignAttributeScopeSchema.parse(payload);
     const definition = await this.definitionRepository.findById(
       context.businessId,
@@ -727,7 +738,7 @@ export class AttributeDefinitionService {
     if (!definition) {
       throw new ProductError(
         "ATTRIBUTE_DEFINITION_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.ATTRIBUTE_DEFINITION_NOT_FOUND,
+        msg.ATTRIBUTE_DEFINITION_NOT_FOUND,
         404
       );
     }
@@ -735,7 +746,7 @@ export class AttributeDefinitionService {
     if (!isAttributeDefinitionAssignable(definition.status)) {
       throw new ProductError(
         "ARCHIVED_ATTRIBUTE_NOT_ASSIGNABLE",
-        PRODUCT_USER_MESSAGES.ARCHIVED_ATTRIBUTE_NOT_ASSIGNABLE,
+        msg.ARCHIVED_ATTRIBUTE_NOT_ASSIGNABLE,
         400
       );
     }
@@ -760,7 +771,7 @@ export class AttributeDefinitionService {
     if (existing) {
       throw new ProductError(
         "DUPLICATE_ATTRIBUTE_SCOPE",
-        PRODUCT_USER_MESSAGES.DUPLICATE_ATTRIBUTE_SCOPE,
+        msg.DUPLICATE_ATTRIBUTE_SCOPE,
         409
       );
     }
@@ -795,6 +806,7 @@ export class AttributeDefinitionService {
     context: CurrentBusinessContext,
     scopeId: string
   ): Promise<void> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const removed = await this.scopeRepository.softDelete(
       context.businessId,
       scopeId,
@@ -804,7 +816,7 @@ export class AttributeDefinitionService {
     if (!removed) {
       throw new ProductError(
         "ATTRIBUTE_ASSIGNMENT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.ATTRIBUTE_ASSIGNMENT_NOT_FOUND,
+        msg.ATTRIBUTE_ASSIGNMENT_NOT_FOUND,
         404
       );
     }

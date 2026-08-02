@@ -6,7 +6,8 @@
  * BP-003 / IP-005 – Product Variants Engine
  */
 
-import { ProductError, PRODUCT_USER_MESSAGES } from "@/modules/product/errors";
+import { ProductError } from "@/modules/product/errors";
+import type { ProductUserMessages } from "@/modules/product/product-user-messages";
 import type { VariantAttributePair } from "@/modules/product/services/product-variant-rules";
 import {
   buildCombinationFingerprint,
@@ -22,13 +23,14 @@ export type VariantAttributeDefinitionContext = AttributeDefinitionForValidation
 };
 
 export function validateVariantAttributes(
+  msg: ProductUserMessages,
   definitions: VariantAttributeDefinitionContext[],
   attributes: VariantAttributePair[]
 ): Record<string, unknown> {
   if (!hasDistinguishingAttributes(attributes)) {
     throw new ProductError(
       "VARIANT_REQUIRES_DISTINGUISHING_ATTRIBUTE",
-      PRODUCT_USER_MESSAGES.VARIANT_REQUIRES_DISTINGUISHING_ATTRIBUTE,
+      msg.VARIANT_REQUIRES_DISTINGUISHING_ATTRIBUTE,
       400,
       "attributes"
     );
@@ -46,7 +48,7 @@ export function validateVariantAttributes(
     if (!definition) {
       throw new ProductError(
         "ATTRIBUTE_DEFINITION_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.ATTRIBUTE_DEFINITION_NOT_FOUND,
+        msg.ATTRIBUTE_DEFINITION_NOT_FOUND,
         400,
         attribute.attributeDefinitionId
       );

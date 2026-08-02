@@ -47,7 +47,7 @@ export const BUSINESS_APP_NAV_ITEMS: PlatformNavItem[] = [
   },
   {
     id: "products",
-    label: "Products",
+    label: "Offerings",
     href: "/products",
     icon: PackageIcon,
   },

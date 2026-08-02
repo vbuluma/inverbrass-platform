@@ -45,10 +45,8 @@ import {
 } from "@/modules/product/actions/product-bundle-actions";
 import { BundleAuditHistoryPanel } from "@/modules/product/components/bundle-audit-history-panel";
 import { BundleTimelinePanel } from "@/modules/product/components/bundle-timeline-panel";
-import {
-  BUNDLE_UI_LABELS,
-  BUNDLE_WORKSPACE_TABS,
-} from "@/modules/product/bundle-ui-labels";
+import { BUNDLE_WORKSPACE_TABS } from "@/modules/product/constants";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import { BUNDLE_STATUS_CODES, BUNDLE_AVAILABILITY_TYPES, BUNDLE_PRICING_STRATEGY_CODES } from "@/modules/product/constants";
 import type {
   BundleProductSearchResult,
@@ -64,6 +62,7 @@ export function BundleWorkspace({
   initialData,
   initialTab = "overview",
 }: BundleWorkspaceProps) {
+  const labels = useProductUiLabels();
   const [workspace, setWorkspace] = useState(initialData);
   const [syncedInitial, setSyncedInitial] = useState(initialData);
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -100,6 +99,18 @@ export function BundleWorkspace({
   const isArchived = workspace.bundle.statusCode === BUNDLE_STATUS_CODES.ARCHIVED;
   const isActive = workspace.bundle.statusCode === BUNDLE_STATUS_CODES.ACTIVE;
 
+  const workspaceTabLabel = (tabId: string) => {
+    const tabLabels: Record<string, string> = {
+      overview: labels.bundle.workspaceTabs.overview,
+      "bundle-items": labels.bundle.workspaceTabs.bundleItems,
+      timeline: labels.bundle.workspaceTabs.timeline,
+      "audit-history": labels.bundle.workspaceTabs.auditHistory,
+      pricing: labels.bundle.workspaceTabs.pricing,
+      analytics: labels.bundle.workspaceTabs.analytics,
+    };
+    return tabLabels[tabId] ?? tabId;
+  };
+
   async function saveOverview(event: React.FormEvent) {
     event.preventDefault();
     setOverviewResult(null);
@@ -113,12 +124,16 @@ export function BundleWorkspace({
       });
 
       if (!result.success) {
-        setOverviewResult(platformError("Could not save", result.error.message));
+        setOverviewResult(
+          platformError(labels.actions.couldNotSave, result.error.message)
+        );
         return;
       }
 
       setWorkspace(result.data);
-      setOverviewResult(platformSuccess("Bundle updated", "Changes saved successfully."));
+      setOverviewResult(
+        platformSuccess(labels.actions.bundleUpdated, labels.actions.changesSaved)
+      );
     });
   }
 
@@ -130,11 +145,13 @@ export function BundleWorkspace({
     await run(async () => {
       const result = await action(workspace.bundle.id);
       if (!result.success) {
-        setHeaderResult(platformError("Action failed", result.error.message));
+        setHeaderResult(platformError(labels.actions.actionFailed, result.error.message));
         return;
       }
       setWorkspace(result.data);
-      setHeaderResult(platformSuccess("Status updated", successMessage));
+      setHeaderResult(
+        platformSuccess(labels.actions.statusUpdated, successMessage)
+      );
     });
   }
 
@@ -159,11 +176,18 @@ export function BundleWorkspace({
         displayOrder: workspace.items.length,
       });
       if (!result.success) {
-        setItemsResult(platformError("Could not add item", result.error.message));
+        setItemsResult(
+          platformError(labels.actions.couldNotAddItem, result.error.message)
+        );
         return;
       }
       setWorkspace(result.data);
-      setItemsResult(platformSuccess("Item added", `${product.productName} added.`));
+      setItemsResult(
+        platformSuccess(
+          labels.actions.bundleItemAdded(product.productName),
+          labels.actions.bundleItemAdded(product.productName)
+        )
+      );
     });
   }
 
@@ -174,7 +198,9 @@ export function BundleWorkspace({
         quantity,
       });
       if (!result.success) {
-        setItemsResult(platformError("Could not update item", result.error.message));
+        setItemsResult(
+          platformError(labels.actions.couldNotUpdateItem, result.error.message)
+        );
         return;
       }
       setWorkspace(result.data);
@@ -186,33 +212,37 @@ export function BundleWorkspace({
     await run(async () => {
       const result = await removeBundleItemAction(workspace.bundle.id, itemId);
       if (!result.success) {
-        setItemsResult(platformError("Could not remove item", result.error.message));
+        setItemsResult(
+          platformError(labels.actions.couldNotRemoveItem, result.error.message)
+        );
         return;
       }
       setWorkspace(result.data);
-      setItemsResult(platformSuccess("Item removed", "Bundle item removed."));
+      setItemsResult(
+        platformSuccess(labels.actions.removed, labels.actions.bundleItemRemoved)
+      );
     });
   }
 
   const tabs = BUNDLE_WORKSPACE_TABS.filter((tab) => tab.available).map((tab) => ({
     id: tab.id,
-    label: tab.label,
+    label: workspaceTabLabel(tab.id),
   }));
 
   return (
     <main className="platform-workspace-main mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6">
       <SetBreadcrumbs
         items={[
-          { label: "Products", href: "/products" },
-          { label: BUNDLE_UI_LABELS.moduleName, href: "/products/bundles" },
+          labels.workspace.hubBreadcrumb,
+          { label: labels.bundle.moduleName, href: "/products/bundles" },
           { label: workspace.bundle.bundleName },
         ]}
       />
 
       <PlatformWorkspaceHeader
         backHref="/products/bundles"
-        backLabel="Back to bundles"
-        workspaceLabel={BUNDLE_UI_LABELS.workspaceTitle}
+        backLabel={labels.bundle.backToModule}
+        workspaceLabel={labels.bundle.workspaceTitle}
         title={workspace.bundle.bundleName}
         subtitle={`${workspace.bundle.bundleCode} · ${workspace.bundle.bundleTypeLabel} · ${workspace.items.length} items`}
         statusLabel={workspace.bundle.statusLabel}
@@ -223,9 +253,11 @@ export function BundleWorkspace({
                 <Button
                   type="button"
                   disabled={isProcessing}
-                  onClick={() => runLifecycle(activateBundleAction, "Bundle activated.")}
+                  onClick={() =>
+                    runLifecycle(activateBundleAction, labels.actions.bundleActivated)
+                  }
                 >
-                  Activate
+                  {labels.bundle.activateLabel}
                 </Button>
               ) : null}
               {isActive ? (
@@ -233,9 +265,11 @@ export function BundleWorkspace({
                   type="button"
                   variant="outline"
                   disabled={isProcessing}
-                  onClick={() => runLifecycle(suspendBundleAction, "Bundle suspended.")}
+                  onClick={() =>
+                    runLifecycle(suspendBundleAction, labels.actions.bundleSuspended)
+                  }
                 >
-                  Suspend
+                  {labels.bundle.suspendLabel}
                 </Button>
               ) : null}
               <Button
@@ -244,7 +278,7 @@ export function BundleWorkspace({
                 disabled={isProcessing}
                 onClick={() => setShowArchiveConfirm(true)}
               >
-                Archive
+                {labels.bundle.archiveLabel}
               </Button>
             </div>
           ) : null
@@ -259,24 +293,24 @@ export function BundleWorkspace({
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        ariaLabel="Bundle workspace sections"
+        ariaLabel={labels.bundle.workspaceAriaLabel}
       />
 
       {activeTab === "overview" ? (
         <Card>
           <CardHeader>
-            <CardTitle>Overview</CardTitle>
-            <CardDescription>Bundle identity, availability, and pricing placeholders.</CardDescription>
+            <CardTitle>{labels.bundle.overviewTitle}</CardTitle>
+            <CardDescription>{labels.bundle.overviewDescription}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={saveOverview} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor="bundle-code">Bundle code</Label>
+                  <Label htmlFor="bundle-code">{labels.bundle.bundleCodeLabel}</Label>
                   <Input id="bundle-code" value={workspace.bundle.bundleCode} disabled readOnly />
                 </div>
                 <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor="bundle-name">Bundle name</Label>
+                  <Label htmlFor="bundle-name">{labels.bundle.bundleNameLabel}</Label>
                   <Input
                     id="bundle-name"
                     value={overviewForm.textValue("bundleName")}
@@ -288,7 +322,7 @@ export function BundleWorkspace({
                   />
                 </div>
                 <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor="bundle-description">Description</Label>
+                  <Label htmlFor="bundle-description">{labels.bundle.bundleDescriptionLabel}</Label>
                   <textarea
                     id="bundle-description"
                     className="flex min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-50"
@@ -358,7 +392,7 @@ export function BundleWorkspace({
                     type="submit"
                     isProcessing={isProcessing}
                     processingLabel={PROCESSING_LABELS.saving}
-                    idleLabel="Save changes"
+                    idleLabel={labels.bundle.saveChangesLabel}
                   />
                 </PlatformFormActionFooter>
               ) : null}
@@ -371,14 +405,14 @@ export function BundleWorkspace({
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>{BUNDLE_UI_LABELS.itemsHeading}</CardTitle>
-              <CardDescription>{BUNDLE_UI_LABELS.itemsDescription}</CardDescription>
+              <CardTitle>{labels.bundle.itemsHeading}</CardTitle>
+              <CardDescription>{labels.bundle.itemsDescription}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {workspace.items.length === 0 ? (
                 <PlatformEmptyState
-                  title="No items yet"
-                  description="Add active products to compose this bundle."
+                  title={labels.bundle.emptyItemsTitle}
+                  description={labels.bundle.emptyItemsDescription}
                 />
               ) : (
                 <ul className="divide-y rounded-lg border">
@@ -463,7 +497,7 @@ export function BundleWorkspace({
                     setProductQuery(value);
                     searchProducts(value);
                   }}
-                  placeholder="Search products…"
+                  placeholder={labels.bundle.searchProductsPlaceholder}
                 />
                 <ul className="divide-y rounded-lg border">
                   {productResults.map((product) => (
@@ -515,13 +549,13 @@ export function BundleWorkspace({
             key={tab.id}
             title={
               tab.id === "pricing"
-                ? BUNDLE_UI_LABELS.pricingPlaceholderTitle
-                : BUNDLE_UI_LABELS.analyticsPlaceholderTitle
+                ? labels.bundle.pricingPlaceholderTitle
+                : labels.bundle.analyticsPlaceholderTitle
             }
             description={
               tab.id === "pricing"
-                ? BUNDLE_UI_LABELS.pricingPlaceholderDescription
-                : BUNDLE_UI_LABELS.analyticsPlaceholderDescription
+                ? labels.bundle.pricingPlaceholderDescription
+                : labels.bundle.analyticsPlaceholderDescription
             }
           />
         ) : null
@@ -530,13 +564,13 @@ export function BundleWorkspace({
       <PlatformConfirmDialog
         open={showArchiveConfirm}
         onOpenChange={setShowArchiveConfirm}
-        title="Archive bundle?"
-        description="Archived bundles cannot be modified or sold."
-        confirmLabel="Archive"
+        title={labels.bundle.archiveConfirmTitle}
+        description={labels.bundle.archiveConfirmDescription}
+        confirmLabel={labels.bundle.archiveConfirmLabel}
         isProcessing={isProcessing}
         onConfirm={async () => {
           setShowArchiveConfirm(false);
-          await runLifecycle(archiveBundleAction, "Bundle archived.");
+          await runLifecycle(archiveBundleAction, labels.actions.bundleArchived);
         }}
       />
     </main>

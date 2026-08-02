@@ -25,7 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useControlledForm } from "@/lib/forms";
 import { createAttributeDefinitionAction } from "@/modules/product/actions/attribute-actions";
-import { ATTRIBUTE_UI_LABELS } from "@/modules/product/attribute-ui-labels";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import { ATTRIBUTE_DATA_TYPES } from "@/modules/product/constants";
 import type { AttributeDashboardView } from "@/modules/product/types";
 
@@ -36,6 +36,7 @@ type AttributeDefinitionRegistrationFormProps = {
 export function AttributeDefinitionRegistrationForm({
   dashboard,
 }: AttributeDefinitionRegistrationFormProps) {
+  const labels = useProductUiLabels();
   const router = useRouter();
   const [result, setResult] = useState<PlatformActionResult | null>(null);
   const { isProcessing, run } = useAsyncAction();
@@ -85,13 +86,13 @@ export function AttributeDefinitionRegistrationForm({
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-      <PageBackLink href="/products/attributes" label="Back to attributes" />
+      <PageBackLink href="/products/attributes" label={labels.attribute.backToModule} />
       <div className="mt-4 space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">
-          {ATTRIBUTE_UI_LABELS.definitionRegistrationTitle}
+          {labels.attribute.definitionRegistrationTitle}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {ATTRIBUTE_UI_LABELS.definitionRegistrationDescription}
+          {labels.attribute.definitionRegistrationDescription}
         </p>
       </div>
 

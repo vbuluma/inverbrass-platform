@@ -8,7 +8,8 @@
 
 import type { CurrentBusinessContext } from "@/core/auth/types";
 import { AUDIT_ENTITY_NAMES, createAuditService } from "@/core/audit";
-import { ProductError, PRODUCT_USER_MESSAGES } from "@/modules/product/errors";
+import { ProductError } from "@/modules/product/errors";
+import { resolveProductUserMessagesForContext } from "@/modules/product/resolve-product-user-messages";
 import { createProductVariantRepository } from "@/modules/product/repositories/product-variant-repository";
 import type { VariantAuditHistoryPanelView } from "@/modules/product/types";
 
@@ -23,6 +24,7 @@ export class ProductVariantAuditQueryService {
     variantId: string,
     filters: { limit?: number; offset?: number } = { limit: 25, offset: 0 }
   ): Promise<VariantAuditHistoryPanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const variant = await this.variantRepository.findById(
       context.businessId,
       variantId
@@ -31,7 +33,7 @@ export class ProductVariantAuditQueryService {
     if (!variant) {
       throw new ProductError(
         "VARIANT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.VARIANT_NOT_FOUND,
+        msg.VARIANT_NOT_FOUND,
         404
       );
     }

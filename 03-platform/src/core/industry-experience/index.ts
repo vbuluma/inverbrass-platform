@@ -8,11 +8,43 @@
 
 export {
   DEFAULT_OFFERING_CATALOGUE_LABEL,
+  DEFAULT_OFFERING_WORKSPACE_LABEL,
   OFFERING_CATALOGUE_NAV_LABELS,
+  OFFERING_WORKSPACE_LABELS,
   resolveOfferingCatalogueNavLabel,
   resolveOfferingCataloguePageTitle,
+  resolveOfferingHubTitle,
+  resolveOfferingNavLabel,
+  resolveOfferingWorkspaceLabel,
 } from "@/core/industry-experience/offering-terminology";
 export type { OfferingMasterRecord } from "@/core/industry-experience/offering-terminology";
+export {
+  DEFAULT_BUSINESS_TERMINOLOGY,
+  resolveBusinessTerminology,
+  resolveBusinessTerminologyFromIndustryId,
+} from "@/core/industry-experience/business-terminology";
+export type { BusinessTerminology } from "@/core/industry-experience/business-terminology";
+export {
+  BusinessTerminologyProvider,
+  useBusinessTerminology,
+} from "@/core/industry-experience/business-terminology-context";
+export {
+  resolveClassificationLabel,
+  resolveClassificationLabelSingular,
+} from "@/core/industry-experience/classification-terminology";
+export {
+  resolveEntityTerminology,
+} from "@/core/industry-experience/entity-terminology";
+export type { EntityTerminology } from "@/core/industry-experience/entity-terminology";
+export {
+  resolveOperationsTerminology,
+} from "@/core/industry-experience/operations-terminology";
+export type { OperationsTerminology } from "@/core/industry-experience/operations-terminology";
+export {
+  PLATFORM_NAV_LABELS,
+  PLATFORM_NAV_OFFERING_LABEL,
+  resolvePlatformNavOfferingLabel,
+} from "@/core/industry-experience/platform-terminology";
 export {
   INDUSTRY_PRODUCT_TYPE_PROFILES,
   filterProductTypesForIndustry,

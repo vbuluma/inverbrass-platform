@@ -25,7 +25,8 @@ import {
   CATALOGUE_VISIBILITY_CODES,
   PRODUCT_STATUS_CODES,
 } from "@/modules/product/constants";
-import { ProductError, PRODUCT_USER_MESSAGES } from "@/modules/product/errors";
+import { ProductError } from "@/modules/product/errors";
+import { resolveProductUserMessagesForContext } from "@/modules/product/resolve-product-user-messages";
 import { createCatalogueChannelRepository } from "@/modules/product/repositories/catalogue-channel-repository";
 import { createProductCataloguePublicationRepository } from "@/modules/product/repositories/product-catalogue-publication-repository";
 import { createProductRepository } from "@/modules/product/repositories/product-repository";
@@ -201,13 +202,14 @@ export class ProductCatalogueService {
     productId: string,
     payload: UpsertPublicationPayload
   ): Promise<CatalogueWorkspaceView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = upsertPublicationSchema.parse(payload);
     const product = await this.requireProduct(context, productId);
 
     if (parsed.published && !isProductPublishable(product.statusCode)) {
       throw new ProductError(
         "PRODUCT_NOT_PUBLISHABLE",
-        PRODUCT_USER_MESSAGES.PRODUCT_NOT_PUBLISHABLE,
+        msg.PRODUCT_NOT_PUBLISHABLE,
         400
       );
     }
@@ -217,7 +219,7 @@ export class ProductCatalogueService {
     ) {
       throw new ProductError(
         "INVALID_PUBLICATION_SCHEDULE",
-        PRODUCT_USER_MESSAGES.INVALID_PUBLICATION_SCHEDULE,
+        msg.INVALID_PUBLICATION_SCHEDULE,
         400,
         "publishTo"
       );
@@ -227,7 +229,7 @@ export class ProductCatalogueService {
     if (!channel) {
       throw new ProductError(
         "CHANNEL_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.CHANNEL_NOT_FOUND,
+        msg.CHANNEL_NOT_FOUND,
         404,
         "channelCode"
       );
@@ -463,11 +465,12 @@ export class ProductCatalogueService {
   }
 
   private async requireProduct(context: CurrentBusinessContext, productId: string) {
+    const msg = await resolveProductUserMessagesForContext(context);
     const row = await this.productRepository.findById(context.businessId, productId);
     if (!row) {
       throw new ProductError(
         "PRODUCT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.PRODUCT_NOT_FOUND,
+        msg.PRODUCT_NOT_FOUND,
         404
       );
     }

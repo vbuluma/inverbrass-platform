@@ -30,7 +30,8 @@ import {
   PRODUCT_CLASSIFICATION_STATUS_CODES,
   PRODUCT_STATUS_CODES,
 } from "@/modules/product/constants";
-import { ProductError, PRODUCT_USER_MESSAGES } from "@/modules/product/errors";
+import { ProductError } from "@/modules/product/errors";
+import { resolveProductUserMessagesForContext } from "@/modules/product/resolve-product-user-messages";
 import {
   createProductClassificationAssignmentRepository,
   type AssignmentWithDetails,
@@ -89,6 +90,7 @@ import {
   updateProductClassificationSchema,
 } from "@/modules/product/validators/product-classification-validators";
 import { createIndustryExperienceService } from "@/core/industry-experience/services/industry-experience-service";
+import { DEFAULT_OFFERING_WORKSPACE_LABEL } from "@/core/industry-experience/offering-terminology";
 
 export class ProductClassificationService {
   constructor(
@@ -150,7 +152,7 @@ export class ProductClassificationService {
             new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
         )
         .slice(0, 5),
-      catalogueLabel: profile.offeringCatalogueNavLabel,
+      catalogueLabel: profile.offeringWorkspaceLabel ?? DEFAULT_OFFERING_WORKSPACE_LABEL,
       industryCode: profile.industryCode,
       industryName: profile.industryName,
       classificationTypes,
@@ -162,12 +164,13 @@ export class ProductClassificationService {
     context: CurrentBusinessContext,
     search: SearchProductClassificationsPayload
   ): Promise<ProductClassificationView[]> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = searchProductClassificationsSchema.safeParse(search);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400
       );
     }
@@ -333,12 +336,13 @@ export class ProductClassificationService {
     context: CurrentBusinessContext,
     payload: CreateProductClassificationPayload
   ): Promise<ProductClassificationDashboardView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = createProductClassificationSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400,
         first?.path[0] ? String(first.path[0]) : undefined
       );
@@ -352,7 +356,7 @@ export class ProductClassificationService {
     if (existing) {
       throw new ProductError(
         "DUPLICATE_CLASSIFICATION_CODE",
-        PRODUCT_USER_MESSAGES.DUPLICATE_CLASSIFICATION_CODE,
+        msg.DUPLICATE_CLASSIFICATION_CODE,
         409,
         "code"
       );
@@ -367,7 +371,7 @@ export class ProductClassificationService {
       if (!canAssignToClassification(parent.status)) {
         throw new ProductError(
           "INACTIVE_CLASSIFICATION",
-          PRODUCT_USER_MESSAGES.INACTIVE_CLASSIFICATION,
+          msg.INACTIVE_CLASSIFICATION,
           400,
           "parentClassificationId"
         );
@@ -439,12 +443,13 @@ export class ProductClassificationService {
     classificationId: string,
     payload: UpdateProductClassificationPayload
   ): Promise<ProductClassificationWorkspaceView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = updateProductClassificationSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400
       );
     }
@@ -473,7 +478,7 @@ export class ProductClassificationService {
     if (!updated) {
       throw new ProductError(
         "CLASSIFICATION_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.CLASSIFICATION_NOT_FOUND,
+        msg.CLASSIFICATION_NOT_FOUND,
         404
       );
     }
@@ -512,12 +517,13 @@ export class ProductClassificationService {
     classificationId: string,
     payload: MoveProductClassificationPayload
   ): Promise<ProductClassificationWorkspaceView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = moveProductClassificationSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400
       );
     }
@@ -530,7 +536,7 @@ export class ProductClassificationService {
     ) {
       throw new ProductError(
         "CIRCULAR_CLASSIFICATION_HIERARCHY",
-        PRODUCT_USER_MESSAGES.CIRCULAR_CLASSIFICATION_HIERARCHY,
+        msg.CIRCULAR_CLASSIFICATION_HIERARCHY,
         400,
         "parentClassificationId"
       );
@@ -552,7 +558,7 @@ export class ProductClassificationService {
     ) {
       throw new ProductError(
         "CIRCULAR_CLASSIFICATION_HIERARCHY",
-        PRODUCT_USER_MESSAGES.CIRCULAR_CLASSIFICATION_HIERARCHY,
+        msg.CIRCULAR_CLASSIFICATION_HIERARCHY,
         400,
         "parentClassificationId"
       );
@@ -567,7 +573,7 @@ export class ProductClassificationService {
       if (!canAssignToClassification(parent.status)) {
         throw new ProductError(
           "INACTIVE_CLASSIFICATION",
-          PRODUCT_USER_MESSAGES.INACTIVE_CLASSIFICATION,
+          msg.INACTIVE_CLASSIFICATION,
           400,
           "parentClassificationId"
         );
@@ -689,6 +695,7 @@ export class ProductClassificationService {
     timelineEventType: string,
     auditOperation: string
   ): Promise<ProductClassificationWorkspaceView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const classification = await this.requireClassification(
       context,
       classificationId
@@ -702,7 +709,7 @@ export class ProductClassificationService {
     ) {
       throw new ProductError(
         "INVALID_STATUS_TRANSITION",
-        PRODUCT_USER_MESSAGES.INVALID_STATUS_TRANSITION,
+        msg.INVALID_STATUS_TRANSITION,
         400
       );
     }
@@ -724,7 +731,7 @@ export class ProductClassificationService {
       if (activeChildren > 0) {
         throw new ProductError(
           "CLASSIFICATION_HAS_ACTIVE_CHILDREN",
-          PRODUCT_USER_MESSAGES.CLASSIFICATION_HAS_ACTIVE_CHILDREN,
+          msg.CLASSIFICATION_HAS_ACTIVE_CHILDREN,
           409
         );
       }
@@ -737,7 +744,7 @@ export class ProductClassificationService {
       if (activeProducts > 0) {
         throw new ProductError(
           "CLASSIFICATION_HAS_ACTIVE_PRODUCTS",
-          PRODUCT_USER_MESSAGES.CLASSIFICATION_HAS_ACTIVE_PRODUCTS,
+          msg.CLASSIFICATION_HAS_ACTIVE_PRODUCTS,
           409
         );
       }
@@ -782,12 +789,13 @@ export class ProductClassificationService {
     productId: string,
     payload: AssignProductClassificationPayload
   ): Promise<ProductClassificationPanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = assignProductClassificationSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400,
         first?.path[0] ? String(first.path[0]) : undefined
       );
@@ -797,7 +805,7 @@ export class ProductClassificationService {
     if (product.statusCode === PRODUCT_STATUS_CODES.ARCHIVED) {
       throw new ProductError(
         "ARCHIVED_PRODUCT_IMMUTABLE",
-        PRODUCT_USER_MESSAGES.ARCHIVED_PRODUCT_IMMUTABLE,
+        msg.ARCHIVED_PRODUCT_IMMUTABLE,
         400
       );
     }
@@ -809,7 +817,7 @@ export class ProductClassificationService {
     if (!canAssignToClassification(classification.status)) {
       throw new ProductError(
         "INACTIVE_CLASSIFICATION",
-        PRODUCT_USER_MESSAGES.INACTIVE_CLASSIFICATION,
+        msg.INACTIVE_CLASSIFICATION,
         400,
         "classificationId"
       );
@@ -824,7 +832,7 @@ export class ProductClassificationService {
     if (duplicate) {
       throw new ProductError(
         "DUPLICATE_CLASSIFICATION_ASSIGNMENT",
-        PRODUCT_USER_MESSAGES.DUPLICATE_CLASSIFICATION_ASSIGNMENT,
+        msg.DUPLICATE_CLASSIFICATION_ASSIGNMENT,
         409,
         "classificationId"
       );
@@ -907,6 +915,7 @@ export class ProductClassificationService {
     productId: string,
     assignmentId: string
   ): Promise<ProductClassificationPanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const product = await this.requireProduct(context, productId);
     const assignment = await this.assignmentRepository.findById(
       context.businessId,
@@ -916,7 +925,7 @@ export class ProductClassificationService {
     if (!assignment || assignment.productId !== productId) {
       throw new ProductError(
         "ASSIGNMENT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.ASSIGNMENT_NOT_FOUND,
+        msg.ASSIGNMENT_NOT_FOUND,
         404
       );
     }
@@ -965,12 +974,13 @@ export class ProductClassificationService {
     productId: string,
     payload: SetPrimaryClassificationPayload
   ): Promise<ProductClassificationPanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = setPrimaryClassificationSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400
       );
     }
@@ -984,7 +994,7 @@ export class ProductClassificationService {
     if (!assignment || assignment.productId !== productId) {
       throw new ProductError(
         "ASSIGNMENT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.ASSIGNMENT_NOT_FOUND,
+        msg.ASSIGNMENT_NOT_FOUND,
         404
       );
     }
@@ -1011,6 +1021,7 @@ export class ProductClassificationService {
     context: CurrentBusinessContext,
     classificationId: string
   ): Promise<ProductClassificationView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const row = await this.classificationRepository.findById(
       context.businessId,
       classificationId
@@ -1018,7 +1029,7 @@ export class ProductClassificationService {
     if (!row) {
       throw new ProductError(
         "CLASSIFICATION_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.CLASSIFICATION_NOT_FOUND,
+        msg.CLASSIFICATION_NOT_FOUND,
         404
       );
     }
@@ -1030,6 +1041,7 @@ export class ProductClassificationService {
     context: CurrentBusinessContext,
     productId: string
   ) {
+    const msg = await resolveProductUserMessagesForContext(context);
     const product = await this.productRepository.findById(
       context.businessId,
       productId
@@ -1037,7 +1049,7 @@ export class ProductClassificationService {
     if (!product) {
       throw new ProductError(
         "PRODUCT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.PRODUCT_NOT_FOUND,
+        msg.PRODUCT_NOT_FOUND,
         404
       );
     }

@@ -29,8 +29,8 @@ import {
   getVariantRegistrationCataloguesAction,
 } from "@/modules/product/actions/variant-actions";
 import { DynamicAttributeRenderer } from "@/modules/product/components/dynamic-attribute-renderer";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import type { VariantRegistrationCataloguesView } from "@/modules/product/types";
-import { VARIANT_UI_LABELS } from "@/modules/product/variant-ui-labels";
 
 type VariantRegistrationFormProps = {
   catalogues: VariantRegistrationCataloguesView;
@@ -41,6 +41,7 @@ export function VariantRegistrationForm({
   catalogues,
   initialProductId,
 }: VariantRegistrationFormProps) {
+  const labels = useProductUiLabels();
   const router = useRouter();
   const [result, setResult] = useState<PlatformActionResult | null>(null);
   const [registrationCatalogues, setRegistrationCatalogues] =
@@ -132,23 +133,26 @@ export function VariantRegistrationForm({
         return;
       }
 
-      setResult(platformSuccess("Variant registered", "Redirecting to workspace…"));
+      setResult(
+        platformSuccess(
+          labels.actions.variantRegistered,
+          labels.actions.redirectingToWorkspace
+        )
+      );
       router.push(`/products/variants/${actionResult.data.variant.id}`);
     });
   }
 
-  const variantLabel = registrationCatalogues.variantLabel;
-
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
-      <PageBackLink href="/products/variants" label={`Back to ${variantLabel.toLowerCase()}`} />
+      <PageBackLink href="/products/variants" label={labels.variant.backToModule} />
 
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">
-          {VARIANT_UI_LABELS.registrationTitle}
+          {labels.variant.registrationTitle}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {VARIANT_UI_LABELS.registrationDescription}
+          {labels.variant.registrationDescription}
         </p>
       </div>
 
@@ -253,7 +257,7 @@ export function VariantRegistrationForm({
             type="submit"
             isProcessing={isProcessing || isLoadingCatalogues}
             processingLabel={PROCESSING_LABELS.saving}
-            idleLabel={VARIANT_UI_LABELS.quickActionRegister}
+            idleLabel={labels.variant.quickActionRegister}
           />
         </PlatformFormActionFooter>
       </form>

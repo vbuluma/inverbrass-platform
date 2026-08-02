@@ -15,8 +15,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import type { ProductBundlesPanelView } from "@/modules/product/types";
-import { BUNDLE_UI_LABELS } from "@/modules/product/bundle-ui-labels";
 
 type ProductBundlesPanelProps = {
   initialData: ProductBundlesPanelView;
@@ -33,11 +33,12 @@ function formatDate(iso: string): string {
 }
 
 export function ProductBundlesPanel({ initialData }: ProductBundlesPanelProps) {
+  const labels = useProductUiLabels();
   return (
     <Card>
       <CardHeader>
         <CardTitle>{initialData.bundleLabel}</CardTitle>
-        <CardDescription>{BUNDLE_UI_LABELS.productPanelDescription}</CardDescription>
+        <CardDescription>{labels.bundle.productPanelDescription}</CardDescription>
       </CardHeader>
       <CardContent>
         {initialData.bundles.length === 0 ? (

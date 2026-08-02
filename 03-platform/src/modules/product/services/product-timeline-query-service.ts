@@ -9,7 +9,13 @@
 import type { CurrentBusinessContext } from "@/core/auth/types";
 import type { ProductTimelinePanelView } from "@/core/product-timeline";
 import { createProductTimelineService } from "@/core/product-timeline";
-import { ProductError, PRODUCT_USER_MESSAGES } from "@/modules/product/errors";
+import { localizeTimelinePanelView } from "@/core/product-timeline/timeline-terminology";
+import {
+  createIndustryExperienceService,
+  resolveBusinessTerminology,
+} from "@/core/industry-experience";
+import { ProductError } from "@/modules/product/errors";
+import { resolveProductUserMessagesForContext } from "@/modules/product/resolve-product-user-messages";
 import { createProductRepository } from "@/modules/product/repositories/product-repository";
 import {
   productTimelineListFiltersSchema,
@@ -19,7 +25,8 @@ import {
 export class ProductTimelineQueryService {
   constructor(
     private readonly productRepository = createProductRepository(),
-    private readonly timelineService = createProductTimelineService()
+    private readonly timelineService = createProductTimelineService(),
+    private readonly industryExperienceService = createIndustryExperienceService()
   ) {}
 
   async getTimelinePanel(
@@ -27,18 +34,25 @@ export class ProductTimelineQueryService {
     productId: string,
     filters: ProductTimelineListFiltersInput = { limit: 20, offset: 0 }
   ): Promise<ProductTimelinePanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = productTimelineListFiltersSchema.safeParse(filters);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400,
         first?.path[0] ? String(first.path[0]) : undefined
       );
     }
 
-    await this.requireProduct(context, productId);
+    await this.requireProduct(context, productId, msg);
+
+    const industryContext =
+      await this.industryExperienceService.getBusinessIndustryContext(
+        context.businessId
+      );
+    const terminology = resolveBusinessTerminology(industryContext.industryCode);
 
     const [result, filterOptions] = await Promise.all([
       this.timelineService.listEvents(
@@ -49,19 +63,23 @@ export class ProductTimelineQueryService {
       this.timelineService.getFilterOptions(context.businessId, productId),
     ]);
 
-    return {
-      events: result.events,
-      totalCount: result.totalCount,
-      hasMore: result.hasMore,
-      pageSize: result.pageSize,
-      offset: result.offset,
-      filterOptions,
-    };
+    return localizeTimelinePanelView(
+      {
+        events: result.events,
+        totalCount: result.totalCount,
+        hasMore: result.hasMore,
+        pageSize: result.pageSize,
+        offset: result.offset,
+        filterOptions,
+      },
+      terminology
+    );
   }
 
   private async requireProduct(
     context: CurrentBusinessContext,
-    productId: string
+    productId: string,
+    msg: Awaited<ReturnType<typeof resolveProductUserMessagesForContext>>
   ): Promise<void> {
     const row = await this.productRepository.findByIdIncludingArchived(
       context.businessId,
@@ -71,7 +89,7 @@ export class ProductTimelineQueryService {
     if (!row) {
       throw new ProductError(
         "PRODUCT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.PRODUCT_NOT_FOUND,
+        msg.PRODUCT_NOT_FOUND,
         404
       );
     }

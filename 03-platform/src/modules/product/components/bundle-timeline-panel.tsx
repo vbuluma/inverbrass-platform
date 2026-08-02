@@ -17,7 +17,7 @@ import {
   BUNDLE_TIMELINE_EVENT_TYPE_LABELS,
 } from "@/core/bundle-timeline/constants";
 import type { BundleTimelinePanelView } from "@/core/bundle-timeline/types";
-import { BUNDLE_UI_LABELS } from "@/modules/product/bundle-ui-labels";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 
 type BundleTimelinePanelProps = {
   initialData: BundleTimelinePanelView;
@@ -35,10 +35,12 @@ function formatDateTime(iso: string): string {
 }
 
 export function BundleTimelinePanel({ initialData }: BundleTimelinePanelProps) {
+  const labels = useProductUiLabels();
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{BUNDLE_UI_LABELS.timelineHeading}</CardTitle>
+        <CardTitle>{labels.bundle.timelineHeading}</CardTitle>
         <CardDescription>Lifecycle and configuration events for this bundle.</CardDescription>
       </CardHeader>
       <CardContent>

@@ -47,10 +47,8 @@ import { VariantAuditHistoryPanel } from "@/modules/product/components/variant-a
 import { VariantTimelinePanel } from "@/modules/product/components/variant-timeline-panel";
 import { VARIANT_STATUS_CODES } from "@/modules/product/constants";
 import type { VariantWorkspaceView } from "@/modules/product/types";
-import {
-  VARIANT_UI_LABELS,
-  VARIANT_WORKSPACE_TABS,
-} from "@/modules/product/variant-ui-labels";
+import { VARIANT_WORKSPACE_TABS } from "@/modules/product/constants";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 
 type VariantWorkspaceProps = {
   initialData: VariantWorkspaceView;
@@ -74,6 +72,7 @@ export function VariantWorkspace({
   initialData,
   initialTab = "overview",
 }: VariantWorkspaceProps) {
+  const labels = useProductUiLabels();
   const [workspace, setWorkspace] = useState(initialData);
   const [syncedInitial, setSyncedInitial] = useState(initialData);
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -108,6 +107,17 @@ export function VariantWorkspace({
   const isArchived = workspace.variant.status === VARIANT_STATUS_CODES.ARCHIVED;
   const isActive = workspace.variant.status === VARIANT_STATUS_CODES.ACTIVE;
 
+  const workspaceTabLabel = (tabId: string) => {
+    if (tabId === "audit-history") {
+      return labels.variant.workspaceTabs.auditHistory;
+    }
+    return (
+      labels.variant.workspaceTabs[
+        tabId as keyof typeof labels.variant.workspaceTabs
+      ] ?? tabId
+    );
+  };
+
   const attributePayload = useMemo(
     () =>
       workspace.attributeFields.map((field) => ({
@@ -136,7 +146,10 @@ export function VariantWorkspace({
 
       setWorkspace(result.data);
       setOverviewResult(
-        platformSuccess("Variant updated", "Changes saved successfully.")
+        platformSuccess(
+          labels.actions.variantUpdated,
+          labels.actions.changesSaved
+        )
       );
     });
   }
@@ -160,7 +173,7 @@ export function VariantWorkspace({
       setWorkspace(result.data);
       setAttributeValues(buildAttributeValues(result.data));
       setAttributesResult(
-        platformSuccess("Attributes saved", "Variant attribute overrides updated.")
+        platformSuccess(labels.actions.attributesSaved, labels.actions.variantAttributesSaved)
       );
     });
   }
@@ -177,7 +190,7 @@ export function VariantWorkspace({
         return;
       }
       setWorkspace(result.data);
-      setHeaderResult(platformSuccess("Status updated", successMessage));
+      setHeaderResult(platformSuccess(labels.actions.statusUpdated, successMessage));
     });
   }
 
@@ -190,7 +203,7 @@ export function VariantWorkspace({
         return;
       }
       setHeaderResult(
-        platformSuccess("Variant cloned", "Opening cloned variant…")
+        platformSuccess(labels.actions.variantCloned, labels.actions.openingClone)
       );
       window.location.assign(`/products/variants/${result.data.variant.id}`);
     });
@@ -200,8 +213,8 @@ export function VariantWorkspace({
     <main className="platform-workspace-main mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6">
       <SetBreadcrumbs
         items={[
-          { label: "Products", href: "/products" },
-          { label: VARIANT_UI_LABELS.moduleName, href: "/products/variants" },
+          labels.workspace.hubBreadcrumb,
+          { label: labels.variant.moduleName, href: "/products/variants" },
           {
             label: workspace.variant.productName,
             href: `/products/${workspace.variant.productId}`,
@@ -212,8 +225,8 @@ export function VariantWorkspace({
 
       <PlatformWorkspaceHeader
         backHref="/products/variants"
-        backLabel={`Back to ${VARIANT_UI_LABELS.moduleName.toLowerCase()}`}
-        workspaceLabel={VARIANT_UI_LABELS.workspaceTitle}
+        backLabel={labels.variant.backToModule}
+        workspaceLabel={labels.variant.workspaceTitle}
         title={workspace.variant.variantName}
         subtitle={`${workspace.variant.variantCode} · ${workspace.variant.productName} (${workspace.variant.productCode})`}
         statusLabel={workspace.variant.statusLabel}
@@ -249,7 +262,7 @@ export function VariantWorkspace({
                 disabled={isProcessing}
                 onClick={runClone}
               >
-                {VARIANT_UI_LABELS.cloneAction}
+                {labels.variant.cloneAction}
               </Button>
               <Button
                 type="button"
@@ -269,9 +282,9 @@ export function VariantWorkspace({
       />
 
       <PlatformTabs
-        tabs={VARIANT_WORKSPACE_TABS.map((tab) => ({
+        tabs={VARIANT_WORKSPACE_TABS.filter((tab) => tab.available).map((tab) => ({
           id: tab.id,
-          label: tab.label,
+          label: workspaceTabLabel(tab.id),
         }))}
         activeTab={activeTab}
         onTabChange={setActiveTab}

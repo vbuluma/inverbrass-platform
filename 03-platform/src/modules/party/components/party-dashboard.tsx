@@ -25,6 +25,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { usePartyDashboardLabels } from "@/modules/party/party-terminology-labels";
 import { PARTY_TYPE_CODES } from "@/modules/party/constants";
 import type { PartyDashboardView } from "@/modules/party/types";
 
@@ -44,10 +45,12 @@ function formatDate(iso: string): string {
 }
 
 export function PartyDashboard({ data }: PartyDashboardProps) {
+  const labels = usePartyDashboardLabels();
+
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6">
       <div className="space-y-3">
-        <PageBackLink href="/dashboard" label="Back to dashboard" />
+        <PageBackLink href="/dashboard" label={labels.backToDashboard} />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-3">
@@ -55,11 +58,11 @@ export function PartyDashboard({ data }: PartyDashboardProps) {
                 <UsersIcon className="size-5" aria-hidden />
               </span>
               <h1 className="text-2xl font-semibold tracking-tight">
-                Party Dashboard
+                {labels.dashboardTitle}
               </h1>
             </div>
             <p className="text-sm text-muted-foreground">
-              Master repository for Individuals and Organizations.
+              {labels.dashboardDescription}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -69,7 +72,7 @@ export function PartyDashboard({ data }: PartyDashboardProps) {
               className={cn(buttonVariants({ variant: "default" }), "gap-2")}
             >
               <UserPlusIcon className="size-4" aria-hidden />
-              Create Individual
+              {labels.createIndividual}
             </Link>
             <Link
               href="/parties/new?type=ORGANIZATION"
@@ -77,7 +80,7 @@ export function PartyDashboard({ data }: PartyDashboardProps) {
               className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
             >
               <Building2Icon className="size-4" aria-hidden />
-              Create Organization
+              {labels.createOrganization}
             </Link>
           </div>
         </div>
@@ -90,10 +93,10 @@ export function PartyDashboard({ data }: PartyDashboardProps) {
         <h2 id="party-kpis-heading" className="sr-only">
           Party statistics
         </h2>
-        <PlatformKpiCard label="Total Parties" value={data.totalParties} />
-        <PlatformKpiCard label="Individuals" value={data.individuals} />
-        <PlatformKpiCard label="Organizations" value={data.organizations} />
-        <PlatformKpiCard label="Active Parties" value={data.activeParties} />
+        <PlatformKpiCard label={labels.totalParties} value={data.totalParties} />
+        <PlatformKpiCard label={labels.individuals} value={data.individuals} />
+        <PlatformKpiCard label={labels.organizations} value={data.organizations} />
+        <PlatformKpiCard label={labels.activeParties} value={data.activeParties} />
       </section>
 
       <section aria-labelledby="party-roles-heading" className="space-y-3">
@@ -101,13 +104,13 @@ export function PartyDashboard({ data }: PartyDashboardProps) {
           id="party-roles-heading"
           className="text-lg font-semibold tracking-tight"
         >
-          Roles
+          {labels.rolesHeading}
         </h2>
         {data.roleCounts.length === 0 ? (
           <PlatformEmptyState
-            title="No Roles Yet"
-            description="Assign Customer, Supplier, Farmer, and other roles from a Party Workspace to populate this widget."
-            actionLabel="View Parties"
+            title={labels.noRolesTitle}
+            description={labels.noRolesDescription}
+            actionLabel={labels.viewParties}
             actionHref="/parties"
           />
         ) : (
@@ -137,22 +140,22 @@ export function PartyDashboard({ data }: PartyDashboardProps) {
             id="recent-parties-heading"
             className="text-lg font-semibold tracking-tight"
           >
-            Recently Registered
+            {labels.recentlyRegistered}
           </h2>
           <Link
             href="/parties/new"
             prefetch={false}
             className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
           >
-            Register Party
+            {labels.registerParty}
           </Link>
         </div>
 
         {data.recentlyRegistered.length === 0 ? (
           <PlatformEmptyState
-            title="No Parties Yet"
-            description="Create an Individual or Organization to populate the master Party repository."
-            actionLabel="Create Individual"
+            title={labels.noPartiesTitle}
+            description={labels.noPartiesDescription}
+            actionLabel={labels.createIndividual}
             actionHref="/parties/new?type=INDIVIDUAL"
           />
         ) : (
@@ -160,7 +163,7 @@ export function PartyDashboard({ data }: PartyDashboardProps) {
             <table className="w-full text-left text-sm">
               <thead className="bg-muted/40 text-muted-foreground">
                 <tr>
-                  <th className="px-4 py-3 font-medium">Party ID</th>
+                  <th className="px-4 py-3 font-medium">{labels.partyIdColumn}</th>
                   <th className="px-4 py-3 font-medium">Name</th>
                   <th className="hidden px-4 py-3 font-medium sm:table-cell">
                     Type
@@ -210,7 +213,7 @@ export function PartyDashboard({ data }: PartyDashboardProps) {
                           )}
                         >
                           <NetworkIcon className="size-3.5" aria-hidden />
-                          Add Unit
+                          {labels.addUnit}
                         </Link>
                       ) : (
                         <span className="text-muted-foreground">—</span>

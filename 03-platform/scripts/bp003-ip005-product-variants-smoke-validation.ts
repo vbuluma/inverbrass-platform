@@ -12,6 +12,7 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { closeDb } from "@/db/client";
+import { resolveBusinessTerminology } from "@/core/industry-experience/business-terminology";
 import { resolveVariantLabel } from "@/core/industry-experience/variant-terminology";
 import { PRODUCT_TIMELINE_EVENT_TYPES } from "@/core/product-timeline/constants";
 import { VARIANT_TIMELINE_EVENT_TYPES } from "@/core/variant-timeline/constants";
@@ -35,7 +36,7 @@ import {
   searchVariantsSchema,
   updateVariantSchema,
 } from "@/modules/product/validators/variant-validators";
-import { VARIANT_UI_LABELS } from "@/modules/product/variant-ui-labels";
+import { buildVariantUiLabels } from "@/modules/product/product-terminology-labels";
 
 const ROOT = path.resolve(__dirname, "..");
 
@@ -215,7 +216,9 @@ function checkWorkspaceTabs(): SmokeResult[] {
     },
     {
       name: "variant ui labels",
-      ok: VARIANT_UI_LABELS.dashboardTitle === "Product Variants",
+      ok:
+        buildVariantUiLabels(resolveBusinessTerminology(null)).dashboardTitle ===
+        "Variants",
     },
   ];
 }

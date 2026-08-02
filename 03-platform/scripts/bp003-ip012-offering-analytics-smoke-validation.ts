@@ -14,13 +14,13 @@ import path from "node:path";
 import { closeDb } from "@/db/client";
 import { PRODUCT_TIMELINE_EVENT_TYPES } from "@/core/product-timeline/constants";
 import { AUDIT_ENTITY_NAMES } from "@/core/audit/constants";
+import { resolveBusinessTerminology } from "@/core/industry-experience/business-terminology";
 import {
   OFFERING_METRIC_CATEGORIES,
   OFFERING_SNAPSHOT_PERIODS,
   PRODUCT_WORKSPACE_TABS,
 } from "@/modules/product/constants";
 import { defaultOfferingMetricDefinitions } from "@/db/seeds/offering-metric-defaults";
-import { OFFERING_ANALYTICS_UI_LABELS } from "@/modules/product/offering-analytics-ui-labels";
 import { createOfferingAnalyticsService } from "@/modules/product/services/offering-analytics-service";
 import {
   formatSnapshotDate,
@@ -192,7 +192,7 @@ function checkWorkspaceTabs(): SmokeResult[] {
     },
     {
       name: "analytics ui labels",
-      ok: OFFERING_ANALYTICS_UI_LABELS.panelTitle === "Analytics",
+      ok: resolveBusinessTerminology(null).analytics.moduleName === "Analytics",
     },
     {
       name: "audit:metric definition entity",

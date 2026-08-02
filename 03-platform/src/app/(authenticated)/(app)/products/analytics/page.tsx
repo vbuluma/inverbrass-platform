@@ -9,6 +9,7 @@
 import { redirect } from "next/navigation";
 
 import { getOfferingAnalyticsDashboardAction } from "@/modules/product/actions/offering-analytics-actions";
+import { ProductModuleErrorPage } from "@/modules/product/components/product-module-error-page";
 import { OfferingAnalyticsDashboard } from "@/modules/product/components/offering-analytics-dashboard";
 
 export default async function OfferingAnalyticsDashboardPage() {
@@ -23,10 +24,7 @@ export default async function OfferingAnalyticsDashboardPage() {
     }
 
     return (
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-xl font-semibold">Offering Analytics</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{result.error.message}</p>
-      </main>
+      <ProductModuleErrorPage message={result.error.message} titleKind="analytics" />
     );
   }
 

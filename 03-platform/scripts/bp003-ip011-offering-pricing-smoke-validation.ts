@@ -14,12 +14,13 @@ import path from "node:path";
 import { closeDb } from "@/db/client";
 import { PRODUCT_TIMELINE_EVENT_TYPES } from "@/core/product-timeline/constants";
 import { AUDIT_ENTITY_NAMES, AUDIT_OPERATIONS } from "@/core/audit/constants";
+import { resolveBusinessTerminology } from "@/core/industry-experience/business-terminology";
 import {
   PRICING_CATALOGUE_STATUS_CODES,
   PRICING_ITEM_STATUS_CODES,
   PRODUCT_WORKSPACE_TABS,
 } from "@/modules/product/constants";
-import { PRICING_UI_LABELS } from "@/modules/product/pricing-ui-labels";
+import { buildPricingUiLabels } from "@/modules/product/product-terminology-labels";
 import { createPricingService } from "@/modules/product/services/pricing-service";
 import {
   buildPricingDimensionKey,
@@ -304,7 +305,8 @@ function checkWorkspaceTabs(): SmokeResult[] {
     },
     {
       name: "pricing ui labels",
-      ok: PRICING_UI_LABELS.panelTitle === "Pricing",
+      ok:
+        resolveBusinessTerminology(null).pricing.moduleName === "Pricing",
     },
     {
       name: "pricing status codes",

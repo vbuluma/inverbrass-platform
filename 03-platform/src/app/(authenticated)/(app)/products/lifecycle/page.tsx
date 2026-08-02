@@ -9,6 +9,7 @@
 import { redirect } from "next/navigation";
 
 import { getProductLifecycleDashboardAction } from "@/modules/product/actions/product-lifecycle-actions";
+import { ProductModuleErrorPage } from "@/modules/product/components/product-module-error-page";
 import { ProductLifecycleDashboard } from "@/modules/product/components/product-lifecycle-dashboard";
 
 export default async function ProductLifecyclePage() {
@@ -23,12 +24,7 @@ export default async function ProductLifecyclePage() {
     }
 
     return (
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-xl font-semibold">Lifecycle Dashboard</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {result.error.message}
-        </p>
-      </main>
+      <ProductModuleErrorPage message={result.error.message} titleKind="lifecycle" />
     );
   }
 

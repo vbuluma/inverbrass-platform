@@ -23,8 +23,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import type { ProductVariantsPanelView } from "@/modules/product/types";
-import { VARIANT_UI_LABELS } from "@/modules/product/variant-ui-labels";
 
 type ProductVariantsPanelProps = {
   initialData: ProductVariantsPanelView;
@@ -45,6 +45,7 @@ export function ProductVariantsPanel({
   initialData,
   disabled = false,
 }: ProductVariantsPanelProps) {
+  const labels = useProductUiLabels();
   const registerHref = `/products/variants/new?productId=${initialData.productId}`;
 
   return (
@@ -52,7 +53,7 @@ export function ProductVariantsPanel({
       <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <CardTitle>{initialData.variantLabel}</CardTitle>
-          <CardDescription>{VARIANT_UI_LABELS.productPanelDescription}</CardDescription>
+          <CardDescription>{labels.variant.productPanelDescription}</CardDescription>
         </div>
         {!disabled ? (
           <Link
@@ -61,7 +62,7 @@ export function ProductVariantsPanel({
             className={cn(buttonVariants({ variant: "default", size: "sm" }), "gap-2")}
           >
             <PlusIcon className="size-4" aria-hidden />
-            {VARIANT_UI_LABELS.quickActionRegister}
+            {labels.variant.quickActionRegister}
           </Link>
         ) : null}
       </CardHeader>
@@ -70,7 +71,7 @@ export function ProductVariantsPanel({
           <PlatformEmptyState
             title={`No ${initialData.variantLabel.toLowerCase()} yet`}
             description="Simple offerings may have no variants. Register one when you need a distinguishable sellable version."
-            actionLabel={disabled ? undefined : VARIANT_UI_LABELS.quickActionRegister}
+            actionLabel={disabled ? undefined : labels.variant.quickActionRegister}
             actionHref={disabled ? undefined : registerHref}
           />
         ) : (

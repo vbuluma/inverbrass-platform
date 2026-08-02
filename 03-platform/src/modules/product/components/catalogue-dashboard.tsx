@@ -18,7 +18,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { searchCatalogueAction } from "@/modules/product/actions/product-catalogue-actions";
-import { CATALOGUE_UI_LABELS } from "@/modules/product/catalogue-ui-labels";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import type {
   CatalogueDashboardEntryView,
   CatalogueDashboardView,
@@ -29,6 +29,7 @@ type CatalogueDashboardProps = {
 };
 
 export function CatalogueDashboard({ data }: CatalogueDashboardProps) {
+  const labels = useProductUiLabels();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<CatalogueDashboardEntryView[] | null>(
     null
@@ -70,28 +71,28 @@ export function CatalogueDashboard({ data }: CatalogueDashboardProps) {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6">
       <div className="space-y-3">
-        <PageBackLink href="/products" label="Back to products" />
+        <PageBackLink href="/products" label={labels.catalogue.backLabel} />
         <div className="flex items-center gap-3">
           <span className="flex size-11 items-center justify-center rounded-lg bg-sky-50 text-sky-900 ring-1 ring-sky-200">
             <GlobeIcon className="size-5" aria-hidden />
           </span>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">
-              {data.catalogueLabel} {CATALOGUE_UI_LABELS.dashboardTitle.replace("Digital ", "")}
+              {data.catalogueLabel} {labels.catalogue.dashboardTitle.replace("Digital ", "")}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {CATALOGUE_UI_LABELS.dashboardDescription}
+              {labels.catalogue.dashboardDescription}
             </p>
           </div>
         </div>
       </div>
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <PlatformKpiCard label={CATALOGUE_UI_LABELS.metricsPublished} value={data.publishedProductCount} />
-        <PlatformKpiCard label={CATALOGUE_UI_LABELS.metricsDraft} value={data.unpublishedActiveCount} />
-        <PlatformKpiCard label={CATALOGUE_UI_LABELS.metricsScheduled} value={data.scheduledPublicationCount} />
-        <PlatformKpiCard label={CATALOGUE_UI_LABELS.metricsFeatured} value={data.featuredCount} />
-        <PlatformKpiCard label={CATALOGUE_UI_LABELS.metricsChannels} value={data.channelCount} />
+        <PlatformKpiCard label={labels.catalogue.metricsPublished} value={data.publishedProductCount} />
+        <PlatformKpiCard label={labels.catalogue.metricsDraft} value={data.unpublishedActiveCount} />
+        <PlatformKpiCard label={labels.catalogue.metricsScheduled} value={data.scheduledPublicationCount} />
+        <PlatformKpiCard label={labels.catalogue.metricsFeatured} value={data.featuredCount} />
+        <PlatformKpiCard label={labels.catalogue.metricsChannels} value={data.channelCount} />
       </section>
 
       <section className="space-y-3">

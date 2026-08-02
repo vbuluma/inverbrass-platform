@@ -28,9 +28,10 @@ import {
   searchBundleProductsAction,
 } from "@/modules/product/actions/product-bundle-actions";
 import {
-  BUNDLE_REGISTRATION_STEPS,
-  BUNDLE_UI_LABELS,
-} from "@/modules/product/bundle-ui-labels";
+  BUNDLE_REGISTRATION_STEP_IDS,
+  BUNDLE_WORKSPACE_TABS,
+} from "@/modules/product/constants";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import type {
   BundleProductSearchResult,
   BundleRegistrationCataloguesView,
@@ -52,6 +53,7 @@ type BundleRegistrationWizardProps = {
 export function BundleRegistrationWizard({
   catalogues,
 }: BundleRegistrationWizardProps) {
+  const labels = useProductUiLabels();
   const [stepIndex, setStepIndex] = useState(0);
   const [result, setResult] = useState<PlatformActionResult | null>(null);
   const [productQuery, setProductQuery] = useState("");
@@ -77,7 +79,15 @@ export function BundleRegistrationWizard({
     draftHydrated: true,
   });
 
-  const currentStep = BUNDLE_REGISTRATION_STEPS[stepIndex];
+  const registrationSteps = BUNDLE_REGISTRATION_STEP_IDS.map((id) => ({
+    id,
+    label:
+      labels.bundle.registrationSteps[
+        id as keyof typeof labels.bundle.registrationSteps
+      ] ?? id,
+  }));
+
+  const currentStep = registrationSteps[stepIndex];
 
   function searchProducts(query: string) {
     startSearchTransition(async () => {
@@ -152,7 +162,12 @@ export function BundleRegistrationWizard({
       }
 
       setCompletedBundleId(actionResult.data.bundle.id);
-      setResult(platformSuccess("Bundle created", "Your bundle has been registered."));
+      setResult(
+        platformSuccess(
+          labels.actions.bundleCreated,
+          `Your ${labels.bundle.singular.toLowerCase()} has been registered.`
+        )
+      );
     });
   }
 
@@ -162,7 +177,7 @@ export function BundleRegistrationWizard({
       return;
     }
     setResult(null);
-    setStepIndex((current) => Math.min(current + 1, BUNDLE_REGISTRATION_STEPS.length - 1));
+    setStepIndex((current) => Math.min(current + 1, registrationSteps.length - 1));
   }
 
   function goBack() {
@@ -174,7 +189,7 @@ export function BundleRegistrationWizard({
     return (
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
         <PlatformCompletionCard
-          title="Bundle registered"
+          title={labels.bundle.registrationCompleteTitle}
           summary={[
             { label: "Code", value: form.textValue("bundleCode") },
             { label: "Name", value: form.textValue("bundleName") },
@@ -195,19 +210,19 @@ export function BundleRegistrationWizard({
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8 sm:px-6">
-      <PageBackLink href="/products/bundles" label="Back to bundles" />
+      <PageBackLink href="/products/bundles" label={labels.bundle.backToModule} />
 
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">
-          {BUNDLE_UI_LABELS.registrationTitle}
+          {labels.bundle.registrationTitle}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Step {stepIndex + 1} of {BUNDLE_REGISTRATION_STEPS.length}: {currentStep.label}
+          Step {stepIndex + 1} of {registrationSteps.length}: {currentStep.label}
         </p>
       </div>
 
       <ol className="flex flex-wrap gap-2 text-sm">
-        {BUNDLE_REGISTRATION_STEPS.map((step, index) => (
+        {registrationSteps.map((step, index) => (
           <li
             key={step.id}
             className={
@@ -454,7 +469,7 @@ export function BundleRegistrationWizard({
             Cancel
           </Link>
         )}
-        {stepIndex < BUNDLE_REGISTRATION_STEPS.length - 1 ? (
+        {stepIndex < registrationSteps.length - 1 ? (
           <Button type="button" onClick={goNext}>
             Continue
           </Button>
@@ -463,7 +478,7 @@ export function BundleRegistrationWizard({
             type="button"
             isProcessing={isProcessing}
             processingLabel={PROCESSING_LABELS.saving}
-            idleLabel={BUNDLE_UI_LABELS.quickActionRegister}
+            idleLabel={labels.bundle.quickActionRegister}
             onClick={submitBundle}
           />
         )}

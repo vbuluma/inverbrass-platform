@@ -16,7 +16,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { ClassificationTimelinePanelView } from "@/core/product-classification-timeline";
-import { CATALOGUE_STRUCTURE_UI_LABELS } from "@/modules/product/catalogue-structure-ui-labels";
+import { useBusinessTerminology } from "@/core/industry-experience/business-terminology-context";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 
 type ProductClassificationTimelinePanelProps = {
   initialData: ClassificationTimelinePanelView;
@@ -36,12 +37,14 @@ function formatDateTime(iso: string): string {
 export function ProductClassificationTimelinePanel({
   initialData,
 }: ProductClassificationTimelinePanelProps) {
+  const labels = useProductUiLabels();
+  const terminology = useBusinessTerminology();
   const [panel] = useState(initialData);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{CATALOGUE_STRUCTURE_UI_LABELS.timelineHeading}</CardTitle>
+        <CardTitle>{labels.catalogueStructure.timelineHeading}</CardTitle>
         <CardDescription>
           Lifecycle events for this catalogue node — create, update, move, assignments.
         </CardDescription>
@@ -50,7 +53,7 @@ export function ProductClassificationTimelinePanel({
         {panel.events.length === 0 ? (
           <PlatformEmptyState
             title="No Timeline Events Yet"
-            description="Events appear when this catalogue node is created, updated, moved, or receives product assignments."
+            description={`Events appear when this catalogue node is created, updated, moved, or receives ${terminology.offerings.plural.toLowerCase()} assignments.`}
           />
         ) : (
           <ul className="divide-y">

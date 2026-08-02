@@ -27,10 +27,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useBusinessTerminology } from "@/core/industry-experience/business-terminology-context";
 import { cn } from "@/lib/utils";
 import { searchVariantsAction } from "@/modules/product/actions/variant-actions";
+import { buildVariantUiLabels } from "@/modules/product/product-terminology-labels";
 import type { ProductVariantView, VariantDashboardView } from "@/modules/product/types";
-import { VARIANT_UI_LABELS } from "@/modules/product/variant-ui-labels";
 
 type VariantDashboardProps = {
   data: VariantDashboardView;
@@ -48,6 +49,8 @@ function formatDate(iso: string): string {
 }
 
 export function VariantDashboard({ data }: VariantDashboardProps) {
+  const terminology = useBusinessTerminology();
+  const uiLabels = buildVariantUiLabels(terminology);
   const variantLabel = data.variantLabel;
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<ProductVariantView[] | null>(
@@ -89,7 +92,7 @@ export function VariantDashboard({ data }: VariantDashboardProps) {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6">
       <div className="space-y-3">
-        <PageBackLink href="/products" label="Back to products" />
+        <PageBackLink href="/products" label={uiLabels.backLabel} />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex items-center gap-3">
             <span className="flex size-11 items-center justify-center rounded-lg bg-amber-50 text-amber-900 ring-1 ring-amber-200">
@@ -100,7 +103,7 @@ export function VariantDashboard({ data }: VariantDashboardProps) {
                 {variantLabel}
               </h1>
               <p className="text-sm text-muted-foreground">
-                {VARIANT_UI_LABELS.dashboardDescription}
+                {uiLabels.dashboardDescription}
               </p>
             </div>
           </div>
@@ -110,30 +113,30 @@ export function VariantDashboard({ data }: VariantDashboardProps) {
             className={cn(buttonVariants({ variant: "default" }), "gap-2")}
           >
             <PlusIcon className="size-4" aria-hidden />
-            {VARIANT_UI_LABELS.quickActionRegister}
+            {uiLabels.quickActionRegister}
           </Link>
         </div>
       </div>
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <PlatformKpiCard
-          label={VARIANT_UI_LABELS.metricsTotal}
+          label={uiLabels.metricsTotal}
           value={data.totalVariants}
         />
         <PlatformKpiCard
-          label={VARIANT_UI_LABELS.metricsActive}
+          label={uiLabels.metricsActive}
           value={data.activeVariants}
         />
         <PlatformKpiCard
-          label={VARIANT_UI_LABELS.metricsDraft}
+          label={uiLabels.metricsDraft}
           value={data.draftVariants}
         />
         <PlatformKpiCard
-          label={VARIANT_UI_LABELS.metricsArchived}
+          label={uiLabels.metricsArchived}
           value={data.archivedVariants}
         />
         <PlatformKpiCard
-          label={VARIANT_UI_LABELS.metricsParentOfferings}
+          label={uiLabels.metricsParentOfferings}
           value={data.parentOfferingCount}
         />
       </section>
@@ -172,9 +175,9 @@ export function VariantDashboard({ data }: VariantDashboardProps) {
           emptyTitle={`No ${variantLabel.toLowerCase()} found`}
           emptyHints={[
             "Try a different code or parent offering",
-            VARIANT_UI_LABELS.quickActionRegister,
+            uiLabels.quickActionRegister,
           ]}
-          createLabel={VARIANT_UI_LABELS.quickActionRegister}
+          createLabel={uiLabels.quickActionRegister}
           onCreate={() => {
             window.location.assign("/products/variants/new");
           }}
@@ -222,7 +225,7 @@ export function VariantDashboard({ data }: VariantDashboardProps) {
         ) : (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">{VARIANT_UI_LABELS.metricsRecent}</CardTitle>
+              <CardTitle className="text-base">{uiLabels.metricsRecent}</CardTitle>
               <CardDescription>
                 Latest updates across all parent {data.catalogueLabel.toLowerCase()}.
               </CardDescription>

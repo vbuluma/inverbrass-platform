@@ -17,7 +17,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { VariantAuditHistoryPanelView } from "@/modules/product/types";
-import { VARIANT_UI_LABELS } from "@/modules/product/variant-ui-labels";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 
 type VariantAuditHistoryPanelProps = {
   initialData: VariantAuditHistoryPanelView;
@@ -37,10 +37,12 @@ function formatDateTime(value: string): string {
 export function VariantAuditHistoryPanel({
   initialData,
 }: VariantAuditHistoryPanelProps) {
+  const labels = useProductUiLabels();
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{VARIANT_UI_LABELS.auditHeading}</CardTitle>
+        <CardTitle>{labels.variant.auditHeading}</CardTitle>
         <CardDescription>
           Immutable record of variant changes (ENG-013).
         </CardDescription>

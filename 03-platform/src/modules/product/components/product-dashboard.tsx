@@ -37,8 +37,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useBusinessTerminology } from "@/core/industry-experience/business-terminology-context";
 import { cn } from "@/lib/utils";
 import { searchProductsAction } from "@/modules/product/actions/product-actions";
+import { buildProductDashboardLabels } from "@/modules/product/product-terminology-labels";
 import type {
   ProductDashboardView,
   ProductSummaryView,
@@ -60,6 +62,8 @@ function formatDate(iso: string): string {
 }
 
 export function ProductDashboard({ data }: ProductDashboardProps) {
+  const terminology = useBusinessTerminology();
+  const labels = buildProductDashboardLabels(terminology);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<ProductSummaryView[] | null>(
     null
@@ -67,7 +71,7 @@ export function ProductDashboard({ data }: ProductDashboardProps) {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const pageTitle = `${data.catalogueLabel} Catalogue`;
+  const pageTitle = labels.pageTitle;
 
   const searchStatus =
     searchQuery.trim().length < 2
@@ -138,17 +142,17 @@ export function ProductDashboard({ data }: ProductDashboardProps) {
             className={cn(buttonVariants({ variant: "default" }), "gap-2")}
           >
             <PlusIcon className="size-4" aria-hidden />
-            Create {data.catalogueLabel.replace(/s$/, "")}
+            {labels.createLabel}
           </Link>
         </div>
       </div>
 
       <section aria-labelledby="product-kpis-heading" className="space-y-3">
         <h2 id="product-kpis-heading" className="text-lg font-semibold tracking-tight">
-          Products
+          {labels.kpiHeading}
         </h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <PlatformKpiCard label="Total Products" value={data.totalProducts} />
+          <PlatformKpiCard label={labels.totalLabel} value={data.totalProducts} />
           <PlatformKpiCard label="Active" value={data.activeProducts} />
           <PlatformKpiCard label="Draft" value={data.draftProducts} />
           <PlatformKpiCard label="Archived" value={data.archivedProducts} />
@@ -169,13 +173,13 @@ export function ProductDashboard({ data }: ProductDashboardProps) {
           id="product-types-heading"
           className="text-lg font-semibold tracking-tight"
         >
-          By Product Type
+          {labels.byTypeHeading}
         </h2>
         {topTypes.length === 0 ? (
           <PlatformEmptyState
-            title="No Types Yet"
-            description="Register offerings to populate type breakdown."
-            actionLabel={`Create ${data.catalogueLabel.replace(/s$/, "")}`}
+            title={labels.emptyTitle}
+            description={`Register ${terminology.offerings.plural.toLowerCase()} to populate type breakdown.`}
+            actionLabel={labels.createLabel}
             actionHref="/products/new"
           />
         ) : (
@@ -213,7 +217,7 @@ export function ProductDashboard({ data }: ProductDashboardProps) {
             className={cn(buttonVariants({ variant: "default" }), "gap-2")}
           >
             <FilePlusIcon className="size-4" aria-hidden />
-            Register Offering
+            Register {terminology.offerings.singular}
           </Link>
           <Link
             href="/products/classifications"
@@ -221,7 +225,7 @@ export function ProductDashboard({ data }: ProductDashboardProps) {
             className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
           >
             <FolderTreeIcon className="size-4" aria-hidden />
-            Classifications
+            {labels.quickActions.classifications}
           </Link>
           <Link
             href="/products/units"
@@ -237,7 +241,7 @@ export function ProductDashboard({ data }: ProductDashboardProps) {
             className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
           >
             <TagsIcon className="size-4" aria-hidden />
-            Product Attributes
+            {labels.quickActions.attributes}
           </Link>
           <Link
             href="/products/variants"
@@ -245,7 +249,7 @@ export function ProductDashboard({ data }: ProductDashboardProps) {
             className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
           >
             <BoxesIcon className="size-4" aria-hidden />
-            Product Variants
+            {labels.quickActions.variants}
           </Link>
           <Link
             href="/products/bundles"
@@ -253,7 +257,7 @@ export function ProductDashboard({ data }: ProductDashboardProps) {
             className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
           >
             <LayersIcon className="size-4" aria-hidden />
-            Product Bundles
+            {labels.quickActions.bundles}
           </Link>
           <Link
             href="/products/catalogue"
@@ -261,7 +265,7 @@ export function ProductDashboard({ data }: ProductDashboardProps) {
             className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
           >
             <GlobeIcon className="size-4" aria-hidden />
-            Digital Catalogue
+            {labels.quickActions.digitalCatalogue}
           </Link>
           <Link
             href="/products/new"
@@ -293,9 +297,9 @@ export function ProductDashboard({ data }: ProductDashboardProps) {
               setSearchQuery(value);
               runSearch(value);
             }}
-            placeholder="Search by code, name, or legacy code…"
+            placeholder={labels.searchPlaceholder}
             className="pl-9"
-            aria-label="Search products"
+            aria-label={labels.searchAriaLabel}
           />
         </div>
 

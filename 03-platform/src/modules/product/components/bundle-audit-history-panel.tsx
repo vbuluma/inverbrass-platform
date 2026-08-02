@@ -14,7 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { BundleAuditHistoryPanelView } from "@/modules/product/types";
-import { BUNDLE_UI_LABELS } from "@/modules/product/bundle-ui-labels";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 
 type BundleAuditHistoryPanelProps = {
   initialData: BundleAuditHistoryPanelView;
@@ -34,10 +34,12 @@ function formatDateTime(value: string): string {
 export function BundleAuditHistoryPanel({
   initialData,
 }: BundleAuditHistoryPanelProps) {
+  const labels = useProductUiLabels();
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{BUNDLE_UI_LABELS.auditHeading}</CardTitle>
+        <CardTitle>{labels.bundle.auditHeading}</CardTitle>
         <CardDescription>Immutable record of bundle changes (ENG-013).</CardDescription>
       </CardHeader>
       <CardContent>

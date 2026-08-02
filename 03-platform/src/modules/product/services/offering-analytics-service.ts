@@ -17,6 +17,8 @@ import {
   createAuditService,
 } from "@/core/audit";
 import { createIndustryExperienceService } from "@/core/industry-experience/services/industry-experience-service";
+import { resolveBusinessTerminology } from "@/core/industry-experience/business-terminology";
+import { DEFAULT_OFFERING_WORKSPACE_LABEL } from "@/core/industry-experience/offering-terminology";
 import {
   buildProductTimelineEventFromContext,
   createProductTimelineRepository,
@@ -30,7 +32,8 @@ import {
   OFFERING_METRIC_CALCULATION_METHODS,
   PRICING_ITEM_STATUS_CODES,
 } from "@/modules/product/constants";
-import { ProductError, PRODUCT_USER_MESSAGES } from "@/modules/product/errors";
+import { ProductError } from "@/modules/product/errors";
+import { resolveProductUserMessagesForContext } from "@/modules/product/resolve-product-user-messages";
 import { createOfferingMetricDefinitionRepository } from "@/modules/product/repositories/offering-metric-definition-repository";
 import { createOfferingMetricSnapshotRepository } from "@/modules/product/repositories/offering-metric-snapshot-repository";
 import { createPricingItemRepository } from "@/modules/product/repositories/pricing-item-repository";
@@ -114,6 +117,9 @@ export class OfferingAnalyticsService {
       await this.industryExperienceService.getBusinessIndustryContext(
         context.businessId
       );
+    const customerEntityLabel = resolveBusinessTerminology(
+      profile.industryCode ?? null
+    ).entities.customer.singular;
 
     const [definitions, snapshots, productCount] = await Promise.all([
       this.definitionRepository.listByBusinessId(context.businessId),
@@ -135,14 +141,18 @@ export class OfferingAnalyticsService {
       metricDefinitionCount: definitions.length,
       snapshotCount: snapshots.length,
       offeringsTracked: productCount,
-      recentlyRefreshed: snapshots.slice(0, 8).map((row) => this.mapSnapshotView(row)),
-      metricDefinitions: definitions.map((row) => this.mapDefinitionView(row)),
+      recentlyRefreshed: snapshots
+        .slice(0, 8)
+        .map((row) => this.mapSnapshotView(row, customerEntityLabel)),
+      metricDefinitions: definitions.map((row) =>
+        this.mapDefinitionView(row, customerEntityLabel)
+      ),
       categorySummary: [...categoryMap.entries()].map(([category, count]) => ({
         category,
-        categoryLabel: metricCategoryLabel(category),
+        categoryLabel: metricCategoryLabel(category, customerEntityLabel),
         count,
       })),
-      catalogueLabel: profile.offeringCatalogueNavLabel ?? "Products",
+      catalogueLabel: profile.offeringWorkspaceLabel ?? DEFAULT_OFFERING_WORKSPACE_LABEL,
     };
   }
 
@@ -151,6 +161,7 @@ export class OfferingAnalyticsService {
     offeringId: string,
     payload: OfferingAnalyticsFiltersPayload = {}
   ): Promise<ProductAnalyticsPanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     await this.ensureDefaults(context);
 
     const parsed = offeringAnalyticsFiltersSchema.safeParse(payload);
@@ -158,12 +169,15 @@ export class OfferingAnalyticsService {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400
       );
     }
 
-    const product = await this.requireOffering(context.businessId, offeringId);
+    const product = await this.requireOffering(context, offeringId);
+    const customerEntityLabel = await this.resolveCustomerEntityLabel(
+      context.businessId
+    );
     const snapshotPeriod =
       parsed.data.snapshotPeriod ?? resolveDefaultSnapshotPeriod();
     const { dateFrom, dateTo } = resolveDateRange(
@@ -182,8 +196,8 @@ export class OfferingAnalyticsService {
     ]);
 
     const latestSnapshots = this.latestSnapshotsByMetric(snapshots);
-    const kpiCards = this.buildKpiCards(latestSnapshots);
-    const sections = this.buildSections(latestSnapshots);
+    const kpiCards = this.buildKpiCards(latestSnapshots, customerEntityLabel);
+    const sections = this.buildSections(latestSnapshots, customerEntityLabel);
 
     const statusName = await this.referenceRepository.getProductStatusName(
       product.statusCode
@@ -202,9 +216,15 @@ export class OfferingAnalyticsService {
       dateTo,
       kpiCards,
       sections,
-      snapshots: snapshots.map((row) => this.mapSnapshotView(row)),
-      trends: snapshots.slice(0, 12).map((row) => this.mapSnapshotView(row)),
-      metricDefinitions: definitions.map((row) => this.mapDefinitionView(row)),
+      snapshots: snapshots.map((row) =>
+        this.mapSnapshotView(row, customerEntityLabel)
+      ),
+      trends: snapshots
+        .slice(0, 12)
+        .map((row) => this.mapSnapshotView(row, customerEntityLabel)),
+      metricDefinitions: definitions.map((row) =>
+        this.mapDefinitionView(row, customerEntityLabel)
+      ),
       exportReady: snapshots.length > 0,
     };
   }
@@ -213,21 +233,19 @@ export class OfferingAnalyticsService {
     context: CurrentBusinessContext,
     payload: RefreshOfferingAnalyticsPayload
   ): Promise<ProductAnalyticsPanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = refreshOfferingAnalyticsSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400
       );
     }
 
     await this.ensureDefaults(context);
-    const product = await this.requireOffering(
-      context.businessId,
-      parsed.data.offeringId
-    );
+    const product = await this.requireOffering(context, parsed.data.offeringId);
     const snapshotPeriod =
       parsed.data.snapshotPeriod ?? resolveDefaultSnapshotPeriod();
     const snapshotDate = formatSnapshotDate(new Date());
@@ -335,17 +353,21 @@ export class OfferingAnalyticsService {
     context: CurrentBusinessContext,
     payload: CompareOfferingAnalyticsPayload
   ): Promise<OfferingAnalyticsComparisonView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = compareOfferingAnalyticsSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400
       );
     }
 
     await this.ensureDefaults(context);
+    const customerEntityLabel = await this.resolveCustomerEntityLabel(
+      context.businessId
+    );
     const snapshotPeriod =
       parsed.data.snapshotPeriod ?? resolveDefaultSnapshotPeriod();
     const { dateFrom, dateTo } = resolveDateRange(
@@ -356,7 +378,7 @@ export class OfferingAnalyticsService {
     const offerings = [];
 
     for (const offeringId of parsed.data.offeringIds) {
-      const product = await this.requireOffering(context.businessId, offeringId);
+      const product = await this.requireOffering(context, offeringId);
       const snapshots = await this.snapshotRepository.listByOfferingId(
         context.businessId,
         offeringId,
@@ -368,7 +390,7 @@ export class OfferingAnalyticsService {
         offeringId,
         offeringCode: product.productCode,
         offeringName: product.productName,
-        kpis: this.buildKpiCards(latestSnapshots),
+        kpis: this.buildKpiCards(latestSnapshots, customerEntityLabel),
       });
     }
 
@@ -380,6 +402,7 @@ export class OfferingAnalyticsService {
     offeringId: string,
     payload: OfferingAnalyticsFiltersPayload = {}
   ): Promise<OfferingAnalyticsExportView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = exportOfferingAnalyticsSchema.safeParse({
       offeringId,
       ...payload,
@@ -388,7 +411,7 @@ export class OfferingAnalyticsService {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400
       );
     }
@@ -513,6 +536,13 @@ export class OfferingAnalyticsService {
     return [...map.values()];
   }
 
+  private async resolveCustomerEntityLabel(businessId: string): Promise<string> {
+    const profile =
+      await this.industryExperienceService.getBusinessIndustryContext(businessId);
+    return resolveBusinessTerminology(profile.industryCode ?? null).entities
+      .customer.singular;
+  }
+
   private buildKpiCards(
     snapshots: Awaited<
       ReturnType<
@@ -520,7 +550,8 @@ export class OfferingAnalyticsService {
           typeof createOfferingMetricSnapshotRepository
         >["listByOfferingId"]
       >
-    >
+    >,
+    customerEntityLabel: string
   ): OfferingAnalyticsKpiCardView[] {
     return snapshots.map((row) => ({
       metricCode: row.metricCode,
@@ -531,7 +562,7 @@ export class OfferingAnalyticsService {
         (row.snapshot.metadata as Record<string, unknown> | null) ?? null
       ),
       category: row.metricCategory,
-      categoryLabel: metricCategoryLabel(row.metricCategory),
+      categoryLabel: metricCategoryLabel(row.metricCategory, customerEntityLabel),
       trendDirection: row.snapshot.metadata &&
         typeof row.snapshot.metadata === "object" &&
         (row.snapshot.metadata as Record<string, unknown>).pending
@@ -553,9 +584,10 @@ export class OfferingAnalyticsService {
           typeof createOfferingMetricSnapshotRepository
         >["listByOfferingId"]
       >
-    >
+    >,
+    customerEntityLabel: string
   ): OfferingAnalyticsSectionView[] {
-    const kpiCards = this.buildKpiCards(snapshots);
+    const kpiCards = this.buildKpiCards(snapshots, customerEntityLabel);
     const grouped = new Map<string, OfferingAnalyticsKpiCardView[]>();
 
     for (const kpi of kpiCards) {
@@ -566,19 +598,25 @@ export class OfferingAnalyticsService {
 
     return [...grouped.entries()].map(([category, kpis]) => ({
       category,
-      categoryLabel: metricCategoryLabel(category),
+      categoryLabel: metricCategoryLabel(category, customerEntityLabel),
       kpis,
     }));
   }
 
-  private mapDefinitionView(row: MetricDefinitionRow): OfferingMetricDefinitionView {
+  private mapDefinitionView(
+    row: MetricDefinitionRow,
+    customerEntityLabel: string
+  ): OfferingMetricDefinitionView {
     return {
       id: row.id,
       code: row.code,
       name: row.name,
       description: row.description,
       metricCategory: row.metricCategory,
-      metricCategoryLabel: metricCategoryLabel(row.metricCategory),
+      metricCategoryLabel: metricCategoryLabel(
+        row.metricCategory,
+        customerEntityLabel
+      ),
       calculationMethod: row.calculationMethod,
       unitOfMeasure: row.unitOfMeasure,
       isActive: row.isActive,
@@ -592,7 +630,8 @@ export class OfferingAnalyticsService {
           typeof createOfferingMetricSnapshotRepository
         >["listByOfferingId"]
       >
-    >[number]
+    >[number],
+    customerEntityLabel: string
   ): OfferingMetricSnapshotView {
     const metadata = (row.snapshot.metadata as Record<string, unknown> | null) ?? null;
 
@@ -605,7 +644,10 @@ export class OfferingAnalyticsService {
       metricCode: row.metricCode,
       metricName: row.metricName,
       metricCategory: row.metricCategory,
-      metricCategoryLabel: metricCategoryLabel(row.metricCategory),
+      metricCategoryLabel: metricCategoryLabel(
+        row.metricCategory,
+        customerEntityLabel
+      ),
       snapshotPeriod: row.snapshot.snapshotPeriod,
       snapshotPeriodLabel: snapshotPeriodLabel(row.snapshot.snapshotPeriod),
       snapshotDate: row.snapshot.snapshotDate,
@@ -622,12 +664,16 @@ export class OfferingAnalyticsService {
     };
   }
 
-  private async requireOffering(businessId: string, offeringId: string) {
-    const row = await this.productRepository.findById(businessId, offeringId);
+  private async requireOffering(
+    context: CurrentBusinessContext,
+    offeringId: string
+  ) {
+    const msg = await resolveProductUserMessagesForContext(context);
+    const row = await this.productRepository.findById(context.businessId, offeringId);
     if (!row) {
       throw new ProductError(
         "PRODUCT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.PRODUCT_NOT_FOUND,
+        msg.PRODUCT_NOT_FOUND,
         404
       );
     }

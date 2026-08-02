@@ -37,10 +37,10 @@ import {
   removeAttributeScopeAction,
   updateAttributeDefinitionAction,
 } from "@/modules/product/actions/attribute-actions";
-import { ATTRIBUTE_UI_LABELS } from "@/modules/product/attribute-ui-labels";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import {
   ATTRIBUTE_DEFINITION_WORKSPACE_TABS,
-} from "@/modules/product/attribute-ui-labels";
+} from "@/modules/product/constants";
 import { ATTRIBUTE_SCOPE_TYPES } from "@/modules/product/constants";
 import type { AttributeDefinitionWorkspaceView } from "@/modules/product/types";
 
@@ -53,6 +53,7 @@ export function AttributeDefinitionWorkspace({
   initialData,
   initialTab = "overview",
 }: AttributeDefinitionWorkspaceProps) {
+  const labels = useProductUiLabels();
   const [workspace, setWorkspace] = useState(initialData);
   const [activeTab, setActiveTab] = useState(initialTab);
   const [result, setResult] = useState<PlatformActionResult | null>(null);
@@ -62,6 +63,17 @@ export function AttributeDefinitionWorkspace({
     initialData.productTypes[0]?.code ?? ""
   );
   const { isProcessing, run } = useAsyncAction();
+
+  const workspaceTabLabel = (tabId: string) => {
+    if (tabId === "audit-history") {
+      return labels.attribute.definitionWorkspaceTabs.auditHistory;
+    }
+    return (
+      labels.attribute.definitionWorkspaceTabs[
+        tabId as keyof typeof labels.attribute.definitionWorkspaceTabs
+      ] ?? tabId
+    );
+  };
 
   async function saveOverview(event: React.FormEvent) {
     event.preventDefault();
@@ -75,14 +87,16 @@ export function AttributeDefinitionWorkspace({
         }
       );
       if (!actionResult.success) {
-        setResult(platformError("Could not save", actionResult.error.message));
+        setResult(platformError(labels.actions.couldNotSave, actionResult.error.message));
         return;
       }
       setWorkspace((current) => ({
         ...current,
         definition: actionResult.data,
       }));
-      setResult(platformSuccess("Saved", "Attribute definition updated."));
+      setResult(
+        platformSuccess(labels.actions.saved, labels.actions.attributeDefinitionUpdated)
+      );
     });
   }
 
@@ -94,7 +108,7 @@ export function AttributeDefinitionWorkspace({
         { optionCode, optionLabel }
       );
       if (!actionResult.success) {
-        setResult(platformError("Could not add option", actionResult.error.message));
+        setResult(platformError(labels.actions.couldNotAddOption, actionResult.error.message));
         return;
       }
       setWorkspace((current) => ({
@@ -103,7 +117,9 @@ export function AttributeDefinitionWorkspace({
       }));
       setOptionCode("");
       setOptionLabel("");
-      setResult(platformSuccess("Option added", "Select option created."));
+      setResult(
+        platformSuccess(labels.actions.optionAdded, labels.actions.attributeOptionAdded)
+      );
     });
   }
 
@@ -116,14 +132,16 @@ export function AttributeDefinitionWorkspace({
         productTypeCode: scopeProductType,
       });
       if (!actionResult.success) {
-        setResult(platformError("Could not assign", actionResult.error.message));
+        setResult(platformError(labels.actions.couldNotAssign, actionResult.error.message));
         return;
       }
       setWorkspace((current) => ({
         ...current,
         scopes: [...current.scopes, actionResult.data],
       }));
-      setResult(platformSuccess("Assigned", "Attribute assigned to product type."));
+      setResult(
+        platformSuccess(labels.actions.assigned, labels.actions.attributeAssigned)
+      );
     });
   }
 
@@ -135,14 +153,16 @@ export function AttributeDefinitionWorkspace({
         scopeId
       );
       if (!actionResult.success) {
-        setResult(platformError("Could not remove", actionResult.error.message));
+        setResult(platformError(labels.actions.couldNotRemove, actionResult.error.message));
         return;
       }
       setWorkspace((current) => ({
         ...current,
         scopes: current.scopes.filter((scope) => scope.id !== scopeId),
       }));
-      setResult(platformSuccess("Removed", "Scope assignment removed."));
+      setResult(
+        platformSuccess(labels.actions.removed, labels.actions.attributeScopeRemoved)
+      );
     });
   }
 
@@ -150,16 +170,16 @@ export function AttributeDefinitionWorkspace({
     <main className="platform-workspace-main mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6">
       <SetBreadcrumbs
         items={[
-          { label: "Products", href: "/products" },
-          { label: ATTRIBUTE_UI_LABELS.moduleName, href: "/products/attributes" },
+          labels.workspace.hubBreadcrumb,
+          { label: labels.attribute.moduleName, href: "/products/attributes" },
           { label: workspace.definition.name },
         ]}
       />
 
       <PlatformWorkspaceHeader
         backHref="/products/attributes"
-        backLabel="Back to attributes"
-        workspaceLabel={ATTRIBUTE_UI_LABELS.definitionWorkspaceTitle}
+        backLabel={labels.attribute.backToModule}
+        workspaceLabel={labels.attribute.definitionWorkspaceTitle}
         title={workspace.definition.name}
         subtitle={`${workspace.definition.code} · ${workspace.definition.groupName} · ${workspace.definition.dataTypeLabel}`}
         statusLabel={workspace.definition.statusLabel}
@@ -168,7 +188,7 @@ export function AttributeDefinitionWorkspace({
       <PlatformTabs
         tabs={ATTRIBUTE_DEFINITION_WORKSPACE_TABS.map((tab) => ({
           id: tab.id,
-          label: tab.label,
+          label: workspaceTabLabel(tab.id),
         }))}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -274,8 +294,8 @@ export function AttributeDefinitionWorkspace({
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>{ATTRIBUTE_UI_LABELS.assignmentHeading}</CardTitle>
-              <CardDescription>{ATTRIBUTE_UI_LABELS.assignmentDescription}</CardDescription>
+              <CardTitle>{labels.attribute.assignmentHeading}</CardTitle>
+              <CardDescription>{labels.attribute.assignmentDescription}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {workspace.scopes.map((scope) => (
@@ -331,7 +351,7 @@ export function AttributeDefinitionWorkspace({
       {activeTab === "timeline" ? (
         <Card>
           <CardHeader>
-            <CardTitle>{ATTRIBUTE_UI_LABELS.timelineHeading}</CardTitle>
+            <CardTitle>{labels.attribute.timelineHeading}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {workspace.timeline.events.map((event) => (
@@ -347,7 +367,7 @@ export function AttributeDefinitionWorkspace({
       {activeTab === "audit-history" ? (
         <Card>
           <CardHeader>
-            <CardTitle>{ATTRIBUTE_UI_LABELS.auditHeading}</CardTitle>
+            <CardTitle>{labels.attribute.auditHeading}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {workspace.audit.entries.map((entry) => (

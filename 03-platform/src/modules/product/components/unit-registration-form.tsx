@@ -28,13 +28,14 @@ import { useControlledForm } from "@/lib/forms";
 import { createUnitAction } from "@/modules/product/actions/unit-actions";
 import { UNIT_STATUS_CODES } from "@/modules/product/constants";
 import type { UnitRegistrationCataloguesView } from "@/modules/product/types";
-import { UNIT_UI_LABELS } from "@/modules/product/unit-ui-labels";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 
 type UnitRegistrationFormProps = {
   catalogues: UnitRegistrationCataloguesView;
 };
 
 export function UnitRegistrationForm({ catalogues }: UnitRegistrationFormProps) {
+  const labels = useProductUiLabels();
   const router = useRouter();
   const [result, setResult] = useState<PlatformActionResult | null>(null);
   const { isProcessing, run } = useAsyncAction();
@@ -77,21 +78,26 @@ export function UnitRegistrationForm({ catalogues }: UnitRegistrationFormProps) 
         return;
       }
 
-      setResult(platformSuccess("Unit registered", "Redirecting to workspace…"));
+      setResult(
+        platformSuccess(
+          labels.actions.unitRegistered,
+          labels.actions.redirectingToWorkspace
+        )
+      );
       router.push(`/products/units/${actionResult.data.unit.id}`);
     });
   }
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
-      <PageBackLink href="/products/units" label="Back to units" />
+      <PageBackLink href="/products/units" label={labels.unit.backToModule} />
 
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">
-          {UNIT_UI_LABELS.registrationTitle}
+          {labels.unit.registrationTitle}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {UNIT_UI_LABELS.registrationDescription}
+          {labels.unit.registrationDescription}
         </p>
       </div>
 

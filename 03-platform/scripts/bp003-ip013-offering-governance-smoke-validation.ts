@@ -14,6 +14,7 @@ import path from "node:path";
 import { closeDb } from "@/db/client";
 import { PRODUCT_TIMELINE_EVENT_TYPES } from "@/core/product-timeline/constants";
 import { AUDIT_ENTITY_NAMES } from "@/core/audit/constants";
+import { resolveBusinessTerminology } from "@/core/industry-experience/business-terminology";
 import {
   OFFERING_GOVERNANCE_CHANGE_TYPES,
   OFFERING_GOVERNANCE_STATUS_CODES,
@@ -23,7 +24,7 @@ import {
   defaultOfferingGovernanceChecklist,
   defaultOfferingGovernanceStatuses,
 } from "@/db/seeds/offering-governance-defaults";
-import { OFFERING_GOVERNANCE_UI_LABELS } from "@/modules/product/offering-governance-ui-labels";
+import { buildGovernanceUiLabels } from "@/modules/product/product-terminology-labels";
 import { createOfferingGovernanceService } from "@/modules/product/services/offering-governance-service";
 import {
   calculateReadinessScore,
@@ -231,7 +232,9 @@ function checkTimelineAuditWorkspace(): SmokeResult[] {
     },
     {
       name: "ui:labels",
-      ok: OFFERING_GOVERNANCE_UI_LABELS.panelTitle === "Governance",
+      ok:
+        buildGovernanceUiLabels(resolveBusinessTerminology(null)).panelTitle ===
+        "Governance",
     },
   ];
 }

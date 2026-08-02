@@ -37,9 +37,9 @@ import {
 } from "@/modules/product/actions/product-catalogue-actions";
 import {
   CATALOGUE_PREVIEW_CHANNELS,
-  CATALOGUE_UI_LABELS,
   CATALOGUE_WORKSPACE_TABS,
-} from "@/modules/product/catalogue-ui-labels";
+} from "@/modules/product/constants";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import { CataloguePreviewPanel } from "@/modules/product/components/catalogue-preview-panel";
 import { CATALOGUE_VISIBILITY_CODES } from "@/modules/product/constants";
 import { visibilityOptions as defaultVisibilityOptions } from "@/modules/product/services/product-catalogue-rules";
@@ -98,6 +98,7 @@ function ChannelPublicationForm({
   disabled,
   onSaved,
 }: ChannelPublicationFormProps) {
+  const labels = useProductUiLabels();
   const [published, setPublished] = useState(publication?.published ?? false);
   const [visibility, setVisibility] = useState(
     publication?.visibility ?? CATALOGUE_VISIBILITY_CODES.PUBLIC
@@ -133,12 +134,17 @@ function ChannelPublicationForm({
       });
 
       if (!response.success) {
-        setResult(platformError("Could not save publication", response.error.message));
+        setResult(platformError(labels.actions.couldNotSavePublication, response.error.message));
         return;
       }
 
       onSaved(response.data);
-      setResult(platformSuccess("Publication saved", "Channel settings updated."));
+      setResult(
+        platformSuccess(
+          labels.actions.publicationSaved,
+          labels.actions.publicationSavedDetail
+        )
+      );
     });
   }
 
@@ -282,6 +288,7 @@ export function CatalogueWorkspace({
   initialData,
   initialTab = "publications",
 }: CatalogueWorkspaceProps) {
+  const labels = useProductUiLabels();
   const [workspace, setWorkspace] = useState(initialData);
   const [syncedInitial, setSyncedInitial] = useState(initialData);
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -308,56 +315,61 @@ export function CatalogueWorkspace({
   const effectiveVisibilityOptions =
     visibilityOptions.length > 0 ? visibilityOptions : defaultVisibilityOptions();
 
+  const catalogueTabLabel = (tabId: string) =>
+    labels.catalogue.workspaceTabs[
+      tabId as keyof typeof labels.catalogue.workspaceTabs
+    ] ?? tabId;
+
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6">
       <SetBreadcrumbs
         items={[
-          { label: "Products", href: "/products" },
-          { label: CATALOGUE_UI_LABELS.moduleName, href: "/products/catalogue" },
+          labels.workspace.hubBreadcrumb,
+          { label: labels.catalogue.moduleName, href: "/products/catalogue" },
           { label: workspace.productName },
         ]}
       />
 
       <PlatformWorkspaceHeader
-        workspaceLabel={CATALOGUE_UI_LABELS.workspaceTitle}
+        workspaceLabel={labels.catalogue.workspaceTitle}
         title={workspace.productName}
         subtitle={`${workspace.productCode} · ${workspace.statusLabel}`}
         statusLabel={workspace.statusLabel}
         backHref="/products/catalogue"
-        backLabel="Back to catalogue"
+        backLabel={labels.catalogue.backToModule}
         primaryActions={
           <Link
             href={`/products/${workspace.productId}`}
             prefetch={false}
             className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
           >
-            Product workspace
+            {labels.catalogue.productWorkspaceLink}
           </Link>
         }
       />
 
       {!workspace.publishable ? (
         <PlatformEmptyState
-          title="Product not publishable"
-          description="Only active products can be published. Activate the product first."
-          actionLabel="Open product workspace"
+          title={labels.catalogue.notPublishableTitle}
+          description={labels.catalogue.notPublishableActivateDescription}
+          actionLabel={labels.catalogue.openProductWorkspace}
           actionHref={`/products/${workspace.productId}`}
         />
       ) : null}
 
       <PlatformTabs
-        tabs={tabs.map((tab) => ({ id: tab.id, label: tab.label }))}
+        tabs={tabs.map((tab) => ({ id: tab.id, label: catalogueTabLabel(tab.id) }))}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        ariaLabel="Catalogue workspace sections"
+        ariaLabel={labels.catalogue.workspaceAriaLabel}
       />
 
       {activeTab === "publications" ? (
         <section className="space-y-4">
           <div>
-            <h2 className="text-lg font-semibold">{CATALOGUE_UI_LABELS.publicationHeading}</h2>
+            <h2 className="text-lg font-semibold">{labels.catalogue.publicationHeading}</h2>
             <p className="text-sm text-muted-foreground">
-              {CATALOGUE_UI_LABELS.publicationDescription}
+              {labels.catalogue.publicationDescription}
             </p>
           </div>
           <div className="space-y-4">

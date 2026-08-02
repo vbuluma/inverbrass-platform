@@ -9,6 +9,7 @@
 import { redirect } from "next/navigation";
 
 import { getVariantDashboardAction } from "@/modules/product/actions/variant-actions";
+import { ProductModuleErrorPage } from "@/modules/product/components/product-module-error-page";
 import { VariantDashboard } from "@/modules/product/components/variant-dashboard";
 
 export default async function VariantsDashboardPage() {
@@ -23,10 +24,7 @@ export default async function VariantsDashboardPage() {
     }
 
     return (
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-xl font-semibold">Product Variants</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{result.error.message}</p>
-      </main>
+      <ProductModuleErrorPage message={result.error.message} titleKind="variants" />
     );
   }
 

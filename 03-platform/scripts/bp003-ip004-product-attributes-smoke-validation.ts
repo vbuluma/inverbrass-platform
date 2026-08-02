@@ -17,13 +17,12 @@ import {
 } from "@/core/attribute-timeline/constants";
 import { filterAttributeGroupsForIndustry } from "@/core/industry-experience/attribute-group-filters";
 import { PRODUCT_TIMELINE_EVENT_TYPES } from "@/core/product-timeline/constants";
+import { resolveBusinessTerminology } from "@/core/industry-experience/business-terminology";
 import {
   ATTRIBUTE_DATA_TYPES,
   PRODUCT_WORKSPACE_TABS,
 } from "@/modules/product/constants";
-import {
-  ATTRIBUTE_UI_LABELS,
-} from "@/modules/product/attribute-ui-labels";
+import { buildAttributeUiLabels } from "@/modules/product/product-terminology-labels";
 import { createAttributeAssignmentService } from "@/modules/product/services/attribute-assignment-service";
 import { createAttributeDefinitionService } from "@/modules/product/services/attribute-definition-service";
 import {
@@ -259,7 +258,9 @@ function checkWorkspaceTabs(): SmokeResult[] {
     },
     {
       name: "attribute ui labels",
-      ok: ATTRIBUTE_UI_LABELS.dashboardTitle === "Product Attributes",
+      ok:
+        buildAttributeUiLabels(resolveBusinessTerminology(null)).dashboardTitle ===
+        "Product Attributes",
     },
   ];
 }

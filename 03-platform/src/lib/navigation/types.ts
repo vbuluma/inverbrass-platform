@@ -38,4 +38,6 @@ export type PlatformChromeContext = {
   showSidebar: boolean;
   /** ENG-003k — override static nav labels per business industry edition */
   navLabelOverrides?: Partial<Record<string, string>>;
+  /** ENG-003k — full platform terminology for UI presentation */
+  terminology?: import("@/core/industry-experience/business-terminology").BusinessTerminology;
 };

@@ -19,6 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PRODUCT_LIFECYCLE_STATE_CODES } from "@/modules/product/constants";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import type { ProductLifecycleDashboardView } from "@/modules/product/types";
 
 type ProductLifecycleDashboardProps = {
@@ -39,18 +40,19 @@ const STATE_LABELS: Record<string, string> = {
 export function ProductLifecycleDashboard({
   data,
 }: ProductLifecycleDashboardProps) {
+  const labels = useProductUiLabels();
   return (
     <>
       <SetBreadcrumbs
         items={[
-          { label: "Products", href: "/products" },
-          { label: "Lifecycle Dashboard" },
+          labels.workspace.hubBreadcrumb,
+          { label: labels.lifecycle.dashboardTitle },
         ]}
       />
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold">Lifecycle Dashboard</h1>
+        <h1 className="text-2xl font-semibold">{labels.lifecycle.dashboardTitle}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Operational view of product lifecycle states across the catalogue.
+          {labels.lifecycle.dashboardDescription}
         </p>
       </div>
 
@@ -69,9 +71,9 @@ export function ProductLifecycleDashboard({
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>Recently Changed</CardTitle>
+          <CardTitle>{labels.lifecycle.recentlyChangedTitle}</CardTitle>
           <CardDescription>
-            Products with recent lifecycle activity.
+            {labels.lifecycle.recentActivity}.
           </CardDescription>
         </CardHeader>
         <CardContent>

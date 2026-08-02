@@ -26,7 +26,8 @@ import {
 import {
   ATTRIBUTE_DEFINITION_STATUS_CODES,
 } from "@/modules/product/constants";
-import { ProductError, PRODUCT_USER_MESSAGES } from "@/modules/product/errors";
+import { ProductError } from "@/modules/product/errors";
+import { resolveProductUserMessagesForContext } from "@/modules/product/resolve-product-user-messages";
 import { createAttributeAssignmentRepository } from "@/modules/product/repositories/attribute-assignment-repository";
 import { createAttributeDefinitionRepository } from "@/modules/product/repositories/attribute-definition-repository";
 import { createAttributeGroupRepository } from "@/modules/product/repositories/attribute-group-repository";
@@ -74,6 +75,7 @@ export class AttributeAssignmentService {
     context: CurrentBusinessContext,
     productId: string
   ): Promise<ProductAttributesPanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const product = await this.productRepository.findById(
       context.businessId,
       productId
@@ -82,7 +84,7 @@ export class AttributeAssignmentService {
     if (!product) {
       throw new ProductError(
         "PRODUCT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.PRODUCT_NOT_FOUND,
+        msg.PRODUCT_NOT_FOUND,
         404
       );
     }
@@ -164,6 +166,7 @@ export class AttributeAssignmentService {
     productId: string,
     payload: SaveProductAttributeValuesPayload
   ): Promise<ProductAttributesPanelView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = saveProductAttributeValuesSchema.parse(payload);
     const product = await this.productRepository.findById(
       context.businessId,
@@ -173,7 +176,7 @@ export class AttributeAssignmentService {
     if (!product) {
       throw new ProductError(
         "PRODUCT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.PRODUCT_NOT_FOUND,
+        msg.PRODUCT_NOT_FOUND,
         404
       );
     }

@@ -11,13 +11,16 @@ import type { BreadcrumbItem } from "@/lib/navigation/types";
 const STATIC_SEGMENTS: Record<string, string> = {
   dashboard: "Dashboard",
   parties: "Parties",
-  products: "Products",
+  products: "Offerings",
   new: "Registration",
   settings: "Settings",
   setup: "Business Setup",
 };
 
-export function buildDefaultBreadcrumbs(pathname: string): BreadcrumbItem[] {
+export function buildDefaultBreadcrumbs(
+  pathname: string,
+  labelOverrides?: Partial<Record<string, string>>
+): BreadcrumbItem[] {
   const segments = pathname.split("/").filter(Boolean);
 
   if (segments.length === 0 || segments[0] === "dashboard") {
@@ -41,7 +44,10 @@ export function buildDefaultBreadcrumbs(pathname: string): BreadcrumbItem[] {
       continue;
     }
 
-    const label = STATIC_SEGMENTS[segment] ?? formatSegmentLabel(segment);
+    const label =
+      labelOverrides?.[segment] ??
+      STATIC_SEGMENTS[segment] ??
+      formatSegmentLabel(segment);
     items.push({
       label,
       href: isLast ? undefined : path,

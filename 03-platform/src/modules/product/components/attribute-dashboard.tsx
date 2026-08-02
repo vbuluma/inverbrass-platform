@@ -29,7 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { searchAttributesAction } from "@/modules/product/actions/attribute-actions";
-import { ATTRIBUTE_UI_LABELS } from "@/modules/product/attribute-ui-labels";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import type {
   AttributeDashboardView,
   AttributeDefinitionView,
@@ -51,6 +51,7 @@ function formatDate(iso: string): string {
 }
 
 export function AttributeDashboard({ data }: AttributeDashboardProps) {
+  const labels = useProductUiLabels();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<
     AttributeDefinitionView[] | null
@@ -91,7 +92,7 @@ export function AttributeDashboard({ data }: AttributeDashboardProps) {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6">
       <div className="space-y-3">
-        <PageBackLink href="/products" label="Back to products" />
+        <PageBackLink href="/products" label={labels.attribute.backLabel} />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex items-center gap-3">
             <span className="flex size-11 items-center justify-center rounded-lg bg-violet-50 text-violet-800 ring-1 ring-violet-200">
@@ -99,10 +100,10 @@ export function AttributeDashboard({ data }: AttributeDashboardProps) {
             </span>
             <div>
               <h1 className="text-2xl font-semibold tracking-tight">
-                {ATTRIBUTE_UI_LABELS.dashboardTitle}
+                {labels.attribute.dashboardTitle}
               </h1>
               <p className="text-sm text-muted-foreground">
-                {ATTRIBUTE_UI_LABELS.dashboardDescription}
+                {labels.attribute.dashboardDescription}
               </p>
             </div>
           </div>
@@ -113,7 +114,7 @@ export function AttributeDashboard({ data }: AttributeDashboardProps) {
               className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
             >
               <LayersIcon className="size-4" aria-hidden />
-              {ATTRIBUTE_UI_LABELS.quickActionGroup}
+              {labels.attribute.quickActionGroup}
             </Link>
             <Link
               href="/products/attributes/definitions/new"
@@ -121,7 +122,7 @@ export function AttributeDashboard({ data }: AttributeDashboardProps) {
               className={cn(buttonVariants({ variant: "default" }), "gap-2")}
             >
               <PlusIcon className="size-4" aria-hidden />
-              {ATTRIBUTE_UI_LABELS.quickActionDefinition}
+              {labels.attribute.quickActionDefinition}
             </Link>
           </div>
         </div>
@@ -129,19 +130,19 @@ export function AttributeDashboard({ data }: AttributeDashboardProps) {
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <PlatformKpiCard
-          label={ATTRIBUTE_UI_LABELS.metricsTotalGroups}
+          label={labels.attribute.metricsTotalGroups}
           value={data.totalGroups}
         />
         <PlatformKpiCard
-          label={ATTRIBUTE_UI_LABELS.metricsTotalAttributes}
+          label={labels.attribute.metricsTotalAttributes}
           value={data.totalAttributes}
         />
         <PlatformKpiCard
-          label={ATTRIBUTE_UI_LABELS.metricsActive}
+          label={labels.attribute.metricsActive}
           value={data.activeAttributes}
         />
         <PlatformKpiCard
-          label={ATTRIBUTE_UI_LABELS.metricsArchived}
+          label={labels.attribute.metricsArchived}
           value={data.archivedAttributes}
         />
       </section>
@@ -214,7 +215,7 @@ export function AttributeDashboard({ data }: AttributeDashboardProps) {
                 title="No attribute groups yet"
                 description="Create a group to organize attribute definitions."
                 actionHref="/products/attributes/groups/new"
-                actionLabel={ATTRIBUTE_UI_LABELS.quickActionGroup}
+                actionLabel={labels.attribute.quickActionGroup}
               />
             ) : (
               data.groups.map((group) => (

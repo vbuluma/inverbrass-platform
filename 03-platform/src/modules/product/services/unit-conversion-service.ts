@@ -6,7 +6,10 @@
  * BP-003 / IP-003 – Units of Measure Engine
  */
 
-import { ProductError, PRODUCT_USER_MESSAGES } from "@/modules/product/errors";
+import type { CurrentBusinessContext } from "@/core/auth/types";
+import { ProductError } from "@/modules/product/errors";
+import type { ProductUserMessages } from "@/modules/product/product-user-messages";
+import { resolveProductUserMessagesForContext } from "@/modules/product/resolve-product-user-messages";
 import { createUnitRepository } from "@/modules/product/repositories/unit-repository";
 import {
   applyRounding,
@@ -31,6 +34,7 @@ export class UnitConversionService {
   constructor(private readonly unitRepository = createUnitRepository()) {}
 
   convert(
+    msg: ProductUserMessages,
     fromUnit: UnitRow,
     toUnit: UnitRow,
     value: number
@@ -38,7 +42,7 @@ export class UnitConversionService {
     if (!canConvertWithinCategory(fromUnit.categoryId, toUnit.categoryId)) {
       throw new ProductError(
         "UNIT_CATEGORY_MISMATCH",
-        PRODUCT_USER_MESSAGES.UNIT_CATEGORY_MISMATCH,
+        msg.UNIT_CATEGORY_MISMATCH,
         400
       );
     }
@@ -49,7 +53,7 @@ export class UnitConversionService {
     if (!isValidConversionFactor(fromFactor) || !isValidConversionFactor(toFactor)) {
       throw new ProductError(
         "INVALID_CONVERSION_FACTOR",
-        PRODUCT_USER_MESSAGES.INVALID_CONVERSION_FACTOR,
+        msg.INVALID_CONVERSION_FACTOR,
         400
       );
     }
@@ -72,25 +76,26 @@ export class UnitConversionService {
   }
 
   async convertByIds(
-    businessId: string,
+    context: CurrentBusinessContext,
     fromUnitId: string,
     toUnitId: string,
     value: number
   ): Promise<UnitConversionResultView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const [fromUnit, toUnit] = await Promise.all([
-      this.unitRepository.findById(businessId, fromUnitId),
-      this.unitRepository.findById(businessId, toUnitId),
+      this.unitRepository.findById(context.businessId, fromUnitId),
+      this.unitRepository.findById(context.businessId, toUnitId),
     ]);
 
     if (!fromUnit || !toUnit) {
       throw new ProductError(
         "UNIT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.UNIT_NOT_FOUND,
+        msg.UNIT_NOT_FOUND,
         404
       );
     }
 
-    return this.convert(fromUnit, toUnit, value);
+    return this.convert(msg, fromUnit, toUnit, value);
   }
 }
 
