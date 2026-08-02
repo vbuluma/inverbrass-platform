@@ -13,6 +13,7 @@ import {
   PlatformCompletionCard,
   PlatformFormActionFooter,
   PlatformProcessingButton,
+  PlatformStepProgress,
   PROCESSING_LABELS,
   useAsyncAction,
 } from "@/components/platform";
@@ -221,22 +222,30 @@ export function BundleRegistrationWizard({
         </p>
       </div>
 
-      <ol className="flex flex-wrap gap-2 text-sm">
-        {registrationSteps.map((step, index) => (
-          <li
-            key={step.id}
-            className={
-              index === stepIndex
-                ? "rounded-full bg-primary px-3 py-1 text-primary-foreground"
-                : index < stepIndex
-                  ? "rounded-full bg-muted px-3 py-1 text-muted-foreground"
-                  : "rounded-full border px-3 py-1 text-muted-foreground"
-            }
-          >
-            {step.label}
-          </li>
-        ))}
-      </ol>
+      <PlatformStepProgress
+        progressPercent={Math.round(
+          ((stepIndex + 1) / registrationSteps.length) * 100
+        )}
+        currentStepLabel={currentStep.label}
+        compactBelowMd={false}
+        steps={registrationSteps.map((step, index) => ({
+          id: step.id,
+          label: step.label,
+          status:
+            index === stepIndex
+              ? "current"
+              : index < stepIndex
+                ? "completed"
+                : "upcoming",
+        }))}
+        onStepSelect={(stepId) => {
+          const index = registrationSteps.findIndex((step) => step.id === stepId);
+          if (index >= 0) {
+            setStepIndex(index);
+            setResult(null);
+          }
+        }}
+      />
 
       {currentStep.id === "details" ? (
         <div className="grid gap-4 sm:grid-cols-2">

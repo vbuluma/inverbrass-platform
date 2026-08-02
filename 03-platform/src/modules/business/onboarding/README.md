@@ -14,6 +14,8 @@ operational Build Packs become available.
 Business Setup Wizard feedback follows platform UX standards:
 
 - **Success:** green `Alert variant="success"` with step-specific copy; navigation only after explicit Continue (no silent redirect).
+- **Navigation:** Back / Continue show a spinner alert and disable controls while the next step loads (hard redirect).
+- **Step jump:** progress steps (✓ / ● / ○) are clickable to open any step for editing — use `PlatformStepProgress` for new multi-step flows.
 - **Validation:** section-scoped destructive alerts with field highlight and auto-scroll to the first invalid field.
 - **Duplicates:** friendly messages include the conflicting value (mobile, email, etc.).
 - **Employee setup:** after creation, only **Create another employee** and **Continue to review** — never re-submits created employees.

@@ -55,12 +55,14 @@ import {
 import { SetupProgressIndicator } from "@/modules/business/onboarding/components/setup-progress-indicator";
 import {
   SetupDuplicateError,
+  SetupNavigatingAlert,
   SetupSectionError,
   SetupSuccessAlert,
   useScrollToFirstInvalidField,
 } from "@/modules/business/onboarding/components/setup-wizard-feedback";
 import {
   EMPLOYEE_SETUP_ROLE_CODES,
+  SETUP_STEP_LABELS,
   SETUP_STEP_ORDER,
   SETUP_STEPS,
   formatSetupWelcomeMessage,
@@ -289,6 +291,24 @@ function emptyBranchDraft(seed?: Partial<BranchSetupItemPayload>): BranchSetupIt
   };
 }
 
+type SetupNavigationFeedback = {
+  message: string;
+  source: "back" | "continue" | "settings";
+};
+
+function scheduleHardNavigation(
+  url: string,
+  onNavigateStart: () => void
+) {
+  onNavigateStart();
+  // Paint loading feedback before the full-page redirect begins.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      window.location.assign(url);
+    });
+  });
+}
+
 export function SetupWizard(props: SetupWizardProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [sectionError, setSectionError] = useState<string | null>(null);
@@ -301,6 +321,8 @@ export function SetupWizard(props: SetupWizardProps) {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [pendingNavigation, setPendingNavigation] =
     useState<SetupProgressView | null>(null);
+  const [navigationFeedback, setNavigationFeedback] =
+    useState<SetupNavigationFeedback | null>(null);
   const [isPending, startTransition] = useTransition();
   const [logoUrl, setLogoUrl] = useState(props.profile?.logoUrl ?? "");
   const [taxEnabledUi, setTaxEnabledUi] = useState(
@@ -419,19 +441,35 @@ export function SetupWizard(props: SetupWizardProps) {
     [props.industries, industryId, props.classification?.industryId]
   );
 
-  function goTo(step: SetupStep) {
-    // Hard navigation — router.push + router.refresh() raced and bounced
-    // Welcome → Business Profile → Welcome, leaving buttons stuck pending.
+  const isNavigating = navigationFeedback !== null;
+
+  function beginNavigation(
+    url: string,
+    feedback: SetupNavigationFeedback
+  ) {
+    scheduleHardNavigation(url, () => {
+      setNavigationFeedback(feedback);
+    });
+  }
+
+  function goTo(step: SetupStep, source: SetupNavigationFeedback["source"]) {
     const suffix = manageMode ? "?manage=1" : "";
-    window.location.assign(`/setup/${step}${suffix}`);
+    const message =
+      source === "back"
+        ? "Going back..."
+        : `Loading ${SETUP_STEP_LABELS[step].toLowerCase()}...`;
+    beginNavigation(`/setup/${step}${suffix}`, { message, source });
   }
 
   function returnToSettings() {
-    window.location.assign("/settings");
+    beginNavigation("/settings", {
+      message: "Returning to settings...",
+      source: "settings",
+    });
   }
 
   function proceedAfterSuccess() {
-    if (!pendingNavigation) {
+    if (!pendingNavigation || isNavigating) {
       return;
     }
 
@@ -440,12 +478,13 @@ export function SetupWizard(props: SetupWizardProps) {
       return;
     }
 
-    goTo(resolveNavigationStep(pendingNavigation));
+    goTo(resolveNavigationStep(pendingNavigation), "continue");
   }
 
   function handleActionFailure(error: SetupActionError) {
     setSuccessMessage(null);
     setPendingNavigation(null);
+    setNavigationFeedback(null);
     setInvalidField(error.field);
 
     if (error.conflictValue && error.conflictFieldLabel) {
@@ -500,6 +539,10 @@ export function SetupWizard(props: SetupWizardProps) {
   );
 
   function onBack() {
+    if (isNavigating || isPending) {
+      return;
+    }
+
     if (manageMode) {
       returnToSettings();
       return;
@@ -507,9 +550,17 @@ export function SetupWizard(props: SetupWizardProps) {
 
     const prior = previousStep(props.step);
     if (prior) {
-      goTo(prior);
+      goTo(prior, "back");
     }
   }
+
+  const wizardNavProps = {
+    manageMode,
+    onBack,
+    isPending,
+    isNavigating,
+    navigationFeedback,
+  };
 
   const stepContinueLabel = pendingNavigation
     ? manageMode
@@ -568,14 +619,23 @@ export function SetupWizard(props: SetupWizardProps) {
             currentStep={props.step}
             completedSteps={props.progress.completedSteps}
             progressPercent={props.progress.progressPercent}
+            disabled={isPending || isNavigating}
+            onStepSelect={(step) => {
+              if (step === props.step || isPending || isNavigating) {
+                return;
+              }
+              goTo(step, "continue");
+            }}
           />
         )}
       </header>
 
-      <section className="space-y-4 rounded-xl border border-border bg-card p-5 shadow-sm">
-        {successMessage ? (
-          <SetupSuccessAlert message={successMessage} />
-        ) : null}
+      <section
+        className={cn(
+          "space-y-4 rounded-xl border border-border bg-card p-5 shadow-sm transition-opacity",
+          isNavigating && "pointer-events-none opacity-70"
+        )}
+      >
         {conflictError ? (
           <SetupDuplicateError
             entityLabel={conflictError.entityLabel}
@@ -792,10 +852,9 @@ export function SetupWizard(props: SetupWizardProps) {
               </div>
             </div>
             <WizardNav
-              manageMode={manageMode}
-              onBack={onBack}
-              isPending={isPending}
+              {...wizardNavProps}
               canSkip={false}
+              successMessage={successMessage}
               continueLabel={
                 stepContinueLabel ?? (manageMode ? "Save" : "Save & continue")
               }
@@ -807,6 +866,11 @@ export function SetupWizard(props: SetupWizardProps) {
           <form
             className="space-y-4"
             action={() => {
+              if (pendingNavigation) {
+                proceedAfterSuccess();
+                return;
+              }
+
               setErrorMessage(null);
               startTransition(async () => {
                 const result = await saveBusinessClassificationAction({
@@ -875,10 +939,12 @@ export function SetupWizard(props: SetupWizardProps) {
               </p>
             ) : null}
             <WizardNav
-              manageMode={manageMode}
-              onBack={onBack}
-              isPending={isPending}
+              {...wizardNavProps}
               canSkip={false}
+              successMessage={successMessage}
+              continueLabel={
+                stepContinueLabel ?? (manageMode ? "Save" : "Save & continue")
+              }
               disableContinue={
                 !industryId || !businessTypeId || props.industries.length === 0
               }
@@ -890,6 +956,11 @@ export function SetupWizard(props: SetupWizardProps) {
           <form
             className="space-y-4"
             action={(formData) => {
+              if (pendingNavigation) {
+                proceedAfterSuccess();
+                return;
+              }
+
               setErrorMessage(null);
               startTransition(async () => {
                 const result = await saveCountryAction({
@@ -925,10 +996,12 @@ export function SetupWizard(props: SetupWizardProps) {
               </select>
             </div>
             <WizardNav
-              manageMode={manageMode}
-              onBack={onBack}
-              isPending={isPending}
+              {...wizardNavProps}
               canSkip={false}
+              successMessage={successMessage}
+              continueLabel={
+                stepContinueLabel ?? (manageMode ? "Save" : "Save & continue")
+              }
               disableContinue={props.countries.length === 0}
             />
           </form>
@@ -938,6 +1011,11 @@ export function SetupWizard(props: SetupWizardProps) {
           <form
             className="space-y-4"
             action={(formData) => {
+              if (pendingNavigation) {
+                proceedAfterSuccess();
+                return;
+              }
+
               setErrorMessage(null);
               startTransition(async () => {
                 const result = await saveBaseCurrencyAction({
@@ -982,11 +1060,13 @@ export function SetupWizard(props: SetupWizardProps) {
               </select>
             </div>
             <WizardNav
-              manageMode={manageMode}
-              onBack={onBack}
-              isPending={isPending}
+              {...wizardNavProps}
               canSkip={optionalSteps.includes(SETUP_STEPS.BASE_CURRENCY)}
               onSkip={onSkip}
+              successMessage={successMessage}
+              continueLabel={
+                stepContinueLabel ?? (manageMode ? "Save" : "Save & continue")
+              }
               disableContinue={props.currencies.length === 0}
             />
           </form>
@@ -1030,12 +1110,19 @@ export function SetupWizard(props: SetupWizardProps) {
                 })}
             </div>
             <WizardNav
-              manageMode={manageMode}
-              onBack={onBack}
-              isPending={isPending}
+              {...wizardNavProps}
               canSkip
               onSkip={onSkip}
+              successMessage={successMessage}
+              continueLabel={
+                stepContinueLabel ?? (manageMode ? "Save" : "Save & continue")
+              }
               onContinue={() => {
+                if (pendingNavigation) {
+                  proceedAfterSuccess();
+                  return;
+                }
+
                 setErrorMessage(null);
                 startTransition(async () => {
                   const result = await saveAdditionalCurrenciesAction({
@@ -1053,6 +1140,11 @@ export function SetupWizard(props: SetupWizardProps) {
             key={operationsForm.formKey}
             className="space-y-6"
             action={(formData) => {
+              if (pendingNavigation) {
+                proceedAfterSuccess();
+                return;
+              }
+
               setErrorMessage(null);
               operationsForm.clearInvalidField();
               startTransition(async () => {
@@ -1255,13 +1347,15 @@ export function SetupWizard(props: SetupWizardProps) {
             </div>
 
             <WizardNav
-              manageMode={manageMode}
-              onBack={onBack}
-              isPending={isPending}
+              {...wizardNavProps}
               canSkip={optionalSteps.includes(
                 SETUP_STEPS.BUSINESS_OPERATIONS
               )}
               onSkip={onSkip}
+              successMessage={successMessage}
+              continueLabel={
+                stepContinueLabel ?? (manageMode ? "Save" : "Save & continue")
+              }
             />
           </form>
         ) : null}
@@ -1531,11 +1625,18 @@ export function SetupWizard(props: SetupWizardProps) {
             )}
 
             <WizardNav
-              manageMode={manageMode}
-              onBack={onBack}
-              isPending={isPending}
+              {...wizardNavProps}
               canSkip={false}
+              successMessage={successMessage}
+              continueLabel={
+                stepContinueLabel ?? (manageMode ? "Save" : "Save & continue")
+              }
               onContinue={() => {
+                if (pendingNavigation) {
+                  proceedAfterSuccess();
+                  return;
+                }
+
                 setErrorMessage(null);
                 startTransition(async () => {
                   const result = await saveBranchSetupAction({
@@ -1802,20 +1903,28 @@ export function SetupWizard(props: SetupWizardProps) {
                   <Button
                     type="button"
                     className="flex-1"
+                    disabled={isNavigating}
                     onClick={() => {
-                      goTo(postEmployeeResumeStep ?? SETUP_STEPS.REVIEW);
+                      if (isNavigating) {
+                        return;
+                      }
+                      goTo(
+                        postEmployeeResumeStep ?? SETUP_STEPS.REVIEW,
+                        "continue"
+                      );
                     }}
                   >
-                    Continue to review
+                    {isNavigating && navigationFeedback?.source === "continue"
+                      ? navigationFeedback.message
+                      : "Continue to review"}
                   </Button>
                 </div>
               </>
             ) : (
               <WizardNav
-                manageMode={manageMode}
-                onBack={onBack}
-                isPending={isPending}
+                {...wizardNavProps}
                 canSkip={!addEmployees}
+                successMessage={successMessage}
                 continueLabel={
                   pendingNavigation
                     ? manageMode
@@ -1981,20 +2090,25 @@ export function SetupWizard(props: SetupWizardProps) {
                 />
               </dl>
             ) : null}
+            {isNavigating && navigationFeedback ? (
+              <SetupNavigatingAlert message={navigationFeedback.message} />
+            ) : null}
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button
                 type="button"
                 variant="outline"
                 className="flex-1"
                 onClick={onBack}
-                disabled={isPending}
+                disabled={isPending || isNavigating}
               >
-                Back
+                {isNavigating && navigationFeedback?.source === "back"
+                  ? navigationFeedback.message
+                  : "Back"}
               </Button>
               <Button
                 type="button"
                 className="flex-1"
-                disabled={isPending}
+                disabled={isPending || isNavigating}
                 onClick={() => {
                   setErrorMessage(null);
                   startTransition(async () => {
@@ -2026,36 +2140,67 @@ function WizardNav({
   onSkip,
   onContinue,
   isPending,
+  isNavigating,
+  navigationFeedback,
   canSkip,
   disableContinue = false,
   manageMode = false,
   continueLabel,
+  successMessage,
 }: {
   onBack: () => void;
   onSkip?: () => void;
   onContinue?: () => void;
   isPending: boolean;
+  isNavigating: boolean;
+  navigationFeedback: SetupNavigationFeedback | null;
   canSkip: boolean;
   disableContinue?: boolean;
   manageMode?: boolean;
   continueLabel?: string;
+  successMessage?: string | null;
 }) {
-  const continueDisabled = isPending || disableContinue;
+  const isBusy = isPending || isNavigating;
+  const continueDisabled = isBusy || disableContinue;
   const showSkip = canSkip && !manageMode;
   const resolvedContinueLabel =
     continueLabel ??
     (isPending ? "Saving..." : manageMode ? "Save" : "Save & continue");
+  const continueButtonLabel =
+    isNavigating && navigationFeedback?.source === "continue"
+      ? navigationFeedback.message
+      : isPending
+        ? "Saving..."
+        : resolvedContinueLabel;
+  const backButtonLabel =
+    isNavigating && navigationFeedback?.source === "back"
+      ? navigationFeedback.message
+      : manageMode
+        ? "Back to settings"
+        : "Back";
+  const settingsButtonLabel =
+    isNavigating && navigationFeedback?.source === "settings"
+      ? navigationFeedback.message
+      : manageMode
+        ? "Back to settings"
+        : "Back";
 
   return (
-    <div className="flex flex-col gap-2 sm:flex-row">
+    <div className="space-y-4">
+      {isNavigating && navigationFeedback ? (
+        <SetupNavigatingAlert message={navigationFeedback.message} />
+      ) : successMessage ? (
+        <SetupSuccessAlert message={successMessage} />
+      ) : null}
+      <div className="flex flex-col gap-2 sm:flex-row">
       <Button
         type="button"
         variant="outline"
         className="flex-1"
         onClick={onBack}
-        disabled={isPending}
+        disabled={isBusy}
       >
-        {manageMode ? "Back to settings" : "Back"}
+        {manageMode ? settingsButtonLabel : backButtonLabel}
       </Button>
       {showSkip ? (
         <Button
@@ -2063,7 +2208,7 @@ function WizardNav({
           variant="secondary"
           className="flex-1"
           onClick={onSkip}
-          disabled={isPending}
+          disabled={isBusy}
         >
           Skip for now
         </Button>
@@ -2075,13 +2220,14 @@ function WizardNav({
           onClick={onContinue}
           disabled={continueDisabled}
         >
-          {isPending ? "Saving..." : resolvedContinueLabel}
+          {continueButtonLabel}
         </Button>
       ) : (
         <Button type="submit" className="flex-1" disabled={continueDisabled}>
-          {resolvedContinueLabel}
+          {continueButtonLabel}
         </Button>
       )}
+      </div>
     </div>
   );
 }

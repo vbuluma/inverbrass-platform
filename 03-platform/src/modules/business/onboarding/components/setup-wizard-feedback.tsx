@@ -4,7 +4,7 @@
 
 "use client";
 
-import { AlertCircleIcon, CheckCircle2Icon } from "lucide-react";
+import { AlertCircleIcon, CheckCircle2Icon, Loader2Icon } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -19,6 +19,25 @@ export function SetupSuccessAlert({ message, className }: SetupSuccessAlertProps
   return (
     <Alert variant="success" className={className}>
       <CheckCircle2Icon aria-hidden />
+      <AlertDescription>
+        <p className="font-medium">{message}</p>
+      </AlertDescription>
+    </Alert>
+  );
+}
+
+type SetupNavigatingAlertProps = {
+  message: string;
+  className?: string;
+};
+
+export function SetupNavigatingAlert({
+  message,
+  className,
+}: SetupNavigatingAlertProps) {
+  return (
+    <Alert className={className} aria-live="polite" aria-busy="true">
+      <Loader2Icon className="animate-spin" aria-hidden />
       <AlertDescription>
         <p className="font-medium">{message}</p>
       </AlertDescription>

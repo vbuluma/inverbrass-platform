@@ -34,6 +34,19 @@ function isPublicPath(pathname: string): boolean {
   );
 }
 
+/** Legacy singular alias — canonical business route is `/parties`. */
+function resolveLegacyPartyPath(pathname: string): string | null {
+  if (pathname === "/party") {
+    return "/parties";
+  }
+
+  if (pathname.startsWith("/party/")) {
+    return `/parties${pathname.slice("/party".length)}`;
+  }
+
+  return null;
+}
+
 function requiresBusinessContext(pathname: string): boolean {
   if (isPublicPath(pathname)) {
     return false;
@@ -46,6 +59,14 @@ function requiresBusinessContext(pathname: string): boolean {
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const legacyPartyPath = resolveLegacyPartyPath(pathname);
+
+  if (legacyPartyPath) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = legacyPartyPath;
+    return NextResponse.redirect(redirectUrl);
+  }
+
   const hasSession = hasAuthSessionCookie(request);
 
   if (!hasSession && !isPublicPath(pathname)) {
