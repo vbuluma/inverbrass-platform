@@ -284,7 +284,7 @@ Insurance Products
 
 Medical Services
 
-Courses
+Offerings
 
 Future offerings
 

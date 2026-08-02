@@ -1178,7 +1178,7 @@ Pharmacy	Products, inventory, compliance, prescriptions.
 Property Management	Properties, units, leases, rent collection.
 School	Students, teachers,parents,fee structures, classes, attendance.
 Chama	Members, contributions, loans, meetings.
-SME Academy	Courses, trainers, learners, enrolment.
+SME Academy	Offerings, trainers, learners, enrolment.
 ________________________________________
 6. AI Configuration
 AI shall be optional and configurable by each tenant.

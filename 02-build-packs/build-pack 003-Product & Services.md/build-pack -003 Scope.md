@@ -33,7 +33,7 @@ Subscription Plans	Monthly Internet
 Memberships	Club Membership
 Insurance Products	Motor Cover
 Financial Products	Loans, Savings Accounts
-Education Products	Courses
+Education Products	Offerings
 Hospitality	Rooms, Packages
 Agriculture	Livestock, Inputs
 Healthcare	Procedures, Medicines
@@ -152,7 +152,7 @@ Vertical	Consumption
 Retail	Merchandise
 Property	Properties, Rental Units
 Healthcare	Services, Procedures
-Education	Courses, Fees
+Education	Offerings, Fees
 Hospitality	Rooms, Packages
 Agriculture	Crops, Livestock
 Banking	Financial Products

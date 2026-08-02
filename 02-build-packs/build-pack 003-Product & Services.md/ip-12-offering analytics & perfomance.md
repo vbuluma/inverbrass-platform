@@ -258,7 +258,7 @@ Insurance Products
 
 Medical Services
 
-Courses
+Offerings
 
 Future offering types
 

@@ -225,7 +225,7 @@ Consultations
 Procedures
 Education
 
-Courses
+Offerings
 
 Programmes
 Classes
@@ -690,7 +690,7 @@ Offers
 
 Education
 
-Courses
+Offerings
 
 Do not hardcode.
 

@@ -23,7 +23,7 @@ It is not a sales module.
 
 It is the authoritative source of product master data that every future Build Pack consumes.
 
-**Offering Engine (internal architecture):** Developers refer to this capability as the **Offering Engine** — the generic master record for products, services, subscriptions, loans, memberships, courses, rental units, and every other business offering. Database tables retain the frozen `product_*` naming from IP-001. Users never see "Offering"; they see industry-native labels ("Loan Products", "Medical Services", "Courses") resolved by **ENG-003k Industry Experience Engine**.
+**Offering Engine (internal architecture):** Developers refer to this capability as the **Offering Engine** — the generic master record for products, services, subscriptions, loans, memberships, courses, rental units, and every other business offering. Database tables retain the frozen `product_*` naming from IP-001. Users never see "Offering"; they see industry-native labels ("Loan Products", "Medical Services", "Offerings") resolved by **ENG-003k Industry Experience Engine**.
 
 **Industry Edition integration:** The foundation supports all product types in the data model. The Industry Experience Engine (ENG-003k) controls which types appear in the UI for each edition. Examples:
 
@@ -326,7 +326,7 @@ The Product Foundation must support:
 • Memberships
 • Property Units
 • Healthcare Services
-• Educational Courses
+• Educational Offerings
 • Agricultural Products
 • Future product types without schema redesign.
 
