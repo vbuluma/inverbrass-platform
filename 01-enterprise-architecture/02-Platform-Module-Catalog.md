@@ -26,7 +26,7 @@ The Build Packs are **shared platform capabilities consumed by Industry Editions
 | **BP-005**        | **Sales, Orders & Service Delivery**       | Manage customer demand from quotation through fulfilment.                       | Quotations, orders, bookings, appointments, work orders, fulfilment, delivery tracking                                                                                                               | Workflow, Notification, Audit, Checklist & Completion                                                              |
 | **BP-006**        | **Payments, Billing & Receipting**         | Process and manage financial transactions.                                      | Billing, invoicing, receipts, collections, refunds, payment allocation, reconciliation                                                                                                               | Payment, Receipting, Reconciliation, Integration                                           |
 | **BP-007**        | **Inventory & Resource Management**        | Manage inventory, operational assets and resources.                             | Inventory, warehouses, stock movement, assets, rentals, consumables, resource allocation                                                                                                             | Workflow, Search, Audit                                                                    |
-| **BP-008**        | **CRM & Customer Engagement**              | Manage customer relationships and engagement.                                   | Leads, opportunities, campaigns, customer interactions, communication history, engagement management                                                                                                 | Notification, AI, Search                                                                   |
+| **BP-008**        | **CRM & Customer Engagement**              | Manage customer relationships and engagement.                                   | Leads, opportunities, campaigns, customer interactions, communication history, engagement management                                                                                                 | Work Assignment & SLA, Workflow, Notification, AI, Search, Checklist & Completion           |
 | **BP-009**        | **Procurement & Supplier Management**      | Manage supplier relationships and procurement processes.                        | Suppliers, RFQs, purchase orders, contracts, supplier performance                                                                                                                                    | Workflow, Audit                                                                            |
 | **BP-010**        | **Finance & Accounting Foundation**        | Provide operational financial management capabilities.                          | Journals, cost centres, accounting periods, budgets, financial integration, reporting foundation                                                                                                     | Reporting, Reconciliation                                                                  |
 | **BP-011**        | **Workflow & Business Process Automation** | Automate business processes across the platform.                                | Maker-checker, approvals, SLAs, escalations, task routing, workflow designer                                                                                                                         | Workflow, Notification, Audit                                                              |
@@ -80,7 +80,7 @@ Each edition is bound at business onboarding. The **Industry Experience Engine (
 
 This structure clearly distinguishes the platform layers:
 
-1. **Core Platform Engines (ENG-001 to ENG-016, ENG-003k, ENG-003l, ENG-003m)** – foundational, experience, completion, and portfolio planning capabilities.
+1. **Core Platform Engines (ENG-001 to ENG-016, ENG-003k, ENG-003l, ENG-003m, ENG-003n)** – foundational, experience, completion, portfolio planning, and work assignment capabilities.
 2. **Build Packs (BP-001 to BP-013)** – reusable business capabilities consumed by Industry Editions.
 3. **Industry Editions (VS-001 onward)** – industry-native products (InverBrass Banking, InverBrass Property, etc.).
 4. **Business Configuration** – tenant-specific settings within an edition.
@@ -95,7 +95,7 @@ This structure clearly distinguishes the platform layers:
 Attribute	Value
 Document Name	Platform Module Catalog
 Version	1.0
-Architecture Version	AV-1.5 (see [01b – Architecture Versions](./01b-Architecture-Versions.md))
+Architecture Version	AV-1.6 (see [01b – Architecture Versions](./01b-Architecture-Versions.md))
 Purpose	Defines every platform capability, ownership, dependencies and reuse strategy.
 Scope	Entire InverBrass Business Platform
 Audience	Product Owner, Solution Architect, Developers, AI Coding Assistants
@@ -144,6 +144,7 @@ Every reusable processing capability is owned by exactly one Core Platform Engin
 | **ENG-003k** | Industry Experience Engine                  | Presents an industry-native user experience on top of shared platform engines.          | Industry Editions, navigation generation, menu visibility, terminology mapping, dashboard layouts, feature visibility, configuration visibility, product templates, workflow templates, report templates, landing pages. | Planned                     |
 | **ENG-003l** | Checklist & Completion Engine               | Provides metadata-driven operational checklists that guide processes and enforce completion. | Checklist definitions, checklist instances, mandatory and optional items, sequence, blocking rules, auto-complete rules, completion expressions, progress calculation, submission gates, warnings, manual completion, event-driven item completion. | Planned                     |
 | **ENG-003m** | Portfolio & Roadmap Engine                  | Provides structured planning and controlled evolution of any portfolio subject.         | Roadmap items, releases, milestones, implementation progress, release history, retirement plans, timeline views, portfolio initiatives — offerings, services, programmes, projects, regulatory and strategic initiatives. | Planned                     |
+| **ENG-003n** | Work Assignment & SLA Engine                | Tracks ownership, assignment history, and time-based SLA across work items.               | Assignment tracking, immutable assignment history, per-assignee SLA segments, cumulative lifecycle SLA, active/waiting/paused time, breach detection, queue metrics, SLA policy configuration by entity type.              | Planned                     |
 | **ENG-004**  | Rules Engine                                | Executes deterministic business rules.                                                  | Eligibility rules, validations, calculations, decision tables, configurable rule execution, business policies, rule versioning.                                                                                          | Planned                     |
 | **ENG-005**  | Workflow Engine                             | Orchestrates business processes requiring approvals or multiple steps.                  | Maker-checker, approvals, escalations, routing, SLA monitoring, workflow history, task assignment, decision points.                                                                                                      | Planned                     |
 | **ENG-006**  | Payment Engine                              | Processes all incoming and outgoing financial transactions.                             | Cash, mobile money, bank transfers, cards, split payments, partial payments, refunds, credits, payment gateways.                                                                                                         | Planned                     |
@@ -160,9 +161,9 @@ Every reusable processing capability is owned by exactly one Core Platform Engin
 
 > **Extension ID:** **ENG-015a** — Document & Compliance Engine (compliance scoring and requirement matching layer on ENG-015). Partial (BP-002). Not a separate baseline row; implements the compliance-evidence slice of ENG-015.
 
-> **Extension IDs:** **ENG-003k** — Industry Experience Engine. **ENG-003l** — Checklist & Completion Engine. **ENG-003m** — Portfolio & Roadmap Engine. All planned. Sub-engines under ENG-003 alongside ENG-003a–m. **Next ID (AV-1.5 lock): ENG-003n.**
+> **Extension IDs:** **ENG-003k** — Industry Experience Engine. **ENG-003l** — Checklist & Completion Engine. **ENG-003m** — Portfolio & Roadmap Engine. **ENG-003n** — Work Assignment & SLA Engine. Sub-engines under ENG-003 alongside ENG-003a–n. **Next ID (AV-1.5 lock): ENG-003o.**
 
-> **ENG-003 family note:** ENG-003 originally represented Platform Foundation / Metadata; the family now spans 13 sub-engines (003a–m). **AV-1.5 Engine Catalog Lock:** no renumbering, no regrouping — new capabilities use **ENG-003n**, **ENG-003o**, … until AV-2.0 is deliberately initiated. Possible AV-2.0 regrouping is recorded in [01b – Architecture Versions](./01b-Architecture-Versions.md) — Future Architecture Considerations.
+> **ENG-003 family note:** ENG-003 originally represented Platform Foundation / Metadata; the family now spans 14 sub-engines (003a–n). **AV-1.5 Engine Catalog Lock:** no renumbering, no regrouping — new capabilities use **ENG-003o**, **ENG-003p**, … until AV-2.0 is deliberately initiated. Possible AV-2.0 regrouping is recorded in [01b – Architecture Versions](./01b-Architecture-Versions.md) — Future Architecture Considerations.
 
 > **ENG-001 – ENG-016** are the active v1.0 baseline engine IDs. Retired or merged IDs are recorded in §3.1 below — not as separate active catalog rows.
 
@@ -217,7 +218,9 @@ Delivery boundaries define when a Build Pack stops accepting new IPs — distinc
 | ---------- | ----------------- | ------ |
 | **BP-003** | **IP-013 (Offering Governance)** — final IP | IP-014 retired → ENG-003m; IP-015 deferred → ENG-003f / BP-013 |
 
-New platform capabilities (checklist, portfolio roadmap, etc.) are implemented as **Core Platform Engines** (ENG-003l, ENG-003m, …) consumed by Build Packs — not as additional BP-003 IPs.
+New platform capabilities (checklist, portfolio roadmap, work assignment & SLA, etc.) are implemented as **Core Platform Engines** (ENG-003l, ENG-003m, ENG-003n, …) consumed by Build Packs — not as additional Build Pack IPs.
+
+**BP-008 CRM baseline (2026-08-02):** Build Pack documentation in `Build Pack 004 - Customer Relationship Management/` establishes a **13-IP CRM baseline** (IP-01 through IP-13) aligned with catalog **BP-008**. **IP-01 CRM Foundation & Customer 360** owns the single pane of glass (default profile landing); IP-02–IP-12 contribute widgets and timeline events. IP-07 owns visit and call report management separately from calendar scheduling (IP-06).
 
 **BP-003 IP-011 — Offering Pricing (2026-08-01):** Implemented as reusable platform tables `pricing_catalogue`, `pricing_item`, and reference `pricing_method`. BP-003 consumes via the Product Workspace **Pricing** tab. Prices are never stored on the offering master (`product`). Future commercial capabilities (discounts, promotions, taxes — BP-004) extend the workspace without redesigning the pricing engine.
 
@@ -233,7 +236,7 @@ New platform capabilities (checklist, portfolio roadmap, etc.) are implemented a
 | Single Owner             | Every engine has one owning service in `03-platform/src/core/`                 |
 | Consume, Don't Duplicate | Domain modules call engine services; they never reimplement engine logic       |
 | Configuration First      | Engine behaviour adapts through configuration (`ENG-003a`) before code changes |
-| AV-1.5 Catalog Lock      | New sub-engines: ENG-003n, ENG-003o, … — no renumbering or regrouping until AV-2.0 |
+| AV-1.5 Catalog Lock      | New sub-engines: ENG-003o, ENG-003p, … — no renumbering or regrouping until AV-2.0 |
 | Audit Cross-Cut          | All mutating engine operations emit events via **ENG-013**                     |
 
 
@@ -291,6 +294,7 @@ Work Orders	Service job management	Yes	Property, Business Operations
 Asset Management	Business assets	Yes	Business Operations, Property
 Document Management	Business documents	Yes	All Solutions
 Checklists	Operational process completion and guided steps (ENG-003l)	Yes	All Industry Solutions
+Work Assignment & SLA	Ownership history, per-assignee and cumulative SLA (ENG-003n)	Yes	All Industry Solutions
 
 ---
 

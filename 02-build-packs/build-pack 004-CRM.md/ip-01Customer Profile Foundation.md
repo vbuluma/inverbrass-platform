@@ -1,3 +1,9 @@
+> **⚠️ Deprecated — superseded documentation.** This file reflects the legacy 15-IP CRM model and is retained for historical reference only.
+>
+> **Canonical replacement:** [`Build Pack 004 - Customer Relationship Management/IP-01 CRM Foundation & Customer 360.md`](../Build%20Pack%20004%20-%20Customer%20Relationship%20Management/IP-01%20CRM%20Foundation%20%26%20Customer%20360.md)
+>
+> **Scope and IP structure:** [`Build Pack 004 - Customer Relationship Management/Build Pack-004 Scope.md`](../Build%20Pack%20004%20-%20Customer%20Relationship%20Management/Build%20Pack-004%20Scope.md) — 13 IPs (AV-1.6 baseline)
+
 I think we should make **IP-001** as strong as we made **BP-003 IP-001**. This is the **foundation** of CRM, and if we get it right, the remaining 14 IPs become much easier.
 
 ---

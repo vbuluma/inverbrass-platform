@@ -6,7 +6,7 @@ ________________________________________
 Attribute	Value
 Document Name	UI/UX Standards & Design System
 Version	1.0
-Architecture Version	AV-1.5 (see [01b – Architecture Versions](./01b-Architecture-Versions.md))
+Architecture Version	AV-1.6 (see [01b – Architecture Versions](./01b-Architecture-Versions.md))
 Purpose	Defines the user experience principles, interface standards, reusable components and design guidelines that ensure a consistent, intuitive and mobile-first experience across all Industry Solutions.
 Scope	Entire InverBrass Business Platform
 Audience	Product Owner, UX Designers, Developers, AI Coding Assistants
@@ -168,7 +168,7 @@ ________________________________________
 Rule	Description
 Business Alignment	User interfaces must support approved business processes and requirements.
 Architecture Compliance	Screens must align with the Enterprise Solution Architecture, Platform Module Catalog and Domain Model.
-Core Platform Engines	All reusable processing belongs to the **v1.0 Platform Engine Baseline** (**ENG-001 – ENG-016** active) plus extensions (**ENG-003a–m**, **ENG-015a**) and Phase 2 engines (**ENG-017 – ENG-019**, introduce only when needed). **AV-1.5 catalog lock:** next sub-engine ID is ENG-003n — no renumbering or regrouping until AV-2.0. Retired IDs are in the Merge Registry — see [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3 and §3.1. Governed by `.cursor/rules/eng-catalog-governance.mdc`.
+Core Platform Engines	All reusable processing belongs to the **v1.0 Platform Engine Baseline** (**ENG-001 – ENG-016** active) plus extensions (**ENG-003a–n**, **ENG-015a**) and Phase 2 engines (**ENG-017 – ENG-019**, introduce only when needed). **AV-1.5 catalog lock:** next sub-engine ID is ENG-003o — no renumbering or regrouping until AV-2.0. Retired IDs are in the Merge Registry — see [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3 and §3.1. Governed by `.cursor/rules/eng-catalog-governance.mdc`.
 Cursor Rules Compliance	Generated UI code must comply with the project's .cursorrules and coding standards.
 Component Standards	Only approved design system components should be used unless explicitly justified.
 Self-Service Validation	Every new feature should be evaluated against the Self-Service First principle.
