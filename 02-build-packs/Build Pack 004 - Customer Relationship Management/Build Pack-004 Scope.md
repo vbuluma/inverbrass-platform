@@ -184,6 +184,14 @@ Each IP shall satisfy:
 
 ---
 
+## Cross-cutting architectural principles (CRM Core)
+
+1. **Interaction continuity** — The customer should not be required to repeatedly explain the same issue or interaction when moving between channels, employees or service processes. Future channel/case/visit IPs converge on Party + CRM + Party Timeline + Customer 360.
+2. **Single Party spine** — Prospect → Lead → Customer reuses Party and CRM; no second customer master.
+3. **Progressive onboarding compatibility** — Digital/assisted/hybrid onboarding is not CRM Core scope; CRM consumes Party identities created by onboarding/identity flows and supports incomplete first-contact leads.
+4. **Customer 360 contribution model** — Later IPs register widgets; placeholders remain until owned.
+---
+
 ## IP Documentation Index
 
 | Document |

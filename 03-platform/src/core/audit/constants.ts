@@ -66,6 +66,11 @@ export const AUDIT_ENTITY_NAMES = {
   PRICING_ITEM: "pricing_item",
   OFFERING_METRIC_DEFINITION: "offering_metric_definition",
   OFFERING_GOVERNANCE: "offering_governance",
+  CRM_RECORD: "crm_record",
+  CRM_LEAD: "crm_lead",
+  CRM_OPPORTUNITY: "crm_opportunity",
+  CRM_ACCOUNT: "crm_account",
+  CRM_ACCOUNT_CONTACT: "crm_account_contact",
 } as const;
 
 export type AuditEntityName =
@@ -106,6 +111,11 @@ export const AUDIT_ENTITY_LABELS: Record<AuditEntityName, string> = {
   pricing_item: "Pricing Item",
   offering_metric_definition: "Offering Metric Definition",
   offering_governance: "Offering Governance",
+  crm_record: "CRM Record",
+  crm_lead: "CRM Lead",
+  crm_opportunity: "CRM Opportunity",
+  crm_account: "CRM Account",
+  crm_account_contact: "CRM Account Contact",
 };
 
 export const AUDIT_SOURCE_MODULES = {
@@ -127,6 +137,7 @@ export const AUDIT_SOURCE_MODULES = {
   OFFERING_PRICING: "offering_pricing",
   OFFERING_ANALYTICS: "offering_analytics",
   OFFERING_GOVERNANCE: "offering_governance",
+  CRM_MANAGEMENT: "crm_management",
 } as const;
 
 export type AuditSourceModule =
@@ -151,6 +162,7 @@ export const AUDIT_SOURCE_MODULE_LABELS: Record<AuditSourceModule, string> = {
   offering_pricing: "Offering Pricing",
   offering_analytics: "Offering Analytics",
   offering_governance: "Offering Governance",
+  crm_management: "CRM Management",
 };
 
 export const AUDIT_DEFAULT_PAGE_SIZE = 25;

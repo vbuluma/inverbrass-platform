@@ -8,12 +8,16 @@
  */
 
 import {
+  Building2Icon,
   ClockIcon,
+  GitBranchIcon,
+  HandshakeIcon,
   LayersIcon,
   LayoutDashboardIcon,
   PackageIcon,
   SettingsIcon,
   StarIcon,
+  TargetIcon,
   UsersIcon,
   UsersRoundIcon,
 } from "lucide-react";
@@ -50,6 +54,30 @@ export const BUSINESS_APP_NAV_ITEMS: PlatformNavItem[] = [
     label: "Offerings",
     href: "/products",
     icon: PackageIcon,
+  },
+  {
+    id: "customers",
+    label: "Customers",
+    href: "/customers",
+    icon: HandshakeIcon,
+  },
+  {
+    id: "leads",
+    label: "Leads",
+    href: "/leads",
+    icon: TargetIcon,
+  },
+  {
+    id: "opportunities",
+    label: "Opportunities",
+    href: "/opportunities",
+    icon: GitBranchIcon,
+  },
+  {
+    id: "accounts",
+    label: "Accounts",
+    href: "/accounts",
+    icon: Building2Icon,
   },
   {
     id: "solutions",

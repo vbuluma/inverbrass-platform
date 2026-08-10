@@ -117,13 +117,17 @@ Lead marked Converted (historical)
 
 | Area | Configuration |
 |------|---------------|
-| Lead sources and channels | Metadata list |
-| Qualification criteria | Checklist or score weights (ENG-003l) |
+| Lead sources and channels | Metadata list (`lead_source` catalogue) |
+| Qualification criteria | `settings.crm.lead.qualification` (score, owner, ENG-003l checklist reserved) |
+| Lead scoring | `settings.crm.lead.scoring` (ENG-004 reserved) |
+| Conversion | `settings.crm.lead.conversion` — see [Lead Conversion Contract](./Lead%20Conversion%20Contract.md) |
 | Assignment rules | Territory, round-robin, team (ENG-004 optional) |
 | Lead SLA targets | Time-to-contact, time-to-qualify, time-to-convert |
 | Reason codes | Disqualification, recycle |
-| Conversion mapping | Which entities to create by lead type |
 
+**Conversion defaults (v1):** Payload overrides (`createOpportunity`, `createCrmIfMissing`) take precedence when supplied; otherwise business configuration defaults apply. New CRM on convert uses `crmStatusOnConvert` (default `LEAD`). Opportunity win may promote CRM to `ACTIVE` via `promoteCrmToActiveOnWin`.
+
+**Low-information intake:** Incomplete profiles are allowed. Sources such as WEB/API/IMPORT/INSTITUTION may originate leads; Party resolution/onboarding remains BP-002 / future onboarding — IP-02 never creates a duplicate Party or CRM master on convert.
 ---
 
 ## Integration Requirements
@@ -132,11 +136,11 @@ Lead marked Converted (historical)
 |--------|-------------|
 | IP-01 | CRM record on conversion; assignment/SLA contract |
 | ENG-003n | Per-owner and total lead SLA |
-| IP-03 | Opportunity creation on conversion |
-| IP-04 | Account and contact creation on conversion |
+| IP-03 | Opportunity creation on conversion (attribution metadata persisted) |
+| IP-04 | Optional account enrichment (`account_id`); contacts remain BP-002 |
 | IP-05 | Follow-up tasks |
 | IP-11 | Campaign source reference |
-| BP-002 | Party creation or match on conversion |
+| BP-002 | Party reuse — create Party only via identity/onboarding flows, not CRM duplicate |
 | ENG-009 | Owner assignment notifications |
 | ENG-004 | Scoring rules |
 

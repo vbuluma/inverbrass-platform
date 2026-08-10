@@ -43,6 +43,13 @@ import { seedSecurityQuestions } from "@/db/seeds/security-questions-seed";
 import { seedProductTypes } from "@/db/seeds/product-types-seed";
 import { seedProductStatuses } from "@/db/seeds/product-statuses-seed";
 import { seedProductClassificationTypes } from "@/db/seeds/product-classification-types-seed";
+import { seedCrmTypes } from "@/db/seeds/crm-types-seed";
+import { seedCrmStatuses } from "@/db/seeds/crm-statuses-seed";
+import { seedLeadDisqualificationReasons } from "@/db/seeds/lead-disqualification-reasons-seed";
+import { seedLeadSources } from "@/db/seeds/lead-sources-seed";
+import { seedLeadStatuses } from "@/db/seeds/lead-statuses-seed";
+import { seedOpportunityReference } from "@/db/seeds/opportunity-reference-seed";
+import { seedAccountReference } from "@/db/seeds/account-reference-seed";
 
 async function runSeed() {
   const connectionString = process.env.DATABASE_URL;
@@ -216,6 +223,48 @@ async function runSeed() {
     const classificationTypeResults = await seedProductClassificationTypes(db);
     console.log(
       `productClassificationTypes: inserted=${classificationTypeResults.inserted}, updated=${classificationTypeResults.updated}, skipped=${classificationTypeResults.skipped}`
+    );
+
+    console.log("Seeding CRM types...");
+    const crmTypeResults = await seedCrmTypes(db);
+    console.log(
+      `crmTypes: inserted=${crmTypeResults.inserted}, updated=${crmTypeResults.updated}, skipped=${crmTypeResults.skipped}`
+    );
+
+    console.log("Seeding CRM statuses...");
+    const crmStatusResults = await seedCrmStatuses(db);
+    console.log(
+      `crmStatuses: inserted=${crmStatusResults.inserted}, updated=${crmStatusResults.updated}, skipped=${crmStatusResults.skipped}`
+    );
+
+    console.log("Seeding lead statuses...");
+    const leadStatusResults = await seedLeadStatuses(db);
+    console.log(
+      `leadStatuses: inserted=${leadStatusResults.inserted}, updated=${leadStatusResults.updated}, skipped=${leadStatusResults.skipped}`
+    );
+
+    console.log("Seeding lead sources...");
+    const leadSourceResults = await seedLeadSources(db);
+    console.log(
+      `leadSources: inserted=${leadSourceResults.inserted}, updated=${leadSourceResults.updated}, skipped=${leadSourceResults.skipped}`
+    );
+
+    console.log("Seeding lead disqualification reasons...");
+    const leadReasonResults = await seedLeadDisqualificationReasons(db);
+    console.log(
+      `leadDisqualificationReasons: inserted=${leadReasonResults.inserted}, updated=${leadReasonResults.updated}, skipped=${leadReasonResults.skipped}`
+    );
+
+    console.log("Seeding opportunity reference data...");
+    const opportunityRefResults = await seedOpportunityReference(db);
+    console.log(
+      `opportunityReference: inserted=${opportunityRefResults.inserted}, updated=${opportunityRefResults.updated}, skipped=${opportunityRefResults.skipped}`
+    );
+
+    console.log("Seeding account reference data...");
+    const accountRefResults = await seedAccountReference(db);
+    console.log(
+      `accountReference: inserted=${accountRefResults.inserted}, updated=${accountRefResults.updated}, skipped=${accountRefResults.skipped}`
     );
 
     console.log("✅ Seed completed.");

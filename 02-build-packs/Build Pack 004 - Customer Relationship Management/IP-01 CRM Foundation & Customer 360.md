@@ -389,3 +389,36 @@ Future Build Packs register additional widgets
 - ENG-012 AI natural-language Customer 360 summary
 - Cross–Build Pack widget SDK for BP-005+, Lending, Insurance, AML
 - Predictive health scoring via ENG-012 Intelligence Engine
+
+---
+
+## Architectural principles (CRM Core freeze)
+
+### Interaction continuity
+
+The customer should not be required to repeatedly explain the same issue or interaction when moving between channels, employees or service processes.
+
+Intended future convergence (owned by later IPs / channels — **not implemented in IP-01**):
+
+```
+WhatsApp → Contact Centre → Case → Visit → Relationship Manager → Customer 360
+```
+
+All relevant interactions must ultimately converge on the same Party, CRM record, Case (when applicable), Party Timeline, and relevant operational object.
+
+### Preferred communication channel
+
+Customer 360 Identity surfaces preferred channel by **reading** BP-002 `party_communication_preference.preferred_contact_method` (display label). CRM does not store a parallel preference. Outbound enforcement remains IP-08.
+
+### Progressive / digital onboarding (boundary)
+
+Digital onboarding is **not** an IP-01 deliverable. CRM Core must remain compatible with self-service, assisted, hybrid, partner/API, and progressive onboarding journeys owned elsewhere:
+
+- Onboarding is a journey, not a form.
+- Low-information first contact may create or reuse a Party; CRM consumes that Party ID.
+- CRM must never create a second customer master for the same Party.
+- Leads may originate from catalogue sources (WEB, API, IMPORT, INSTITUTION, …) with incomplete profiles.
+
+### Customer 360 contribution contract
+
+IP-05–IP-13 and future Build Packs register widgets/timeline events into the existing catalog/registry. Placeholders remain until owning IPs ship. Do not invent fake implementations to complete the 360 UI.

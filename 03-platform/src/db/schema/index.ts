@@ -101,3 +101,26 @@ export { userRole } from "./user-role";
 export { userSecurityProfile } from "./user-security-profile";
 export { securityQuestion } from "./security-question";
 export { userSecurityAnswer } from "./user-security-answer";
+export { crmType } from "./crm-type";
+export { crmStatus } from "./crm-status";
+export { crmRecord } from "./crm-record";
+export {
+  workAssignment,
+  workAssignmentHistory,
+  workSlaPolicy,
+  workSlaSegment,
+} from "./work-assignment-sla";
+export { leadStatus } from "./lead-status";
+export { leadSource } from "./lead-source";
+export { leadDisqualificationReason } from "./lead-disqualification-reason";
+export { crmLead } from "./crm-lead";
+export { opportunityPipeline } from "./opportunity-pipeline";
+export { opportunityStage } from "./opportunity-stage";
+export { opportunityLossReason } from "./opportunity-loss-reason";
+export { crmOpportunity } from "./crm-opportunity";
+export { crmOpportunityLineItem } from "./crm-opportunity-line-item";
+export { accountType } from "./account-type";
+export { accountStatus } from "./account-status";
+export { crmContactRole } from "./crm-contact-role";
+export { crmAccount } from "./crm-account";
+export { crmAccountContact } from "./crm-account-contact";

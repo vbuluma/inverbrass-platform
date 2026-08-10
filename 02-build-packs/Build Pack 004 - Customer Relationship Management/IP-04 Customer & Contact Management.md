@@ -207,3 +207,10 @@ Engage via Opportunities (IP-03), Activities (IP-05), Communications (IP-08)
 | BP-002 IP-03 | Contact master |
 | BP-002 IP-12 | Consent |
 | ENG-003a | Account configuration |
+| IP-03 | Optional `crm_opportunity.account_id` enrichment (account ownership stays IP-04) |
+
+---
+
+## Ownership boundary
+
+IP-04 owns Account and Account–Contact role context. Opportunities reference accounts via optional FK only — they do not own or duplicate account masters. Contact identity remains BP-002 Party.

@@ -295,6 +295,34 @@
       "when": 1784564588842,
       "tag": "0041_bp003_ip013_offering_governance",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1784564588843,
+      "tag": "0042_bp004_ip001_crm_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1784564588844,
+      "tag": "0043_bp004_ip002_lead_management",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1784564588845,
+      "tag": "0044_bp004_ip003_opportunity_management",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1784564588846,
+      "tag": "0045_bp004_ip004_account_contact_management",
+      "breakpoints": true
     }
   ]
 }
