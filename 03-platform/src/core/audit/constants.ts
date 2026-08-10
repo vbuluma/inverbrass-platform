@@ -66,6 +66,14 @@ export const AUDIT_ENTITY_NAMES = {
   PRICING_ITEM: "pricing_item",
   OFFERING_METRIC_DEFINITION: "offering_metric_definition",
   OFFERING_GOVERNANCE: "offering_governance",
+  CRM_ACTIVITY: "crm_activity",
+  CRM_APPOINTMENT: "crm_appointment",
+  CRM_VISIT: "crm_visit",
+  CRM_COMMUNICATION: "crm_communication",
+  CRM_CASE: "crm_case",
+  CRM_GOVERNANCE: "crm_governance",
+  CRM_MERGE_PROPOSAL: "crm_merge_proposal",
+  CRM_SLA_POLICY: "crm_sla_policy",
 } as const;
 
 export type AuditEntityName =
@@ -106,6 +114,14 @@ export const AUDIT_ENTITY_LABELS: Record<AuditEntityName, string> = {
   pricing_item: "Pricing Item",
   offering_metric_definition: "Offering Metric Definition",
   offering_governance: "Offering Governance",
+  crm_activity: "CRM Activity",
+  crm_appointment: "CRM Appointment",
+  crm_visit: "CRM Visit",
+  crm_communication: "CRM Communication",
+  crm_case: "CRM Case",
+  crm_governance: "CRM Governance",
+  crm_merge_proposal: "CRM Merge Proposal",
+  crm_sla_policy: "CRM SLA Policy",
 };
 
 export const AUDIT_SOURCE_MODULES = {
@@ -127,6 +143,12 @@ export const AUDIT_SOURCE_MODULES = {
   OFFERING_PRICING: "offering_pricing",
   OFFERING_ANALYTICS: "offering_analytics",
   OFFERING_GOVERNANCE: "offering_governance",
+  CRM_ACTIVITY: "crm_activity",
+  CRM_APPOINTMENT: "crm_appointment",
+  CRM_VISIT: "crm_visit",
+  CRM_COMMUNICATION: "crm_communication",
+  CRM_CASE: "crm_case",
+  CRM_GOVERNANCE: "crm_governance",
 } as const;
 
 export type AuditSourceModule =
@@ -151,6 +173,12 @@ export const AUDIT_SOURCE_MODULE_LABELS: Record<AuditSourceModule, string> = {
   offering_pricing: "Offering Pricing",
   offering_analytics: "Offering Analytics",
   offering_governance: "Offering Governance",
+  crm_activity: "CRM Activities",
+  crm_appointment: "CRM Appointments",
+  crm_visit: "CRM Visits",
+  crm_communication: "CRM Communications",
+  crm_case: "CRM Cases",
+  crm_governance: "CRM Governance",
 };
 
 export const AUDIT_DEFAULT_PAGE_SIZE = 25;

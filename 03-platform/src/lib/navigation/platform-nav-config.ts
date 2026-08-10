@@ -8,11 +8,17 @@
  */
 
 import {
+  AlertCircleIcon,
+  CalendarIcon,
+  CheckSquareIcon,
   ClockIcon,
+  MapPinIcon,
+  MessageSquareIcon,
   LayersIcon,
   LayoutDashboardIcon,
   PackageIcon,
   SettingsIcon,
+  ShieldIcon,
   StarIcon,
   UsersIcon,
   UsersRoundIcon,
@@ -50,6 +56,42 @@ export const BUSINESS_APP_NAV_ITEMS: PlatformNavItem[] = [
     label: "Offerings",
     href: "/products",
     icon: PackageIcon,
+  },
+  {
+    id: "crm-activities",
+    label: "Activities",
+    href: "/crm/activities",
+    icon: CheckSquareIcon,
+  },
+  {
+    id: "crm-appointments",
+    label: "Calendar",
+    href: "/crm/appointments",
+    icon: CalendarIcon,
+  },
+  {
+    id: "crm-visits",
+    label: "Visits",
+    href: "/crm/visits",
+    icon: MapPinIcon,
+  },
+  {
+    id: "crm-communications",
+    label: "Communications",
+    href: "/crm/communications",
+    icon: MessageSquareIcon,
+  },
+  {
+    id: "crm-cases",
+    label: "Cases",
+    href: "/crm/cases",
+    icon: AlertCircleIcon,
+  },
+  {
+    id: "crm-governance",
+    label: "CRM Governance",
+    href: "/crm/governance",
+    icon: ShieldIcon,
   },
   {
     id: "solutions",
