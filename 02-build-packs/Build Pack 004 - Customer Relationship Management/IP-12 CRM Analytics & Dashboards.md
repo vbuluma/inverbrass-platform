@@ -167,9 +167,27 @@ Export / Scheduled Delivery
 | Contribution | Description |
 |--------------|-------------|
 | **Analytics tab** | Customer-scoped KPIs on Customer Profile (distinct from executive CRM dashboard) |
-| **Widgets on 360** | Health score, churn/dormancy risk flag, relationship value indicators |
-| **Insights** | Rule-based health summary consumed by Customer Insights panel |
-| **Future** | ENG-012 AI summary widget on Customer 360 |
+| **Widgets on 360** | Health score, churn/dormancy risk, relationship value; open pipeline pending IP-03 |
+| **Insights** | Rule-based health summary |
+| **Quick actions** | View CRM dashboard, export |
+| **Future zones** | `analytics.ai_summary`, `analytics.next_best_action` (ENG-012 / ENG-004) — not implemented |
+| **Publisher** | `CrmAnalyticsService.getCustomerAnalytics` — mounted by IP-01 |
+
+---
+
+## Implementation Status (Sales & Marketing — Frozen)
+
+| Area | Status |
+|------|--------|
+| Schema / migration `0045` | Complete (journal = Integration Manager) |
+| Metric definitions + snapshots | Complete |
+| Live quotation + campaign KPIs | Complete |
+| Pending pipeline / lead / service / visit / SLA | Graceful empty (not faked) |
+| Customer health / dormancy (rule-based) | Complete — no AI |
+| Executive dashboard + CSV export | Complete (`/crm-analytics`) |
+| Capstone consumer posture | Confirmed — no operational masters |
+
+**Canonical handover:** `sales-marketing-implementation.md`
 
 ---
 
@@ -181,3 +199,4 @@ Export / Scheduled Delivery
 | ENG-011 | Reporting platform |
 | ENG-004 | Rule-based insights |
 | ENG-003n | Assignment and SLA analytics source |
+| ENG-012 | Future AI insights (deferred) |

@@ -155,8 +155,30 @@ Close Campaign → ROI Report
 | Contribution | Description |
 |--------------|-------------|
 | **Widgets** | Active campaigns, campaign responses, last campaign touch |
-| **Insights** | Campaign response rate for customer |
-| **Timeline** | `CAMPAIGN_RESPONSE`, `CAMPAIGN_LEAD_ATTRIBUTED` |
+| **Insights** | Campaign response rate, attributed leads |
+| **Quick actions** | Log campaign response |
+| **Timeline** | `CAMPAIGN_MEMBER_ADDED`, `CAMPAIGN_RESPONSE`, `CAMPAIGN_LEAD_ATTRIBUTED` |
+| **Publisher** | `CampaignCustomer360Provider` — mounted by IP-01 |
+
+---
+
+## Implementation Status (Sales & Marketing — Frozen)
+
+| Area | Status |
+|------|--------|
+| Schema / migration `0044` | Complete (journal = Integration Manager) |
+| Party group audience | Complete — dynamic segments deferred |
+| Consent before outreach | Complete (BP-002 prefs) |
+| Membership + responses | Complete |
+| Lead attribution adapter | Stub until IP-02 — no Lead tables here |
+| ENG-009 outreach | Manual stub |
+| ROI summary | Complete (pipeline value pending IP-03) |
+| UI + navigation | Complete |
+| Customer 360 contribution | Complete |
+
+**Lead merge contract:** Campaign response → `LeadAttributionAdapter` → IP-02 Lead service → `campaign_member.lead_id`.
+
+**Canonical handover:** `sales-marketing-implementation.md`
 
 ---
 
@@ -168,3 +190,4 @@ Close Campaign → ROI Report
 | BP-002 IP-08, IP-12 | Audience and consent |
 | ENG-009 | Message delivery |
 | ENG-011 | Reporting |
+| IP-01 | Mount 360 contribution |

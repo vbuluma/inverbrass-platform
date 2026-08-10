@@ -9,8 +9,11 @@
 
 import {
   ClockIcon,
+  FileTextIcon,
+  BarChart3Icon,
   LayersIcon,
   LayoutDashboardIcon,
+  MegaphoneIcon,
   PackageIcon,
   SettingsIcon,
   StarIcon,
@@ -50,6 +53,24 @@ export const BUSINESS_APP_NAV_ITEMS: PlatformNavItem[] = [
     label: "Offerings",
     href: "/products",
     icon: PackageIcon,
+  },
+  {
+    id: "quotations",
+    label: "Quotations",
+    href: "/quotations",
+    icon: FileTextIcon,
+  },
+  {
+    id: "campaigns",
+    label: "Campaigns",
+    href: "/campaigns",
+    icon: MegaphoneIcon,
+  },
+  {
+    id: "crm-analytics",
+    label: "CRM Analytics",
+    href: "/crm-analytics",
+    icon: BarChart3Icon,
   },
   {
     id: "solutions",
