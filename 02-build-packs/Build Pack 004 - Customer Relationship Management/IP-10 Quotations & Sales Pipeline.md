@@ -154,15 +154,37 @@ Accepted? ──Yes──→ Create Sales Order → Handoff to Fulfilment BP
 | AC-004 | Expired quotations blocked from order conversion. |
 | AC-005 | Document generation produces quotation PDF. |
 
+> **v1 note (AC-005):** PDF deferred to ENG-015 Phase 2. v1 delivers printable HTML via `QuotationDocumentAdapter`.
+
 ---
 
 ## Customer 360 Contribution
 
 | Contribution | Description |
 |--------------|-------------|
-| **Widgets** | Outstanding quotations, pending acceptance, expired quotes |
+| **Widgets** | Outstanding, pending acceptance, expired, **accepted** (`quotation.*` stable IDs) |
 | **Insights** | Quotation awaiting response, total quoted value |
-| **Timeline** | `QUOTATION_SENT`, `QUOTATION_ACCEPTED`, `QUOTATION_REJECTED`, `QUOTATION_EXPIRED` |
+| **Quick actions** | View latest, create quotation |
+| **Timeline** | `QUOTATION_CREATED`, `QUOTATION_SENT`, `QUOTATION_ACCEPTED`, `QUOTATION_REJECTED`, `QUOTATION_EXPIRED`, `QUOTATION_REVISED` |
+| **Publisher** | `QuotationCustomer360Provider` — mounted by IP-01 (not a second 360 shell) |
+
+---
+
+## Implementation Status (Sales & Marketing — Frozen)
+
+| Area | Status |
+|------|--------|
+| Schema / migrations `0042`–`0043` | Complete (journal = Integration Manager) |
+| Lifecycle + versioning + expiry | Complete |
+| BP-003 pricing consumption | Complete |
+| Approval threshold (ENG-005-ready) | Complete — multi-tier deferred |
+| Acceptance channel metadata | Complete — channels not implemented |
+| Sales order handoff stub | Complete |
+| HTML document adapter | Complete — PDF deferred |
+| UI + navigation | Complete |
+| Customer 360 contribution contract | Complete |
+
+**Canonical handover:** `sales-marketing-implementation.md`
 
 ---
 
@@ -174,3 +196,4 @@ Accepted? ──Yes──→ Create Sales Order → Handoff to Fulfilment BP
 | BP-003 IP-01, IP-11 | Catalogue and pricing |
 | ENG-015 | Documents |
 | ENG-005 | Quote approval |
+| IP-01 | Mount 360 contribution |
