@@ -134,6 +134,11 @@ export const AUDIT_ENTITY_LABELS: Record<AuditEntityName, string> = {
   crm_sla_policy: "CRM SLA Policy",
 };
 
+/**
+ * Source modules for audit provenance.
+ * CRM_MANAGEMENT = CRM Core (records, leads, accounts, opportunities).
+ * CRM_* = later BP-004 IP capability modules (distinct audit sources).
+ */
 export const AUDIT_SOURCE_MODULES = {
   PARTY_MANAGEMENT: "party_management",
   PARTY_ROLES: "party_roles",
@@ -154,6 +159,12 @@ export const AUDIT_SOURCE_MODULES = {
   OFFERING_ANALYTICS: "offering_analytics",
   OFFERING_GOVERNANCE: "offering_governance",
   CRM_MANAGEMENT: "crm_management",
+  CRM_ACTIVITY: "crm_activity",
+  CRM_APPOINTMENT: "crm_appointment",
+  CRM_VISIT: "crm_visit",
+  CRM_COMMUNICATION: "crm_communication",
+  CRM_CASE: "crm_case",
+  CRM_GOVERNANCE: "crm_governance",
 } as const;
 
 export type AuditSourceModule =
@@ -179,6 +190,12 @@ export const AUDIT_SOURCE_MODULE_LABELS: Record<AuditSourceModule, string> = {
   offering_analytics: "Offering Analytics",
   offering_governance: "Offering Governance",
   crm_management: "CRM Management",
+  crm_activity: "CRM Activity",
+  crm_appointment: "CRM Appointment",
+  crm_visit: "CRM Visit",
+  crm_communication: "CRM Communication",
+  crm_case: "CRM Case",
+  crm_governance: "CRM Governance",
 };
 
 export const AUDIT_DEFAULT_PAGE_SIZE = 25;
