@@ -1,9 +1,9 @@
-/**
+﻿/**
  * Purpose:
  * Constants for the reusable Enterprise Audit capability.
  *
  * Implementation Package:
- * BP-002 / IP-011 – Enterprise Audit History
+ * BP-002 / IP-011 â€“ Enterprise Audit History
  */
 
 export const AUDIT_OPERATIONS = {
@@ -71,6 +71,14 @@ export const AUDIT_ENTITY_NAMES = {
   CRM_OPPORTUNITY: "crm_opportunity",
   CRM_ACCOUNT: "crm_account",
   CRM_ACCOUNT_CONTACT: "crm_account_contact",
+  CRM_ACTIVITY: "crm_activity",
+  CRM_APPOINTMENT: "crm_appointment",
+  CRM_VISIT: "crm_visit",
+  CRM_COMMUNICATION: "crm_communication",
+  CRM_CASE: "crm_case",
+  CRM_GOVERNANCE: "crm_governance",
+  CRM_MERGE_PROPOSAL: "crm_merge_proposal",
+  CRM_SLA_POLICY: "crm_sla_policy",
 } as const;
 
 export type AuditEntityName =
@@ -116,6 +124,14 @@ export const AUDIT_ENTITY_LABELS: Record<AuditEntityName, string> = {
   crm_opportunity: "CRM Opportunity",
   crm_account: "CRM Account",
   crm_account_contact: "CRM Account Contact",
+  crm_activity: "CRM Activity",
+  crm_appointment: "CRM Appointment",
+  crm_visit: "CRM Visit",
+  crm_communication: "CRM Communication",
+  crm_case: "CRM Case",
+  crm_governance: "CRM Governance",
+  crm_merge_proposal: "CRM Merge Proposal",
+  crm_sla_policy: "CRM SLA Policy",
 };
 
 export const AUDIT_SOURCE_MODULES = {
@@ -166,3 +182,8 @@ export const AUDIT_SOURCE_MODULE_LABELS: Record<AuditSourceModule, string> = {
 };
 
 export const AUDIT_DEFAULT_PAGE_SIZE = 25;
+
+
+
+
+

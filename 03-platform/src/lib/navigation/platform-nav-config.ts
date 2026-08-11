@@ -1,9 +1,9 @@
-/**
+﻿/**
  * Purpose:
  * Central navigation registry for the InverBrass platform shell (IP-007).
  *
  * Design rationale:
- * All Build Packs inherit navigation from this config — modules must not
+ * All Build Packs inherit navigation from this config ΓÇö modules must not
  * duplicate nav items locally.
  */
 
@@ -108,13 +108,13 @@ export const BUSINESS_APP_NAV_ITEMS: PlatformNavItem[] = [
 export const PLACEHOLDER_MESSAGES: Record<string, string> = {
   solutions:
     "Industry Solutions (Property, Healthcare, Schools, and more) will appear here as Build Packs ship.",
-  favorites: "Pin records and screens you use most — coming in a future release.",
-  recent: "Recently viewed items will appear here — coming in a future release.",
+  favorites: "Pin records and screens you use most ΓÇö coming in a future release.",
+  recent: "Recently viewed items will appear here ΓÇö coming in a future release.",
   search: "Universal search across your business will be available here.",
   notifications: "Notifications and alerts will appear here.",
   help: "Help and guided support will be available here.",
   "register-business": "Register a new business from Platform Home after sign-in.",
-  "back-home": "Public marketing home page — coming soon.",
+  "back-home": "Public marketing home page ΓÇö coming soon.",
   "switch-business-single":
     "You have one business. Create or join another to switch without signing out.",
   privacy: "Privacy policy will be published here.",
@@ -122,3 +122,6 @@ export const PLACEHOLDER_MESSAGES: Record<string, string> = {
   about:
     "InverBrass is a multi-industry digitalization platform for SMEs and growing organizations.",
 };
+
+
+

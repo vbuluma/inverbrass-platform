@@ -8,6 +8,7 @@ export const BUSINESS_APP_PREFIXES = [
   "/parties",
   "/groups",
   "/products",
+  "/crm",
   "/settings",
 ];
 

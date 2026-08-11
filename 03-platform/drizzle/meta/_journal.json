@@ -323,6 +323,68 @@
       "when": 1784564588846,
       "tag": "0045_bp004_ip004_account_contact_management",
       "breakpoints": true
-    }
-  ]
+    },
+      {
+        "idx": 46,
+        "version": "7",
+        "when": 1784564588843,
+        "tag": "0046_bp004_ip005_activity_task_management",
+        "breakpoints": true
+      },
+      {
+        "idx": 47,
+        "version": "7",
+        "when": 1784564588844,
+        "tag": "0047_bp004_ip005_activity_catalogues",
+        "breakpoints": true
+      },
+      {
+        "idx": 48,
+        "version": "7",
+        "when": 1784564588845,
+        "tag": "0048_bp004_ip006_calendar_appointment_management",
+        "breakpoints": true
+      },
+      {
+        "idx": 49,
+        "version": "7",
+        "when": 1784564588846,
+        "tag": "0049_bp004_ip006_appointment_minutes_and_extensions",
+        "breakpoints": true
+      },
+      {
+        "idx": 50,
+        "version": "7",
+        "when": 1784564588847,
+        "tag": "0050_bp004_ip007_visit_call_report_management",
+        "breakpoints": true
+      },
+      {
+        "idx": 51,
+        "version": "7",
+        "when": 1784564588848,
+        "tag": "0051_bp004_ip008_communication_management",
+        "breakpoints": true
+      },
+      {
+        "idx": 52,
+        "version": "7",
+        "when": 1784564588849,
+        "tag": "0052_bp004_ip009_case_service_request_management",
+        "breakpoints": true
+      },
+      {
+        "idx": 53,
+        "version": "7",
+        "when": 1784564588850,
+        "tag": "0053_bp004_ip013_crm_governance",
+        "breakpoints": true
+      },
+      {
+        "idx": 54,
+        "version": "7",
+        "when": 1784564588851,
+        "tag": "0054_bp004_se_final_remediation",
+        "breakpoints": true
+      }    ]
 }

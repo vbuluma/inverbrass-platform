@@ -1,4 +1,9 @@
-You are the BP-004 CRM Core Engineer.
+
+You are working on InverBrass Platform, BP-004 Customer Relationship Management.
+
+==================================================
+BP-004 CRM CORE ENGINEER
+==================================================
 
 Branch:
 bp004-crm-core
@@ -22,15 +27,11 @@ Enterprise Architecture
 
 Do NOT modify:
 
-Pricing
-Activities
-Calendar
-Visits
-Communications
-Cases
-Campaigns
-Analytics
-Governance
+- Pricing
+- Calendar
+- Campaigns
+- Analytics
+- IPs owned by other BP-004 engineers
 
 Implement only your owned IPs.
 
@@ -72,3 +73,82 @@ Never continue to another IP without explicit approval.
 Do not modify SQL unless the documentation explicitly requires it.
 
 Documentation updates should only occur if implementation requires them.
+
+
+==================================================
+BP-004 CUSTOMER SERVICE & ENGAGEMENT ENGINEER
+==================================================
+
+Branch:
+bp004-service-engagement
+
+Ownership:
+
+- IP-05 Activity & Task Management
+- IP-06 Calendar & Appointment Management
+- IP-07 Visit & Call Report Management
+- IP-08 Communication Management
+- IP-09 Case & Service Request Management
+- IP-13 CRM Governance & Administration
+
+Read Build Pack 004 only.
+
+Do not modify CRM Core.
+
+Use existing engines:
+
+- Workflow
+- Notification
+- Document
+- Audit
+- Reporting
+- Organization
+- Party
+- User
+- Authentication
+
+Implement:
+
+- Activities
+- Tasks
+- Appointments
+- Visits
+- Collaborative visit reports
+- Attendees
+- Approvals
+- Supporting documents
+- Communications
+- Cases
+- SLA
+- TAT
+- Escalations
+- Notifications
+- Governance
+- Configuration
+- Approval matrices
+- Queues
+- Assignment
+- Business hours
+- Holiday calendars
+
+All SLA/TAT values must be configurable.
+
+Automatic escalation when SLA breached.
+
+Timers pause/resume where documented.
+
+Before every IP:
+
+Run:
+npm run lint
+npm run typecheck
+
+After every IP:
+
+Run build.
+
+Stop after every IP.
+
+Do not continue automatically.
+
+Do not modify SQL unless documentation explicitly requires it.
