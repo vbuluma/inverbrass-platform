@@ -576,7 +576,7 @@ Provides cross-cutting ownership tracking, assignment history, and time-based SL
 
 This is a **cross-cutting platform capability** — not a CRM, sales, or service module concern. Build Packs **consume** ENG-003n through a shared consumption contract; they do not implement module-local assignment or SLA tables.
 
-> **Architecture note (AV-1.6):** BP-008 CRM documentation (Build Pack 004 folder) defines the ENG-003n consumption contract and **Customer 360 hub** in **IP-01 CRM Foundation & Customer 360**. ENG-004 remains the **Rules Engine** (scoring, routing rules); ENG-005 orchestrates approvals and escalations — it complements but does not replace ENG-003n segment tracking.
+> **Architecture note (AV-1.6 / AV-1.7):** BP-004 CRM documentation (Build Pack 004 folder) defines the ENG-003n consumption contract and **Customer 360 hub** in **IP-01 CRM Foundation & Customer 360**. ENG-004 remains the **Rules Engine** (scoring, routing rules); ENG-005 orchestrates approvals and escalations — it complements but does not replace ENG-003n segment tracking.
 
 **Core responsibilities**
 
@@ -605,7 +605,7 @@ This is a **cross-cutting platform capability** — not a CRM, sales, or service
 
 | Consumer | Assignment / SLA Example |
 |----------|--------------------------|
-| BP-008 CRM (IP-01 contract) | Lead, opportunity, case, visit report ownership and TAT |
+| BP-004 CRM (IP-01 contract) | Lead, opportunity, case, visit report ownership and TAT |
 | BP-005 Sales & Service Delivery | Work order and fulfilment assignment (future) |
 | BP-011 Workflow & Process Automation | Task routing metrics complementing ENG-005 |
 | Loan origination (Banking Edition) | Application handler segments and cumulative approval SLA |
@@ -642,7 +642,7 @@ ENG-013 Audit Engine → assignment history immutability
 
 **Implementation location:** `03-platform/src/core/work-assignment-sla/` (planned)
 
-**BP-008 consumption pattern:** CRM modules call ENG-003n on every ownership change per IP-01 contract. No `lead_assignment_history` or module-local SLA tables in CRM.
+**BP-004 consumption pattern:** CRM modules call ENG-003n on every ownership change per IP-01 contract. No `lead_assignment_history` or module-local SLA tables in CRM.
 
 
 |                                         |                                                                                                                                                                                                                                                                                                                                                                    |

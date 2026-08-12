@@ -129,11 +129,12 @@ The following belong to other Build Packs or future phases:
 
 | Area | Owner |
 |------|-------|
-| Order fulfilment, deliveries, service fulfilment | BP-006+ |
-| Billing, invoicing, receivables | BP-007+ |
+| Order fulfilment, deliveries, service fulfilment | BP-006 |
+| Billing, invoicing, receivables | BP-007 |
+| Pricing tax / discounts / promotions beyond offering prices | BP-005 |
 | Full marketing automation | Future BP |
 | Party identity, addresses, documents | BP-002 |
-| Product catalogue and pricing rules | BP-003 |
+| Product catalogue and offering unit prices | BP-003 |
 
 ---
 
@@ -144,9 +145,11 @@ The following belong to other Build Packs or future phases:
 | BP-002 | Who the person or organisation is (Party) |
 | BP-003 | What is offered (Offerings) |
 | BP-004 | How we build and manage customer relationships — **Customer 360 is the primary experience** (IP-01) |
-| BP-005+ | How we sell and fulfil (Sales, Orders, Billing) |
+| BP-005 | Commercial rules (tax, discounts, promotions) |
+| BP-006 | How we sell and fulfil (orders, checkout, fulfilment) |
+| BP-007 | Billing, payments, receipting |
 
-BP-004 deliberately stops before operational fulfilment and billing. IP-10 covers quotations and pipeline linkage; order execution remains downstream.
+BP-004 deliberately stops before operational fulfilment and billing. IP-10 covers quotations and pipeline linkage; order execution remains BP-006.
 
 ---
 

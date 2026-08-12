@@ -5,7 +5,7 @@
 | Attribute | Value |
 |-----------|-------|
 | Document Name | Architecture Versions |
-| Current Version | **AV-1.6** |
+| Current Version | **AV-1.7** |
 | Former Name | Architecture Decision Record (ADR) — enterprise scope |
 | Scope | Entire InverBrass Enterprise Architecture |
 | Audience | Product Owner, Solution Architect, Developers, AI Coding Assistants |
@@ -302,12 +302,12 @@ This lock preserves implementation stability while the platform grows. Defer fam
 
 ---
 
-### AV-1.6 — Work Assignment & SLA Engine (ENG-003n); BP-008 CRM 13-IP Baseline
+### AV-1.6 — Work Assignment & SLA Engine (ENG-003n); CRM 13-IP Baseline
 
 | Field | Value |
 |-------|-------|
 | **Date** | 2026-08-02 |
-| **Status** | **Current** |
+| **Status** | **Superseded in part by AV-1.7** (CRM catalog ID is **BP-004**, not BP-008; ENG-003n content remains current) |
 | **Author** | Solution Architect |
 
 #### From → To
@@ -317,19 +317,19 @@ This lock preserves implementation stability while the platform grows. Defer fam
 | Work assignment & SLA | Implied in ENG-005 Workflow ("SLA monitoring, task assignment") without dedicated ownership | **ENG-003n Work Assignment & SLA Engine** — assignment history, per-assignee segments, cumulative lifecycle SLA, queue metrics |
 | ENG-004 scope | Risk of conflating Rules Engine with SLA tracking | **ENG-004 unchanged** — Rules Engine only; SLA is ENG-003n |
 | ENG-005 scope | Implied SLA ownership | **ENG-005 refocused** — approvals, escalations, workflow orchestration; complements ENG-003n breach signals |
-| BP-008 CRM documentation | Legacy 15-IP model in `build-pack 004-CRM.md/` | **13-IP baseline** in `Build Pack 004 - Customer Relationship Management/` — IP-01 through IP-13 |
+| CRM documentation (then labeled BP-008 in draft catalog) | Legacy 15-IP model in `build-pack 004-CRM.md/` | **13-IP baseline** in `Build Pack 004 - Customer Relationship Management/` — IP-01 through IP-13 (**canonical ID BP-004** per AV-1.7) |
 | CRM IP structure | Activities, calendar, visits combined or scattered | **IP-05** Activities, **IP-06** Calendar, **IP-07** Visit & Call Reports (standalone); IP-04 merges accounts + contacts |
 | CRM consumption contract | Per-module SLA duplication risk | **IP-01** defines ENG-003n consumption contract and **Customer 360 hub** for all CRM work items |
 | Next ENG-003 sub-engine ID | ENG-003n (reserved) | **ENG-003n registered**; next ID **ENG-003o** |
 
 #### Reasoning
 
-Assignment history and SLA measurement apply across CRM, sales, service, lending, and operations — not only within workflow steps. Implementing SLA segments inside each Build Pack would duplicate logic and prevent cross-module queue analytics. ENG-003n elevates the capability to platform level while ENG-005 retains approval orchestration. BP-008 CRM documentation is restructured to 13 IPs with explicit boundaries between calendar scheduling (IP-06) and visit/call report documentation with collaborative approval (IP-07).
+Assignment history and SLA measurement apply across CRM, sales, service, lending, and operations — not only within workflow steps. Implementing SLA segments inside each Build Pack would duplicate logic and prevent cross-module queue analytics. ENG-003n elevates the capability to platform level while ENG-005 retains approval orchestration. CRM documentation is restructured to 13 IPs with explicit boundaries between calendar scheduling (IP-06) and visit/call report documentation with collaborative approval (IP-07).
 
 #### Affected Documents
 
 - [01 – Enterprise Solution Architecture](./01-Enterprise-Solution-Architecture.md) §5 — ENG-003n specification
-- [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3 — ENG-003n row; BP-008 baseline note
+- [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3 — ENG-003n row; BP-004 CRM baseline note
 - [03 – Enterprise Domain Model](./03-Enterprise-Domain-Model.md) — Work Assignment & SLA capability
 - [13 – Platform Blueprint](./13-platform-blueprint.md) — ENG-003n in platform layer
 - `Build Pack 004 - Customer Relationship Management/` — 13 IP specifications and scope
@@ -338,8 +338,40 @@ Assignment history and SLA measurement apply across CRM, sales, service, lending
 #### Implementation Notes (planned)
 
 - Module: `03-platform/src/core/work-assignment-sla/` (not yet implemented)
-- BP-008 IP-01 defines consumption contract; IP-02, IP-03, IP-07, IP-09 consume ENG-003n for entity-specific SLA policies
+- BP-004 IP-01 defines consumption contract; IP-02, IP-03, IP-07, IP-09 consume ENG-003n for entity-specific SLA policies
 - ENG-005 escalation workflows triggered on ENG-003n breach events
+
+---
+
+### AV-1.7 — Build Pack ID realignment (CRM remains BP-004)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-08-12 |
+| **Status** | **Current** |
+| **Author** | Integration Manager / Solution Architect |
+
+#### From → To
+
+| Area | From (prior catalog draft) | To (canonical) |
+|------|----------------------------|----------------|
+| CRM & Customer Engagement | BP-008 | **BP-004** (locked to implemented delivery) |
+| Pricing, Tax & Commercial Rules | BP-004 | **BP-005** |
+| Sales, Orders & Service Delivery | BP-005 | **BP-006** |
+| Payments, Billing & Receipting | BP-006 | **BP-007** |
+| Inventory & Resource Management | BP-007 | **BP-008** |
+| BP-001–BP-003, BP-009–BP-013 | Unchanged | Unchanged |
+
+#### Reasoning
+
+CRM was delivered and certified as Build Pack 004. Retaining CRM as BP-008 would force a permanent delivery/catalog mismatch. Catalog IDs are realigned so **CRM stays BP-004** and remaining commercial/operations packs follow in logical order: Pricing → Sales → Payments → Inventory → Procurement → Finance → Workflow → Analytics → Product Innovation.
+
+#### Affected Documents
+
+- [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) — Build Pack table + Industry Edition pack lists
+- [11 – Development Roadmap](./11-Development-Roadmap.md) — canonical sequence + status
+- [01 – Enterprise Solution Architecture](./01-Enterprise-Solution-Architecture.md) — CRM references updated to BP-004
+- CRM folder `Build Pack 004 - Customer Relationship Management/` — remains authoritative for BP-004
 
 ---
 

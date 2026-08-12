@@ -1,114 +1,127 @@
 ---
 
-PRODUCT ROADMAP
+# PRODUCT ROADMAP
 
-Refined Development Roadmap
-Release 1 — Platform Foundation
-Business Goal
-Enable businesses to onboard, authenticate and activate the platform.
-BP-001 Business Setup & Onboarding
-Status: In Progress
-IP	Implementation Package	Status
-IP-001	Project Foundation & Architecture	✅ Complete
-IP-002	Database Foundation & Multi-tenancy	✅ Complete
-IP-003	Business Registration & Owner Onboarding	✅ Complete
-IP-004	Authentication Services & First Login	✅ Complete
-IP-005	Authentication UI & Business Selection	✅ Complete
-IP-006	Business Setup Wizard, Configuration & Activation	⏳ Pending
-IP-007	[Retired — activation merged into IP-006]	⛔ Retired
-IP-008	End-to-End Testing & Release Hardening	⏳ Pending
+## Canonical Build Pack Sequence (authoritative)
 
----
+Canonical Build Pack IDs are defined in [`02-Platform-Module-Catalog.md`](./02-Platform-Module-Catalog.md).  
+**CRM remains BP-004** (as implemented). Remaining packs are sequenced after it.
 
-Release 2 — Business Operations
-BP-002 Customer & Supplier Management
-Capability Owner:
-Customer Domain
-IPs
-•	Customer Management 
-•	Supplier Management 
-•	Contact Management 
-•	Customer Search 
-•	Customer Import 
-•	Customer APIs 
+| Order | Build Pack ID | Name | Delivery status (2026-08-12) |
+| ----- | ------------- | ---- | ---------------------------- |
+| 1 | **BP-001** | Business Setup & Onboarding | ✅ Complete |
+| 2 | **BP-002** | Party & Relationship Management | ✅ Complete |
+| 3 | **BP-003** | Product & Service Catalogue | ✅ Complete (IP-001–IP-013; offering pricing foundation included) |
+| 4 | **BP-004** | CRM & Customer Engagement | ✅ Complete (13-IP baseline; folder `Build Pack 004 - Customer Relationship Management/`) |
+| 5 | **BP-005** | Pricing, Tax & Commercial Rules | ⏳ Planned (tax, discounts, promotions beyond BP-003 offering price items) |
+| 6 | **BP-006** | Sales, Orders & Service Delivery | ⏳ Planned next operational focus (quotation → order/checkout/fulfilment) |
+| 7 | **BP-007** | Payments, Billing & Receipting | ⏳ Planned (depends on sales transactions) |
+| 8 | **BP-008** | Inventory & Resource Management | ⏳ Planned |
+| 9 | **BP-009** | Procurement & Supplier Management | ⏳ Planned |
+| 10 | **BP-010** | Finance & Accounting Foundation | ⏳ Planned |
+| 11 | **BP-011** | Workflow & Business Process Automation | ⏳ Planned |
+| 12 | **BP-012** | Analytics, AI & Decision Intelligence | ⏳ Planned |
+| 13 | **BP-013** | Product Management & Innovation | ⏳ Planned |
 
----
+### ID realignment (from prior catalog draft)
 
-BP-003 Product & Service Catalogue
-Owner
-Inventory Domain
-IPs
-•	Product Catalogue 
-•	Service Catalogue 
-•	Categories 
-•	Units of Measure 
-•	Product Images 
-•	Product Import 
+| Prior catalog ID / label | New canonical ID | Notes |
+| ------------------------ | ---------------- | ----- |
+| Pricing, Tax & Commercial Rules (old BP-004) | **BP-005** | Offering unit prices remain in BP-003 IP-011; this pack owns tax/discount/promotion policy |
+| Sales, Orders & Service Delivery (old BP-005) | **BP-006** | CRM quotations stay in BP-004 IP-10; this pack owns checkout/order/fulfilment |
+| Payments, Billing & Receipting (old BP-006) | **BP-007** | |
+| Inventory & Resource Management (old BP-007) | **BP-008** | |
+| CRM & Customer Engagement (old BP-008) | **BP-004** | Locked to implemented delivery ID — do not renumber CRM to BP-008 |
+
+### Recommended next pack after BP-004 CRM
+
+1. **BP-006 — Sales, Orders & Service Delivery** to close Quotation → Order → Checkout/Fulfilment, **or**  
+2. **BP-005 — Pricing, Tax & Commercial Rules** first if taxed checkout is mandatory before sales go-live.
+
+Do **not** start BP-007 Payments before a sales transaction owner exists.
 
 ---
 
-BP-004 Pricing, Tax & Discounts
-Owner
-Finance Domain
-IPs
-•	Pricing Engine 
-•	Discounts 
-•	Promotions 
-•	Tax Configuration 
-•	Pricing Rules 
+## Refined Development Roadmap (detail)
+
+### Release 1 — Platform Foundation
+
+Business Goal: Enable businesses to onboard, authenticate and activate the platform.
+
+**BP-001 Business Setup & Onboarding** — ✅ Complete
+
+| IP | Implementation Package | Status |
+| -- | ---------------------- | ------ |
+| IP-001 | Project Foundation & Architecture | ✅ Complete |
+| IP-002 | Database Foundation & Multi-tenancy | ✅ Complete |
+| IP-003 | Business Registration & Owner Onboarding | ✅ Complete |
+| IP-004 | Authentication Services & First Login | ✅ Complete |
+| IP-005 | Authentication UI & Business Selection | ✅ Complete |
+| IP-006 | Business Setup Wizard, Configuration & Activation | ✅ Complete |
+| IP-007 | [Retired — activation merged into IP-006] | ⛔ Retired |
+| IP-008 | End-to-End Testing & Release Hardening | ✅ Complete (covered by integration certification) |
 
 ---
 
-BP-005 Sales & Checkout
-Owner
-Sales Domain
-IPs
-•	Quotations 
-•	Orders 
-•	Checkout 
-•	Sales Transactions 
-•	Returns 
+### Release 2 — Business Operations Foundation (complete)
+
+**BP-002 Party & Relationship Management** — ✅ Complete  
+(Customer/supplier identity is a *role on Party*, not a separate customer master.)
+
+**BP-003 Product & Service Catalogue** — ✅ Complete  
+Includes categories, UoM, attributes, variants, bundles, digital catalogue, lifecycle, documents, relationships, **offering pricing (IP-011)**, analytics, governance.
+
+**BP-004 CRM & Customer Engagement** — ✅ Complete  
+Leads, opportunities, accounts, activities, calendar, visits, communications, cases, quotations (pipeline), campaigns, analytics, governance, Customer 360.
 
 ---
 
-BP-006 Payments & Receipting
-Owner
-Finance Domain
-IPs
-•	Payment Processing 
-•	Split Payments 
-•	Receipts 
-•	Credit Sales 
-•	Invoice Settlement 
+### Release 2b — Commercial Completion (next)
+
+**BP-005 Pricing, Tax & Commercial Rules** — ⏳ Planned  
+Tax configuration, discounts, promotions, commissions, commercial policies extending BP-003 `pricing_*` (prices remain off the product master).
+
+**BP-006 Sales, Orders & Service Delivery** — ⏳ Planned (recommended next operational focus)  
+Orders, checkout, sales transactions, returns, fulfilment beyond CRM quotation/pipeline.
+
+**BP-007 Payments, Billing & Receipting** — ⏳ Planned  
+Payment processing, split payments, receipts, credit sales, invoice settlement.
+
+**BP-008 Inventory & Resource Management** — ⏳ Planned  
+Stock, warehouses, transfers, adjustments, operational assets.
 
 ---
 
-BP-007 Inventory & Purchasing
-Owner
-Inventory Domain
-IPs
-•	Stock Management 
-•	Warehouses 
-•	Purchasing 
-•	Supplier Deliveries 
-•	Stock Adjustments 
-•	Transfers 
+### Release 3 — Extended Operations & Intelligence
+
+**BP-009** Procurement & Supplier Management — ⏳ Planned  
+**BP-010** Finance & Accounting Foundation — ⏳ Planned  
+**BP-011** Workflow & Business Process Automation — ⏳ Planned  
+**BP-012** Analytics, AI & Decision Intelligence — ⏳ Planned  
+**BP-013** Product Management & Innovation — ⏳ Planned  
 
 ---
 
-Release 3 — Customer Growth
-BP-008 CRM & Lead Management
-Owner
-Customer Domain
-•	CRM 
-•	Leads 
-•	Communication History 
-•	Tasks 
-•	Pipeline 
+### Delivery principles
+
+- Build one Build Pack at a time.
+- Complete design, development, testing, and approval before starting the next Build Pack.
+- Reuse Core Platform capabilities wherever possible.
+- Prefer configuration over customization.
+- Every release shall deliver usable business value.
+- Where narrative below conflicts with the **Canonical Build Pack Sequence** table, **the canonical table wins**.
 
 ---
 
-BP-009 Bookings & Appointments
+## Historical narrative (superseded for IDs)
+
+The following retains older product wording for context. **IDs in the canonical table above are authoritative.**
+
+---
+
+Release 3 — Customer Growth (historical — CRM is BP-004, already complete)
+
+BP-009 Bookings & Appointments *(where not already covered by BP-004 calendar/visits)*
 Owner
 Operations Domain
 •	Scheduling 
@@ -195,11 +208,19 @@ Delivery Principles
 
 Senior Architect Recommendation
 I would make one small enhancement. Add a simple Status column from day one. It will become your project dashboard.
-Release	Build Pack	Status
-R1	BP-001 Business Setup & Onboarding	✅ Complete
-R2	BP-002 Customer & Supplier Management	⏳ Planned
-R2	BP-003 Product & Service Catalogue	⏳ Planned
-...	...	...
+
+| Release | Build Pack | Status |
+| ------- | ---------- | ------ |
+| R1 | BP-001 Business Setup & Onboarding | ✅ Complete |
+| R2 | BP-002 Party & Relationship Management | ✅ Complete |
+| R2 | BP-003 Product & Service Catalogue | ✅ Complete |
+| R2 | BP-004 CRM & Customer Engagement | ✅ Complete |
+| R2b | BP-005 Pricing, Tax & Commercial Rules | ⏳ Planned |
+| R2b | BP-006 Sales, Orders & Service Delivery | ⏳ Planned (recommended next) |
+| R2b | BP-007 Payments, Billing & Receipting | ⏳ Planned |
+| R2b | BP-008 Inventory & Resource Management | ⏳ Planned |
+| R3 | BP-009–BP-013 | ⏳ Planned |
+
 As the project grows, this single table becomes your executive progress tracker without needing a separate project plan. It's simple, practical, and aligns with your goal of managing the project as a solo founder using AI-assisted development.
 
 
