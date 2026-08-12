@@ -39,6 +39,15 @@ import {
   FUTURE_TAB_MESSAGE,
 } from "@/modules/crm/constants";
 import { Customer360Panel } from "@/modules/crm/components/customer-360-panel";
+import {
+  CustomerWorkspaceActivitiesTab,
+  CustomerWorkspaceAnalyticsTab,
+  CustomerWorkspaceCampaignsTab,
+  CustomerWorkspaceCasesTab,
+  CustomerWorkspaceCommunicationsTab,
+  CustomerWorkspaceQuotationsTab,
+  CustomerWorkspaceVisitsTab,
+} from "@/modules/crm/components/customer-workspace-ip-panels";
 import type {
   CrmDetailView,
   CrmRegistrationCatalogues,
@@ -54,6 +63,16 @@ type CustomerWorkspaceProps = {
   timeline: PartyTimelinePanelView;
   initialTab?: string;
 };
+
+const DELIVERED_IP_TABS = new Set([
+  "activities",
+  "visits",
+  "communications",
+  "cases",
+  "quotations",
+  "campaigns",
+  "analytics",
+]);
 
 export function CustomerWorkspace({
   customer,
@@ -173,12 +192,56 @@ export function CustomerWorkspace({
         </Card>
       ) : null}
 
+      {activeTab === "activities" ? (
+        <CustomerWorkspaceActivitiesTab
+          key={`activities-${customer.partyId}`}
+          partyId={customer.partyId}
+        />
+      ) : null}
+      {activeTab === "visits" ? (
+        <CustomerWorkspaceVisitsTab
+          key={`visits-${customer.partyId}`}
+          partyId={customer.partyId}
+        />
+      ) : null}
+      {activeTab === "communications" ? (
+        <CustomerWorkspaceCommunicationsTab
+          key={`communications-${customer.partyId}`}
+          partyId={customer.partyId}
+        />
+      ) : null}
+      {activeTab === "cases" ? (
+        <CustomerWorkspaceCasesTab
+          key={`cases-${customer.partyId}`}
+          partyId={customer.partyId}
+        />
+      ) : null}
+      {activeTab === "quotations" ? (
+        <CustomerWorkspaceQuotationsTab
+          key={`quotations-${customer.partyId}`}
+          partyId={customer.partyId}
+        />
+      ) : null}
+      {activeTab === "campaigns" ? (
+        <CustomerWorkspaceCampaignsTab
+          key={`campaigns-${customer.partyId}`}
+          partyId={customer.partyId}
+        />
+      ) : null}
+      {activeTab === "analytics" ? (
+        <CustomerWorkspaceAnalyticsTab
+          key={`analytics-${customer.partyId}`}
+          partyId={customer.partyId}
+        />
+      ) : null}
+
       {activeTab !== "customer-360" &&
       activeTab !== "documents" &&
       activeTab !== "relationships" &&
       activeTab !== "timeline" &&
       activeTab !== "accounts" &&
-      activeTab !== "opportunities" ? (
+      activeTab !== "opportunities" &&
+      !DELIVERED_IP_TABS.has(activeTab) ? (
         <FutureTabPlaceholder tabId={activeTab} />
       ) : null}
 

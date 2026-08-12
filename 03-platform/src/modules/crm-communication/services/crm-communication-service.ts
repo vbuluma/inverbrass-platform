@@ -496,6 +496,8 @@ export class CrmCommunicationService {
         tx
       );
 
+      return row;
+    }).then(async (row) => {
       await recordCrmCommunicationAudit(this.auditService, context, {
         communicationId: row.id,
         operation: AUDIT_OPERATIONS.CREATE,
@@ -506,7 +508,6 @@ export class CrmCommunicationService {
           statusCode: row.statusCode,
         },
       });
-
       return row;
     });
   }

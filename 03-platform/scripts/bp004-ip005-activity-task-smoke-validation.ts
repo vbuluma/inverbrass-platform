@@ -40,12 +40,16 @@ import { AUDIT_ENTITY_NAMES, AUDIT_SOURCE_MODULES } from "@/core/audit/constants
 
 const ROOT = path.resolve(__dirname, "..");
 
-const MIGRATION_TAGS = ["0042_bp004_ip005_activity_task_management"] as const;
+const MIGRATION_TAGS = [
+  "0046_bp004_ip005_activity_task_management",
+  "0047_bp004_ip005_activity_catalogues",
+] as const;
 
 const REQUIRED_FILES = [
   "src/db/schema/crm-activity.ts",
   "src/db/schema/crm-activity-entity-link.ts",
-  "drizzle/0042_bp004_ip005_activity_task_management.sql",
+  "drizzle/0046_bp004_ip005_activity_task_management.sql",
+  "drizzle/0047_bp004_ip005_activity_catalogues.sql",
   "src/modules/crm-activity/constants.ts",
   "src/modules/crm-activity/errors.ts",
   "src/modules/crm-activity/types.ts",
@@ -177,9 +181,9 @@ function checkIntegrations(): SmokeResult[] {
       ).includes("overdue_event_emitted_at"),
     },
     {
-      name: "migration:0050",
+      name: "migration:0054",
       ok: existsSync(
-        path.join(ROOT, "drizzle/0050_bp004_se_final_remediation.sql")
+        path.join(ROOT, "drizzle/0054_bp004_se_final_remediation.sql")
       ),
     },
     {

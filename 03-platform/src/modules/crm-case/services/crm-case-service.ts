@@ -324,18 +324,18 @@ export class CrmCaseService {
         tx
       );
 
-      await recordCrmCaseAudit(this.auditService, context, {
-        caseId: row.id,
-        operation: AUDIT_OPERATIONS.CREATE,
-        createValues: {
-          caseNumber: row.caseNumber,
-          caseTypeCode: row.caseTypeCode,
-          statusCode: row.statusCode,
-          priorityCode: row.priorityCode,
-        },
-      });
-
       return row;
+    });
+
+    await recordCrmCaseAudit(this.auditService, context, {
+      caseId: created.id,
+      operation: AUDIT_OPERATIONS.CREATE,
+      createValues: {
+        caseNumber: created.caseNumber,
+        caseTypeCode: created.caseTypeCode,
+        statusCode: created.statusCode,
+        priorityCode: created.priorityCode,
+      },
     });
 
     await this.timelineService.recordEvent(

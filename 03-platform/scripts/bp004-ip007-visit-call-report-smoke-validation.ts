@@ -44,7 +44,7 @@ const REQUIRED_FILES = [
   "src/db/schema/crm-visit-document.ts",
   "src/db/schema/crm-visit-type.ts",
   "src/db/schema/crm-visit-status.ts",
-  "drizzle/0046_bp004_ip007_visit_call_report_management.sql",
+  "drizzle/0050_bp004_ip007_visit_call_report_management.sql",
   "src/modules/crm-visit/constants.ts",
   "src/modules/crm-visit/services/crm-visit-service.ts",
   "src/modules/crm-visit/actions/crm-visit-actions.ts",
@@ -62,13 +62,13 @@ function main() {
       ok: existsSync(path.join(ROOT, relativePath)),
     })),
     {
-      name: "journal:0046",
+      name: "journal:0050",
       ok: (
         JSON.parse(
           readFileSync(path.join(ROOT, "drizzle/meta/_journal.json"), "utf8")
         ) as { entries: Array<{ tag: string }> }
       ).entries.some(
-        (entry) => entry.tag === "0046_bp004_ip007_visit_call_report_management"
+        (entry) => entry.tag === "0050_bp004_ip007_visit_call_report_management"
       ),
     },
     {

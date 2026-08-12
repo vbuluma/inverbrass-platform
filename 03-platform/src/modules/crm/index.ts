@@ -43,6 +43,7 @@ export {
 export {
   createOpportunityHandoffAdapter,
   NoOpOpportunityHandoffAdapter,
+  OpportunityServiceHandoffAdapter,
 } from "@/modules/crm/adapters/opportunity-handoff-adapter";
 
 export type {
@@ -200,6 +201,7 @@ export {
 
 export {
   createLeadAttributionAdapter,
+  LeadServiceLeadAttributionAdapter,
   StubLeadAttributionAdapter,
 } from "@/modules/crm/adapters/lead-attribution-adapter";
 

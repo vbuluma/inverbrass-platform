@@ -10,6 +10,7 @@
  */
 
 import type { CurrentBusinessContext } from "@/core/auth/types";
+import { createCrmAnalyticsService } from "@/modules/crm/analytics/services/crm-analytics-service";
 import type {
   Customer360WidgetSummary,
   CrmDetailView,
@@ -48,14 +49,31 @@ export function unregisterCustomer360WidgetLoader(widgetId: string): void {
   widgetLoaders.delete(widgetId);
 }
 
-/** IP-01 built-in loader until IP-12 delivers scoring. */
-registerCustomer360WidgetLoader("health-summary", async ({ customer }) => ({
-  id: "health-summary",
-  sourceIp: "IP-01",
-  title: "Relationship Health",
-  label: "Health score",
-  value: "Not yet calculated",
-  hint: `${customer.statusName} customer — analytics widgets arrive in IP-12.`,
-  status: "default",
-  unavailable: true,
-}));
+/** IP-12 health score via getCustomerAnalytics — replaces IP-01 placeholder. */
+registerCustomer360WidgetLoader(
+  "health-summary",
+  async ({ businessContext, customer }) => {
+    const analytics = await createCrmAnalyticsService().getCustomerAnalytics(
+      businessContext,
+      customer.partyId
+    );
+
+    return {
+      id: "health-summary",
+      sourceIp: "IP-12",
+      title: "Relationship Health",
+      label: "Health score",
+      value: String(analytics.healthScore),
+      hint: analytics.dormancyFlag
+        ? `Dormant · Churn ${analytics.churnRisk} · ${customer.statusName}`
+        : `Churn ${analytics.churnRisk} · ${analytics.openQuotations} open quote(s)`,
+      status:
+        analytics.churnRisk === "HIGH"
+          ? "warning"
+          : analytics.healthScore >= 60
+            ? "success"
+            : "default",
+      href: "/crm-analytics",
+    };
+  }
+);

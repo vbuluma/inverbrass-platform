@@ -38,7 +38,7 @@ const REQUIRED_FILES = [
   "src/db/schema/crm-communication.ts",
   "src/db/schema/crm-communication-channel.ts",
   "src/db/schema/crm-communication-entity-link.ts",
-  "drizzle/0047_bp004_ip008_communication_management.sql",
+  "drizzle/0051_bp004_ip008_communication_management.sql",
   "src/modules/crm-communication/constants.ts",
   "src/modules/crm-communication/services/crm-communication-service.ts",
   "src/modules/crm-communication/actions/crm-communication-actions.ts",
@@ -56,13 +56,13 @@ function main() {
       ok: existsSync(path.join(ROOT, relativePath)),
     })),
     {
-      name: "journal:0047",
+      name: "journal:0051",
       ok: (
         JSON.parse(
           readFileSync(path.join(ROOT, "drizzle/meta/_journal.json"), "utf8")
         ) as { entries: Array<{ tag: string }> }
       ).entries.some(
-        (entry) => entry.tag === "0047_bp004_ip008_communication_management"
+        (entry) => entry.tag === "0051_bp004_ip008_communication_management"
       ),
     },
     {

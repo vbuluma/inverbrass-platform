@@ -409,35 +409,35 @@ export class CrmActivityService {
 
       await this.entityLinkRepository.insertMany(links, tx);
 
-      await recordCrmActivityAudit(this.auditService, context, {
-        activityId: created.id,
-        operation: AUDIT_OPERATIONS.CREATE,
-        createValues: {
-          activityNumber: created.activityNumber,
-          subject: created.subject,
-          activityTypeCode: created.activityTypeCode,
-          ownerUserId: created.ownerUserId,
-        },
-      });
-
-      await this.timelineService.recordEvent(
-        buildTimelineEventFromContext(context, {
-          partyId: parsed.data.primaryPartyId,
-          eventType: PARTY_TIMELINE_EVENT_TYPES.ACTIVITY_CREATED,
-          eventCategory: PARTY_TIMELINE_EVENT_CATEGORIES.ENGAGEMENT,
-          sourceModule: PARTY_TIMELINE_SOURCE_MODULES.CRM_ACTIVITY,
-          summary: `Activity created: ${created.subject}`,
-          referenceEntity: "crm_activity",
-          referenceId: created.id,
-          metadata: {
-            activityNumber: created.activityNumber,
-            activityTypeCode: created.activityTypeCode,
-          },
-        })
-      );
-
       return created;
     });
+
+    await recordCrmActivityAudit(this.auditService, context, {
+      activityId: row.id,
+      operation: AUDIT_OPERATIONS.CREATE,
+      createValues: {
+        activityNumber: row.activityNumber,
+        subject: row.subject,
+        activityTypeCode: row.activityTypeCode,
+        ownerUserId: row.ownerUserId,
+      },
+    });
+
+    await this.timelineService.recordEvent(
+      buildTimelineEventFromContext(context, {
+        partyId: parsed.data.primaryPartyId,
+        eventType: PARTY_TIMELINE_EVENT_TYPES.ACTIVITY_CREATED,
+        eventCategory: PARTY_TIMELINE_EVENT_CATEGORIES.ENGAGEMENT,
+        sourceModule: PARTY_TIMELINE_SOURCE_MODULES.CRM_ACTIVITY,
+        summary: `Activity created: ${row.subject}`,
+        referenceEntity: "crm_activity",
+        referenceId: row.id,
+        metadata: {
+          activityNumber: row.activityNumber,
+          activityTypeCode: row.activityTypeCode,
+        },
+      })
+    );
 
     return this.toDetailView(context, row);
   }

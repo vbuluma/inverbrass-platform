@@ -48,7 +48,8 @@ const REQUIRED_FILES = [
   "src/db/schema/crm-appointment-entity-link.ts",
   "src/db/schema/crm-appointment-type.ts",
   "src/db/schema/crm-appointment-status.ts",
-  "drizzle/0044_bp004_ip006_calendar_appointment_management.sql",
+  "drizzle/0048_bp004_ip006_calendar_appointment_management.sql",
+  "drizzle/0049_bp004_ip006_appointment_minutes_and_extensions.sql",
   "src/modules/crm-appointment/constants.ts",
   "src/modules/crm-appointment/errors.ts",
   "src/modules/crm-appointment/types.ts",
@@ -86,9 +87,16 @@ function checkJournal(): SmokeResult[] {
 
   return [
     {
-      name: "journal:0044_bp004_ip006_calendar_appointment_management",
+      name: "journal:0048_bp004_ip006_calendar_appointment_management",
       ok: journal.entries.some(
-        (entry) => entry.tag === "0044_bp004_ip006_calendar_appointment_management"
+        (entry) => entry.tag === "0048_bp004_ip006_calendar_appointment_management"
+      ),
+    },
+    {
+      name: "journal:0049_bp004_ip006_appointment_minutes_and_extensions",
+      ok: journal.entries.some(
+        (entry) =>
+          entry.tag === "0049_bp004_ip006_appointment_minutes_and_extensions"
       ),
     },
   ];

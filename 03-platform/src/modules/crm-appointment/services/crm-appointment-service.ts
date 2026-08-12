@@ -420,34 +420,34 @@ export class CrmAppointmentService {
 
       await this.entityLinkRepository.insertMany(links, tx);
 
-      await recordCrmAppointmentAudit(this.auditService, context, {
-        appointmentId: row.id,
-        operation: AUDIT_OPERATIONS.CREATE,
-        createValues: {
-          appointmentNumber: row.appointmentNumber,
-          subject: row.subject,
-          statusCode: row.statusCode,
-        },
-      });
-
-      await this.timelineService.recordEvent(
-        buildTimelineEventFromContext(context, {
-          partyId: parsed.data.primaryPartyId,
-          eventType: PARTY_TIMELINE_EVENT_TYPES.APPOINTMENT_SCHEDULED,
-          eventCategory: PARTY_TIMELINE_EVENT_CATEGORIES.ENGAGEMENT,
-          sourceModule: PARTY_TIMELINE_SOURCE_MODULES.CRM_APPOINTMENT,
-          summary: `Appointment scheduled: ${row.subject}`,
-          referenceEntity: "crm_appointment",
-          referenceId: row.id,
-          metadata: {
-            appointmentNumber: row.appointmentNumber,
-            startDateTime: row.startDateTime.toISOString(),
-          },
-        })
-      );
-
       return row;
     });
+
+    await recordCrmAppointmentAudit(this.auditService, context, {
+      appointmentId: created.id,
+      operation: AUDIT_OPERATIONS.CREATE,
+      createValues: {
+        appointmentNumber: created.appointmentNumber,
+        subject: created.subject,
+        statusCode: created.statusCode,
+      },
+    });
+
+    await this.timelineService.recordEvent(
+      buildTimelineEventFromContext(context, {
+        partyId: parsed.data.primaryPartyId,
+        eventType: PARTY_TIMELINE_EVENT_TYPES.APPOINTMENT_SCHEDULED,
+        eventCategory: PARTY_TIMELINE_EVENT_CATEGORIES.ENGAGEMENT,
+        sourceModule: PARTY_TIMELINE_SOURCE_MODULES.CRM_APPOINTMENT,
+        summary: `Appointment scheduled: ${created.subject}`,
+        referenceEntity: "crm_appointment",
+        referenceId: created.id,
+        metadata: {
+          appointmentNumber: created.appointmentNumber,
+          startDateTime: created.startDateTime.toISOString(),
+        },
+      })
+    );
 
     return this.toDetailView(context, created);
   }

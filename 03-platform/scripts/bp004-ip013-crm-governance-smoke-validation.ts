@@ -40,7 +40,7 @@ import {
 const ROOT = path.resolve(__dirname, "..");
 
 const REQUIRED_FILES = [
-  "drizzle/0049_bp004_ip013_crm_governance.sql",
+  "drizzle/0053_bp004_ip013_crm_governance.sql",
   "src/db/schema/crm-governance-status.ts",
   "src/db/schema/crm-governance-checklist-definition.ts",
   "src/db/schema/crm-governance.ts",
@@ -69,7 +69,7 @@ const REQUIRED_FILES = [
   "scripts/bp004-ip013-crm-governance-smoke-validation.ts",
 ];
 
-const MIGRATION_TAG = "0049_bp004_ip013_crm_governance";
+const MIGRATION_TAG = "0053_bp004_ip013_crm_governance";
 
 const MIGRATION_TABLES = [
   "crm_governance_status",
@@ -99,7 +99,7 @@ function checkRequiredFiles(): SmokeResult[] {
 function checkMigrationSql(): SmokeResult[] {
   const migrationPath = path.join(
     ROOT,
-    "drizzle/0049_bp004_ip013_crm_governance.sql"
+    "drizzle/0053_bp004_ip013_crm_governance.sql"
   );
   if (!existsSync(migrationPath)) {
     return [{ name: "migration:sql", ok: false, detail: "Migration SQL missing." }];
@@ -125,17 +125,17 @@ function checkMigrationJournal(): SmokeResult[] {
 
   return [
     {
-      name: "journal:0049_bp004_ip013",
+      name: "journal:0053_bp004_ip013",
       ok: Boolean(entry),
       detail: entry ? undefined : "Expected journal tag missing.",
     },
     {
       name: "journal:idx-when",
-      ok: entry?.idx === 49 && entry?.when === 1784564588850,
+      ok: entry?.idx === 53 && entry?.when === 1784564588850,
       detail:
-        entry?.idx === 49 && entry?.when === 1784564588850
+        entry?.idx === 53 && entry?.when === 1784564588850
           ? undefined
-          : "Expected idx 49 and when 1784564588850.",
+          : "Expected idx 53 and when 1784564588850.",
     },
   ];
 }

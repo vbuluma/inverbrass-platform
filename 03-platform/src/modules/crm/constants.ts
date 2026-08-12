@@ -67,22 +67,22 @@ export const CRM_WORKSPACE_TABS = [
     available: true,
     futureIp: "IP-03",
   },
-  { id: "activities", label: "Activities", available: false, futureIp: "IP-05" },
-  { id: "visits", label: "Visits", available: false, futureIp: "IP-07" },
+  { id: "activities", label: "Activities", available: true, futureIp: "IP-05" },
+  { id: "visits", label: "Visits", available: true, futureIp: "IP-07" },
   {
     id: "communications",
     label: "Communications",
-    available: false,
+    available: true,
     futureIp: "IP-08",
   },
-  { id: "cases", label: "Cases", available: false, futureIp: "IP-09" },
+  { id: "cases", label: "Cases", available: true, futureIp: "IP-09" },
   {
     id: "quotations",
     label: "Quotations",
-    available: false,
+    available: true,
     futureIp: "IP-10",
   },
-  { id: "campaigns", label: "Campaigns", available: false, futureIp: "IP-11" },
+  { id: "campaigns", label: "Campaigns", available: true, futureIp: "IP-11" },
   { id: "documents", label: "Documents", available: true, futureIp: "BP-002" },
   {
     id: "relationships",
@@ -91,7 +91,7 @@ export const CRM_WORKSPACE_TABS = [
     futureIp: "BP-002",
   },
   { id: "timeline", label: "Timeline", available: true, futureIp: null },
-  { id: "analytics", label: "Analytics", available: false, futureIp: "IP-12" },
+  { id: "analytics", label: "Analytics", available: true, futureIp: "IP-12" },
   { id: "settings", label: "Settings", available: false, futureIp: "IP-13" },
 ] as const;
 

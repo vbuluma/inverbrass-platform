@@ -318,30 +318,30 @@ export class CrmVisitService {
         tx
       );
 
-      await recordCrmVisitAudit(this.auditService, context, {
-        visitId: row.id,
-        operation: AUDIT_OPERATIONS.CREATE,
-        createValues: {
-          visitNumber: row.visitNumber,
-          subject: row.subject,
-          statusCode: row.statusCode,
-        },
-      });
-
-      await this.timelineService.recordEvent(
-        buildTimelineEventFromContext(context, {
-          partyId: parsed.data.primaryPartyId,
-          eventType: PARTY_TIMELINE_EVENT_TYPES.VISIT_PLANNED,
-          eventCategory: PARTY_TIMELINE_EVENT_CATEGORIES.ENGAGEMENT,
-          sourceModule: PARTY_TIMELINE_SOURCE_MODULES.CRM_VISIT,
-          summary: `Visit planned: ${row.subject}`,
-          referenceEntity: "crm_visit",
-          referenceId: row.id,
-        })
-      );
-
       return row;
     });
+
+    await recordCrmVisitAudit(this.auditService, context, {
+      visitId: created.id,
+      operation: AUDIT_OPERATIONS.CREATE,
+      createValues: {
+        visitNumber: created.visitNumber,
+        subject: created.subject,
+        statusCode: created.statusCode,
+      },
+    });
+
+    await this.timelineService.recordEvent(
+      buildTimelineEventFromContext(context, {
+        partyId: parsed.data.primaryPartyId,
+        eventType: PARTY_TIMELINE_EVENT_TYPES.VISIT_PLANNED,
+        eventCategory: PARTY_TIMELINE_EVENT_CATEGORIES.ENGAGEMENT,
+        sourceModule: PARTY_TIMELINE_SOURCE_MODULES.CRM_VISIT,
+        summary: `Visit planned: ${created.subject}`,
+        referenceEntity: "crm_visit",
+        referenceId: created.id,
+      })
+    );
 
     return this.toDetailView(context, created);
   }

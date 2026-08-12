@@ -37,7 +37,7 @@ export const CUSTOMER_360_WIDGET_CATALOG: Customer360WidgetCatalogEntry[] = [
     order: 10,
     defaultEnabled: true,
     layoutProfiles: ["all"],
-    placeholderHint: "Health score arrives with IP-12 Analytics.",
+    placeholderHint: "Health score from IP-12 Customer Analytics.",
   },
   {
     id: "active-lead",
@@ -148,7 +148,7 @@ export const CUSTOMER_360_WIDGET_CATALOG: Customer360WidgetCatalogEntry[] = [
     order: 110,
     defaultEnabled: true,
     layoutProfiles: ["all"],
-    placeholderHint: "Quotation widgets activate when IP-10 is implemented.",
+    placeholderHint: "Quotation widgets provided by IP-10.",
   },
   {
     id: "campaign-membership",
@@ -159,7 +159,7 @@ export const CUSTOMER_360_WIDGET_CATALOG: Customer360WidgetCatalogEntry[] = [
     order: 120,
     defaultEnabled: true,
     layoutProfiles: ["all"],
-    placeholderHint: "Campaign widgets activate when IP-11 is implemented.",
+    placeholderHint: "Campaign widgets provided by IP-11.",
   },
   {
     id: "customer-analytics",
@@ -170,7 +170,7 @@ export const CUSTOMER_360_WIDGET_CATALOG: Customer360WidgetCatalogEntry[] = [
     order: 130,
     defaultEnabled: true,
     layoutProfiles: ["all"],
-    placeholderHint: "Customer-scoped analytics activate when IP-12 is implemented.",
+    placeholderHint: "Customer-scoped analytics provided by IP-12.",
   },
 ];
 

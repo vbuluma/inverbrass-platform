@@ -71,16 +71,28 @@ export class CrmAnalyticsService {
       if (existing) {
         continue;
       }
-      await this.definitionRepository.insert({
-        businessId: context.businessId,
-        code: definition.code,
-        name: definition.name,
-        metricCategory: definition.metricCategory,
-        calculationMethod: definition.calculationMethod,
-        unitOfMeasure: definition.unitOfMeasure,
-        createdBy: context.platformUserId ?? null,
-        updatedBy: context.platformUserId ?? null,
-      });
+      try {
+        await this.definitionRepository.insert({
+          businessId: context.businessId,
+          code: definition.code,
+          name: definition.name,
+          metricCategory: definition.metricCategory,
+          calculationMethod: definition.calculationMethod,
+          unitOfMeasure: definition.unitOfMeasure,
+          createdBy: context.platformUserId ?? null,
+          updatedBy: context.platformUserId ?? null,
+        });
+      } catch (error) {
+        // Parallel Customer 360 widget loads may race on first ensureDefaults.
+        const again = await this.definitionRepository.findByCode(
+          context.businessId,
+          definition.code
+        );
+        if (again) {
+          continue;
+        }
+        throw error;
+      }
     }
   }
 

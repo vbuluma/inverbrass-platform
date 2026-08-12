@@ -8,6 +8,8 @@
  */
 import {
   Building2Icon,
+  CalendarDaysIcon,
+  CheckSquareIcon,
   ClockIcon,
   GitBranchIcon,
   HandshakeIcon,
@@ -15,13 +17,17 @@ import {
   BarChart3Icon,
   LayersIcon,
   LayoutDashboardIcon,
+  MapPinIcon,
   MegaphoneIcon,
+  MessageSquareIcon,
   PackageIcon,
   SettingsIcon,
+  ShieldCheckIcon,
   StarIcon,
   TargetIcon,
   UsersIcon,
   UsersRoundIcon,
+  LifeBuoyIcon,
 } from "lucide-react";
 import type { PlatformNavItem } from "@/lib/navigation/types";
 export const PLATFORM_BRAND = {
@@ -95,6 +101,42 @@ export const BUSINESS_APP_NAV_ITEMS: PlatformNavItem[] = [
     label: "CRM Analytics",
     href: "/crm-analytics",
     icon: BarChart3Icon,
+  },
+  {
+    id: "crm-activities",
+    label: "Activities",
+    href: "/crm/activities",
+    icon: CheckSquareIcon,
+  },
+  {
+    id: "crm-appointments",
+    label: "Appointments",
+    href: "/crm/appointments",
+    icon: CalendarDaysIcon,
+  },
+  {
+    id: "crm-visits",
+    label: "Visits",
+    href: "/crm/visits",
+    icon: MapPinIcon,
+  },
+  {
+    id: "crm-communications",
+    label: "Communications",
+    href: "/crm/communications",
+    icon: MessageSquareIcon,
+  },
+  {
+    id: "crm-cases",
+    label: "Cases",
+    href: "/crm/cases",
+    icon: LifeBuoyIcon,
+  },
+  {
+    id: "crm-governance",
+    label: "CRM Governance",
+    href: "/crm/governance",
+    icon: ShieldCheckIcon,
   },
   {
     id: "solutions",
