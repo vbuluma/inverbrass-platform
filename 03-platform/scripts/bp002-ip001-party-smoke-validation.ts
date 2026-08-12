@@ -116,6 +116,7 @@ function checkValidators(): SmokeResult[] {
     dateOfBirth: "1815-12-10",
     gender: "FEMALE",
     preferredLanguageCode: "en",
+    mobile: "+254712345678",
     notes: "",
   }).success;
 
@@ -229,9 +230,10 @@ function checkRules(): SmokeResult[] {
       ),
     },
     {
-      name: "rule:workspace placeholders configured",
+      name: "rule:workspace tabs delivered",
       ok:
-        PARTY_WORKSPACE_TABS.filter((tab) => !tab.available).length >= 9 &&
+        PARTY_WORKSPACE_TABS.length >= 9 &&
+        PARTY_WORKSPACE_TABS.every((tab) => tab.available) &&
         PARTY_WORKSPACE_TABS.some((tab) => tab.id === "roles" && tab.available) &&
         FUTURE_TAB_MESSAGE.includes("future Implementation Package"),
     },

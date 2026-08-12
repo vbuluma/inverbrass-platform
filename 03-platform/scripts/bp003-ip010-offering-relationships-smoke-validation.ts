@@ -27,6 +27,7 @@ const REQUIRED_FILES = [
   "src/db/schema/offering-relationship-type.ts",
   "src/db/schema/offering-relationship.ts",
   "src/db/seeds/offering-relationship-types.ts",
+  "src/db/seeds/offering-relationship-types-seed.ts",
   "src/modules/product/repositories/offering-relationship-type-repository.ts",
   "src/modules/product/repositories/offering-relationship-repository.ts",
   "src/modules/product/services/offering-relationship-rules.ts",

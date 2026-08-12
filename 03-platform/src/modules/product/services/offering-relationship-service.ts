@@ -29,6 +29,8 @@ import {
 } from "@/modules/product/constants";
 import { ProductError } from "@/modules/product/errors";
 import { resolveProductUserMessagesForContext } from "@/modules/product/resolve-product-user-messages";
+import { getDb } from "@/db/client";
+import { seedDefaultOfferingRelationshipTypesForBusiness } from "@/db/seeds/offering-relationship-types-seed";
 import { createOfferingRelationshipRepository } from "@/modules/product/repositories/offering-relationship-repository";
 import { createOfferingRelationshipTypeRepository } from "@/modules/product/repositories/offering-relationship-type-repository";
 import { createProductRepository } from "@/modules/product/repositories/product-repository";
@@ -66,10 +68,18 @@ export class OfferingRelationshipService {
     private readonly auditService = createAuditService()
   ) {}
 
+  async ensureDefaults(context: CurrentBusinessContext): Promise<void> {
+    await seedDefaultOfferingRelationshipTypesForBusiness(
+      context.businessId,
+      getDb()
+    );
+  }
+
   async getOfferingRelationshipsPanel(
     context: CurrentBusinessContext,
     productId: string
   ): Promise<OfferingRelationshipsPanelView> {
+    await this.ensureDefaults(context);
     await this.requireProduct(context, productId);
 
     const [rows, relationshipTypes] = await Promise.all([
@@ -200,6 +210,7 @@ export class OfferingRelationshipService {
       );
     }
 
+    await this.ensureDefaults(context);
     await this.requireMutableProduct(context, sourceOfferingId);
 
     if (isSelfRelationship(sourceOfferingId, parsed.data.targetOfferingId)) {

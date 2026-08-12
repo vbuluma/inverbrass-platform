@@ -43,6 +43,8 @@ import { seedSecurityQuestions } from "@/db/seeds/security-questions-seed";
 import { seedProductTypes } from "@/db/seeds/product-types-seed";
 import { seedProductStatuses } from "@/db/seeds/product-statuses-seed";
 import { seedProductClassificationTypes } from "@/db/seeds/product-classification-types-seed";
+import { seedPricingMethods } from "@/db/seeds/pricing-methods-seed";
+import { seedOfferingGovernanceReferenceData } from "@/db/seeds/offering-governance-defaults-seed";
 import { seedCrmTypes } from "@/db/seeds/crm-types-seed";
 import { seedCrmStatuses } from "@/db/seeds/crm-statuses-seed";
 import { seedLeadDisqualificationReasons } from "@/db/seeds/lead-disqualification-reasons-seed";
@@ -224,6 +226,20 @@ async function runSeed() {
     console.log(
       `productClassificationTypes: inserted=${classificationTypeResults.inserted}, updated=${classificationTypeResults.updated}, skipped=${classificationTypeResults.skipped}`
     );
+
+    console.log("Seeding pricing methods...");
+    const pricingMethodResults = await seedPricingMethods(
+      db as unknown as Parameters<typeof seedPricingMethods>[0]
+    );
+    console.log(
+      `pricingMethods: inserted=${pricingMethodResults.inserted}, skipped=${pricingMethodResults.skipped}`
+    );
+
+    console.log("Seeding offering governance statuses...");
+    await seedOfferingGovernanceReferenceData(
+      db as unknown as Parameters<typeof seedOfferingGovernanceReferenceData>[0]
+    );
+    console.log("offeringGovernanceStatuses: ensured");
 
     console.log("Seeding CRM types...");
     const crmTypeResults = await seedCrmTypes(db);

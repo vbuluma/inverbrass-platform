@@ -152,7 +152,8 @@ function checkRules(): SmokeResult[] {
       name: "rules:industryLabel",
       ok:
         resolveVariantLabel("RETAIL") === "Variants" &&
-        resolveVariantLabel("HEALTHCARE") === "Service Options",
+        resolveVariantLabel("HEALTHCARE") === "Treatment Options" &&
+        resolveVariantLabel("PROFESSIONAL") === "Service Options",
     },
   ];
 }
