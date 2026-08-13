@@ -414,6 +414,20 @@
       "when": 1784564588855,
       "tag": "0045_bp004_ip012_crm_analytics",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1784564588856,
+      "tag": "0055_bp005_ip008_commercial_governance",
+      "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1784564588857,
+      "tag": "0056_bp005_ip011_tax_compliance",
+      "breakpoints": true
     }
   ]
 }

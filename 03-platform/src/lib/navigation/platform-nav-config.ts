@@ -8,6 +8,7 @@
  */
 import {
   Building2Icon,
+  CalculatorIcon,
   CalendarDaysIcon,
   CheckSquareIcon,
   ClockIcon,
@@ -88,6 +89,24 @@ export const BUSINESS_APP_NAV_ITEMS: PlatformNavItem[] = [
     id: "quotations",
     label: "Quotations",
     href: "/quotations",
+    icon: FileTextIcon,
+  },
+  {
+    id: "commercial-resolve",
+    label: "Commercial resolve",
+    href: "/commercial/resolve",
+    icon: CalculatorIcon,
+  },
+  {
+    id: "commercial-governance",
+    label: "Commercial governance",
+    href: "/commercial/governance",
+    icon: ShieldCheckIcon,
+  },
+  {
+    id: "tax-compliance",
+    label: "Tax compliance",
+    href: "/commercial/tax-compliance",
     icon: FileTextIcon,
   },
   {

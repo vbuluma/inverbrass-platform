@@ -1,103 +1,39 @@
 /**
  * Purpose:
- * Resolves offering unit prices from BP-003 Pricing for quotation line entry.
+ * Resolves offering unit prices and full commercial snapshots via BP-005.
  *
  * Architecture:
- * QuotationService → PricingResolutionAdapter → PricingService (BP-003)
+ * QuotationService → PricingResolutionAdapter
+ *   → unit price: BasePriceResolutionService (IP-01 → IP-05 → BP-003)
+ *   → commercial: CommercialResolutionService (IP-01→05→03→04→02→IP-06)
  *
- * Design rationale:
- * Price retrieval is isolated from quotation total calculations
- * (QuotationCalculationService).
+ * CRM must not score prices locally or query pricing_item directly.
  *
  * Implementation Package:
  * BP-004 / IP-10 – Quotations & Sales Pipeline (Phase 10.2)
+ * Consumer of BP-005 / IP-01 + IP-05 + IP-06
  */
 
 import type { CurrentBusinessContext } from "@/core/auth/types";
-import { normalizePricingDimension } from "@/modules/product/services/pricing-rules";
-import { createPricingService } from "@/modules/product/services/pricing-service";
-import { createProductRepository } from "@/modules/product/repositories/product-repository";
+import {
+  CommercialError,
+  createBasePriceResolutionService,
+  createCommercialResolutionService,
+  type CommercialResolutionRequest,
+  type CommercialSnapshot,
+} from "@/modules/commercial";
 import { PRODUCT_STATUS_CODES } from "@/modules/product/constants";
+import { createProductRepository } from "@/modules/product/repositories/product-repository";
 import { CrmError, CRM_USER_MESSAGES } from "@/modules/crm/errors";
 import type {
   PricingResolutionRequest,
   ResolvedOfferingPrice,
 } from "@/modules/crm/quotation/types";
-import type { PricingItemView } from "@/modules/product/types";
-
-function scorePricingCandidate(
-  item: PricingItemView,
-  request: PricingResolutionRequest
-): number {
-  let score = 0;
-
-  if (item.isActiveNow) {
-    score += 100;
-  }
-
-  if (
-    request.pricingCatalogueId &&
-    item.pricingCatalogueId === request.pricingCatalogueId
-  ) {
-    score += 50;
-  }
-
-  score += scoreDimensionMatch(
-    item.customerSegment,
-    request.customerSegment ?? null
-  );
-  score += scoreDimensionMatch(item.salesChannel, request.salesChannel ?? null);
-  score += scoreDimensionMatch(item.region, request.region ?? null);
-
-  return score;
-}
-
-function scoreDimensionMatch(
-  itemValue: string | null,
-  requestValue: string | null
-): number {
-  const normalizedItem = normalizePricingDimension(itemValue);
-  const normalizedRequest = normalizePricingDimension(requestValue);
-
-  if (normalizedRequest == null) {
-    return normalizedItem == null ? 5 : 2;
-  }
-
-  if (normalizedItem === normalizedRequest) {
-    return 20;
-  }
-
-  if (normalizedItem == null) {
-    return 8;
-  }
-
-  return 0;
-}
-
-function toResolvedOfferingPrice(item: PricingItemView): ResolvedOfferingPrice {
-  return {
-    offeringId: item.offeringId,
-    offeringCode: item.offeringCode,
-    offeringName: item.offeringName,
-    pricingItemId: item.id,
-    pricingCatalogueId: item.pricingCatalogueId,
-    catalogueCode: item.catalogueCode,
-    catalogueName: item.catalogueName,
-    unitPrice: Number(item.unitPrice),
-    currencyCode: item.currencyCode,
-    pricingMethod: item.pricingMethod,
-    customerSegment: item.customerSegment,
-    salesChannel: item.salesChannel,
-    region: item.region,
-    effectiveFrom: item.effectiveFrom,
-    effectiveTo: item.effectiveTo,
-    resolvedAt: new Date().toISOString(),
-  };
-}
 
 export class PricingResolutionAdapter {
   constructor(
-    private readonly pricingService = createPricingService(),
+    private readonly basePriceResolution = createBasePriceResolutionService(),
+    private readonly commercialResolution = createCommercialResolutionService(),
     private readonly productRepository = createProductRepository()
   ) {}
 
@@ -107,64 +43,65 @@ export class PricingResolutionAdapter {
   ): Promise<ResolvedOfferingPrice> {
     await this.assertOfferingQuotable(context, request.offeringId);
 
-    const candidates = await this.pricingService.searchPriceItems(context, {
-      offeringId: request.offeringId,
-      pricingCatalogueId: request.pricingCatalogueId,
-      currencyCode: request.currencyCode,
-      customerSegment: request.customerSegment ?? undefined,
-      salesChannel: request.salesChannel ?? undefined,
-      region: request.region ?? undefined,
-    });
-
-    const asOf = request.asOfDate ?? new Date();
-    const activeCandidates = candidates.filter((item) => {
-      if (!item.isActiveNow) {
-        return false;
-      }
-      const effectiveFrom = new Date(item.effectiveFrom);
-      const effectiveTo = item.effectiveTo ? new Date(item.effectiveTo) : null;
-      if (effectiveFrom > asOf) {
-        return false;
-      }
-      if (effectiveTo && effectiveTo < asOf) {
-        return false;
-      }
-      return true;
-    });
-
-    if (activeCandidates.length === 0) {
-      throw new CrmError(
-        "PRICE_NOT_FOUND",
-        CRM_USER_MESSAGES.PRICE_NOT_FOUND,
-        404
-      );
-    }
-
-    const ranked = activeCandidates
-      .map((item) => ({
-        item,
-        score: scorePricingCandidate(item, request),
-      }))
-      .sort((a, b) => {
-        if (b.score !== a.score) {
-          return b.score - a.score;
+    try {
+      const resolved = await this.basePriceResolution.resolveBasePrice(
+        context,
+        {
+          businessId: context.businessId,
+          offeringId: request.offeringId,
+          currencyCode: request.currencyCode,
+          pricingCatalogueId: request.pricingCatalogueId,
+          customerSegment: request.customerSegment,
+          salesChannel: request.salesChannel,
+          region: request.region,
+          effectiveAt: request.asOfDate,
         }
-        return (
-          new Date(b.item.effectiveFrom).getTime() -
-          new Date(a.item.effectiveFrom).getTime()
-        );
-      });
-
-    const best = ranked[0]?.item;
-    if (!best || ranked[0]?.score <= 0) {
-      throw new CrmError(
-        "PRICE_NOT_FOUND",
-        CRM_USER_MESSAGES.PRICE_NOT_FOUND,
-        404
       );
-    }
 
-    return toResolvedOfferingPrice(best);
+      return {
+        offeringId: resolved.offeringId,
+        offeringCode: resolved.offeringCode,
+        offeringName: resolved.offeringName,
+        pricingItemId: resolved.pricingItemId,
+        pricingCatalogueId: resolved.pricingCatalogueId,
+        catalogueCode: resolved.catalogueCode,
+        catalogueName: resolved.catalogueName,
+        unitPrice: resolved.unitPrice,
+        currencyCode: resolved.currencyCode,
+        pricingMethod: resolved.pricingMethod,
+        customerSegment: resolved.customerSegment,
+        salesChannel: resolved.salesChannel,
+        region: resolved.region,
+        effectiveFrom: resolved.effectiveFrom,
+        effectiveTo: resolved.effectiveTo,
+        resolvedAt: resolved.resolvedAt,
+      };
+    } catch (error) {
+      this.rethrowCommercialAsCrm(error);
+    }
+  }
+
+  /**
+   * Full commercial resolution + immutable snapshot via IP-06.
+   * Prefer this when quotations/orders need authoritative payable + components.
+   */
+  async resolveCommercialSnapshot(
+    context: CurrentBusinessContext,
+    request: Omit<CommercialResolutionRequest, "businessId"> & {
+      businessId?: string;
+    }
+  ): Promise<CommercialSnapshot> {
+    await this.assertOfferingQuotable(context, request.offeringId);
+
+    try {
+      const resolution = await this.commercialResolution.resolve(context, {
+        ...request,
+        businessId: context.businessId,
+      });
+      return this.commercialResolution.snapshot(resolution);
+    } catch (error) {
+      this.rethrowCommercialAsCrm(error);
+    }
   }
 
   async resolveUnitPrices(
@@ -174,6 +111,35 @@ export class PricingResolutionAdapter {
     return Promise.all(
       requests.map((request) => this.resolveUnitPrice(context, request))
     );
+  }
+
+  private rethrowCommercialAsCrm(error: unknown): never {
+    if (error instanceof CommercialError) {
+      if (
+        error.code === "MISSING_BASE_PRICE" ||
+        error.code === "BASE_PRICE_UNAVAILABLE"
+      ) {
+        throw new CrmError(
+          "PRICE_NOT_FOUND",
+          CRM_USER_MESSAGES.PRICE_NOT_FOUND,
+          404
+        );
+      }
+      if (error.code === "BASE_PRICE_CONFLICT") {
+        throw new CrmError(
+          "PRICE_NOT_FOUND",
+          CRM_USER_MESSAGES.PRICE_NOT_FOUND,
+          409
+        );
+      }
+      throw new CrmError(
+        "INVALID_INPUT",
+        error.message,
+        error.statusCode,
+        error.field
+      );
+    }
+    throw error;
   }
 
   private async assertOfferingQuotable(

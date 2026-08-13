@@ -37,11 +37,29 @@ export const rolePermissionMatrix: Record<string, readonly string[]> = {
   MAKER: [
     "TenantManagement.Business.Read",
     "TenantManagement.Dashboard.Read",
+    "CommercialManagement.Config.Read",
+    "CommercialManagement.Config.Create",
+    "CommercialManagement.Config.Update",
+    "CommercialManagement.Config.Execute",
+    "CommercialManagement.Override.Create",
+    "CommercialManagement.TaxCompliance.Read",
+    "CommercialManagement.TaxCompliance.Manage",
+    "CommercialManagement.TaxCompliance.File",
+    "CommercialManagement.TaxCompliance.Remit",
+    "CommercialManagement.TaxCompliance.Evidence",
   ],
 
   CHECKER: [
     "TenantManagement.Business.Read",
     "AuditActivityLogging.AuditLog.Read",
+    "CommercialManagement.Config.Read",
+    "CommercialManagement.Config.Approve",
+    "CommercialManagement.Config.Reject",
+    "CommercialManagement.Config.Activate",
+    "CommercialManagement.Config.Deactivate",
+    "CommercialManagement.Override.Approve",
+    "CommercialManagement.TaxCompliance.Read",
+    "CommercialManagement.TaxCompliance.Evidence",
   ],
 
   PLATFORM_ADMIN: [

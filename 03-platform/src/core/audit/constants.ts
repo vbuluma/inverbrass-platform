@@ -79,6 +79,8 @@ export const AUDIT_ENTITY_NAMES = {
   CRM_GOVERNANCE: "crm_governance",
   CRM_MERGE_PROPOSAL: "crm_merge_proposal",
   CRM_SLA_POLICY: "crm_sla_policy",
+  COMMERCIAL_RULE_VERSION: "commercial_rule_version",
+  COMMERCIAL_OVERRIDE_REQUEST: "commercial_override_request",
 } as const;
 
 export type AuditEntityName =
@@ -132,6 +134,8 @@ export const AUDIT_ENTITY_LABELS: Record<AuditEntityName, string> = {
   crm_governance: "CRM Governance",
   crm_merge_proposal: "CRM Merge Proposal",
   crm_sla_policy: "CRM SLA Policy",
+  commercial_rule_version: "Commercial Rule Version",
+  commercial_override_request: "Commercial Override Request",
 };
 
 /**
@@ -165,6 +169,7 @@ export const AUDIT_SOURCE_MODULES = {
   CRM_COMMUNICATION: "crm_communication",
   CRM_CASE: "crm_case",
   CRM_GOVERNANCE: "crm_governance",
+  COMMERCIAL_GOVERNANCE: "commercial_governance",
 } as const;
 
 export type AuditSourceModule =
@@ -196,6 +201,7 @@ export const AUDIT_SOURCE_MODULE_LABELS: Record<AuditSourceModule, string> = {
   crm_communication: "CRM Communication",
   crm_case: "CRM Case",
   crm_governance: "CRM Governance",
+  commercial_governance: "Commercial Governance",
 };
 
 export const AUDIT_DEFAULT_PAGE_SIZE = 25;

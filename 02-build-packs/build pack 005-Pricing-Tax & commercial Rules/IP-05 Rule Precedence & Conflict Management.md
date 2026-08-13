@@ -1,5 +1,10 @@
 # BP-005 IP-05 – Rule Precedence & Conflict Management
 
+> **Implementation record moved.** Base-price precedence (IP-05) is implemented and documented in:
+> [`IP-05 Pricing Precedence, Eligibility & Conflict Resolution.md`](./IP-05%20Pricing%20Precedence%2C%20Eligibility%20%26%20Conflict%20Resolution.md)
+>
+> This file retains the original pack draft for broader commercial-rule precedence (tax/discount/component families, ENG-004). Treat the new IP-05 doc as authoritative for price-candidate winner selection.
+
 | Attribute | Description |
 |-----------|-------------|
 | Implementation Package | IP-05 |
@@ -7,6 +12,7 @@
 | Priority | Critical |
 | Depends On | IP-01, IP-02, IP-03, IP-04, ENG-004 |
 | Scope coverage | SC-006, SC-010 |
+| Status | Draft retained — price engine implemented in sibling IP-05 doc |
 
 ---
 

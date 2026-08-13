@@ -304,6 +304,115 @@ export const permissions: PermissionSeed[] = [
     "View unmasked regulatory identifier values (full value access).",
     430
   ),
+
+  // CommercialManagement — BP-005 / IP-08 Commercial Governance
+  permission(
+    "CommercialManagement",
+    "Config",
+    "Read",
+    "View commercial governance configurations.",
+    500
+  ),
+  permission(
+    "CommercialManagement",
+    "Config",
+    "Create",
+    "Create commercial configuration drafts.",
+    510
+  ),
+  permission(
+    "CommercialManagement",
+    "Config",
+    "Update",
+    "Edit commercial configuration drafts and governance policy.",
+    520
+  ),
+  permission(
+    "CommercialManagement",
+    "Config",
+    "Execute",
+    "Submit commercial configuration for approval.",
+    530
+  ),
+  permission(
+    "CommercialManagement",
+    "Config",
+    "Approve",
+    "Approve commercial configuration changes.",
+    540
+  ),
+  permission(
+    "CommercialManagement",
+    "Config",
+    "Reject",
+    "Reject commercial configuration changes.",
+    550
+  ),
+  permission(
+    "CommercialManagement",
+    "Config",
+    "Activate",
+    "Activate approved commercial configurations.",
+    560
+  ),
+  permission(
+    "CommercialManagement",
+    "Config",
+    "Deactivate",
+    "Suspend active commercial configurations.",
+    570
+  ),
+  permission(
+    "CommercialManagement",
+    "Override",
+    "Create",
+    "Request a controlled commercial override.",
+    580
+  ),
+  permission(
+    "CommercialManagement",
+    "Override",
+    "Approve",
+    "Approve or reject commercial override requests.",
+    590
+  ),
+
+  // CommercialManagement — BP-005 / IP-11 Tax Compliance
+  permission(
+    "CommercialManagement",
+    "TaxCompliance",
+    "Read",
+    "View tax compliance profiles, obligations, calendars and evidence metadata.",
+    600
+  ),
+  permission(
+    "CommercialManagement",
+    "TaxCompliance",
+    "Manage",
+    "Manage tax compliance profiles, registrations, calendars and obligations.",
+    610
+  ),
+  permission(
+    "CommercialManagement",
+    "TaxCompliance",
+    "File",
+    "Prepare and submit tax filings (compliance recording — not authority integration).",
+    620
+  ),
+  permission(
+    "CommercialManagement",
+    "TaxCompliance",
+    "Remit",
+    "Record tax remittance outcomes (payment execution is BP-007).",
+    630
+  ),
+  permission(
+    "CommercialManagement",
+    "TaxCompliance",
+    "Evidence",
+    "Upload and verify tax compliance evidence document references.",
+    640
+  ),
 ];
 
 export function getPermissionActionCode(seed: PermissionSeed): string {

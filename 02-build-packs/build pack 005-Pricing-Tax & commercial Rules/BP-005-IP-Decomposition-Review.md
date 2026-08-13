@@ -41,7 +41,8 @@ Folder: `02-build-packs/build pack 005-Pricing-Tax & commercial Rules/`
 | Document | Purpose |
 |----------|---------|
 | `Build Pack-005 Scope.md` | Pack scope, principle, dependency graph, revised waves |
-| `IP-01` … `IP-10` | IP specifications |
+| `IP-01` … `IP-10` | IP specifications (commercial resolution path) |
+| `IP-11 Tax Compliance, Remittance & Evidence Management.md` | Tax obligation / remittance / evidence extension (consumes IP-03; does not replace IP-03 or IP-06) |
 | `BP-005-Requirements-Traceability-Matrix.md` | Requirement → IP → runtime tests |
 | `BP-005-Stakeholder-Review-Response.md` | Acceptance of YES WITH CHANGES |
 | `BP-005-IP-Decomposition-Review.md` | This historical review |
