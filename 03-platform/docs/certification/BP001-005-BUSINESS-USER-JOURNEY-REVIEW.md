@@ -1,0 +1,727 @@
+# BP-001 → BP-005 — Business-User Journey Review
+
+**Date:** 2026-08-24  
+**Branch:** `develop` (post `8c926f5` — feat(bp005): complete pricing tax and commercial rules)  
+**Scope:** Business setup → Customer → Offering → Pricing → Commercial resolution → Expected amount → Tax compliance  
+**Review type:** REVIEW AND EVIDENCE ONLY (no application code changes; BP-006 not started)  
+**Browser automation:** **NOT EXECUTED**  
+**Certification status:** **C — CONDITIONAL** (journey requires guidance; evidence is wiring + prior runtime + smoke, not a live click-through)
+
+---
+
+## 1. Executive conclusion
+
+BP-001 through BP-005 **can** form one business journey at the **service and route** layer: shared `businessId`, party/customer identity, product/offering identity, BP-003 pricing masters, BP-005 commercial resolution → expected amount → contract, then IP-11 tax obligations.
+
+A real business user **cannot yet complete that journey naturally without guidance**, because:
+
+1. Navigation is a flat module list — not a guided “set up business → sell → resolve commercial → tax” path.
+2. Commercial and tax screens expose **IP / BP / adapter / snapshot** language.
+3. Commercial resolve does **not** ask the user to select the customer used earlier in the journey.
+4. Tax compliance does **not** auto-consume the commercial snapshot; the user must **paste** snapshot/resolution IDs and amounts.
+5. Tax compliance runtime storage for the workspace is **process-scoped in-memory** (tables exist for readiness; durable UI continuity across restarts is not proven for BA reproduction).
+
+**Question 1 — Natural journey without IP architecture knowledge?**  
+**No (not yet).** A motivated user with training can complete screens, but the UI still teaches internal implementation language and requires workarounds between Commercial resolve and Tax compliance.
+
+**Question 2 — Can another BA/PO reproduce the same journey?**  
+**Yes, conditionally**, using the **Manual Reproduction Procedure** and **synthetic test data** below. Prior BP-001→004 certification UUIDs are **reference evidence from a past runtime run** — recreate fresh entities with the same *names/values* if those IDs are not in the local database.
+
+---
+
+## 2. Overall rating
+
+| Dimension | Rating |
+|---|---|
+| **Overall journey rating** | **C — Journey requires guidance/workarounds** |
+| **Confidence** | **MEDIUM** |
+
+**Why C (not B):** Material discoverability and language friction; missing customer context on resolve; manual snapshot → tax handoff; IP jargon in primary UX copy.  
+**Why not D:** Routes, nav entries, server actions, and smoke validators prove the underlying capability chain exists.  
+**Why MEDIUM (not HIGH):** No browser click-through in this review; commercial amounts for the *same* BP-001→004 entities were not re-executed end-to-end in one live session; tax compliance store is process-memory.
+
+---
+
+## 3. Journey tested
+
+Intended business journey:
+
+1. Set up / register a business  
+2. Complete business setup / configuration  
+3. Register a customer (party → CRM)  
+4. Create / configure a product or service offering  
+5. Configure pricing (BP-003 master)  
+6. Configure applicable commercial rules (tax/discount/governance where UI allows)  
+7. Resolve a commercial transaction  
+8. Review commercial breakdown  
+9. Review expected commercial amount  
+10. View tax obligations / compliance information  
+
+**Actual vs expected payment:** Actual payment / variance / receipts are **out of scope** (BP-007+). UI correctly shows “Actual payment = Not available yet”.
+
+---
+
+## 4. Test scenario
+
+**Scenario name:** Journey Customer Alpha — Kenya SME service sale (KES)
+
+**Persona:** Business owner / commercial clerk of a newly activated Kenya-oriented business.
+
+**One consistent identity set:** Same business → same party/customer → same offering → same pricing item → commercial resolve on that offering → tax obligation referencing that commercial snapshot.
+
+**Evidence modes used in this review:**
+
+| Mode | Used? |
+|---|---|
+| Route / page / nav wiring inspection | Yes |
+| UX copy / stepper / handoff inspection | Yes |
+| Prior BP-001→004 system integration certification runtime IDs | Yes (reference) |
+| BP-005 IP smoke validators (documented PASS) | Yes (service-layer) |
+| Live browser click-through | **No** |
+| Fresh DB insert of one continuous BA session | **No** (procedure provided for BA) |
+
+---
+
+## 5. Test Business Created
+
+### Synthetic business (for manual reproduction)
+
+Use these values when creating/selecting a business:
+
+| Field | Value |
+|---|---|
+| **Business name** | `Journey Alpha Services KE` |
+| **Country** | `KE` (Kenya) |
+| **Industry** | Select a seeded industry from `/businesses/create` catalogue (record the label chosen) |
+| **Business type / template** | Select template filtered by industry (record label) |
+| **Currency** | `KES` (base currency in setup) |
+| **Status target** | `ACTIVE` after setup wizard completion |
+| **Business ID** | **Generated by system** — copy from URL, settings, or business switcher after create. Do **not** invent. |
+
+### Reference runtime business (prior certification — may not exist in your DB)
+
+From `BP-001-004-SYSTEM-INTEGRATION-CERTIFICATION.md` (2026-08-12 run):
+
+| Field | Value |
+|---|---|
+| Business ID | `da744f52-15d8-44ff-ba79-ec936e135011` |
+| Membership ID | `d44640fd-858a-4be9-81a1-37f48577306c` |
+| Currency | `KES` |
+| Status | `ACTIVE` (certified) |
+
+**Reuse vs recreate:** Prefer **recreating** `Journey Alpha Services KE` so BA evidence is local and current. Cite the certification IDs only if that business still exists in the environment under test.
+
+**Relevant configuration:** Setup wizard at `/setup/[step]` — profile, classification, country, base currency, operations, review, activation. Settings deep-links: `/settings` → `/setup/[step]?manage=1`.
+
+---
+
+## 6. Test Customer Created
+
+### Synthetic customer (for manual reproduction)
+
+| Field | Value |
+|---|---|
+| **Customer name (party full name)** | `Test Customer Alpha` |
+| **Party type** | `INDIVIDUAL` |
+| **Role** | `CUSTOMER` (assign on party if prompted / via party workspace) |
+| **Date of birth (synthetic)** | `1990-05-15` |
+| **Preferred language** | `en` |
+| **Mobile (synthetic)** | `+254712345001` |
+| **Party ID** | **System-generated** — copy from `/parties/[partyId]` |
+| **Party number** | **System-generated if shown** — copy from UI; if not shown, state “not exposed on this screen” |
+| **CRM customer ID (`crmId`)** | **System-generated** after `/customers/new` registration — copy from `/customers/[crmId]` |
+| **Business association** | Must be the active business (`Journey Alpha Services KE`) |
+| **Status** | Record status shown on customer/party screen (e.g. PROSPECT / ACTIVE if labelled) |
+
+**Use this customer for manual reproduction of the journey.**
+
+### Reference runtime party/customer (prior certification)
+
+| Field | Value |
+|---|---|
+| Party ID | `dd1f0dbb-a580-4aa7-b8c1-b604d4066a85` |
+| Role | `CUSTOMER` |
+| CRM Record ID | `1e330db3-704c-41f3-899a-15701a4d055b` |
+| Name pattern | `Cert Customer A {stamp}` (stamp-specific; not stable) |
+
+**Important continuity note:** Commercial resolve UX **does not currently require selecting this customer**. Party continuity into BP-005 resolve is **service-capable** (`partyId` on resolution request) but **not user-driven** on `/commercial/resolve`. Treat customer selection as a **journey gap** (Finding C-02).
+
+---
+
+## 7. Test Product / Offering
+
+### Synthetic offering (for manual reproduction)
+
+| Field | Value |
+|---|---|
+| **Product / service name** | `Journey Alpha Advisory Service` |
+| **Product code** | `JA-ADV-001` |
+| **Product type** | `SERVICE` (or catalogue equivalent label) |
+| **Default currency** | `KES` |
+| **Sellable** | Yes (`isSellable` checked) |
+| **Owner party** | Prefer `Test Customer Alpha` party (or business-owned party if UI requires) |
+| **Product / offering ID** | **System-generated** — same UUID used as `offeringId` in pricing and commercial resolve |
+| **Classification** | Optional for minimal journey; if used, record classification name/code |
+| **Unit** | Optional for service; if required by UI, select a seeded unit and record code |
+
+### Reference runtime offering (prior certification)
+
+| Field | Value |
+|---|---|
+| Product / Offering ID | `1a22071d-e652-4f47-bc4c-39821b1d31da` |
+| Name pattern | `Cert Offering A {stamp}` |
+| Owner party | Certification party ID above |
+| Status | ACTIVE + sellable |
+
+---
+
+## 8. Test Pricing Configuration
+
+### Distinguish masters
+
+| Layer | What it is | Where |
+|---|---|---|
+| **BP-003 pricing master** | Catalogue + price item on the offering | `/products/pricing`, product workspace pricing panel |
+| **BP-005 commercial resolution** | Applies precedence, composition, tax session, snapshot, expected amount | `/commercial/resolve` |
+
+### Synthetic pricing (for manual reproduction)
+
+| Field | Value |
+|---|---|
+| **Catalogue name** | `Journey Alpha KES Catalogue` |
+| **Catalogue code** | `JA-KES-CAT` |
+| **Currency** | `KES` |
+| **Pricing method** | `FIXED` |
+| **Unit price** | `2750.50` |
+| **Effective from** | Yesterday or earlier (so resolve “now” is in window) |
+| **Lifecycle / status** | Activate price item after create |
+| **Catalogue ID** | System-generated — copy if shown |
+| **Pricing item ID** | System-generated — copy if shown |
+| **Dimensions used** | Currency `KES`; leave channel/segment empty unless testing precedence |
+
+### Reference runtime pricing (prior certification)
+
+| Field | Value |
+|---|---|
+| Pricing Catalogue ID | `53a3dde7-5a9a-4284-8421-5574a6882492` |
+| Pricing Item ID | `b388f577-ea7d-44ab-9790-8943a1a06d55` |
+| Unit price resolved | `2750.5` KES |
+| Quotation proof (qty 2) | lineTotal `5501` via PricingResolutionAdapter |
+
+**Expected on commercial resolve (qty 1, VAT 16% exclusive, no discount/commission):**
+
+```
+Principal = 2750.50
+Tax (16% exclusive) = 440.08
+Expected payable = 3190.58
+```
+
+*(Arithmetic: 2750.50 × 0.16 = 440.08; 2750.50 + 440.08 = 3190.58. Confirm UI rounding against displayed values — do not invent alternate totals.)*
+
+### Service-layer commercial arithmetic evidence (BP-005 smoke fixtures — not the certification offering)
+
+From `bp005-ip07-expected-commercial-amount-smoke-validation.ts` (documented **23/23 PASS**):
+
+| Case | Principal | Tax | Other | Expected |
+|---|---|---|---|---|
+| Principal only | 1000 | 0 | — | 1000 |
+| + 18% exclusive VAT | 1000 | 180 | — | 1180 |
+| + commission 100 | 1000 | 180 | +100 | 1280 |
+| + discount 50 | 1000 | 180 | −50 | 1130 |
+| Full mix | 1000 | 180 | +100 +25 −50 | **1255** |
+
+Reconciliation form used by platform:
+
+```
+Expected Payable = Principal + Charges/Commission + Tax − Discounts
+```
+
+---
+
+## 9. Commercial Resolution Evidence
+
+### What the UI produces (wiring proven)
+
+Route: `/commercial/resolve`  
+Workspace: stepper **Base price → Components → Tax → Review / Expected**
+
+| Artifact | Proven? | Notes |
+|---|---|---|
+| Resolved base price from BP-003 | Yes (action + BP-003 adapter path) | Search offering → Resolve price |
+| Composition / principal | Yes | Compose step |
+| Session tax (rate entered in UI) | Yes | Defaults VAT / 16% / EXCLUSIVE; **persisted tax rule masters not required by this UX** |
+| Snapshot ID | Yes (shown on Review) | Generated per finalize |
+| Expected amount | Yes | Shown as primary green card |
+| Contract ID | Yes | Downstream contract panel |
+| Actual payment | Explicitly **Not available yet** | BP-007 boundary |
+| Variance | Explicitly **Not available yet** | RA out of scope |
+
+### Fields the BA should record after a successful Review step
+
+Copy exactly from UI (do not invent):
+
+- Offering name / code selected  
+- Quantity  
+- Currency  
+- Resolved unit price + catalogue name + pricing item ID (base-price alert)  
+- Principal, charges, commission, tax, discounts, payable / expected amount  
+- Snapshot ID  
+- Contract ID + contract status  
+- Integrity hash (if shown)  
+
+### Continuity gap
+
+`partyId` / customer is **not collected** on the resolve form. Offering search uses products in the **current business context**. Customer from Steps 2–3 is therefore **not visibly connected** on the resolve screen.
+
+---
+
+## 10. Tax Compliance Evidence
+
+Route: `/commercial/tax-compliance`  
+Panels: Dashboard | Registrations | Calendar | Obligations | Evidence
+
+### Kenya / configurable boundary (mandatory label)
+
+Kenya templates (`KE-VAT-MONTHLY`, `KE-WHT-MONTHLY`) are **illustrative configuration**. Due day defaults (e.g. VAT filing day **20** following month) are **configurable defaults**, **not legally certified** KRA statutory facts. Live eTIMS filing is **not** implemented.
+
+### Synthetic tax setup (manual reproduction)
+
+| Field | Recommended test value |
+|---|---|
+| Country profile | `KE` |
+| Jurisdiction (after profile) | `KE-NATIONAL` (from template) |
+| Authority | `KRA` |
+| Registration type | `VAT` |
+| Registration number (synthetic) | `P051234567A` |
+| Obligation tax type | `VAT` |
+| Snapshot ID | **Paste from Commercial Review** |
+| Resolution ID | Paste if shown on Review / contract; else follow UI validation messages |
+| Taxable amount | Principal / taxable from Review |
+| Tax amount | Tax total from Review |
+| Currency | `KES` |
+| Obligation date | e.g. `2026-06-15` (synthetic) |
+
+### What to record after obligation create
+
+- Profile country / jurisdiction  
+- Registration number / type  
+- Obligation ID (if shown)  
+- Period key  
+- Filing due date / remittance due date (**label as configured**, not certified law)  
+- Filing status, remittance status, evidence status, compliance status  
+
+### Runtime storage caveat
+
+Workspace actions use `getProcessTaxComplianceStore()` — **in-memory process store**. Schema/migrations (`0056_bp005_ip011_tax_compliance.sql`) exist for readiness. BA must not assume obligations survive server restart unless durable persistence is separately verified.
+
+---
+
+## 11. Screen-by-screen journey
+
+| Step | User action | Screen/route | Data entered | System result | Evidence | Next action |
+|---|---|---|---|---|---|---|
+| 1 | Register / select business | `/businesses/create` → `/select-business` → `/setup/...` | `Journey Alpha Services KE`, KE, industry/template, KES | ACTIVE business + config | Business ID + status | Create party |
+| 2a | Create individual party | `/parties/new` | `Test Customer Alpha`, synthetic DOB/mobile | Party created | Party ID / number | Assign CUSTOMER if needed |
+| 2b | Register CRM customer | `/customers/new` | Search party → register | CRM record | `crmId` URL | Create offering |
+| 3 | Create offering | `/products/new` | `JA-ADV-001` / `Journey Alpha Advisory Service`, SERVICE, KES, sellable | Product created | Product ID | Activate if required |
+| 4 | Configure price | `/products/pricing` or product pricing panel | Catalogue `JA-KES-CAT`, FIXED `2750.50` KES, activate | Price item ACTIVE | Catalogue/item IDs, price | Optional: commercial governance |
+| 5 | Commercial rules | `/commercial/governance` and/or resolve Tax step | Governance drafts **or** session VAT 16% EXCLUSIVE | Rules drafted / session tax ready | Governance status **or** tax fields | Resolve commercial |
+| 6 | Resolve commercial | `/commercial/resolve` | Search offering, qty `1`, currency `KES` | Base → components → tax | Resolved price + breakdown | Review expected |
+| 7 | Review expected | same workspace Review step | Finalize after tax | Snapshot + expected + contract | Snapshot/contract IDs, amounts | Tax compliance |
+| 8 | Tax compliance | `/commercial/tax-compliance` | KE profile, registration, paste snapshot amounts | Obligation / calendar | Obligation + statuses | End of BP-005 journey |
+
+---
+
+## 12. Manual Reproduction Procedure
+
+Instructions for a Business Analyst / Product Owner who has not seen the implementation.
+
+### Prerequisites
+
+1. Sign in with a user that can create businesses and operate CRM/products/commercial modules.  
+2. Do **not** need to know Build Pack or IP numbers.  
+3. Keep a notepad for IDs and amounts.  
+4. Prefer a clean synthetic business (`Journey Alpha Services KE`).
+
+### Step 1 — Create / Select Business
+
+**Navigate to:** `/businesses/create` (from platform home / authenticated create-business entry)
+
+**Action:** Enter business details → Create → complete `/setup` wizard → activate → `/select-business` if needed → land on `/dashboard`.
+
+**Enter:**
+
+- Business name: `Journey Alpha Services KE`  
+- Country: Kenya / `KE`  
+- Industry + template: pick from lists; write them down  
+- Base currency: `KES`
+
+**Expected result:** Business ACTIVE; dashboard available.
+
+**Evidence:** Business name visible in chrome/switcher; copy **Business ID** if shown (else note “ID not exposed in UI — verify by business name in switcher”).
+
+**Next:** Create party customer.
+
+### Step 2 — Create Customer (Party then CRM)
+
+**Navigate to:** `/parties/new`
+
+**Enter:** Individual — `Test Customer Alpha`, DOB `1990-05-15`, mobile `+254712345001`, language `en`.
+
+**Expected:** Party detail at `/parties/[partyId]`.
+
+**Evidence:** Party ID from URL; display name; CUSTOMER role if assigned.
+
+**Next:** `/customers/new` → search `Test Customer Alpha` → Register customer → `/customers/[crmId]`.
+
+**Evidence:** CRM ID from URL.  
+**Statement:** Use this customer for manual reproduction of the journey.
+
+### Step 3 — Create Product / Service
+
+**Navigate to:** `/products/new` (nav label **Offerings**)
+
+**Enter:** Code `JA-ADV-001`, name `Journey Alpha Advisory Service`, type SERVICE, currency KES, sellable on; set owner party if required.
+
+**Expected:** Product workspace `/products/[productId]`; activate if status is draft.
+
+**Evidence:** Product ID (URL); name; sellable/active status.
+
+**Next:** Pricing.
+
+### Step 4 — Configure Pricing (BP-003 master)
+
+**Navigate to:** `/products/pricing` or pricing panel on the product.
+
+**Enter:** Catalogue `Journey Alpha KES Catalogue` / `JA-KES-CAT`, currency KES; price item on offering, method FIXED, unit price `2750.50`, effective in the past; activate.
+
+**Expected:** Price appears in pricing dashboard; searchable for resolve.
+
+**Evidence:** Catalogue name, unit price, currency, status; IDs if UI shows them.
+
+**Next:** Optional commercial governance, then resolve.
+
+### Step 5 — Configure Commercial Rules
+
+**Path A — Session tax (minimum for resolve UX):**  
+On `/commercial/resolve` Tax step use VAT / 16 / EXCLUSIVE (defaults).
+
+**Path B — Governance workspace:**  
+`/commercial/governance` — create draft → submit → approve → activate (as UI allows). Record rule type/status.
+
+**Expected:** Enough configuration to resolve without PRICE_CONFLICT / missing price errors.
+
+**Evidence:** Either activated price item only, or governance rule statuses + session tax fields.
+
+**Next:** Commercial resolve.
+
+### Step 6 — Commercial Resolution
+
+**Navigate to:** `/commercial/resolve` (nav: **Commercial resolve**)
+
+**Action:**
+
+1. Search offering `Journey Alpha` / `JA-ADV-001` → select  
+2. Currency `KES`, quantity `1`  
+3. **Resolve price**  
+4. **Compose components**  
+5. Confirm tax fields → **Apply tax** (auto-finalizes expected in current UX)  
+6. Open **Review / Expected**
+
+**Expected:** Base price ≈ `2750.50`; expected amount ≈ `3190.58` for 16% exclusive VAT with no adjustments; Actual payment = Not available yet.
+
+**Evidence:** Copy snapshot ID, contract ID, principal, tax, expected amount.
+
+**Next:** Tax compliance (manual handoff).
+
+### Step 7 — Commercial Review / Expected Amount
+
+Already on Review step of `/commercial/resolve`.
+
+**Verify:**
+
+- Expected commercial amount card populated  
+- Actual payment / variance: Not available yet  
+- Breakdown: principal, tax, discounts, commission, payable  
+- Snapshot ID + contract ID visible  
+
+**Next:** `/commercial/tax-compliance`
+
+### Step 8 — Tax Compliance Review
+
+**Navigate to:** `/commercial/tax-compliance`
+
+**Action:**
+
+1. Registrations → Create KE profile if empty  
+2. Add registration `VAT` / `P051234567A` / `KRA`  
+3. Optional: Calendar → generate period for VAT  
+4. Obligations → paste Snapshot ID + amounts from Review → Create obligation  
+5. Observe filing / remittance / evidence / compliance statuses  
+
+**Expected:** Obligation listed with configured due dates; statuses update when filing actions used.
+
+**Evidence:** Profile, registration, obligation line, due dates (**configured, not legally certified**).
+
+**Stop.** Do not start orders/payments (BP-006/BP-007).
+
+---
+
+## 13. Evidence checklist
+
+Manual tester should capture:
+
+- [ ] Business created / selected (`Journey Alpha Services KE`)  
+- [ ] Business ID visible **or** verified indirectly via switcher name  
+- [ ] Customer party created (`Test Customer Alpha`)  
+- [ ] Party ID / number visible (or “not exposed”)  
+- [ ] Customer associated with correct business  
+- [ ] CRM customer registered (`crmId` from URL)  
+- [ ] Product / offering created and visible  
+- [ ] Product/offering ID from URL  
+- [ ] Price configured (catalogue + FIXED 2750.50 KES) and activated  
+- [ ] Commercial price resolved on `/commercial/resolve`  
+- [ ] Commercial breakdown displayed  
+- [ ] Expected amount displayed  
+- [ ] Snapshot ID / contract ID visible on Review  
+- [ ] Tax profile + registration created  
+- [ ] Tax obligation visible  
+- [ ] Tax compliance / filing / remittance / evidence status visible  
+- [ ] Actual payment explicitly unavailable (BP-007 boundary)  
+
+Where a technical ID is not visible to the normal user: **Verify indirectly through the displayed business/customer/product information.** Do not require DB inspection unless IDs cannot be obtained from URL or UI.
+
+---
+
+## 14. Cross-BP continuity
+
+```
+Business (businessId)
+  → Party (partyId) + CUSTOMER role
+    → CRM (crmId → partyId)
+  → Product (productId = offeringId, businessId, optional ownerPartyId)
+    → Pricing catalogue + pricing item (offeringId, businessId)
+      → BP-005 resolve (business context + offeringId → pricingItemId)
+        → Snapshot (snapshotId) + Expected amount + Contract (contractId)
+          → Tax obligation (manual snapshotId + tax amounts; process store)
+```
+
+| Continuity link | Status |
+|---|---|
+| businessId across masters | **PROVEN** (BP-001→004 cert + commercial context gate) |
+| partyId → product owner | **PROVEN** (prior cert) |
+| offeringId → pricingItemId | **PROVEN** (prior cert + resolve base-price path) |
+| pricingItemId → commercial base provenance | **PROVEN** (service + UI shows pricing item) |
+| partyId / crmId → commercial resolve UI | **NOT PROVEN in UX** (gap) |
+| snapshotId → tax obligation | **WIRED** via manual paste; **not auto-linked** |
+| Same masters reused (no duplicate pricing engine) | **PROVEN** (BP-003 master consumed by BP-005) |
+
+Do not create duplicate masters for commercial resolve — search the offering already priced.
+
+---
+
+## 15. UX assessment
+
+| Theme | Assessment |
+|---|---|
+| **Discoverability** | Weak for first-time users. Flat nav lists Parties, Customers, Offerings, Commercial resolve, Tax compliance separately with no journey stepper across packs. |
+| **Navigation** | Breadcrumbs / PageBackLink present on commercial screens; Previous/Next inside resolve stepper. No deep link from Review → Tax compliance. |
+| **Progress** | Strong **within** `/commercial/resolve` and governance steppers. Absent across BP-001→005 as one journey. |
+| **Errors** | Near-step alerts, codes/families, actionable hints (including price conflict). Some codes are technical. |
+| **Loading** | Processing buttons / labels present. |
+| **Empty states** | Present (offerings search, components, tax, obligations). |
+| **Search** | Offering search on resolve; party search on CRM registration; pricing dashboard search. |
+| **Success** | Inline success feedback after resolve/tax/finalize. |
+| **Guidance** | Side panel “Where you are / What to do next” on resolve — but copy references IP numbers. |
+| **User language** | **Fail for natural business language** — frequent IP-01…IP-11, BP-003, BP-006/007, snapshot, provenance, pipeline strings on primary surfaces. |
+
+---
+
+## 16. Findings
+
+| ID | Finding | Class |
+|---|---|---|
+| C-01 | Primary commercial/tax UX exposes IP/BP/snapshot/provenance/pipeline terminology | **B. UX defect** |
+| C-02 | Commercial resolve does not select/bind the journey customer (`partyId`/`crmId`) | **C. Navigation/discoverability** + **D. Data continuity** (UI gap) |
+| C-03 | No guided cross-module journey from Dashboard → setup → customer → offering → price → resolve → tax | **C. Navigation/discoverability** |
+| C-04 | Tax compliance requires manual snapshot ID / amount paste; no “Send to tax compliance” from Review | **C. Navigation/discoverability** + **D. Data continuity** (handoff) |
+| C-05 | Tax compliance workspace uses process in-memory store (durability not BA-obvious) | **D. Data continuity/integration** (runtime) / **F** if documented as interim |
+| C-06 | Resolve Tax step uses session-entered rates; copy states persisted tax rule masters “not yet available” for that UX path | **F. Intentional scope boundary** (with UX honesty) / enhancement to bind governance masters |
+| C-07 | Nav labels “Commercial resolve” / technical tone vs business “Price a sale” | **B. UX defect** |
+| C-08 | Success toast references “Commercial contract ready (IP-10)” | **B. UX defect** |
+| F-01 | No payment / receipt / actual-vs-expected | **F. Intentional scope boundary** |
+| F-02 | Kenya due dates / eTIMS not legally certified | **F. Intentional scope boundary** |
+| F-03 | Browser click-through not executed in this review | **Evidence limitation** (not an app defect) |
+| G-01 | Guided onboarding checklist spanning BP-001→005 | **G. Future enhancement** |
+| G-02 | One-click handoff Review → Tax obligation prefilled | **G. Future enhancement** |
+| G-03 | Customer picker on commercial resolve | **G. Future enhancement** |
+
+No finding in this review is classified as a blocking **A. Functional defect** of the commercial calculation engines based on documented smoke PASS results; journey friction is primarily UX/continuity/handoff.
+
+---
+
+## 17. Intentional boundaries
+
+| Boundary | Status |
+|---|---|
+| Payment collection / split | BP-007+ — UI shows Not available |
+| Orders / checkout | BP-006+ — not started |
+| Receipts | Out of scope |
+| Revenue-assurance actual vs expected | Out of scope |
+| Live eTIMS / authority filing | Future integration |
+| OCR / file platform | Out of scope |
+| Kenya statutory certification of due dates/penalties | Configurable templates only |
+
+---
+
+## 18. Recommended improvements
+
+1. Replace IP/BP jargon on user-facing copy with business language (price → charges → tax → expected amount → tax obligations).  
+2. Add customer (party/CRM) selection to commercial resolve and show it on Review.  
+3. Add “Create tax obligation from this result” on Review, prefilling snapshot and tax amounts.  
+4. Provide a simple “Get ready to sell” checklist on Dashboard linking the eight steps.  
+5. Clarify tax compliance persistence expectations for operators (or wire durable store to UI).  
+6. Keep Actual payment / Variance cards as-is until BP-007.
+
+---
+
+## 19. Proven vs not-proven evidence
+
+### PROVEN
+
+- Routes exist: `/businesses/create`, `/setup/*`, `/parties`, `/customers`, `/products`, `/products/pricing`, `/commercial/resolve`, `/commercial/governance`, `/commercial/tax-compliance`  
+- Nav entries for commercial resolve, governance, tax compliance  
+- Server-action wiring for resolve → expected → contract  
+- BP-001→004 cumulative identity graph (prior certification runtime)  
+- BP-003 price resolution into quotation (prior cert: 2750.5 / pricingItemId match)  
+- BP-005 IP smokes documented PASS (IP-01…IP-11)  
+- Expected vs Actual payment boundary copy on Review  
+- Kenya templates labelled as non-certified configuration in code/docs  
+
+### NOT PROVEN (this review)
+
+- Actual human browser click-through of the full journey  
+- Visual usability / first-time discoverability with real users  
+- One continuous DB session reproducing certification UUIDs on this machine  
+- Durable tax-compliance UI state across process restart  
+- Automatic customer continuity into commercial resolve UX  
+
+---
+
+## 20. Conclusion
+
+| Question | Answer |
+|---|---|
+| Can a real business user **naturally** complete BP-001→BP-005 without understanding IP architecture? | **Not yet.** Capability exists; natural language and guided continuity do not. Rating **C**. |
+| Can another BA/PO **reproduce** the journey with this document? | **Yes, conditionally**, by creating `Journey Alpha Services KE` / `Test Customer Alpha` / `Journey Alpha Advisory Service` / FIXED `2750.50` KES and following the Manual Reproduction Procedure, recording system-generated IDs from URLs/UI. |
+
+**Overall:** **C — Journey requires guidance/workarounds**  
+**Confidence:** **MEDIUM**  
+**BP-006:** **Not started**  
+**Application code:** **Not modified** in this review  
+
+---
+
+## Appendix A — Route map (business-relevant)
+
+| Intent | Route | Nav label |
+|---|---|---|
+| Create business | `/businesses/create` | (authenticated create entry) |
+| Select business | `/select-business` | — |
+| Setup wizard | `/setup/[step]` | Settings deep-links |
+| Parties | `/parties`, `/parties/new` | Parties |
+| Customers | `/customers`, `/customers/new` | Customers |
+| Offerings | `/products`, `/products/new` | Offerings |
+| Pricing master | `/products/pricing` | (via Offerings / product) |
+| Commercial resolve | `/commercial/resolve` | Price a sale |
+| Commercial governance | `/commercial/governance` | Commercial rules |
+| Tax compliance | `/commercial/tax-compliance` | Tax obligations |
+
+## Appendix B — Prior certification identity graph (reference only)
+
+| Entity | ID |
+|---|---|
+| Business | `da744f52-15d8-44ff-ba79-ec936e135011` |
+| Party | `dd1f0dbb-a580-4aa7-b8c1-b604d4066a85` |
+| Product/Offering | `1a22071d-e652-4f47-bc4c-39821b1d31da` |
+| Pricing Catalogue | `53a3dde7-5a9a-4284-8421-5574a6882492` |
+| Pricing Item | `b388f577-ea7d-44ab-9790-8943a1a06d55` |
+| CRM | `1e330db3-704c-41f3-899a-15701a4d055b` |
+
+Recreate with synthetic names in §5–§8 if these rows are absent.
+
+## Appendix C — Smoke validation status (documentation authority)
+
+| IP | Documented smoke |
+|---|---|
+| IP-01 … IP-11 | PASS (per BP-005 IP docs; IP-11 49/49) |
+| Pack | IP-11 COMPLETE — BP-005 COMPLETE — STOPPED BEFORE BP-006 |
+
+---
+
+## UX & Journey Remediation — Round 1
+
+**Date:** 2026-08-24  
+**Scope:** Presentation / journey continuity only. No BP-006. No new commercial engines. No new IPs.
+
+### Finding → remediation
+
+| Finding (original C review) | Remediation |
+|---|---|
+| C-01 IP/BP jargon on commercial/tax UX | Replaced user-facing copy with business language (Price a sale, Charges, Expected amount, Tax obligations, Commercial rules). Backend names unchanged. |
+| C-02 Customer missing from resolve | Customer search (CRM) required on step 1; `partyId` passed into existing resolve/finalize pipeline. Deep links from Customer workspace. |
+| C-03 Flat navigation / discoverability | Nav labels updated; contextual links Customer → Price a sale, Offering → Price a sale / Pricing lists; resolve header links to Customers, Offerings, Pricing, Rules. |
+| C-04 Manual snapshot → tax paste | Session handoff of validated commercial result; Review → **View tax obligations** prefills obligation create; advanced paste remains optional. |
+
+### Files changed (Round 1)
+
+- `03-platform/src/lib/navigation/platform-nav-config.ts`
+- `03-platform/src/modules/commercial/commercial-journey-handoff.ts` *(new)*
+- `03-platform/src/modules/commercial/actions/commercial-resolution-actions.ts` (`partyId` on base-price resolve)
+- `03-platform/src/modules/commercial/components/commercial-resolution-workspace.tsx`
+- `03-platform/src/modules/commercial/components/tax-compliance-workspace.tsx`
+- `03-platform/src/modules/commercial/components/commercial-governance-workspace.tsx`
+- `03-platform/src/app/(authenticated)/(app)/commercial/resolve/page.tsx`
+- `03-platform/src/app/(authenticated)/(app)/commercial/tax-compliance/page.tsx`
+- `03-platform/src/modules/crm/components/customer-workspace.tsx`
+- `03-platform/src/modules/product/components/product-workspace.tsx`
+- `03-platform/docs/certification/BP001-005-MANUAL-JOURNEY-REVALIDATION.md` *(new)*
+- this file (append)
+
+### Before → after
+
+| Behaviour | Before | After |
+|---|---|---|
+| Resolve step 1 | Offering only | Customer + offering |
+| Review completion | Copy snapshot IDs manually | **View tax obligations** carries amounts |
+| Tax obligation create | Required paste of snapshot/tax fields | Primary path: one-click from handoff |
+| Nav labels | Commercial resolve / Tax compliance | Price a sale / Tax obligations |
+| User-facing IP labels | Widespread | Removed from primary UX copy |
+
+### Validation evidence
+
+- `npm run typecheck`: BP-005 remediation files clean; remaining known unrelated `leads` error in `bp001-004-system-integration-certification.ts` (**not fixed**)
+- `npm run lint`: see Round 1 gate log
+- `db:migrate` / `db:seed`: environment DB unreachable in this session (`ENOTFOUND` tenant) — **environment failure**, not remediation regression
+- Browser click-through: **not performed**
+
+### Remaining gaps
+
+- Tax obligations store remains process-scoped in-memory (durability)
+- No full Dashboard “Get ready to sell” checklist yet
+- Conditional rating until BA browser revalidation
+
+---
+
+## Post-Remediation Assessment
+
+| Dimension | Rating |
+|---|---|
+| **Journey rating** | **B — Works with minor UX friction** |
+| **Confidence** | **MEDIUM** |
+
+**Rationale:** The four certification blockers are addressed in UX wiring. Rating is not A because browser click-through was not performed and tax persistence remains interim.
+
+**Conditional — browser click-through not performed.**
+
+Manual revalidation guide: `03-platform/docs/certification/BP001-005-MANUAL-JOURNEY-REVALIDATION.md`

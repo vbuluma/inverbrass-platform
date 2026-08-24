@@ -291,19 +291,19 @@ export function CommercialGovernanceWorkspace() {
       <SetBreadcrumbs
         items={[
           { label: "Dashboard", href: "/dashboard" },
-          { label: "Commercial governance" },
+          { label: "Commercial rules" },
         ]}
       />
       <PageBackLink href="/dashboard" label="Back to dashboard" />
 
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">
-          Commercial governance
+          Commercial rules
         </h1>
         <p className="text-sm text-muted-foreground">
           Control commercial configuration lifecycle — draft, approve, activate,
           and suspend — without recalculating prices, tax, or expected amounts.
-          Historical IP-06 snapshots remain immutable.
+          Confirmed commercial results remain unchanged when rules change later.
         </p>
       </header>
 
@@ -752,7 +752,7 @@ function guidanceCopy(step: GovernanceStepId): string {
     case "tax":
       return "Maker/checker separation applies. Approvers cannot approve their own submissions when SoD is enabled.";
     case "review":
-      return "Activation respects effective dating. Governance never rewrites IP-06 historical snapshots.";
+      return "Activation respects effective dating. Confirmed commercial results are not rewritten when rules change.";
   }
 }
 

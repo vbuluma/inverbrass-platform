@@ -93,19 +93,19 @@ export const BUSINESS_APP_NAV_ITEMS: PlatformNavItem[] = [
   },
   {
     id: "commercial-resolve",
-    label: "Commercial resolve",
+    label: "Price a sale",
     href: "/commercial/resolve",
     icon: CalculatorIcon,
   },
   {
     id: "commercial-governance",
-    label: "Commercial governance",
+    label: "Commercial rules",
     href: "/commercial/governance",
     icon: ShieldCheckIcon,
   },
   {
     id: "tax-compliance",
-    label: "Tax compliance",
+    label: "Tax obligations",
     href: "/commercial/tax-compliance",
     icon: FileTextIcon,
   },

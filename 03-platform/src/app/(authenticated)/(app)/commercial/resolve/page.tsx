@@ -1,13 +1,31 @@
 /**
  * Purpose:
- * Commercial resolution workspace page (BP-005 IP-01 → IP-02 → IP-03 UX).
- *
- * Implementation Package:
- * BP-005 / IP-01–IP-03 – Commercial Resolution UX
+ * Commercial pricing workspace — resolve expected commercial amount for a sale.
  */
 
 import { CommercialResolutionWorkspace } from "@/modules/commercial/components/commercial-resolution-workspace";
 
-export default function CommercialResolvePage() {
-  return <CommercialResolutionWorkspace />;
+type PageProps = {
+  searchParams: Promise<{
+    partyId?: string;
+    crmId?: string;
+    customerName?: string;
+    offeringId?: string;
+    offeringName?: string;
+  }>;
+};
+
+export default async function CommercialResolvePage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  return (
+    <CommercialResolutionWorkspace
+      initialContext={{
+        partyId: params.partyId?.trim() || null,
+        crmId: params.crmId?.trim() || null,
+        customerName: params.customerName?.trim() || null,
+        offeringId: params.offeringId?.trim() || null,
+        offeringName: params.offeringName?.trim() || null,
+      }}
+    />
+  );
 }

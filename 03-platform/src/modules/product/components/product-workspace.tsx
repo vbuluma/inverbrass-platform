@@ -305,6 +305,11 @@ export function ProductWorkspace({
           { label: labels.catalogueStructure.moduleName, href: `/products/${product.id}?tab=classification` },
           { label: "View Timeline", href: `/products/${product.id}?tab=timeline` },
           { label: "View Audit", href: `/products/${product.id}?tab=audit-history` },
+          {
+            label: "Price a sale",
+            href: `/commercial/resolve?offeringId=${encodeURIComponent(product.id)}&offeringName=${encodeURIComponent(product.productName)}`,
+          },
+          { label: "Pricing lists", href: "/products/pricing" },
         ]}
         primaryActions={
           isArchived ? null : (

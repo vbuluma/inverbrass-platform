@@ -1,11 +1,14 @@
 /**
  * Purpose:
- * Tax compliance workspace (IP-11) — dashboard, registrations, obligations, evidence.
+ * Tax obligations workspace — filings, remittance, evidence.
+ * Consumes validated commercial handoff; does not recalculate tax.
  */
 
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 import {
   PlatformEmptyState,
@@ -15,6 +18,7 @@ import {
 import { PageBackLink } from "@/components/platform/page-back-link";
 import { SetBreadcrumbs } from "@/components/platform/breadcrumb-context";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -22,6 +26,7 @@ import {
   platformSuccess,
 } from "@/core/platform/platform-action-helpers";
 import type { PlatformActionResult } from "@/core/platform/types";
+import { cn } from "@/lib/utils";
 import {
   addTaxRegistrationAction,
   createTaxComplianceProfileAction,
@@ -32,35 +37,84 @@ import {
   transitionTaxFilingAction,
   uploadTaxEvidenceAction,
 } from "@/modules/commercial/actions/tax-compliance-actions";
+import {
+  clearCommercialTaxHandoff,
+  readCommercialTaxHandoff,
+  type CommercialTaxHandoffPayload,
+} from "@/modules/commercial/commercial-journey-handoff";
 import type { TaxComplianceDashboardView } from "@/modules/commercial";
 
 type Panel = "dashboard" | "registration" | "obligation" | "evidence" | "calendar";
 
 export function TaxComplianceWorkspace() {
+  const searchParams = useSearchParams();
+  const fromQuery = searchParams.get("handoff") === "1";
+  const initialHandoff = useMemo(() => readCommercialTaxHandoff(), []);
+
   const [isPending, startTransition] = useTransition();
   const [actionResult, setActionResult] = useState<PlatformActionResult | null>(
-    null
+    () => {
+      if (initialHandoff && fromQuery) {
+        return platformSuccess(
+          "Commercial result loaded",
+          "Amounts came from Price a sale. Create the tax obligation when ready — no retyping required."
+        );
+      }
+      if (fromQuery && !initialHandoff) {
+        return platformError(
+          "No commercial result waiting",
+          "Return to Price a sale, complete Review, then open Tax obligations again."
+        );
+      }
+      return null;
+    }
   );
-  const [panel, setPanel] = useState<Panel>("dashboard");
+  const [panel, setPanel] = useState<Panel>(() =>
+    initialHandoff || fromQuery ? "obligation" : "dashboard"
+  );
   const [dashboard, setDashboard] = useState<TaxComplianceDashboardView | null>(
     null
   );
   const [statusFilter, setStatusFilter] = useState("");
   const [taxTypeFilter, setTaxTypeFilter] = useState("");
+  const [handoff, setHandoff] = useState<CommercialTaxHandoffPayload | null>(
+    () => initialHandoff
+  );
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const [countryCode, setCountryCode] = useState("KE");
   const [regType, setRegType] = useState("VAT");
   const [regNumber, setRegNumber] = useState("");
   const [authority, setAuthority] = useState("KRA");
 
-  const [snapshotId, setSnapshotId] = useState("");
-  const [resolutionId, setResolutionId] = useState("");
-  const [taxComponentId, setTaxComponentId] = useState("tax-comp-1");
-  const [taxTypeCode, setTaxTypeCode] = useState("VAT");
-  const [taxableAmount, setTaxableAmount] = useState("1000.00");
-  const [taxAmount, setTaxAmount] = useState("160.00");
-  const [currencyCode, setCurrencyCode] = useState("KES");
-  const [obligationDate, setObligationDate] = useState("2026-06-15");
+  const [snapshotId, setSnapshotId] = useState(
+    () => initialHandoff?.snapshotId ?? ""
+  );
+  const [resolutionId, setResolutionId] = useState(
+    () => initialHandoff?.resolutionId ?? ""
+  );
+  const [commercialContractId] = useState(
+    () => initialHandoff?.commercialContractId ?? ""
+  );
+  const [taxComponentId, setTaxComponentId] = useState(
+    () => initialHandoff?.taxComponentId ?? "tax-comp-1"
+  );
+  const [taxTypeCode, setTaxTypeCode] = useState(
+    () => initialHandoff?.taxTypeCode ?? "VAT"
+  );
+  const [taxableAmount, setTaxableAmount] = useState(
+    () => initialHandoff?.taxableAmount ?? "1000.00"
+  );
+  const [taxAmount, setTaxAmount] = useState(
+    () => initialHandoff?.taxAmount ?? "160.00"
+  );
+  const [currencyCode, setCurrencyCode] = useState(
+    () => initialHandoff?.currencyCode ?? "KES"
+  );
+  const [obligationDate, setObligationDate] = useState(
+    () =>
+      initialHandoff?.obligationDate ?? new Date().toISOString().slice(0, 10)
+  );
   const [selectedObligationId, setSelectedObligationId] = useState<string | null>(
     null
   );
@@ -73,7 +127,7 @@ export function TaxComplianceWorkspace() {
       const result = await loadTaxComplianceDashboardAction();
       if (!result.success) {
         setActionResult(
-          platformError("Could not load tax compliance", result.error.message)
+          platformError("Could not load tax obligations", result.error.message)
         );
         return;
       }
@@ -84,6 +138,63 @@ export function TaxComplianceWorkspace() {
   useEffect(() => {
     refresh();
   }, []);
+
+  function createObligationFromContext() {
+    startTransition(async () => {
+      if (!dashboard?.profile) {
+        setActionResult(
+          platformError(
+            "Tax profile required",
+            "Create a country profile under Registrations first, then add a tax registration."
+          )
+        );
+        setPanel("registration");
+        return;
+      }
+      if ((dashboard.registrations ?? []).length === 0) {
+        setActionResult(
+          platformError(
+            "Tax registration required",
+            "Add a VAT (or matching) registration under Registrations, then create the obligation."
+          )
+        );
+        setPanel("registration");
+        return;
+      }
+
+      const result = await createTaxObligationFromSnapshotAction({
+        snapshotId,
+        resolutionId,
+        commercialContractId: commercialContractId || null,
+        taxComponentId,
+        taxTypeCode,
+        taxableAmount,
+        taxAmount,
+        currencyCode,
+        obligationDate,
+      });
+      if (!result.success) {
+        setActionResult(
+          platformError(
+            "Could not create obligation",
+            result.error.message,
+            result.error.field
+          )
+        );
+        return;
+      }
+      setSelectedObligationId(result.data.obligationId);
+      clearCommercialTaxHandoff();
+      setHandoff(null);
+      setActionResult(
+        platformSuccess(
+          "Tax obligation created",
+          `Status ${result.data.complianceStatus}. Continue with filing, remittance, or evidence.`
+        )
+      );
+      refresh();
+    });
+  }
 
   const filteredObligations = useMemo(() => {
     const all = [
@@ -103,21 +214,20 @@ export function TaxComplianceWorkspace() {
     <main className="space-y-4 p-4 sm:p-6">
       <SetBreadcrumbs
         items={[
-          { label: "Commercial", href: "/commercial/resolve" },
-          { label: "Tax compliance" },
+          { label: "Price a sale", href: "/commercial/resolve" },
+          { label: "Tax obligations" },
         ]}
       />
-      <PageBackLink href="/commercial/resolve" label="Commercial resolve" />
+      <PageBackLink href="/commercial/resolve" label="Back to Price a sale" />
 
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
-          Tax compliance
+          Tax obligations
         </h1>
         <p className="text-sm text-muted-foreground">
-          IP-11 manages tax obligations, calendars, filings, remittance records
-          and evidence. IP-03 remains the tax calculator — this workspace does
-          not recalculate tax. Capability is configurable; it is not a legal
-          compliance certificate.
+          Track tax registrations, filing periods, remittance records, and
+          evidence for commercial results already calculated. Due dates shown
+          here are configurable defaults — not a legal certification.
         </p>
       </div>
 
@@ -145,6 +255,24 @@ export function TaxComplianceWorkspace() {
       </div>
 
       <PlatformInlineFormFeedback result={actionResult} />
+
+      {handoff ? (
+        <Alert>
+          <AlertDescription>
+            <p className="font-medium">Commercial result ready</p>
+            <p>
+              {handoff.customerName ? `${handoff.customerName} · ` : ""}
+              {handoff.offeringName ?? "Offering"} · Expected{" "}
+              {handoff.currencyCode} {handoff.expectedAmount} · Tax{" "}
+              {handoff.currencyCode} {handoff.taxAmount}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Create the obligation under Obligations — you do not need to copy
+              amounts.
+            </p>
+          </AlertDescription>
+        </Alert>
+      ) : null}
 
       {panel === "dashboard" ? (
         <section className="space-y-4 rounded-xl border p-4">
@@ -291,7 +419,7 @@ export function TaxComplianceWorkspace() {
                     setActionResult(
                       platformSuccess(
                         "Registration added",
-                        "Next: generate calendar or create an obligation from a commercial snapshot."
+                        "Next: create the tax obligation from your commercial result (if waiting), or generate a calendar period."
                       )
                     );
                     refresh();
@@ -382,100 +510,136 @@ export function TaxComplianceWorkspace() {
       {panel === "obligation" ? (
         <section className="space-y-4 rounded-xl border p-4">
           <h2 className="text-lg font-semibold">Tax obligation</h2>
-          <p className="text-sm text-muted-foreground">
-            Enter amounts from an IP-06 snapshot / IP-03 tax component. Do not
-            invent tax here.
-          </p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field
-              id="snapshotId"
-              label="Snapshot ID"
-              value={snapshotId}
-              onChange={setSnapshotId}
+          {handoff ? (
+            <div className="space-y-3 rounded-lg border border-emerald-200 bg-emerald-50/50 p-3">
+              <p className="text-sm font-medium">
+                From Price a sale — create without retyping
+              </p>
+              <dl className="grid gap-2 text-sm sm:grid-cols-2">
+                <div>
+                  <dt className="text-muted-foreground">Customer</dt>
+                  <dd>{handoff.customerName ?? "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Offering</dt>
+                  <dd>{handoff.offeringName ?? "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Tax type</dt>
+                  <dd>{handoff.taxTypeCode}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Tax amount</dt>
+                  <dd>
+                    {handoff.currencyCode} {handoff.taxAmount}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Taxable amount</dt>
+                  <dd>
+                    {handoff.currencyCode} {handoff.taxableAmount}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Expected amount</dt>
+                  <dd>
+                    {handoff.currencyCode} {handoff.expectedAmount}
+                  </dd>
+                </div>
+              </dl>
+              <PlatformProcessingButton
+                type="button"
+                isProcessing={isPending}
+                processingLabel="Creating…"
+                idleLabel="Create tax obligation"
+                onClick={createObligationFromContext}
+              >
+                Create tax obligation
+              </PlatformProcessingButton>
+            </div>
+          ) : (
+            <PlatformEmptyState
+              title="No commercial result waiting"
+              description="Complete Price a sale through Review, then choose View tax obligations. A tax profile and registration are still required once."
+              actionLabel="Go to Price a sale"
+              onAction={() => {
+                window.location.href = "/commercial/resolve";
+              }}
+              compact
             />
-            <Field
-              id="resolutionId"
-              label="Resolution ID"
-              value={resolutionId}
-              onChange={setResolutionId}
-            />
-            <Field
-              id="taxComponentId"
-              label="Tax component ID"
-              value={taxComponentId}
-              onChange={setTaxComponentId}
-            />
-            <Field
-              id="taxTypeCode"
-              label="Tax type"
-              value={taxTypeCode}
-              onChange={setTaxTypeCode}
-            />
-            <Field
-              id="taxableAmount"
-              label="Taxable amount (from snapshot)"
-              value={taxableAmount}
-              onChange={setTaxableAmount}
-            />
-            <Field
-              id="taxAmount"
-              label="Tax amount (from IP-03)"
-              value={taxAmount}
-              onChange={setTaxAmount}
-            />
-            <Field
-              id="currencyCode"
-              label="Currency"
-              value={currencyCode}
-              onChange={setCurrencyCode}
-            />
-            <Field
-              id="obligationDate"
-              label="Obligation date"
-              value={obligationDate}
-              onChange={setObligationDate}
-            />
-          </div>
-          <PlatformProcessingButton
+          )}
+
+          <button
             type="button"
-            isProcessing={isPending}
-            processingLabel="Creating…"
-            idleLabel="Create obligation from snapshot"
-            onClick={() => {
-              startTransition(async () => {
-                const result = await createTaxObligationFromSnapshotAction({
-                  snapshotId,
-                  resolutionId,
-                  taxComponentId,
-                  taxTypeCode,
-                  taxableAmount,
-                  taxAmount,
-                  currencyCode,
-                  obligationDate,
-                });
-                if (!result.success) {
-                  setActionResult(
-                    platformError(
-                      "Obligation failed",
-                      result.error.message,
-                      result.error.field
-                    )
-                  );
-                  return;
-                }
-                setSelectedObligationId(result.data.obligationId);
-                setActionResult(
-                  platformSuccess(
-                    "Obligation created",
-                    `Status ${result.data.complianceStatus}. Next: filing / remittance / evidence.`
-                  )
-                );
-                refresh();
-              });
-            }}
+            className="text-sm text-muted-foreground underline"
+            onClick={() => setShowAdvanced((v) => !v)}
           >
-            Create obligation
-          </PlatformProcessingButton>
+            {showAdvanced ? "Hide advanced entry" : "Show advanced entry"}
+          </button>
+
+          {showAdvanced ? (
+            <div className="space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field
+                  id="snapshotId"
+                  label="Commercial reference (advanced)"
+                  value={snapshotId}
+                  onChange={setSnapshotId}
+                />
+                <Field
+                  id="resolutionId"
+                  label="Resolution reference (advanced)"
+                  value={resolutionId}
+                  onChange={setResolutionId}
+                />
+                <Field
+                  id="taxComponentId"
+                  label="Tax line reference (advanced)"
+                  value={taxComponentId}
+                  onChange={setTaxComponentId}
+                />
+                <Field
+                  id="taxTypeCode"
+                  label="Tax type"
+                  value={taxTypeCode}
+                  onChange={setTaxTypeCode}
+                />
+                <Field
+                  id="taxableAmount"
+                  label="Taxable amount"
+                  value={taxableAmount}
+                  onChange={setTaxableAmount}
+                />
+                <Field
+                  id="taxAmount"
+                  label="Tax amount"
+                  value={taxAmount}
+                  onChange={setTaxAmount}
+                />
+                <Field
+                  id="currencyCode"
+                  label="Currency"
+                  value={currencyCode}
+                  onChange={setCurrencyCode}
+                />
+                <Field
+                  id="obligationDate"
+                  label="Obligation date"
+                  value={obligationDate}
+                  onChange={setObligationDate}
+                />
+              </div>
+              <PlatformProcessingButton
+                type="button"
+                isProcessing={isPending}
+                processingLabel="Creating…"
+                idleLabel="Create from advanced fields"
+                onClick={createObligationFromContext}
+              >
+                Create from advanced fields
+              </PlatformProcessingButton>
+            </div>
+          ) : null}
 
           <div className="flex flex-wrap gap-2">
             <Input
@@ -495,7 +659,7 @@ export function TaxComplianceWorkspace() {
           {filteredObligations.length === 0 ? (
             <PlatformEmptyState
               title="No obligations yet"
-              description="Create an obligation from a commercial snapshot tax component."
+              description="Create an obligation from a completed commercial result on Price a sale."
               compact
             />
           ) : (
@@ -514,9 +678,6 @@ export function TaxComplianceWorkspace() {
                     <p className="text-muted-foreground">
                       Filing {o.filingStatus} · Remit {o.remittanceStatus} ·
                       Evidence {o.evidenceStatus} · {o.complianceStatus}
-                    </p>
-                    <p className="font-mono text-xs text-muted-foreground">
-                      snapshot {o.snapshotId} · rule {o.ruleKey}
                     </p>
                   </button>
                   {selectedObligationId === o.obligationId ? (
@@ -705,12 +866,18 @@ export function TaxComplianceWorkspace() {
         >
           Refresh dashboard
         </PlatformProcessingButton>
-        <a
+        <Link
           href="/commercial/resolve"
-          className="inline-flex h-9 items-center rounded-md border px-3 text-sm"
+          className={cn(buttonVariants({ variant: "outline" }))}
         >
-          Open commercial resolve
-        </a>
+          Price a sale
+        </Link>
+        <Link
+          href="/commercial/governance"
+          className={cn(buttonVariants({ variant: "outline" }))}
+        >
+          Commercial rules
+        </Link>
       </div>
     </main>
   );

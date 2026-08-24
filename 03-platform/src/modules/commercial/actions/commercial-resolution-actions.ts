@@ -160,6 +160,8 @@ export type ResolveBasePriceActionInput = {
   salesChannel?: string | null;
   region?: string | null;
   effectiveAt?: string | null;
+  /** Existing party identity (BP-002) — optional commercial context. */
+  partyId?: string | null;
 };
 
 export async function resolveCommercialBasePriceAction(
@@ -196,6 +198,7 @@ export async function resolveCommercialBasePriceAction(
         salesChannel: input.salesChannel,
         region: input.region,
         effectiveAt: input.effectiveAt,
+        partyId: input.partyId?.trim() || null,
       }
     );
     return { success: true, data };

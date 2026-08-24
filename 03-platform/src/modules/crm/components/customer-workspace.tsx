@@ -111,6 +111,13 @@ export function CustomerWorkspace({
         title={customer.displayName}
         subtitle={`${customer.customerNumber} · ${customer.statusName}`}
         statusLabel={customer.statusName}
+        quickActions={[
+          {
+            label: "Price a sale",
+            href: `/commercial/resolve?partyId=${encodeURIComponent(customer.partyId)}&crmId=${encodeURIComponent(customer.crmId)}&customerName=${encodeURIComponent(customer.displayName)}`,
+          },
+          { label: "Offerings", href: "/products" },
+        ]}
       />
 
       <PlatformTabs

@@ -1,14 +1,12 @@
 /**
  * Purpose:
- * Commercial resolution workspace — progressive IP-01 → IP-09 UX (§14).
- *
- * Implementation Package:
- * BP-005 / IP-01–IP-09 – Commercial Resolution UX
+ * Commercial pricing workspace — customer + offering → expected amount → tax handoff.
+ * Presentation layer consumes existing BP-005 services; does not recalculate masters.
  */
 
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -39,6 +37,11 @@ import {
   resolveCommercialBasePriceAction,
 } from "@/modules/commercial/actions/commercial-resolution-actions";
 import {
+  buildCommercialTaxHandoff,
+  saveCommercialTaxHandoff,
+  taxComplianceHandoffHref,
+} from "@/modules/commercial/commercial-journey-handoff";
+import {
   CommercialResolutionStepper,
   type CommercialStepDefinition,
   type CommercialStepId,
@@ -54,11 +57,21 @@ import {
   type TaxResolutionResult,
   type TaxTreatmentCode,
 } from "@/modules/commercial";
+import { searchCrmRecordsAction } from "@/modules/crm/actions/crm-actions";
+import type { CrmSummaryView } from "@/modules/crm/types";
 import { searchProductsAction } from "@/modules/product/actions/product-actions";
 import type { ProductSummaryView } from "@/modules/product/types";
 
 type FieldErrors = Partial<
-  Record<"offeringId" | "currencyCode" | "quantity" | "ratePercent" | "taxTypeCode", string>
+  Record<
+    | "customerId"
+    | "offeringId"
+    | "currencyCode"
+    | "quantity"
+    | "ratePercent"
+    | "taxTypeCode",
+    string
+  >
 >;
 
 const STEP_ORDER: CommercialStepId[] = [
@@ -68,7 +81,21 @@ const STEP_ORDER: CommercialStepId[] = [
   "review",
 ];
 
-export function CommercialResolutionWorkspace() {
+export type CommercialResolveInitialContext = {
+  partyId?: string | null;
+  crmId?: string | null;
+  customerName?: string | null;
+  offeringId?: string | null;
+  offeringName?: string | null;
+};
+
+type CommercialResolutionWorkspaceProps = {
+  initialContext?: CommercialResolveInitialContext;
+};
+
+export function CommercialResolutionWorkspace({
+  initialContext,
+}: CommercialResolutionWorkspaceProps) {
   const router = useRouter();
   const [activeStep, setActiveStep] = useState<CommercialStepId>("base-price");
   const [isPending, startTransition] = useTransition();
@@ -90,14 +117,56 @@ export function CommercialResolutionWorkspace() {
     >
   >({});
 
-  const [offeringQuery, setOfferingQuery] = useState("");
+  const [customerQuery, setCustomerQuery] = useState(
+    initialContext?.customerName ?? ""
+  );
+  const [customerSearchStatus, setCustomerSearchStatus] =
+    useState<PlatformSearchStateStatus>(
+      initialContext?.customerName || initialContext?.partyId ? "success" : "idle"
+    );
+  const [customerResults, setCustomerResults] = useState<CrmSummaryView[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<CrmSummaryView | null>(
+    initialContext?.partyId
+      ? {
+          crmId: initialContext.crmId ?? "",
+          partyId: initialContext.partyId,
+          customerNumber: "",
+          displayName: initialContext.customerName ?? "Selected customer",
+          partyTypeCode: "",
+          crmTypeCode: "",
+          crmTypeName: "",
+          statusCode: "",
+          statusName: "",
+          ownerPartyId: null,
+          ownerDisplayName: null,
+          branchId: null,
+          branchName: null,
+          customerSince: "",
+          updatedAt: "",
+        }
+      : null
+  );
+
+  const [offeringQuery, setOfferingQuery] = useState(
+    initialContext?.offeringName ?? ""
+  );
   const [offeringSearchStatus, setOfferingSearchStatus] =
-    useState<PlatformSearchStateStatus>("idle");
+    useState<PlatformSearchStateStatus>(
+      initialContext?.offeringId ? "success" : "idle"
+    );
   const [offeringResults, setOfferingResults] = useState<ProductSummaryView[]>(
     []
   );
   const [selectedOffering, setSelectedOffering] =
-    useState<ProductSummaryView | null>(null);
+    useState<ProductSummaryView | null>(
+      initialContext?.offeringId
+        ? ({
+            id: initialContext.offeringId,
+            productName: initialContext.offeringName ?? "Selected offering",
+            productCode: "",
+          } as ProductSummaryView)
+        : null
+    );
 
   const [currencyCode, setCurrencyCode] = useState("KES");
   const [quantity, setQuantity] = useState("1");
@@ -124,6 +193,51 @@ export function CommercialResolutionWorkspace() {
   const [treatment, setTreatment] = useState<TaxTreatmentCode>(
     TAX_TREATMENT_CODES.EXCLUSIVE
   );
+
+  useEffect(() => {
+    if (initialContext?.offeringId && initialContext.offeringName) {
+      startTransition(async () => {
+        const result = await searchProductsAction(
+          initialContext.offeringName!.trim()
+        );
+        if (result.success) {
+          const match =
+            result.data.find((p) => p.id === initialContext.offeringId) ??
+            result.data[0] ??
+            null;
+          if (match) {
+            setSelectedOffering(match);
+            setOfferingResults(result.data);
+            setOfferingSearchStatus("success");
+          }
+        }
+      });
+    }
+    if (initialContext?.customerName || initialContext?.crmId) {
+      startTransition(async () => {
+        const q =
+          initialContext.customerName?.trim() ||
+          initialContext.crmId?.trim() ||
+          "";
+        if (q.length < 2) return;
+        const result = await searchCrmRecordsAction(q);
+        if (result.success) {
+          const match =
+            result.data.find((c) => c.crmId === initialContext.crmId) ||
+            result.data.find((c) => c.partyId === initialContext.partyId) ||
+            result.data[0] ||
+            null;
+          if (match) {
+            setSelectedCustomer(match);
+            setCustomerResults(result.data);
+            setCustomerSearchStatus("success");
+          }
+        }
+      });
+    }
+    // Intentional once on mount for deep-link prefill
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const stepStatus = useMemo(() => {
     const map: Record<CommercialStepId, CommercialStepStatus> = {
@@ -182,14 +296,14 @@ export function CommercialResolutionWorkspace() {
   const steps: CommercialStepDefinition[] = [
     {
       id: "base-price",
-      label: "Base price",
+      label: "Customer & price",
       shortLabel: "Price",
       status: stepStatus["base-price"],
     },
     {
       id: "components",
-      label: "Components",
-      shortLabel: "Components",
+      label: "Charges",
+      shortLabel: "Charges",
       status: stepStatus.components,
     },
     {
@@ -200,8 +314,8 @@ export function CommercialResolutionWorkspace() {
     },
     {
       id: "review",
-      label: "Review / Expected",
-      shortLabel: "Expected",
+      label: "Review",
+      shortLabel: "Review",
       status: stepStatus.review,
     },
   ];
@@ -220,22 +334,13 @@ export function CommercialResolutionWorkspace() {
       actionableHint?: string;
     }
   ) {
-    const detail = [
-      error.family ? `[${error.family}]` : null,
-      error.code ? `${error.code}:` : null,
-      error.message,
-    ]
+    const detail = [error.message, error.actionableHint]
       .filter(Boolean)
       .join(" ");
-    const title = error.family
-      ? `Could not continue (${error.family})`
-      : "Could not continue";
     setActionResult(
       platformError(
-        title,
-        error.actionableHint
-          ? `${detail} ${error.actionableHint}`
-          : detail,
+        "Could not continue",
+        detail,
         error.field
       )
     );
@@ -254,6 +359,31 @@ export function CommercialResolutionWorkspace() {
         [error.field as keyof FieldErrors]: error.message,
       }));
     }
+  }
+
+  function searchCustomers() {
+    clearFeedback();
+    const q = customerQuery.trim();
+    if (q.length < 2) {
+      setCustomerSearchStatus("idle");
+      setCustomerResults([]);
+      return;
+    }
+    setCustomerSearchStatus("searching");
+    startTransition(async () => {
+      const result = await searchCrmRecordsAction(q);
+      if (!result.success) {
+        setCustomerSearchStatus("error");
+        setCustomerResults([]);
+        setActionResult(
+          platformError("Customer search failed", result.error.message)
+        );
+        return;
+      }
+      const normalized = result.data ?? [];
+      setCustomerResults(normalized);
+      setCustomerSearchStatus(normalized.length === 0 ? "empty" : "success");
+    });
   }
 
   function searchOfferings() {
@@ -279,8 +409,11 @@ export function CommercialResolutionWorkspace() {
     clearFeedback();
     setFieldErrors({});
     const errors: FieldErrors = {};
+    if (!selectedCustomer?.partyId) {
+      errors.customerId = "Select a customer to continue.";
+    }
     if (!selectedOffering) {
-      errors.offeringId = "Select an offering from search results.";
+      errors.offeringId = "Select a product or service from search results.";
     }
     if (!currencyCode.trim()) {
       errors.currencyCode = "Currency is required.";
@@ -308,6 +441,7 @@ export function CommercialResolutionWorkspace() {
         salesChannel: salesChannel.trim() || null,
         customerSegment: customerSegment.trim() || null,
         effectiveAt: effectiveAt.trim() || null,
+        partyId: selectedCustomer!.partyId,
       });
       if (!result.success) {
         applyActionError("base-price", result.error);
@@ -322,8 +456,8 @@ export function CommercialResolutionWorkspace() {
       setStepErrors((prev) => ({ ...prev, "base-price": undefined }));
       setActionResult(
         platformSuccess(
-          "Base price resolved",
-          `${result.data.currencyCode} ${result.data.unitPrice} from ${result.data.catalogueCode}.`
+          "Price found",
+          `${result.data.currencyCode} ${result.data.unitPrice} from ${result.data.catalogueName}.`
         )
       );
       setActiveStep("components");
@@ -352,8 +486,8 @@ export function CommercialResolutionWorkspace() {
       setStepErrors((prev) => ({ ...prev, components: undefined }));
       setActionResult(
         platformSuccess(
-          "Components composed",
-          `Principal ready. Payable candidate ${result.data.currencyCode} ${result.data.payableCandidate}.`
+          "Charges ready",
+          `Principal ready. Running total ${result.data.currencyCode} ${result.data.payableCandidate}.`
         )
       );
       setActiveStep("tax");
@@ -414,8 +548,47 @@ export function CommercialResolutionWorkspace() {
     });
   }
 
+  function persistTaxHandoff(
+    nextSnapshot: CommercialSnapshot,
+    nextExpected: ExpectedCommercialAmount,
+    nextContract: CommercialTransactionContract
+  ) {
+    const tax = nextSnapshot.resolution.tax;
+    const firstTax = tax?.taxComponents[0];
+    const taxable =
+      firstTax?.calculationBasisAmount ??
+      nextExpected.principalAmount ??
+      "0";
+    const taxAmount = tax?.totalTaxAmount ?? nextExpected.totalTaxAmount ?? "0";
+    const taxCompId = firstTax?.componentId ?? "tax-component";
+    const obligationDate = (nextSnapshot.resolution.effectiveAt || "").slice(
+      0,
+      10
+    ) || new Date().toISOString().slice(0, 10);
+
+    saveCommercialTaxHandoff(
+      buildCommercialTaxHandoff({
+        snapshotId: nextSnapshot.snapshotId,
+        resolutionId: nextSnapshot.resolution.resolutionId,
+        commercialContractId: nextContract.contractId,
+        taxComponentId: taxCompId,
+        taxTypeCode: firstTax?.taxTypeCode ?? (taxTypeCode.trim() || "VAT"),
+        taxableAmount: String(taxable),
+        taxAmount: String(taxAmount),
+        currencyCode: nextExpected.currency,
+        obligationDate,
+        expectedAmount: nextExpected.expectedAmount,
+        offeringName: nextSnapshot.resolution.offeringName,
+        offeringId: nextSnapshot.resolution.offeringId,
+        customerName: selectedCustomer?.displayName ?? null,
+        partyId: selectedCustomer?.partyId ?? null,
+        crmId: selectedCustomer?.crmId || null,
+      })
+    );
+  }
+
   async function finalizeSnapshot() {
-    if (!selectedOffering) {
+    if (!selectedOffering || !selectedCustomer?.partyId) {
       return;
     }
     const result = await finalizeCommercialExpectedAction({
@@ -425,6 +598,7 @@ export function CommercialResolutionWorkspace() {
       salesChannel: salesChannel.trim() || null,
       customerSegment: customerSegment.trim() || null,
       effectiveAt: effectiveAt.trim() || null,
+      partyId: selectedCustomer.partyId,
       taxTypeCode: taxTypeCode.trim(),
       taxTypeLabel: taxTypeLabel.trim() || taxTypeCode.trim(),
       ratePercent: Number(ratePercent),
@@ -440,15 +614,21 @@ export function CommercialResolutionWorkspace() {
     setContract(result.data.contract);
     setComposition(result.data.snapshot.resolution.composition);
     setTaxResult(result.data.snapshot.resolution.tax);
+    persistTaxHandoff(
+      result.data.snapshot,
+      result.data.expected,
+      result.data.contract
+    );
     setStepErrors((prev) => ({ ...prev, review: undefined }));
     setActionResult(
       platformSuccess(
-        "Commercial contract ready (IP-10)",
-        `Expected ${result.data.expected.currency} ${result.data.expected.expectedAmount}. Contract ${result.data.contract.contractId} validated for downstream consumption.`
+        "Commercial result ready",
+        `Expected ${result.data.expected.currency} ${result.data.expected.expectedAmount}. Continue to tax obligations when ready.`
       )
     );
     setActiveStep("review");
   }
+
   function goPrevious() {
     clearFeedback();
     const idx = STEP_ORDER.indexOf(activeStep);
@@ -507,21 +687,24 @@ export function CommercialResolutionWorkspace() {
     setSelectedOffering(null);
     setOfferingResults([]);
     setOfferingSearchStatus("idle");
+    setSelectedCustomer(null);
+    setCustomerResults([]);
+    setCustomerSearchStatus("idle");
     setFieldErrors({});
     setStepErrors({});
     setActionResult(
       platformSuccess(
-        "Ready for a new resolution",
-        "Search for an offering to begin."
+        "Ready for a new pricing",
+        "Select a customer and a product or service to begin."
       )
     );
   }
 
   const processingLabel =
     activeStep === "base-price"
-      ? "Resolving price…"
+      ? "Finding price…"
       : activeStep === "components"
-        ? "Composing components…"
+        ? "Building charges…"
         : activeStep === "tax"
           ? "Applying tax…"
           : "Calculating expected amount…";
@@ -531,21 +714,43 @@ export function CommercialResolutionWorkspace() {
       <SetBreadcrumbs
         items={[
           { label: "Dashboard", href: "/dashboard" },
-          { label: "Commercial resolution" },
+          { label: "Price a sale" },
         ]}
       />
       <PageBackLink href="/dashboard" label="Back to dashboard" />
 
       <header className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Commercial resolution
-        </h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Price a sale</h1>
         <p className="text-sm text-muted-foreground">
-          Resolve an applicable base price (IP-01 via IP-05 precedence), compose
-          commercial components (IP-02), apply tax (IP-03), freeze the commercial
-          snapshot (IP-06), then derive the expected commercial amount (IP-07).
-          Pricing conflicts fail closed — they are not silently resolved.
+          Choose a customer and product or service, apply tax, then review the
+          expected amount. Payment collection is not available yet.
         </p>
+        <div className="flex flex-wrap gap-2 text-sm">
+          <Link
+            href="/customers"
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+          >
+            Customers
+          </Link>
+          <Link
+            href="/products"
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+          >
+            Offerings
+          </Link>
+          <Link
+            href="/products/pricing"
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+          >
+            Pricing lists
+          </Link>
+          <Link
+            href="/commercial/governance"
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+          >
+            Commercial rules
+          </Link>
+        </div>
       </header>
 
       <CommercialResolutionStepper
@@ -559,24 +764,17 @@ export function CommercialResolutionWorkspace() {
           {activeStep === "base-price" ? (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold">1. Base price (IP-01)</h2>
+                <h2 className="text-lg font-semibold">1. Customer & price</h2>
                 <p className="text-sm text-muted-foreground">
-                  Find the offering and resolve the applicable BP-003 price.
+                  Select the customer, then the product or service, and find the
+                  applicable list price.
                 </p>
               </div>
 
               {stepErrors["base-price"] ? (
                 <Alert variant="destructive">
                   <AlertDescription>
-                    <p className="font-medium">
-                      Base price step
-                      {stepErrors["base-price"].family
-                        ? ` · ${stepErrors["base-price"].family}`
-                        : ""}
-                      {stepErrors["base-price"].code
-                        ? ` · ${stepErrors["base-price"].code}`
-                        : ""}
-                    </p>
+                    <p className="font-medium">Price step</p>
                     <p>{stepErrors["base-price"].message}</p>
                     {stepErrors["base-price"].actionableHint ? (
                       <p className="mt-1 text-sm">
@@ -584,14 +782,87 @@ export function CommercialResolutionWorkspace() {
                       </p>
                     ) : null}
                     <p className="mt-1 text-xs opacity-90">
-                      No commercial payable was produced.
+                      No commercial amount was produced.
                     </p>
                   </AlertDescription>
                 </Alert>
               ) : null}
 
               <div className="space-y-2">
-                <Label htmlFor="offering-search">Offering search</Label>
+                <Label htmlFor="customer-search">Customer *</Label>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Input
+                    id="customer-search"
+                    value={customerQuery}
+                    onChange={(e) => setCustomerQuery(e.target.value)}
+                    placeholder="Search by customer name or number"
+                    aria-invalid={Boolean(fieldErrors.customerId)}
+                  />
+                  <PlatformProcessingButton
+                    type="button"
+                    variant="secondary"
+                    isProcessing={
+                      isPending && customerSearchStatus === "searching"
+                    }
+                    processingLabel="Searching…"
+                    idleLabel="Search"
+                    onClick={searchCustomers}
+                  >
+                    Search
+                  </PlatformProcessingButton>
+                </div>
+                <FieldError message={fieldErrors.customerId} />
+              </div>
+
+              <PlatformSearchState
+                status={customerSearchStatus}
+                emptyTitle="No customers found"
+                emptyHints={[
+                  "Try another name or customer number",
+                  "Register the customer first",
+                ]}
+                createLabel="Open customers"
+                onCreate={() => {
+                  router.push("/customers/new");
+                }}
+                errorMessage="Retry the search, or check that a business is selected."
+                onRetry={searchCustomers}
+              >
+                <ul className="divide-y rounded-lg border">
+                  {customerResults.map((item) => {
+                    const selected = selectedCustomer?.partyId === item.partyId;
+                    return (
+                      <li key={item.crmId || item.partyId}>
+                        <button
+                          type="button"
+                          className={
+                            selected
+                              ? "flex w-full flex-col gap-0.5 bg-emerald-50 px-3 py-2 text-left"
+                              : "flex w-full flex-col gap-0.5 px-3 py-2 text-left hover:bg-muted/50"
+                          }
+                          onClick={() => setSelectedCustomer(item)}
+                        >
+                          <span className="text-sm font-medium">
+                            {item.displayName}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {item.customerNumber || item.statusName}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </PlatformSearchState>
+
+              {selectedCustomer ? (
+                <p className="text-sm">
+                  Customer: <strong>{selectedCustomer.displayName}</strong>
+                </p>
+              ) : null}
+
+              <div className="space-y-2">
+                <Label htmlFor="offering-search">Product or service *</Label>
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Input
                     id="offering-search"
@@ -621,8 +892,7 @@ export function CommercialResolutionWorkspace() {
                 emptyTitle="No offerings found"
                 emptyHints={[
                   "A different name or code",
-                  "Removing filters",
-                  "Create the offering in the Product Workspace first",
+                  "Create the offering first",
                 ]}
                 createLabel="Open offerings"
                 onCreate={() => {
@@ -660,7 +930,7 @@ export function CommercialResolutionWorkspace() {
 
               {selectedOffering ? (
                 <p className="text-sm">
-                  Selected: <strong>{selectedOffering.productName}</strong>
+                  Offering: <strong>{selectedOffering.productName}</strong>
                 </p>
               ) : null}
 
@@ -707,7 +977,7 @@ export function CommercialResolutionWorkspace() {
                   />
                 </div>
                 <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor="effectiveAt">Effective at</Label>
+                  <Label htmlFor="effectiveAt">Price date</Label>
                   <Input
                     id="effectiveAt"
                     type="datetime-local"
@@ -720,11 +990,10 @@ export function CommercialResolutionWorkspace() {
               {resolvedBase ? (
                 <Alert>
                   <AlertDescription>
-                    <p className="font-medium">Resolved base price</p>
+                    <p className="font-medium">List price found</p>
                     <p>
                       {resolvedBase.currencyCode} {resolvedBase.unitPrice} ·{" "}
-                      {resolvedBase.catalogueName} · item{" "}
-                      {resolvedBase.pricingItemId}
+                      {resolvedBase.catalogueName}
                     </p>
                   </AlertDescription>
                 </Alert>
@@ -735,41 +1004,29 @@ export function CommercialResolutionWorkspace() {
           {activeStep === "components" ? (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold">2. Components (IP-02)</h2>
+                <h2 className="text-lg font-semibold">2. Charges</h2>
                 <p className="text-sm text-muted-foreground">
-                  Build the principal commercial component from the resolved
-                  base price.
+                  Build the principal charge from the list price and quantity.
                 </p>
               </div>
               {stepErrors.components ? (
                 <Alert variant="destructive">
                   <AlertDescription>
-                    <p className="font-medium">
-                      Components step
-                      {stepErrors.components.family
-                        ? ` · ${stepErrors.components.family}`
-                        : ""}
-                      {stepErrors.components.code
-                        ? ` · ${stepErrors.components.code}`
-                        : ""}
-                    </p>
+                    <p className="font-medium">Charges step</p>
                     <p>{stepErrors.components.message}</p>
                     {stepErrors.components.actionableHint ? (
                       <p className="mt-1 text-sm">
                         {stepErrors.components.actionableHint}
                       </p>
                     ) : null}
-                    <p className="mt-1 text-xs opacity-90">
-                      No commercial payable was produced.
-                    </p>
                   </AlertDescription>
                 </Alert>
               ) : null}
               {!composition ? (
                 <PlatformEmptyState
-                  title="No components yet"
-                  description="Compose the principal component to continue to tax."
-                  actionLabel="Compose components"
+                  title="No charges yet"
+                  description="Build the principal charge to continue to tax."
+                  actionLabel="Build charges"
                   onAction={composeComponents}
                   compact
                 />
@@ -782,29 +1039,22 @@ export function CommercialResolutionWorkspace() {
           {activeStep === "tax" ? (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold">3. Tax (IP-03)</h2>
+                <h2 className="text-lg font-semibold">3. Tax</h2>
                 <p className="text-sm text-muted-foreground">
-                  Configure session tax treatment. Persisted tax rule masters
-                  are not yet available.
+                  Apply the tax treatment for this commercial result. You can
+                  refine governed tax rules under Commercial rules.
                 </p>
               </div>
               {stepErrors.tax ? (
                 <Alert variant="destructive">
                   <AlertDescription>
-                    <p className="font-medium">
-                      Tax step
-                      {stepErrors.tax.family ? ` · ${stepErrors.tax.family}` : ""}
-                      {stepErrors.tax.code ? ` · ${stepErrors.tax.code}` : ""}
-                    </p>
+                    <p className="font-medium">Tax step</p>
                     <p>{stepErrors.tax.message}</p>
                     {stepErrors.tax.actionableHint ? (
                       <p className="mt-1 text-sm">
                         {stepErrors.tax.actionableHint}
                       </p>
                     ) : null}
-                    <p className="mt-1 text-xs opacity-90">
-                      No commercial payable was produced.
-                    </p>
                   </AlertDescription>
                 </Alert>
               ) : null}
@@ -882,7 +1132,7 @@ export function CommercialResolutionWorkspace() {
             !snapshot || !expected ? (
               <PlatformEmptyState
                 title="Expected amount not ready"
-                description="Complete Base price, Components, and Tax, then finalize the IP-06 snapshot and IP-07 expected commercial amount."
+                description="Complete Customer & price, Charges, and Tax, then calculate the expected amount."
                 actionLabel="Calculate expected amount"
                 onAction={() => {
                   startTransition(async () => {
@@ -894,57 +1144,43 @@ export function CommercialResolutionWorkspace() {
             ) : (
               <div className="space-y-4">
                 <div>
-                  <h2 className="text-lg font-semibold">
-                    4. Review / Downstream contract (IP-06 → IP-10)
-                  </h2>
+                  <h2 className="text-lg font-semibold">4. Review</h2>
                   <p className="text-sm text-muted-foreground">
-                    IP-06 freezes the commercial calculation. IP-07 projects the
-                    expected amount. IP-10 publishes the validated contract for
-                    future BP-006 / BP-007 consumers — without recalculating
-                    price or tax.
+                    Confirm the commercial breakdown and expected amount. Next:
+                    open tax obligations for this result — amounts are carried
+                    forward automatically.
                   </p>
                 </div>
                 {stepErrors.review ? (
                   <Alert variant="destructive">
                     <AlertDescription>
-                      <p className="font-medium">
-                        Review / Expected step
-                        {stepErrors.review.family
-                          ? ` · ${stepErrors.review.family}`
-                          : ""}
-                        {stepErrors.review.code
-                          ? ` · ${stepErrors.review.code}`
-                          : ""}
-                      </p>
+                      <p className="font-medium">Review step</p>
                       <p>{stepErrors.review.message}</p>
                       {stepErrors.review.actionableHint ? (
                         <p className="mt-1 text-sm">
                           {stepErrors.review.actionableHint}
                         </p>
                       ) : null}
-                      <p className="mt-1 text-xs opacity-90">
-                        No commercial payable was produced.
-                      </p>
                     </AlertDescription>
                   </Alert>
                 ) : null}
                 <PlatformInlineFormFeedback
                   result={platformSuccess(
-                    "Expected commercial amount calculated",
-                    `${expected.currency} ${expected.expectedAmount} from snapshot ${snapshot.snapshotId}.`
+                    "Expected amount calculated",
+                    `${expected.currency} ${expected.expectedAmount} for ${selectedCustomer?.displayName ?? "customer"} · ${snapshot.resolution.offeringName}.`
                   )}
                 />
 
                 <div className="grid gap-3 sm:grid-cols-3">
                   <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3">
                     <p className="text-xs font-medium uppercase tracking-wide text-emerald-900">
-                      Expected commercial amount
+                      Expected amount
                     </p>
                     <p className="mt-1 text-xl font-semibold text-emerald-950">
                       {expected.currency} {expected.expectedAmount}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      What the business expects to charge/collect
+                      What the business expects to charge
                     </p>
                   </div>
                   <div className="rounded-lg border p-3">
@@ -955,7 +1191,7 @@ export function CommercialResolutionWorkspace() {
                       Not available yet
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Payment collection is BP-007+
+                      Payment collection is a future capability
                     </p>
                   </div>
                   <div className="rounded-lg border p-3">
@@ -974,26 +1210,20 @@ export function CommercialResolutionWorkspace() {
                 {contract ? (
                   <div className="space-y-2 rounded-lg border border-sky-200 bg-sky-50/50 p-3">
                     <p className="text-sm font-semibold text-sky-950">
-                      Downstream commercial contract (IP-10)
+                      Commercial result
                     </p>
                     <dl className="grid gap-2 text-sm sm:grid-cols-2">
                       <div>
-                        <dt className="text-muted-foreground">Commercial result</dt>
+                        <dt className="text-muted-foreground">Customer</dt>
+                        <dd className="font-medium">
+                          {selectedCustomer?.displayName ?? "—"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground">Expected payable</dt>
                         <dd className="font-medium">
                           {contract.commercial.currency}{" "}
                           {contract.commercial.expectedPayable}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted-foreground">Currency</dt>
-                        <dd className="font-medium">
-                          {contract.commercial.currency}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted-foreground">Snapshot</dt>
-                        <dd className="font-mono text-xs">
-                          {contract.identity.snapshotId}
                         </dd>
                       </div>
                       <div>
@@ -1001,15 +1231,9 @@ export function CommercialResolutionWorkspace() {
                         <dd className="font-medium">{contract.status}</dd>
                       </div>
                       <div>
-                        <dt className="text-muted-foreground">Contract ID</dt>
-                        <dd className="font-mono text-xs">
-                          {contract.contractId}
-                        </dd>
-                      </div>
-                      <div>
                         <dt className="text-muted-foreground">Next action</dt>
                         <dd className="font-medium">
-                          Continue to transaction (BP-006+) / resolve issue
+                          View tax obligations for this result
                         </dd>
                       </div>
                     </dl>
@@ -1028,17 +1252,13 @@ export function CommercialResolutionWorkspace() {
                     <dd className="font-medium">{snapshot.resolution.quantity}</dd>
                   </div>
                   <div>
-                    <dt className="text-muted-foreground">Currency</dt>
-                    <dd className="font-medium">{expected.currency}</dd>
-                  </div>
-                  <div>
                     <dt className="text-muted-foreground">Principal</dt>
                     <dd className="font-medium">
                       {expected.currency} {expected.principalAmount}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-muted-foreground">Components (charges)</dt>
+                    <dt className="text-muted-foreground">Other charges</dt>
                     <dd className="font-medium">
                       {expected.currency} {expected.totalComponentAmount}
                     </dd>
@@ -1062,38 +1282,28 @@ export function CommercialResolutionWorkspace() {
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-muted-foreground">Payable (IP-06)</dt>
+                    <dt className="text-muted-foreground">Payable</dt>
                     <dd className="font-medium">
                       {expected.currency} {expected.payableAmount}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground">Snapshot id</dt>
-                    <dd className="font-mono text-xs">{snapshot.snapshotId}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground">Integrity hash</dt>
-                    <dd className="font-mono text-xs">
-                      {snapshot.integrityHash}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground">Provenance pipeline</dt>
-                    <dd className="font-mono text-xs">
-                      {expected.provenance.pipeline}
                     </dd>
                   </div>
                 </dl>
                 <ComponentTable composition={snapshot.resolution.composition} />
                 <div className="flex flex-wrap gap-2">
-                  <Button type="button" onClick={resetWorkspace}>
-                    Resolve another
+                  <Link
+                    href={taxComplianceHandoffHref()}
+                    className={cn(buttonVariants())}
+                  >
+                    View tax obligations
+                  </Link>
+                  <Button type="button" variant="outline" onClick={resetWorkspace}>
+                    Price another sale
                   </Button>
                   <Link
                     href="/products/pricing"
                     className={cn(buttonVariants({ variant: "outline" }))}
                   >
-                    Open pricing master
+                    Open pricing lists
                   </Link>
                 </div>
               </div>
@@ -1122,9 +1332,9 @@ export function CommercialResolutionWorkspace() {
                   processingLabel={processingLabel}
                   idleLabel={
                     activeStep === "base-price" && !resolvedBase
-                      ? "Resolve price"
+                      ? "Find price"
                       : activeStep === "components" && !composition
-                        ? "Compose components"
+                        ? "Build charges"
                         : activeStep === "tax" && !taxResult
                           ? "Apply tax"
                           : "Next"
@@ -1132,17 +1342,20 @@ export function CommercialResolutionWorkspace() {
                   onClick={goNext}
                 >
                   {activeStep === "base-price" && !resolvedBase
-                    ? "Resolve price"
+                    ? "Find price"
                     : activeStep === "components" && !composition
-                      ? "Compose components"
+                      ? "Build charges"
                       : activeStep === "tax" && !taxResult
                         ? "Apply tax"
                         : "Next"}
                 </PlatformProcessingButton>
               ) : (
-                <Button type="button" onClick={resetWorkspace}>
-                  Resolve another
-                </Button>
+                <Link
+                  href={taxComplianceHandoffHref()}
+                  className={cn(buttonVariants())}
+                >
+                  View tax obligations
+                </Link>
               )}
             </div>
           </PlatformFormActionFooter>
@@ -1159,7 +1372,8 @@ export function CommercialResolutionWorkspace() {
               activeStep,
               Boolean(resolvedBase),
               Boolean(composition),
-              Boolean(taxResult)
+              Boolean(taxResult),
+              Boolean(snapshot && expected)
             )}
           </p>
           {Object.values(stepErrors).some(Boolean) ? (
@@ -1193,13 +1407,13 @@ function FieldError({ message }: { message?: string }) {
 function guidanceCopy(step: CommercialStepId): string {
   switch (step) {
     case "base-price":
-      return "IP-01 identifies eligible BP-003 prices; IP-05 selects the deterministic winner or returns PRICE_CONFLICT.";
+      return "Pick the customer and offering, then find the applicable list price. Overlapping prices must be fixed in Pricing lists — this screen will not pick arbitrarily.";
     case "components":
-      return "IP-02 builds the principal commercial component from the resolved base price.";
+      return "Build the principal charge from the list price and quantity.";
     case "tax":
-      return "IP-03 calculates tax components using explicit treatment and rate.";
+      return "Apply tax treatment and rate for this commercial result.";
     case "review":
-      return "IP-06 freezes the commercial snapshot. IP-07 derives the expected commercial amount from that snapshot only — not a second pricing engine. Actual payment and variance are not available yet.";
+      return "Confirm the expected amount. Actual payment and variance are not available yet. Continue to tax obligations without retyping amounts.";
   }
 }
 
@@ -1207,23 +1421,26 @@ function nextCopy(
   step: CommercialStepId,
   hasBase: boolean,
   hasComposition: boolean,
-  hasTax: boolean
+  hasTax: boolean,
+  hasReview: boolean
 ): string {
   switch (step) {
     case "base-price":
       return hasBase
-        ? "Continue to Components, or resolve again with different dimensions."
-        : "Search and select an offering, then Resolve price.";
+        ? "Continue to Charges, or find the price again with different options."
+        : "Search and select a customer and offering, then Find price.";
     case "components":
       return hasComposition
         ? "Continue to Tax."
-        : "Compose components to create the principal line.";
+        : "Build charges to create the principal line.";
     case "tax":
       return hasTax
-        ? "Continue to Review / Expected to freeze the snapshot and calculate expected amount."
+        ? "Continue to Review to confirm the expected amount."
         : "Enter tax treatment and rate, then Apply tax.";
     case "review":
-      return "Resolve another commercial amount, or return to the dashboard. Payment collection and variance are not part of this screen.";
+      return hasReview
+        ? "Open Tax obligations to record filing and remittance for this result."
+        : "Calculate the expected amount to finish this pricing.";
   }
 }
 
@@ -1258,7 +1475,7 @@ function ComponentTable({
         <tfoot>
           <tr className="border-t bg-muted/30">
             <td className="px-3 py-2 font-semibold" colSpan={2}>
-              Payable candidate
+              Running total
             </td>
             <td className="px-3 py-2 font-semibold">
               {composition.currencyCode} {composition.payableCandidate}
