@@ -5,19 +5,19 @@
 | Implementation Package | IP-10 |
 | Build Pack | BP-004 – Customer Relationship Management |
 | Priority | High |
-| Depends On | IP-03, BP-003 IP-01, BP-003 IP-11, ENG-003n (optional) |
+| Depends On | IP-03, BP-003 IP-01, BP-003 IP-11, BP-006 IP-01 (conversion consumer), ENG-003n (optional) |
 
 ---
 
 ## Objective
 
-Enable CRM users to create quotations and advance the sales pipeline from opportunity and account context, consuming BP-003 offerings and pricing while maintaining CRM-to-commercial document linkage without implementing fulfilment or billing.
+Enable CRM users to create quotations and advance the sales pipeline from opportunity and account context, consuming catalogue/pricing (and BP-005 commercial resolution when aligned) while maintaining CRM-to-commercial document linkage. **Quotation ownership stays in BP-004. Conversion of an eligible quotation into a sales order is owned by BP-006 IP-01.** BP-004 does not persist sales orders and does not implement fulfilment or billing.
 
 ---
 
 ## Business Problem
 
-Sales teams rebuild quotes manually outside CRM, introducing pricing errors and losing traceability from opportunity to order. Quotations must pull live offering and price data from BP-003, respect account context, and hand off to operational Build Packs for fulfilment without CRM owning inventory or billing.
+Sales teams rebuild quotes manually outside CRM, introducing pricing errors and losing traceability from opportunity to order. Quotations must pull live offering and price data, respect account context, and **hand off conversion to BP-006** so the user is not forced to start a disconnected sale. CRM does not own the sales order, inventory or billing.
 
 ---
 
@@ -30,7 +30,8 @@ Sales teams rebuild quotes manually outside CRM, introducing pricing errors and 
 - Quotation lifecycle: Draft, Sent, Accepted, Rejected, Expired
 - Quotation versioning and revision
 - Customer acceptance tracking
-- Sales order initiation from accepted quotation
+- Conversion eligibility for BP-006 IP-01 (accepted, unexpired, same business/customer)
+- Handoff to BP-006 to convert quotation → sales order (CRM does **not** persist the order)
 - Linkage to opportunity, account, and CRM record
 - PDF/document output via ENG-015
 - Pipeline visibility from quotation stage through acceptance
@@ -39,9 +40,10 @@ Sales teams rebuild quotes manually outside CRM, introducing pricing errors and 
 
 - Product catalogue management (BP-003)
 - Pricing rule configuration (BP-003 IP-11)
-- Order fulfilment, shipping, inventory (BP-006+)
-- Invoicing and payment (BP-007+)
-- Complex discount approval engines (future)
+- **Sales order persistence and quote-to-order execution (BP-006 IP-01)**
+- Order fulfilment, inspection, shipping, inventory (BP-006 / BP-008)
+- Invoicing and payment (BP-007)
+- Complex discount approval engines (BP-005 / future)
 
 ---
 
@@ -52,7 +54,7 @@ Sales teams rebuild quotes manually outside CRM, introducing pricing errors and 
 | BR-001 | Generate accurate quotations from live catalogue and pricing. |
 | BR-002 | Maintain traceability from opportunity to quotation to order. |
 | BR-003 | Support quotation revision without losing history. |
-| BR-004 | Convert accepted quotations to sales orders for downstream fulfilment. |
+| BR-004 | Expose accepted quotations as eligible for conversion; **BP-006 IP-01 executes conversion** into a sales order. |
 | BR-005 | Apply business-specific quotation validity and terms. |
 | BR-006 | Surface quotation progress within the sales pipeline view (IP-03). |
 | BR-007 | Optional: track quotation turnaround SLA from draft to sent/accepted via ENG-003n. |
@@ -71,10 +73,10 @@ Sales teams rebuild quotes manually outside CRM, introducing pricing errors and 
 | FR-006 | Generate quotation document via ENG-015. |
 | FR-007 | Mark quotation Sent, Accepted, Rejected, or Expired. |
 | FR-008 | Create revised quotation version preserving prior versions. |
-| FR-009 | Convert Accepted quotation to sales order record. |
-| FR-010 | Link sales order to quotation, opportunity, and account. |
+| FR-009 | Hand off an Accepted (conversion-eligible) quotation to **BP-006 IP-01**; do not persist a sales order in CRM. |
+| FR-010 | Retain linkage from quotation to the resulting BP-006 order id once conversion succeeds. |
 | FR-011 | Publish quotation and order events to timeline and audit. |
-| FR-012 | Search quotations and orders by number, account, status, date. |
+| FR-012 | Search quotations by number, account, status, date. Order search is owned by BP-006. |
 
 ---
 
@@ -85,9 +87,9 @@ Sales teams rebuild quotes manually outside CRM, introducing pricing errors and 
 | BRU-001 | Line items must reference active BP-003 offerings. |
 | BRU-002 | Pricing resolved at quotation creation; locked on Sent unless revised. |
 | BRU-003 | Expired quotations cannot convert to order without renewal. |
-| BRU-004 | Accepted quotation required before order creation where configured. |
+| BRU-004 | BP-006 requires a conversion-eligible quotation; CRM must not create the sales order. |
 | BRU-005 | Quotation versions are immutable once Sent. |
-| BRU-006 | Sales order creation updates linked opportunity stage where configured. |
+| BRU-006 | Successful BP-006 conversion may update linked opportunity stage where configured. |
 
 ---
 
@@ -100,7 +102,7 @@ Add Offerings (BP-003) + Prices (BP-003)
       ↓
 Draft → Review → Send
       ↓
-Accepted? ──Yes──→ Create Sales Order → Handoff to Fulfilment BP
+Accepted? ──Yes──→ Convert Quote (BP-006 IP-01) → Sales Order (BP-006) → Fulfilment
       │
       No → Rejected / Expired → Revise or Close Opportunity
 ```
@@ -115,7 +117,7 @@ Accepted? ──Yes──→ Create Sales Order → Handoff to Fulfilment BP
 | Default validity period | Days until expiry |
 | Price list defaults | By channel or segment |
 | Terms and conditions templates | ENG-015 document templates |
-| Order creation rules | Auto-stage update on opportunity |
+| Order creation rules | Auto-stage update on opportunity after **BP-006** conversion |
 
 ---
 
@@ -127,9 +129,9 @@ Accepted? ──Yes──→ Create Sales Order → Handoff to Fulfilment BP
 | BP-003 IP-11 | Price resolution |
 | IP-03 | Opportunity and pipeline linkage |
 | IP-04 | Account and billing context |
+| BP-006 IP-01 | **Owns** quote-to-order conversion and sales order persistence |
 | ENG-015 | Quotation PDF generation |
 | ENG-005 | Approval for high-value quotes |
-| BP-006+ | Sales order handoff (future consumption) |
 
 ---
 
@@ -150,7 +152,7 @@ Accepted? ──Yes──→ Create Sales Order → Handoff to Fulfilment BP
 |----|-----------|
 | AC-001 | Quotations build from BP-003 offerings and pricing. |
 | AC-002 | Version history preserved on revision. |
-| AC-003 | Accepted quotation converts to sales order with linkage. |
+| AC-003 | Eligible accepted quotation is handed to BP-006 IP-01; CRM does not persist the sales order. |
 | AC-004 | Expired quotations blocked from order conversion. |
 | AC-005 | Document generation produces quotation PDF. |
 
@@ -164,8 +166,8 @@ Accepted? ──Yes──→ Create Sales Order → Handoff to Fulfilment BP
 |--------------|-------------|
 | **Widgets** | Outstanding, pending acceptance, expired, **accepted** (`quotation.*` stable IDs) |
 | **Insights** | Quotation awaiting response, total quoted value |
-| **Quick actions** | View latest, create quotation |
-| **Timeline** | `QUOTATION_CREATED`, `QUOTATION_SENT`, `QUOTATION_ACCEPTED`, `QUOTATION_REJECTED`, `QUOTATION_EXPIRED`, `QUOTATION_REVISED` |
+| **Quick actions** | View latest, create quotation, **Convert Quote** (invokes BP-006 IP-01 when eligible) |
+| **Timeline** | `QUOTATION_CREATED`, `QUOTATION_SENT`, `QUOTATION_ACCEPTED`, `QUOTATION_REJECTED`, `QUOTATION_EXPIRED`, `QUOTATION_REVISED`, `QUOTATION_CONVERTED` (when BP-006 conversion succeeds) |
 | **Publisher** | `QuotationCustomer360Provider` — mounted by IP-01 (not a second 360 shell) |
 
 ---
@@ -179,7 +181,7 @@ Accepted? ──Yes──→ Create Sales Order → Handoff to Fulfilment BP
 | BP-003 pricing consumption | Complete |
 | Approval threshold (ENG-005-ready) | Complete — multi-tier deferred |
 | Acceptance channel metadata | Complete — channels not implemented |
-| Sales order handoff stub | Complete |
+| Sales order handoff stub | Complete — **execution owner is BP-006 IP-01**; CRM must not persist orders |
 | HTML document adapter | Complete — PDF deferred |
 | UI + navigation | Complete |
 | Customer 360 contribution contract | Complete |

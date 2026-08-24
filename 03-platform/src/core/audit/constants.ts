@@ -81,6 +81,7 @@ export const AUDIT_ENTITY_NAMES = {
   CRM_SLA_POLICY: "crm_sla_policy",
   COMMERCIAL_RULE_VERSION: "commercial_rule_version",
   COMMERCIAL_OVERRIDE_REQUEST: "commercial_override_request",
+  SALES_ORDER: "sales_order",
 } as const;
 
 export type AuditEntityName =
@@ -136,6 +137,7 @@ export const AUDIT_ENTITY_LABELS: Record<AuditEntityName, string> = {
   crm_sla_policy: "CRM SLA Policy",
   commercial_rule_version: "Commercial Rule Version",
   commercial_override_request: "Commercial Override Request",
+  sales_order: "Sales Order",
 };
 
 /**
@@ -170,6 +172,7 @@ export const AUDIT_SOURCE_MODULES = {
   CRM_CASE: "crm_case",
   CRM_GOVERNANCE: "crm_governance",
   COMMERCIAL_GOVERNANCE: "commercial_governance",
+  SALES_ORDERS: "sales_orders",
 } as const;
 
 export type AuditSourceModule =
@@ -202,6 +205,7 @@ export const AUDIT_SOURCE_MODULE_LABELS: Record<AuditSourceModule, string> = {
   crm_case: "CRM Case",
   crm_governance: "CRM Governance",
   commercial_governance: "Commercial Governance",
+  sales_orders: "Sales Orders",
 };
 
 export const AUDIT_DEFAULT_PAGE_SIZE = 25;

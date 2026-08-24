@@ -72,7 +72,7 @@ Without a published contract, each pack invents its own total, tax and discount 
 
 | Consumer | Allowed | Forbidden |
 |----------|---------|-----------|
-| BP-006 Sales | Call resolve; attach snapshot id on order commit | Recalculate tax/discount in checkout UI/server independently |
+| BP-006 Sales | Call resolve; attach snapshot id on order commit; convert quote via IP-01 using a valid contract | Recalculate tax/discount in checkout UI/server independently |
 | BP-004 Quotations | May call resolve for quote totals (future alignment) | Store only a naked total without snapshot/provenance when commercial commit is required |
 | BP-007 Payments | Read expected payable/components; allocate actuals | Re-derive tax as system of record |
 | Future RA | Compare expected vs actual using BP-005 expected amounts | Rebuild expected commercial from current rules for historical txns |

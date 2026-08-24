@@ -252,7 +252,7 @@ export function QuotationWorkspace({
                     runLifecycle(
                       () => convertQuotationToSalesOrderAction(quotation.id),
                       (data) => setSalesOrder(data),
-                      "Sales order created."
+                        "Draft sale created. Review and confirm next.",
                     )
                   }
                 />
@@ -273,7 +273,11 @@ export function QuotationWorkspace({
 
             {salesOrder ? (
               <p className="text-sm text-emerald-700">
-                Sales order {salesOrder.orderNumber} created ({salesOrder.status}).
+                Sale {salesOrder.orderNumber} created as a draft.{" "}
+                <Link href={`/sales/${salesOrder.id}`} className="underline">
+                  Review and confirm
+                </Link>
+                . Payment is not yet recorded.
               </p>
             ) : null}
           </CardContent>

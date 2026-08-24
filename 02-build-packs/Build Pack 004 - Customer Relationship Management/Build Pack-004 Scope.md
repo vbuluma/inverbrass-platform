@@ -93,7 +93,7 @@ BP-004 delivers end-to-end CRM capabilities covering:
 | IP-07 | Visit planning, collaborative call reports — **feeds Customer 360** | IP-01, IP-04, IP-05, IP-06, ENG-003n, ENG-005 |
 | IP-08 | Communication log, channels — **feeds Customer 360** | IP-04, IP-05, BP-002 |
 | IP-09 | Cases, complaints, SLA — **feeds Customer 360** | IP-01, IP-04, IP-05, IP-08, ENG-003n |
-| IP-10 | Quotations — **feeds Customer 360** | IP-03, BP-003 |
+| IP-10 | Quotations — **feeds Customer 360**; **quote-to-order execution is BP-006 IP-01** | IP-03, BP-003 |
 | IP-11 | Campaigns, responses — **feeds Customer 360** | IP-02, IP-08, BP-002 |
 | IP-12 | Dashboards, KPIs, **customer-scoped Analytics tab and health score for 360** | IP-01–IP-11, ENG-003n, ENG-011 |
 | IP-13 | Governance, readiness, merge, SLA admin, administration | IP-01–IP-12, ENG-003l, ENG-003n, ENG-005 |
@@ -129,7 +129,8 @@ The following belong to other Build Packs or future phases:
 
 | Area | Owner |
 |------|-------|
-| Order fulfilment, deliveries, service fulfilment | BP-006 |
+| Order fulfilment, deliveries, goods inspection, service fulfilment | BP-006 |
+| Quote-to-order conversion (execution / sales order persistence) | BP-006 IP-01 |
 | Billing, invoicing, receivables | BP-007 |
 | Pricing tax / discounts / promotions beyond offering prices | BP-005 |
 | Full marketing automation | Future BP |
@@ -146,10 +147,10 @@ The following belong to other Build Packs or future phases:
 | BP-003 | What is offered (Offerings) |
 | BP-004 | How we build and manage customer relationships — **Customer 360 is the primary experience** (IP-01) |
 | BP-005 | Commercial rules (tax, discounts, promotions) |
-| BP-006 | How we sell and fulfil (orders, checkout, fulfilment) |
+| BP-006 | How we sell and fulfil (orders, checkout, fulfilment, inspection); **converts** BP-004 quotations |
 | BP-007 | Billing, payments, receipting |
 
-BP-004 deliberately stops before operational fulfilment and billing. IP-10 covers quotations and pipeline linkage; order execution remains BP-006.
+BP-004 deliberately stops before operational fulfilment and billing. IP-10 covers quotations and pipeline linkage; **quote-to-order conversion and order execution remain BP-006**.
 
 ---
 

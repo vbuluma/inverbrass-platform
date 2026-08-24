@@ -428,6 +428,34 @@
       "when": 1784564588857,
       "tag": "0056_bp005_ip011_tax_compliance",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1784564588858,
+      "tag": "0057_bp006_ip001_sales_order_creation",
+      "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1784564588859,
+      "tag": "0058_bp006_ip002_order_lifecycle_fulfilment",
+      "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1784564588860,
+      "tag": "0059_bp006_ip003_delivery_inspection_service",
+      "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1784564588861,
+      "tag": "0060_bp006_ip004_amendments_cancellation_returns",
+      "breakpoints": true
     }
   ]
 }

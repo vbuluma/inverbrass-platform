@@ -63,7 +63,7 @@ export const CRM_QUOTATION_LABELS = {
     approve: "Approve",
     rejectApproval: "Reject Approval",
     generateDocument: "Generate Document",
-    convertOrder: "Create Sales Order",
+    convertOrder: "Convert to Sale",
   },
   tabs: {
     overview: "Overview",

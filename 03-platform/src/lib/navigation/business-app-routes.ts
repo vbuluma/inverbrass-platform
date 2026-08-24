@@ -13,6 +13,7 @@ export const BUSINESS_APP_PREFIXES = [
   "/opportunities",
   "/accounts",
   "/quotations",
+  "/sales",
   "/campaigns",
   "/crm-analytics",
   "/crm",

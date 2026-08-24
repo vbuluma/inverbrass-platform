@@ -24,6 +24,7 @@ import {
   PackageIcon,
   SettingsIcon,
   ShieldCheckIcon,
+  ShoppingCartIcon,
   StarIcon,
   TargetIcon,
   UsersIcon,
@@ -90,6 +91,12 @@ export const BUSINESS_APP_NAV_ITEMS: PlatformNavItem[] = [
     label: "Quotations",
     href: "/quotations",
     icon: FileTextIcon,
+  },
+  {
+    id: "sales",
+    label: "Sales",
+    href: "/sales",
+    icon: ShoppingCartIcon,
   },
   {
     id: "commercial-resolve",

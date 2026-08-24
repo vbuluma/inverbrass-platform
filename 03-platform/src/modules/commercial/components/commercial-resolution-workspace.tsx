@@ -42,6 +42,11 @@ import {
   taxComplianceHandoffHref,
 } from "@/modules/commercial/commercial-journey-handoff";
 import {
+  buildCommercialSaleHandoff,
+  createSaleHref,
+  saveCommercialSaleHandoff,
+} from "@/modules/sales/sales-journey-handoff";
+import {
   CommercialResolutionStepper,
   type CommercialStepDefinition,
   type CommercialStepId,
@@ -548,6 +553,30 @@ export function CommercialResolutionWorkspace({
     });
   }
 
+  function persistSaleHandoff(
+    nextSnapshot: CommercialSnapshot,
+    nextExpected: ExpectedCommercialAmount,
+    nextContract: CommercialTransactionContract
+  ) {
+    if (!selectedCustomer?.partyId) {
+      return;
+    }
+    saveCommercialSaleHandoff(
+      buildCommercialSaleHandoff({
+        partyId: selectedCustomer.partyId,
+        crmId: selectedCustomer.crmId || null,
+        customerName: selectedCustomer.displayName ?? null,
+        offeringId: nextSnapshot.resolution.offeringId,
+        offeringName: nextSnapshot.resolution.offeringName,
+        quantity: nextSnapshot.resolution.quantity,
+        currencyCode: nextExpected.currency,
+        snapshot: nextSnapshot,
+        expected: nextExpected,
+        contract: nextContract,
+      })
+    );
+  }
+
   function persistTaxHandoff(
     nextSnapshot: CommercialSnapshot,
     nextExpected: ExpectedCommercialAmount,
@@ -615,6 +644,11 @@ export function CommercialResolutionWorkspace({
     setComposition(result.data.snapshot.resolution.composition);
     setTaxResult(result.data.snapshot.resolution.tax);
     persistTaxHandoff(
+      result.data.snapshot,
+      result.data.expected,
+      result.data.contract
+    );
+    persistSaleHandoff(
       result.data.snapshot,
       result.data.expected,
       result.data.contract
@@ -1233,7 +1267,7 @@ export function CommercialResolutionWorkspace({
                       <div>
                         <dt className="text-muted-foreground">Next action</dt>
                         <dd className="font-medium">
-                          View tax obligations for this result
+                          Create a sale or view tax obligations
                         </dd>
                       </div>
                     </dl>
@@ -1291,8 +1325,20 @@ export function CommercialResolutionWorkspace({
                 <ComponentTable composition={snapshot.resolution.composition} />
                 <div className="flex flex-wrap gap-2">
                   <Link
-                    href={taxComplianceHandoffHref()}
+                    href={createSaleHref({
+                      partyId: selectedCustomer?.partyId,
+                      crmId: selectedCustomer?.crmId,
+                      customerName: selectedCustomer?.displayName,
+                      offeringId: snapshot.resolution.offeringId,
+                      offeringName: snapshot.resolution.offeringName,
+                    })}
                     className={cn(buttonVariants())}
+                  >
+                    Create sale
+                  </Link>
+                  <Link
+                    href={taxComplianceHandoffHref()}
+                    className={cn(buttonVariants({ variant: "outline" }))}
                   >
                     View tax obligations
                   </Link>

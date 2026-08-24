@@ -177,6 +177,15 @@ export { crmContactRole } from "./crm-contact-role";
 export { crmAccount } from "./crm-account";
 export { crmAccountContact } from "./crm-account-contact";
 export { quotation, quotationVersion, quotationLine } from "./quotation";
-export { salesOrder, salesOrderLine } from "./sales-order";
+export {
+  salesOrder,
+  salesOrderLine,
+  salesOrderCommercialLink,
+} from "./sales-order";
+export { salesDeliveryEvent, salesInspectionOutcome } from "./sales-delivery";
+export {
+  salesDispositionInstruction,
+  salesOrderAmendment,
+} from "./sales-exception";
 export { campaign, campaignMember } from "./campaign";
 export { crmMetricDefinition, crmMetricSnapshot } from "./crm-analytics";
