@@ -16,7 +16,7 @@ Canonical Build Pack IDs are defined in `[02-Platform-Module-Catalog.md](./02-Pl
 | 4     | **BP-004**    | CRM & Customer Engagement              | ✅ Complete (13-IP baseline; folder `Build Pack 004 - Customer Relationship Management/`) |
 | 5     | **BP-005**    | Pricing, Tax & Commercial Rules        | ⏳ Planned (tax, discounts, promotions beyond BP-003 offering price items)                |
 | 6     | **BP-006**    | Sales, Orders & Service Delivery       | ✅ Complete — IP-01–IP-06 certified (2026-08-24); bookings out of scope; BP-007 not started |
-| 7     | **BP-007**    | Payments, Billing & Receipting         | ⏳ Planned (depends on sales transactions)                                                |
+| 7     | **BP-007**    | Payments, Billing & Receipting         | ✅ Implemented (IP-01–IP-08) |
 | 8     | **BP-008**    | Inventory & Resource Management        | ⏳ Planned                                                                                |
 | 9     | **BP-009**    | Procurement & Supplier Management      | ⏳ Planned                                                                                |
 | 10    | **BP-010**    | Finance & Accounting Foundation        | ⏳ Planned                                                                                |
@@ -102,8 +102,19 @@ Tax configuration, discounts, promotions, commissions, commercial policies exten
 **BP-006 Sales, Orders & Service Delivery** — ✅ Complete (IP-01–IP-06 certified 2026-08-24; bookings out of scope)  
 Direct sale and quote-to-order (conversion owned by BP-006 IP-01), fulfilment, physical goods inspection, service delivery of sold orders, downstream handoff to BP-007/BP-008. Bookings/appointments/resource scheduling are out of scope.
 
-**BP-007 Payments, Billing & Receipting** — ⏳ Planned  
-Payment processing, split payments, receipts, credit sales, invoice settlement.
+**BP-007 Payments, Billing & Receipting** — ✅ Implemented (IP-01–IP-08)  
+Customer AR from BP-006 payment-ready contracts. Four-dimension catalogues (method / rail / provider / channel). Initiation via ENG-006 adapters (not pack-direct Daraja). Partial/split/allocation, optional invoicing & credit sales, receipts, refunds, settlement handoff to ENG-008. **Not** a processor, collections engine (SC-032 future — not BP-013), or reconciliation matcher.
+
+| IP | Implementation Package | Status |
+|----|------------------------|--------|
+| IP-01 | Payment Obligation & Provider Integration Foundation | ✅ Implemented |
+| IP-02 | Payment Initiation & Processing | ✅ Implemented |
+| IP-03 | Partial, Split Payment & Allocation | ✅ Implemented |
+| IP-04 | Billing, Invoicing & Credit Sales | ✅ Implemented |
+| IP-05 | Receipting & Payment Evidence | ✅ Implemented |
+| IP-06 | Refunds, Reversals & Adjustments | ✅ Implemented |
+| IP-07 | Settlement & Reconciliation Handoff | ✅ Implemented |
+| IP-08 | Payment Exceptions, Operations & Controls | ✅ Implemented |
 
 **BP-008 Inventory & Resource Management** — ⏳ Planned  
 Stock, warehouses, transfers, adjustments, operational assets.
@@ -178,7 +189,7 @@ Customer Domain
 Release 4 — Business Control
 BP-012 Expenses & Cashbook
 Finance Domain
-BP-013 Receivables & Collections
+BP-013 Receivables & Collections *(historical ID — **not canonical**. Canonical **BP-013** is Product Management & Innovation. Overdue collections = future SC-032; ID unassigned in AV-1.8.)*
 Finance Domain
 BP-014 Reconciliation
 Finance Domain
@@ -242,7 +253,7 @@ I would make one small enhancement. Add a simple Status column from day one. It 
 | R2      | BP-004 CRM & Customer Engagement        | ✅ Complete                   |
 | R2b     | BP-005 Pricing, Tax & Commercial Rules  | ⏳ Planned                    |
 | R2b     | BP-006 Sales, Orders & Service Delivery | ✅ Complete (IP-01–IP-06) |
-| R2b     | BP-007 Payments, Billing & Receipting   | ⏳ Planned                    |
+| R2b     | BP-007 Payments, Billing & Receipting   | ✅ Implemented (IP-01–IP-08) |
 | R2b     | BP-008 Inventory & Resource Management  | ⏳ Planned                    |
 | R3      | BP-009–BP-013                           | ⏳ Planned                    |
 

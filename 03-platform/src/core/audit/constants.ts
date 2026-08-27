@@ -82,6 +82,14 @@ export const AUDIT_ENTITY_NAMES = {
   COMMERCIAL_RULE_VERSION: "commercial_rule_version",
   COMMERCIAL_OVERRIDE_REQUEST: "commercial_override_request",
   SALES_ORDER: "sales_order",
+  PAYMENT_OBLIGATION: "payment_obligation",
+  PAYMENT_TRANSACTION: "payment_transaction",
+  PAYMENT_ALLOCATION: "payment_allocation",
+  PAYMENT_INVOICE: "payment_invoice",
+  PAYMENT_RECEIPT: "payment_receipt",
+  PAYMENT_REFUND: "payment_refund",
+  PAYMENT_SETTLEMENT: "payment_settlement",
+  PAYMENT_EXCEPTION: "payment_exception",
 } as const;
 
 export type AuditEntityName =
@@ -138,6 +146,14 @@ export const AUDIT_ENTITY_LABELS: Record<AuditEntityName, string> = {
   commercial_rule_version: "Commercial Rule Version",
   commercial_override_request: "Commercial Override Request",
   sales_order: "Sales Order",
+  payment_obligation: "Payment Obligation",
+  payment_transaction: "Payment Transaction",
+  payment_allocation: "Payment Allocation",
+  payment_invoice: "Payment Invoice",
+  payment_receipt: "Payment Receipt",
+  payment_refund: "Payment Refund",
+  payment_settlement: "Payment Settlement",
+  payment_exception: "Payment Exception",
 };
 
 /**
@@ -173,6 +189,7 @@ export const AUDIT_SOURCE_MODULES = {
   CRM_GOVERNANCE: "crm_governance",
   COMMERCIAL_GOVERNANCE: "commercial_governance",
   SALES_ORDERS: "sales_orders",
+  PAYMENTS: "payments",
 } as const;
 
 export type AuditSourceModule =
@@ -206,6 +223,7 @@ export const AUDIT_SOURCE_MODULE_LABELS: Record<AuditSourceModule, string> = {
   crm_governance: "CRM Governance",
   commercial_governance: "Commercial Governance",
   sales_orders: "Sales Orders",
+  payments: "Payments",
 };
 
 export const AUDIT_DEFAULT_PAGE_SIZE = 25;

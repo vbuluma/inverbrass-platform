@@ -1526,8 +1526,8 @@ Future Build Packs depending on BP-002 include:
 •	BP-008 Inventory & Resource Management
 •	BP-009 Procurement & Supplier Management
 •	BP-010 Finance & Accounting Foundation
-•	BP-013 Receivables & Collections
-•	BP-014 Reconciliation
+•	BP-013 Product Management & Innovation *(do not use this ID for Receivables; SC-032 collections is unassigned in AV-1.8)*
+•	BP-014 Reconciliation *(historical — reconciliation matching is ENG-008)*
 •	BP-017 Workforce & Performance Management
 •	All Industry Solutions
 ________________________________________

@@ -52,6 +52,9 @@ import { seedLeadSources } from "@/db/seeds/lead-sources-seed";
 import { seedLeadStatuses } from "@/db/seeds/lead-statuses-seed";
 import { seedOpportunityReference } from "@/db/seeds/opportunity-reference-seed";
 import { seedAccountReference } from "@/db/seeds/account-reference-seed";
+import { seedPaymentCatalogues } from "@/db/seeds/payment-catalogue-seed";
+import { seedInvoicePaymentTerms } from "@/db/seeds/invoice-payment-terms-seed";
+import { seedDocumentNumberingPolicies } from "@/db/seeds/document-numbering-policy-seed";
 
 async function runSeed() {
   const connectionString = process.env.DATABASE_URL;
@@ -281,6 +284,36 @@ async function runSeed() {
     const accountRefResults = await seedAccountReference(db);
     console.log(
       `accountReference: inserted=${accountRefResults.inserted}, updated=${accountRefResults.updated}, skipped=${accountRefResults.skipped}`
+    );
+
+    console.log("Seeding payment catalogues...");
+    const paymentCatalogueResults = await seedPaymentCatalogues(db);
+    console.log(
+      `paymentMethods: inserted=${paymentCatalogueResults.methods.inserted}, updated=${paymentCatalogueResults.methods.updated}, skipped=${paymentCatalogueResults.methods.skipped}`
+    );
+    console.log(
+      `paymentNetworks: inserted=${paymentCatalogueResults.networks.inserted}, updated=${paymentCatalogueResults.networks.updated}, skipped=${paymentCatalogueResults.networks.skipped}`
+    );
+    console.log(
+      `paymentProviders: inserted=${paymentCatalogueResults.providers.inserted}, updated=${paymentCatalogueResults.providers.updated}, skipped=${paymentCatalogueResults.providers.skipped}`
+    );
+    console.log(
+      `paymentChannels: inserted=${paymentCatalogueResults.channels.inserted}, updated=${paymentCatalogueResults.channels.updated}, skipped=${paymentCatalogueResults.channels.skipped}`
+    );
+    console.log(
+      `paymentChannelCapabilities: inserted=${paymentCatalogueResults.capabilities.inserted}, updated=${paymentCatalogueResults.capabilities.updated}, skipped=${paymentCatalogueResults.capabilities.skipped}`
+    );
+
+    console.log("Seeding invoice payment terms...");
+    const invoiceTermResults = await seedInvoicePaymentTerms(db);
+    console.log(
+      `invoicePaymentTerms: inserted=${invoiceTermResults.inserted}, updated=${invoiceTermResults.updated}, skipped=${invoiceTermResults.skipped}`
+    );
+
+    console.log("Seeding document numbering policies...");
+    const numberingResults = await seedDocumentNumberingPolicies(db);
+    console.log(
+      `documentNumberingPolicies: inserted=${numberingResults.inserted}, updated=${numberingResults.updated}, skipped=${numberingResults.skipped}`
     );
 
     console.log("✅ Seed completed.");

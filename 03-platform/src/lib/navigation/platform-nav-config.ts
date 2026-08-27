@@ -7,6 +7,7 @@
  * duplicate nav items locally.
  */
 import {
+  BanknoteIcon,
   Building2Icon,
   CalculatorIcon,
   CalendarDaysIcon,
@@ -97,6 +98,30 @@ export const BUSINESS_APP_NAV_ITEMS: PlatformNavItem[] = [
     label: "Sales",
     href: "/sales",
     icon: ShoppingCartIcon,
+  },
+  {
+    id: "payments",
+    label: "Payments",
+    href: "/payments",
+    icon: BanknoteIcon,
+  },
+  {
+    id: "invoices",
+    label: "Invoices",
+    href: "/invoices",
+    icon: FileTextIcon,
+  },
+  {
+    id: "receipts",
+    label: "Receipts",
+    href: "/receipts",
+    icon: FileTextIcon,
+  },
+  {
+    id: "payment-reviews",
+    label: "Payment reviews",
+    href: "/payments/exceptions",
+    icon: ShieldCheckIcon,
   },
   {
     id: "commercial-resolve",

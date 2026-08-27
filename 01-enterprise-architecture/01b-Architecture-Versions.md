@@ -5,7 +5,7 @@
 | Attribute | Value |
 |-----------|-------|
 | Document Name | Architecture Versions |
-| Current Version | **AV-1.7** |
+| Current Version | **AV-1.8** |
 | Former Name | Architecture Decision Record (ADR) — enterprise scope |
 | Scope | Entire InverBrass Enterprise Architecture |
 | Audience | Product Owner, Solution Architect, Developers, AI Coding Assistants |
@@ -348,7 +348,7 @@ Assignment history and SLA measurement apply across CRM, sales, service, lending
 | Field | Value |
 |-------|-------|
 | **Date** | 2026-08-12 |
-| **Status** | **Current** |
+| **Status** | Superseded by AV-1.8 |
 | **Author** | Integration Manager / Solution Architect |
 
 #### From → To
@@ -372,6 +372,42 @@ CRM was delivered and certified as Build Pack 004. Retaining CRM as BP-008 would
 - [11 – Development Roadmap](./11-Development-Roadmap.md) — canonical sequence + status
 - [01 – Enterprise Solution Architecture](./01-Enterprise-Solution-Architecture.md) — CRM references updated to BP-004
 - CRM folder `Build Pack 004 - Customer Relationship Management/` — remains authoritative for BP-004
+
+---
+
+### AV-1.8 — BP-007 Payments ownership lock
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-08-25 |
+| **Status** | **Current** |
+| **Author** | Integration Manager / Solution Architect |
+
+#### From → To
+
+| Area | From | To |
+|------|------|-----|
+| BP-007 key capabilities | Billing, invoicing, receipts, **collections**, refunds, allocation, **reconciliation** | Obligation, four-dimension catalogues, adapter orchestration, initiation, split/allocation, invoicing & credit sales, receipts, refunds, settlement **handoff** |
+| Collections (SC-032) | Implied in BP-007 catalog keys; some narrative used **BP-013 Receivables** | **Out of BP-007.** Future capability — **no pack ID in AV-1.8**. Canonical **BP-013 remains Product Management & Innovation** |
+| Reconciliation | Listed as BP-007 in-pack work | **ENG-008** later. BP-007 IP-07 = handoff only |
+| Provider integration | Unspecified (risk of pack-direct Daraja) | **ENG-006 adapters via ENG-003e**. Pack does not own rails |
+| Payment dimensions | Flattened methods in BP-001 / Doc 10 (Credit listed as a method) | Independent **method / rail / provider / channel**. Credit = billing, not tender |
+| Pack documentation | No BP-007 folder | `02-build-packs/build pack 007-Payments Billing & Receipting/` — IP-01–IP-08 specified; implementation not started |
+
+#### Reasoning
+
+BP-006 is certified and must hand off a payment-ready contract. Documenting BP-007 without locking ownership would recreate the old ID collision (Receivables as BP-013) and would let the pack become a processor or a reconciliation engine. AV-1.8 records the lock so implementation prompts cannot reuse those IDs.
+
+#### Affected Documents
+
+- [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) — BP-007 row
+- [11 – Development Roadmap](./11-Development-Roadmap.md) — BP-007 IP list; historical BP-013 Receivables note
+- `02-build-packs/build pack 007-Payments Billing & Receipting/` — Scope + IP-01–IP-08
+- `02-build-packs/build pack 006-Sales-Orders & Service Delivery/Build Pack-006 Scope.md` — reconciliation owner line
+
+#### Implementation impact
+
+Documentation only. No payment runtime yet. Existing unused `payment_method` / `payment_network` / `payment_provider` / `payment_channel` schema is the catalogue target for IP-01.
 
 ---
 

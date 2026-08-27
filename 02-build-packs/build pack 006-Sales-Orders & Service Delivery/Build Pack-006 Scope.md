@@ -189,7 +189,7 @@ IP-05 is **not** payment or inventory implementation. It produces the contracts 
 | Inventory quantities, reservation, valuation, stock movement | BP-008 | BP-006 states what to fulfil |
 | Supplier / procurement orders | BP-009 | Sales orders only |
 | Full resource scheduling / work-order dispatch beyond sold-service delivery | Later | FR-038 handoff only |
-| Financial reconciliation / revenue assurance | BP-007 / future RA | Expected value from commercial contract; actuals later |
+| Financial reconciliation matching | ENG-008 (later) | BP-007 IP-07 settlement handoff only; RA compares BP-005 expected vs BP-007 actual collected (future) |
 | Full offline sync / conflict engine | Platform architecture | Transaction capture only where already supported |
 
 ---

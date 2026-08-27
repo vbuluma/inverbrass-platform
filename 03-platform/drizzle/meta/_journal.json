@@ -456,6 +456,62 @@
       "when": 1784564588861,
       "tag": "0060_bp006_ip004_amendments_cancellation_returns",
       "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1784564588862,
+      "tag": "0061_bp007_ip001_payment_obligation_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1784564588863,
+      "tag": "0062_bp007_ip002_payment_initiation_processing",
+      "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1784564588864,
+      "tag": "0063_bp007_ip003_partial_split_payment_allocation",
+      "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1784564588865,
+      "tag": "0064_bp007_ip004_billing_invoicing_credit_sales",
+      "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1784564588866,
+      "tag": "0065_bp007_ip005_receipting_payment_evidence",
+      "breakpoints": true
+    },
+    {
+      "idx": 70,
+      "version": "7",
+      "when": 1784564588867,
+      "tag": "0066_bp007_ip006_refunds_reversals_adjustments",
+      "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1784564588868,
+      "tag": "0067_bp007_ip007_settlement_reconciliation_handoff",
+      "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1784564588869,
+      "tag": "0068_bp007_ip008_payment_exceptions_operations_controls",
+      "breakpoints": true
     }
   ]
 }
