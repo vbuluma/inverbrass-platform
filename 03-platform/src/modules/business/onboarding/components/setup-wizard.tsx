@@ -33,6 +33,9 @@ import type {
   CurrencyOption,
   IndustryOption,
 } from "@/core/auth/types";
+import { resolveBusinessTerminologyFromIndustryId } from "@/core/industry-experience/business-terminology";
+import type { BusinessTerminology } from "@/core/industry-experience/business-terminology";
+import { BusinessTerminologyProvider } from "@/core/industry-experience/business-terminology-context";
 import { usePreservedFormValues } from "@/lib/forms/preserve-form-values";
 import { cn } from "@/lib/utils";
 import {
@@ -51,7 +54,15 @@ import {
 } from "@/modules/business/onboarding/actions/setup-actions";
 import { SetupProgressIndicator } from "@/modules/business/onboarding/components/setup-progress-indicator";
 import {
+  SetupDuplicateError,
+  SetupNavigatingAlert,
+  SetupSectionError,
+  SetupSuccessAlert,
+  useScrollToFirstInvalidField,
+} from "@/modules/business/onboarding/components/setup-wizard-feedback";
+import {
   EMPLOYEE_SETUP_ROLE_CODES,
+  SETUP_STEP_LABELS,
   SETUP_STEP_ORDER,
   SETUP_STEPS,
   formatSetupWelcomeMessage,
@@ -68,6 +79,10 @@ import {
   type OnboardingProfileCode,
 } from "@/modules/business/onboarding/onboarding-profiles";
 import { buildBranchCodeCandidate } from "@/modules/business/onboarding/services/setup-rules";
+import {
+  SETUP_EMPLOYEE_CREATED_SUCCESS,
+  resolveSetupStepSuccessMessage,
+} from "@/modules/business/onboarding/setup-step-success-messages";
 import type {
   BranchSetupItemPayload,
   CreatedEmployeeCredential,
@@ -200,6 +215,55 @@ const BUSINESS_OPERATIONS_CHECKBOXES = [
   "loyaltyProgrammeEnabled",
 ] as const;
 
+type SetupActionError = {
+  message: string;
+  field?: string;
+  conflictValue?: string;
+  conflictFieldLabel?: string;
+};
+
+function resolveStepSectionTitle(
+  step: SetupStep,
+  terminology: BusinessTerminology
+): string {
+  switch (step) {
+    case SETUP_STEPS.BUSINESS_PROFILE:
+      return "Business Details";
+    case SETUP_STEPS.BRANCH_SETUP:
+      return terminology.entities.branch.plural;
+    case SETUP_STEPS.EMPLOYEE_SETUP:
+      return terminology.entities.employee.plural;
+    case SETUP_STEPS.REVIEW:
+      return "Review";
+    case SETUP_STEPS.BUSINESS_OPERATIONS:
+      return "Configuration";
+    default:
+      return "Setup";
+  }
+}
+
+function resolveConflictEntityLabel(
+  step: SetupStep,
+  terminology: BusinessTerminology
+): string {
+  switch (step) {
+    case SETUP_STEPS.EMPLOYEE_SETUP:
+      return terminology.entities.employee.singular;
+    case SETUP_STEPS.BRANCH_SETUP:
+      return terminology.entities.branch.singular;
+    default:
+      return "Business";
+  }
+}
+
+function resolveNavigationStep(progress: SetupProgressView): SetupStep {
+  return progress.resumeStep === SETUP_STEPS.COMPLETED
+    ? SETUP_STEPS.REVIEW
+    : progress.resumeStep === SETUP_STEPS.BUSINESS_DETAILS
+      ? SETUP_STEPS.BUSINESS_PROFILE
+      : progress.resumeStep;
+}
+
 function previousStep(step: SetupStep): SetupStep | null {
   const index = SETUP_STEP_ORDER.indexOf(step);
   if (index <= 0) {
@@ -227,8 +291,38 @@ function emptyBranchDraft(seed?: Partial<BranchSetupItemPayload>): BranchSetupIt
   };
 }
 
+type SetupNavigationFeedback = {
+  message: string;
+  source: "back" | "continue" | "settings";
+};
+
+function scheduleHardNavigation(
+  url: string,
+  onNavigateStart: () => void
+) {
+  onNavigateStart();
+  // Paint loading feedback before the full-page redirect begins.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      window.location.assign(url);
+    });
+  });
+}
+
 export function SetupWizard(props: SetupWizardProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [sectionError, setSectionError] = useState<string | null>(null);
+  const [conflictError, setConflictError] = useState<{
+    entityLabel: string;
+    fieldLabel: string;
+    value: string;
+  } | null>(null);
+  const [invalidField, setInvalidField] = useState<string | undefined>();
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [pendingNavigation, setPendingNavigation] =
+    useState<SetupProgressView | null>(null);
+  const [navigationFeedback, setNavigationFeedback] =
+    useState<SetupNavigationFeedback | null>(null);
   const [isPending, startTransition] = useTransition();
   const [logoUrl, setLogoUrl] = useState(props.profile?.logoUrl ?? "");
   const [taxEnabledUi, setTaxEnabledUi] = useState(
@@ -338,21 +432,93 @@ export function SetupWizard(props: SetupWizardProps) {
   const profileDefinition = getOnboardingProfileDefinition(onboardingProfile);
   const optionalSteps = getOptionalStepsForProfile(onboardingProfile);
 
-  function goTo(step: SetupStep) {
-    // Hard navigation — router.push + router.refresh() raced and bounced
-    // Welcome → Business Profile → Welcome, leaving buttons stuck pending.
+  const liveTerminology = useMemo(
+    () =>
+      resolveBusinessTerminologyFromIndustryId(
+        props.industries,
+        industryId || props.classification?.industryId
+      ),
+    [props.industries, industryId, props.classification?.industryId]
+  );
+
+  const isNavigating = navigationFeedback !== null;
+
+  function beginNavigation(
+    url: string,
+    feedback: SetupNavigationFeedback
+  ) {
+    scheduleHardNavigation(url, () => {
+      setNavigationFeedback(feedback);
+    });
+  }
+
+  function goTo(step: SetupStep, source: SetupNavigationFeedback["source"]) {
     const suffix = manageMode ? "?manage=1" : "";
-    window.location.assign(`/setup/${step}${suffix}`);
+    const message =
+      source === "back"
+        ? "Going back..."
+        : `Loading ${SETUP_STEP_LABELS[step].toLowerCase()}...`;
+    beginNavigation(`/setup/${step}${suffix}`, { message, source });
   }
 
   function returnToSettings() {
-    window.location.assign("/settings");
+    beginNavigation("/settings", {
+      message: "Returning to settings...",
+      source: "settings",
+    });
+  }
+
+  function proceedAfterSuccess() {
+    if (!pendingNavigation || isNavigating) {
+      return;
+    }
+
+    if (manageMode) {
+      returnToSettings();
+      return;
+    }
+
+    goTo(resolveNavigationStep(pendingNavigation), "continue");
+  }
+
+  function handleActionFailure(error: SetupActionError) {
+    setSuccessMessage(null);
+    setPendingNavigation(null);
+    setNavigationFeedback(null);
+    setInvalidField(error.field);
+
+    if (error.conflictValue && error.conflictFieldLabel) {
+      setConflictError({
+        entityLabel: resolveConflictEntityLabel(props.step, liveTerminology),
+        fieldLabel: error.conflictFieldLabel,
+        value: error.conflictValue,
+      });
+      setSectionError(null);
+      setErrorMessage(null);
+      return;
+    }
+
+    setConflictError(null);
+    setSectionError(error.message);
+    setErrorMessage(null);
+  }
+
+  function handleSaveSuccess(
+    progress: SetupProgressView,
+    message?: string
+  ) {
+    setSectionError(null);
+    setConflictError(null);
+    setInvalidField(undefined);
+    setErrorMessage(null);
+    setSuccessMessage(message ?? resolveSetupStepSuccessMessage(props.step));
+    setPendingNavigation(progress);
   }
 
   function handleResult(
     result:
       | { success: true; data: SetupProgressView }
-      | { success: false; error: { message: string; field?: string } }
+      | { success: false; error: SetupActionError }
       | undefined
   ) {
     if (!result) {
@@ -360,25 +526,23 @@ export function SetupWizard(props: SetupWizardProps) {
     }
 
     if (!result.success) {
-      setErrorMessage(result.error.message);
+      handleActionFailure(result.error);
       return;
     }
 
-    if (manageMode) {
-      returnToSettings();
-      return;
-    }
-
-    goTo(
-      result.data.resumeStep === SETUP_STEPS.COMPLETED
-        ? SETUP_STEPS.REVIEW
-        : result.data.resumeStep === SETUP_STEPS.BUSINESS_DETAILS
-          ? SETUP_STEPS.BUSINESS_PROFILE
-          : result.data.resumeStep
-    );
+    handleSaveSuccess(result.data);
   }
 
+  useScrollToFirstInvalidField(
+    invalidField,
+    Boolean(sectionError || conflictError)
+  );
+
   function onBack() {
+    if (isNavigating || isPending) {
+      return;
+    }
+
     if (manageMode) {
       returnToSettings();
       return;
@@ -386,9 +550,23 @@ export function SetupWizard(props: SetupWizardProps) {
 
     const prior = previousStep(props.step);
     if (prior) {
-      goTo(prior);
+      goTo(prior, "back");
     }
   }
+
+  const wizardNavProps = {
+    manageMode,
+    onBack,
+    isPending,
+    isNavigating,
+    navigationFeedback,
+  };
+
+  const stepContinueLabel = pendingNavigation
+    ? manageMode
+      ? "Back to settings"
+      : "Continue"
+    : undefined;
 
   function onSkip() {
     if (manageMode || !optionalSteps.includes(props.step)) {
@@ -408,7 +586,8 @@ export function SetupWizard(props: SetupWizardProps) {
     }
 
     if (file.size > 400_000) {
-      setErrorMessage("Logo must be smaller than 400KB.");
+      setSectionError("Logo must be smaller than 400KB.");
+      setErrorMessage(null);
       return;
     }
 
@@ -422,6 +601,7 @@ export function SetupWizard(props: SetupWizardProps) {
   }
 
   return (
+    <BusinessTerminologyProvider terminology={liveTerminology}>
     <main className="mx-auto flex min-h-screen w-full max-w-2xl flex-col gap-6 px-4 py-8">
       <header className="space-y-2">
         <p className="text-sm text-muted-foreground">
@@ -439,15 +619,39 @@ export function SetupWizard(props: SetupWizardProps) {
             currentStep={props.step}
             completedSteps={props.progress.completedSteps}
             progressPercent={props.progress.progressPercent}
+            disabled={isPending || isNavigating}
+            onStepSelect={(step) => {
+              if (step === props.step || isPending || isNavigating) {
+                return;
+              }
+              goTo(step, "continue");
+            }}
           />
         )}
       </header>
 
-      <section className="space-y-4 rounded-xl border border-border bg-card p-5 shadow-sm">
-        {errorMessage ? (
-          <Alert variant="destructive">
-            <AlertDescription>{errorMessage}</AlertDescription>
-          </Alert>
+      <section
+        className={cn(
+          "space-y-4 rounded-xl border border-border bg-card p-5 shadow-sm transition-opacity",
+          isNavigating && "pointer-events-none opacity-70"
+        )}
+      >
+        {conflictError ? (
+          <SetupDuplicateError
+            entityLabel={conflictError.entityLabel}
+            fieldLabel={conflictError.fieldLabel}
+            value={conflictError.value}
+          />
+        ) : sectionError ? (
+          <SetupSectionError
+            title={resolveStepSectionTitle(props.step, liveTerminology)}
+            messages={[sectionError]}
+          />
+        ) : errorMessage ? (
+          <SetupSectionError
+            title={resolveStepSectionTitle(props.step, liveTerminology)}
+            messages={[errorMessage]}
+          />
         ) : null}
 
         {props.step === SETUP_STEPS.WELCOME ? (
@@ -465,9 +669,9 @@ export function SetupWizard(props: SetupWizardProps) {
                 try {
                   const result = await completeWelcomeAction();
                   // Success path server-redirects; only failures return here.
-                  if (!result.success) {
-                    setErrorMessage(result.error.message);
-                  }
+                if (!result.success) {
+                  handleActionFailure(result.error);
+                }
                 } catch (error) {
                   // NEXT_REDIRECT is expected on success — do not surface it.
                   if (isNextRedirectError(error)) {
@@ -491,6 +695,11 @@ export function SetupWizard(props: SetupWizardProps) {
             key={profileForm.formKey}
             className="space-y-4"
             action={(formData) => {
+              if (pendingNavigation) {
+                proceedAfterSuccess();
+                return;
+              }
+
               setErrorMessage(null);
               profileForm.clearInvalidField();
               startTransition(async () => {
@@ -512,10 +721,10 @@ export function SetupWizard(props: SetupWizardProps) {
                     formData,
                     result.error.field
                   );
-                  setErrorMessage(result.error.message);
+                  handleActionFailure(result.error);
                   return;
                 }
-                handleResult(result);
+                handleSaveSuccess(result.data);
               });
             }}
           >
@@ -643,10 +852,12 @@ export function SetupWizard(props: SetupWizardProps) {
               </div>
             </div>
             <WizardNav
-              manageMode={manageMode}
-              onBack={onBack}
-              isPending={isPending}
+              {...wizardNavProps}
               canSkip={false}
+              successMessage={successMessage}
+              continueLabel={
+                stepContinueLabel ?? (manageMode ? "Save" : "Save & continue")
+              }
             />
           </form>
         ) : null}
@@ -655,6 +866,11 @@ export function SetupWizard(props: SetupWizardProps) {
           <form
             className="space-y-4"
             action={() => {
+              if (pendingNavigation) {
+                proceedAfterSuccess();
+                return;
+              }
+
               setErrorMessage(null);
               startTransition(async () => {
                 const result = await saveBusinessClassificationAction({
@@ -723,10 +939,12 @@ export function SetupWizard(props: SetupWizardProps) {
               </p>
             ) : null}
             <WizardNav
-              manageMode={manageMode}
-              onBack={onBack}
-              isPending={isPending}
+              {...wizardNavProps}
               canSkip={false}
+              successMessage={successMessage}
+              continueLabel={
+                stepContinueLabel ?? (manageMode ? "Save" : "Save & continue")
+              }
               disableContinue={
                 !industryId || !businessTypeId || props.industries.length === 0
               }
@@ -738,6 +956,11 @@ export function SetupWizard(props: SetupWizardProps) {
           <form
             className="space-y-4"
             action={(formData) => {
+              if (pendingNavigation) {
+                proceedAfterSuccess();
+                return;
+              }
+
               setErrorMessage(null);
               startTransition(async () => {
                 const result = await saveCountryAction({
@@ -773,10 +996,12 @@ export function SetupWizard(props: SetupWizardProps) {
               </select>
             </div>
             <WizardNav
-              manageMode={manageMode}
-              onBack={onBack}
-              isPending={isPending}
+              {...wizardNavProps}
               canSkip={false}
+              successMessage={successMessage}
+              continueLabel={
+                stepContinueLabel ?? (manageMode ? "Save" : "Save & continue")
+              }
               disableContinue={props.countries.length === 0}
             />
           </form>
@@ -786,6 +1011,11 @@ export function SetupWizard(props: SetupWizardProps) {
           <form
             className="space-y-4"
             action={(formData) => {
+              if (pendingNavigation) {
+                proceedAfterSuccess();
+                return;
+              }
+
               setErrorMessage(null);
               startTransition(async () => {
                 const result = await saveBaseCurrencyAction({
@@ -830,11 +1060,13 @@ export function SetupWizard(props: SetupWizardProps) {
               </select>
             </div>
             <WizardNav
-              manageMode={manageMode}
-              onBack={onBack}
-              isPending={isPending}
+              {...wizardNavProps}
               canSkip={optionalSteps.includes(SETUP_STEPS.BASE_CURRENCY)}
               onSkip={onSkip}
+              successMessage={successMessage}
+              continueLabel={
+                stepContinueLabel ?? (manageMode ? "Save" : "Save & continue")
+              }
               disableContinue={props.currencies.length === 0}
             />
           </form>
@@ -878,12 +1110,19 @@ export function SetupWizard(props: SetupWizardProps) {
                 })}
             </div>
             <WizardNav
-              manageMode={manageMode}
-              onBack={onBack}
-              isPending={isPending}
+              {...wizardNavProps}
               canSkip
               onSkip={onSkip}
+              successMessage={successMessage}
+              continueLabel={
+                stepContinueLabel ?? (manageMode ? "Save" : "Save & continue")
+              }
               onContinue={() => {
+                if (pendingNavigation) {
+                  proceedAfterSuccess();
+                  return;
+                }
+
                 setErrorMessage(null);
                 startTransition(async () => {
                   const result = await saveAdditionalCurrenciesAction({
@@ -901,6 +1140,11 @@ export function SetupWizard(props: SetupWizardProps) {
             key={operationsForm.formKey}
             className="space-y-6"
             action={(formData) => {
+              if (pendingNavigation) {
+                proceedAfterSuccess();
+                return;
+              }
+
               setErrorMessage(null);
               operationsForm.clearInvalidField();
               startTransition(async () => {
@@ -938,7 +1182,7 @@ export function SetupWizard(props: SetupWizardProps) {
                     result.error.field
                   );
                   setTaxEnabledUi(formData.get("taxEnabled") === "on");
-                  setErrorMessage(result.error.message);
+                  handleActionFailure(result.error);
                   return;
                 }
                 handleResult(result);
@@ -1103,20 +1347,22 @@ export function SetupWizard(props: SetupWizardProps) {
             </div>
 
             <WizardNav
-              manageMode={manageMode}
-              onBack={onBack}
-              isPending={isPending}
+              {...wizardNavProps}
               canSkip={optionalSteps.includes(
                 SETUP_STEPS.BUSINESS_OPERATIONS
               )}
               onSkip={onSkip}
+              successMessage={successMessage}
+              continueLabel={
+                stepContinueLabel ?? (manageMode ? "Save" : "Save & continue")
+              }
             />
           </form>
         ) : null}
 
         {props.step === SETUP_STEPS.BRANCH_SETUP ? (
           <div className="space-y-4">
-            <h2 className="text-xl font-medium">Branch setup</h2>
+            <h2 className="text-xl font-medium">{liveTerminology.entities.branch.plural} setup</h2>
             <p className="text-sm text-muted-foreground">
               Do you have multiple branches?
             </p>
@@ -1379,11 +1625,18 @@ export function SetupWizard(props: SetupWizardProps) {
             )}
 
             <WizardNav
-              manageMode={manageMode}
-              onBack={onBack}
-              isPending={isPending}
+              {...wizardNavProps}
               canSkip={false}
+              successMessage={successMessage}
+              continueLabel={
+                stepContinueLabel ?? (manageMode ? "Save" : "Save & continue")
+              }
               onContinue={() => {
+                if (pendingNavigation) {
+                  proceedAfterSuccess();
+                  return;
+                }
+
                 setErrorMessage(null);
                 startTransition(async () => {
                   const result = await saveBranchSetupAction({
@@ -1399,9 +1652,9 @@ export function SetupWizard(props: SetupWizardProps) {
 
         {props.step === SETUP_STEPS.EMPLOYEE_SETUP ? (
           <div className="space-y-4">
-            <h2 className="text-xl font-medium">Employee setup</h2>
+            <h2 className="text-xl font-medium">{liveTerminology.entities.employee.plural} setup</h2>
             <p className="text-sm text-muted-foreground">
-              Would you like to add employees now?
+              Would you like to add {liveTerminology.entities.employee.plural.toLowerCase()} now?
             </p>
             <div className="flex gap-3">
               <Button
@@ -1606,88 +1859,131 @@ export function SetupWizard(props: SetupWizardProps) {
             ) : null}
 
             {issuedCredentials.length > 0 ? (
-              <Alert>
-                <AlertDescription>
-                  <p className="mb-2 font-medium">
-                    Temporary passwords (shown once — copy them now):
-                  </p>
-                  <ul className="space-y-2 text-sm">
-                    {issuedCredentials.map((credential) => (
-                      <li key={credential.employeeId}>
-                        {credential.fullName} ({credential.mobileNumber}):{" "}
-                        <code className="rounded bg-muted px-1 py-0.5">
-                          {credential.temporaryPassword}
-                        </code>
-                      </li>
-                    ))}
-                  </ul>
-                </AlertDescription>
-              </Alert>
-            ) : null}
+              <>
+                <SetupSuccessAlert message={SETUP_EMPLOYEE_CREATED_SUCCESS} />
+                <Alert>
+                  <AlertDescription>
+                    <p className="mb-2 font-medium">Temporary passwords</p>
+                    <ul className="space-y-2 text-sm">
+                      {issuedCredentials.map((credential) => (
+                        <li key={credential.employeeId}>
+                          {credential.fullName} ({credential.mobileNumber}):{" "}
+                          <code className="rounded bg-muted px-1 py-0.5">
+                            {credential.temporaryPassword}
+                          </code>
+                        </li>
+                      ))}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      setIssuedCredentials([]);
+                      setSuccessMessage(null);
+                      setPendingNavigation(null);
+                      setEmployeeDrafts([
+                        {
+                          firstName: "",
+                          lastName: "",
+                          mobileNumber: "",
+                          email: "",
+                          branchId: props.branches[0]?.id ?? "",
+                          jobTitle: "",
+                          platformRoleCode: "EMPLOYEE",
+                        },
+                      ]);
+                    }}
+                  >
+                    Create another employee
+                  </Button>
+                  <Button
+                    type="button"
+                    className="flex-1"
+                    disabled={isNavigating}
+                    onClick={() => {
+                      if (isNavigating) {
+                        return;
+                      }
+                      goTo(
+                        postEmployeeResumeStep ?? SETUP_STEPS.REVIEW,
+                        "continue"
+                      );
+                    }}
+                  >
+                    {isNavigating && navigationFeedback?.source === "continue"
+                      ? navigationFeedback.message
+                      : "Continue to review"}
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <WizardNav
+                {...wizardNavProps}
+                canSkip={!addEmployees}
+                successMessage={successMessage}
+                continueLabel={
+                  pendingNavigation
+                    ? manageMode
+                      ? "Back to settings"
+                      : "Continue"
+                    : undefined
+                }
+                onSkip={
+                  !addEmployees
+                    ? () => {
+                        setErrorMessage(null);
+                        setSectionError(null);
+                        setConflictError(null);
+                        startTransition(async () => {
+                          const result = await saveEmployeeSetupAction({
+                            skip: true,
+                            employees: [],
+                          });
+                          if (!result.success) {
+                            handleActionFailure(result.error);
+                            return;
+                          }
+                          handleSaveSuccess(result.data.progress);
+                        });
+                      }
+                    : undefined
+                }
+                onContinue={() => {
+                  if (pendingNavigation) {
+                    proceedAfterSuccess();
+                    return;
+                  }
 
-            <WizardNav
-              manageMode={manageMode}
-              onBack={onBack}
-              isPending={isPending}
-              canSkip={!addEmployees}
-              onSkip={
-                !addEmployees
-                  ? () => {
-                      setErrorMessage(null);
-                      startTransition(async () => {
-                        const result = await saveEmployeeSetupAction({
-                          skip: true,
-                          employees: [],
-                        });
-                        if (!result.success) {
-                          setErrorMessage(result.error.message);
-                          return;
-                        }
-                        handleResult({
-                          success: true,
-                          data: result.data.progress,
-                        });
-                      });
+                  setErrorMessage(null);
+                  setSectionError(null);
+                  setConflictError(null);
+                  startTransition(async () => {
+                    const result = await saveEmployeeSetupAction({
+                      skip: !addEmployees,
+                      employees: addEmployees ? employeeDrafts : [],
+                    });
+                    if (!result.success) {
+                      handleActionFailure(result.error);
+                      return;
                     }
-                  : undefined
-              }
-              onContinue={() => {
-                setErrorMessage(null);
-                startTransition(async () => {
-                  const result = await saveEmployeeSetupAction({
-                    skip: !addEmployees,
-                    employees: addEmployees ? employeeDrafts : [],
+
+                    if (result.data.credentials.length > 0) {
+                      setIssuedCredentials(result.data.credentials);
+                      setPostEmployeeResumeStep(result.data.progress.resumeStep);
+                      setSuccessMessage(SETUP_EMPLOYEE_CREATED_SUCCESS);
+                      setPendingNavigation(null);
+                      return;
+                    }
+
+                    handleSaveSuccess(result.data.progress);
                   });
-                  if (!result.success) {
-                    setErrorMessage(result.error.message);
-                    return;
-                  }
-
-                  if (result.data.credentials.length > 0) {
-                    setIssuedCredentials(result.data.credentials);
-                    setPostEmployeeResumeStep(result.data.progress.resumeStep);
-                    return;
-                  }
-
-                  handleResult({
-                    success: true,
-                    data: result.data.progress,
-                  });
-                });
-              }}
-            />
-
-            {issuedCredentials.length > 0 ? (
-              <Button
-                type="button"
-                className="w-full"
-                onClick={() => {
-                  goTo(postEmployeeResumeStep ?? SETUP_STEPS.REVIEW);
                 }}
-              >
-                Continue to review
-              </Button>
-            ) : null}
+              />
+            )}
           </div>
         ) : null}
 
@@ -1719,7 +2015,7 @@ export function SetupWizard(props: SetupWizardProps) {
                   }
                 />
                 <ReviewRow
-                  label="Branches"
+                  label={liveTerminology.entities.branch.plural}
                   value={
                     props.review.branches.length > 0
                       ? props.review.branches
@@ -1732,7 +2028,7 @@ export function SetupWizard(props: SetupWizardProps) {
                   }
                 />
                 <ReviewRow
-                  label="Employees"
+                  label={liveTerminology.entities.employee.plural}
                   value={
                     props.review.employees.length > 0
                       ? props.review.employees
@@ -1794,31 +2090,36 @@ export function SetupWizard(props: SetupWizardProps) {
                 />
               </dl>
             ) : null}
+            {isNavigating && navigationFeedback ? (
+              <SetupNavigatingAlert message={navigationFeedback.message} />
+            ) : null}
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button
                 type="button"
                 variant="outline"
                 className="flex-1"
                 onClick={onBack}
-                disabled={isPending}
+                disabled={isPending || isNavigating}
               >
-                Back
+                {isNavigating && navigationFeedback?.source === "back"
+                  ? navigationFeedback.message
+                  : "Back"}
               </Button>
               <Button
                 type="button"
                 className="flex-1"
-                disabled={isPending}
+                disabled={isPending || isNavigating}
                 onClick={() => {
                   setErrorMessage(null);
                   startTransition(async () => {
                     const reviewResult = await completeReviewAction();
                     if (!reviewResult.success) {
-                      setErrorMessage(reviewResult.error.message);
+                      handleActionFailure(reviewResult.error);
                       return;
                     }
                     const result = await activateBusinessAction();
                     if (result && !result.success) {
-                      setErrorMessage(result.error.message);
+                      handleActionFailure(result.error);
                     }
                   });
                 }}
@@ -1830,6 +2131,7 @@ export function SetupWizard(props: SetupWizardProps) {
         ) : null}
       </section>
     </main>
+    </BusinessTerminologyProvider>
   );
 }
 
@@ -1838,31 +2140,67 @@ function WizardNav({
   onSkip,
   onContinue,
   isPending,
+  isNavigating,
+  navigationFeedback,
   canSkip,
   disableContinue = false,
   manageMode = false,
+  continueLabel,
+  successMessage,
 }: {
   onBack: () => void;
   onSkip?: () => void;
   onContinue?: () => void;
   isPending: boolean;
+  isNavigating: boolean;
+  navigationFeedback: SetupNavigationFeedback | null;
   canSkip: boolean;
   disableContinue?: boolean;
   manageMode?: boolean;
+  continueLabel?: string;
+  successMessage?: string | null;
 }) {
-  const continueDisabled = isPending || disableContinue;
+  const isBusy = isPending || isNavigating;
+  const continueDisabled = isBusy || disableContinue;
   const showSkip = canSkip && !manageMode;
+  const resolvedContinueLabel =
+    continueLabel ??
+    (isPending ? "Saving..." : manageMode ? "Save" : "Save & continue");
+  const continueButtonLabel =
+    isNavigating && navigationFeedback?.source === "continue"
+      ? navigationFeedback.message
+      : isPending
+        ? "Saving..."
+        : resolvedContinueLabel;
+  const backButtonLabel =
+    isNavigating && navigationFeedback?.source === "back"
+      ? navigationFeedback.message
+      : manageMode
+        ? "Back to settings"
+        : "Back";
+  const settingsButtonLabel =
+    isNavigating && navigationFeedback?.source === "settings"
+      ? navigationFeedback.message
+      : manageMode
+        ? "Back to settings"
+        : "Back";
 
   return (
-    <div className="flex flex-col gap-2 sm:flex-row">
+    <div className="space-y-4">
+      {isNavigating && navigationFeedback ? (
+        <SetupNavigatingAlert message={navigationFeedback.message} />
+      ) : successMessage ? (
+        <SetupSuccessAlert message={successMessage} />
+      ) : null}
+      <div className="flex flex-col gap-2 sm:flex-row">
       <Button
         type="button"
         variant="outline"
         className="flex-1"
         onClick={onBack}
-        disabled={isPending}
+        disabled={isBusy}
       >
-        {manageMode ? "Back to settings" : "Back"}
+        {manageMode ? settingsButtonLabel : backButtonLabel}
       </Button>
       {showSkip ? (
         <Button
@@ -1870,7 +2208,7 @@ function WizardNav({
           variant="secondary"
           className="flex-1"
           onClick={onSkip}
-          disabled={isPending}
+          disabled={isBusy}
         >
           Skip for now
         </Button>
@@ -1882,13 +2220,14 @@ function WizardNav({
           onClick={onContinue}
           disabled={continueDisabled}
         >
-          {isPending ? "Saving..." : manageMode ? "Save" : "Continue"}
+          {continueButtonLabel}
         </Button>
       ) : (
         <Button type="submit" className="flex-1" disabled={continueDisabled}>
-          {isPending ? "Saving..." : manageMode ? "Save" : "Save & continue"}
+          {continueButtonLabel}
         </Button>
       )}
+      </div>
     </div>
   );
 }

@@ -312,7 +312,7 @@ Inputs
 Education
 
 Training
-    Courses
+    Offerings
 
 Banking
 

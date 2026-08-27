@@ -6,6 +6,8 @@
  * BP-003 / IP-002 – Product Classification & Categorization
  *
  * Note: Internal tables remain product_classification*. UI uses business language.
+ *
+ * @deprecated Prefer `buildCatalogueStructureUiLabels()` from `@/modules/product/product-terminology-labels`.
  */
 
 export const CATALOGUE_STRUCTURE_UI_LABELS = {

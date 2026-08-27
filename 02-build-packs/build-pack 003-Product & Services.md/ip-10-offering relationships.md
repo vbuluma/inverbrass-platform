@@ -223,7 +223,7 @@ Loan Products
 
 Insurance Products
 
-Courses
+Offerings
 
 Medical Services
 

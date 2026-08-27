@@ -14,6 +14,11 @@ import type { AuthActionResult } from "@/core/auth/actions/auth-actions";
 import { AuthError } from "@/core/auth/errors";
 import { createAuthService } from "@/core/auth/services/auth-service";
 import { createBusinessContextService } from "@/core/auth/services/business-context-service";
+import {
+  createIndustryExperienceService,
+  resolveBusinessTerminology,
+  type BusinessTerminology,
+} from "@/core/industry-experience";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 import {
   platformError,
@@ -37,6 +42,15 @@ export type ProductActionResult<T> = AuthActionResult<T> & {
   platform?: PlatformActionResult<T>;
 };
 
+async function resolveActionTerminology(
+  businessId: string
+): Promise<BusinessTerminology> {
+  const industryService = createIndustryExperienceService();
+  const industryContext =
+    await industryService.getBusinessIndustryContext(businessId);
+  return resolveBusinessTerminology(industryContext.industryCode);
+}
+
 async function requireProductContext() {
   const authService = createAuthService();
   const user = await authService.getAuthenticatedUser();
@@ -55,7 +69,7 @@ async function requireProductContext() {
   if (!context) {
     throw new ProductError(
       "BUSINESS_CONTEXT_REQUIRED",
-      "Select a business before managing products.",
+      "Select a business before managing offerings.",
       403
     );
   }
@@ -101,16 +115,19 @@ function toActionError(error: unknown): AuthActionResult<never> {
     success: false,
     error: {
       code: "PROVIDER_ERROR",
-      message: "We could not complete that Product action. Please try again.",
+      message: "We could not complete that action. Please try again.",
     },
   };
 }
 
-function productCreateSummary(product: ProductDetailView) {
+function productCreateSummary(
+  product: ProductDetailView,
+  terminology: BusinessTerminology
+) {
   return [
-    { label: "Product Code", value: product.productCode },
+    { label: terminology.offerings.codeLabel, value: product.productCode },
     { label: "Status", value: product.statusName },
-    { label: "Type", value: product.productTypeName },
+    { label: terminology.offerings.typeLabel, value: product.productTypeName },
     { label: "Source", value: product.recordSourceLabel },
   ];
 }
@@ -185,6 +202,7 @@ export async function createProductAction(
 ): Promise<ProductActionResult<ProductDetailView>> {
   try {
     const context = await requireProductContext();
+    const terminology = await resolveActionTerminology(context.businessId);
     const service = createProductService();
     const data = await service.createProduct(context, payload);
     revalidatePath("/products");
@@ -194,34 +212,38 @@ export async function createProductAction(
       success: true,
       data,
       platform: platformSuccess(
-        "Product Created",
+        `${terminology.offerings.singular} Created`,
         `${data.productName} has been registered in the catalogue.`,
         data,
         [
           {
-            label: "Open Product Workspace",
+            label: `Open ${terminology.offerings.workspaceTitle}`,
             href: `/products/${data.id}`,
             variant: "default",
           },
           {
-            label: "Register Another Product",
+            label: terminology.offerings.registerLabel,
             href: "/products/new",
             variant: "outline",
           },
         ],
         {
-          completionTitle: "Product registered",
-          summary: productCreateSummary(data),
+          completionTitle: `${terminology.offerings.singular} registered`,
+          summary: productCreateSummary(data, terminology),
         }
       ),
     };
   } catch (error) {
     const base = toActionError(error);
     if (!base.success) {
+      const context = await requireProductContext().catch(() => null);
+      const offeringLower = context
+        ? (await resolveActionTerminology(context.businessId)).offerings.singular.toLowerCase()
+        : "offering";
       return {
         ...base,
         platform: platformError(
-          "Could not create product",
+          `Could not create ${offeringLower}`,
           base.error.message,
           base.error.field
         ),

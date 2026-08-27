@@ -46,10 +46,8 @@ import { UnitAuditHistoryPanel } from "@/modules/product/components/unit-audit-h
 import { UnitTimelinePanel } from "@/modules/product/components/unit-timeline-panel";
 import { UNIT_STATUS_CODES } from "@/modules/product/constants";
 import type { UnitWorkspaceView } from "@/modules/product/types";
-import {
-  UNIT_UI_LABELS,
-  UNIT_WORKSPACE_TABS,
-} from "@/modules/product/unit-ui-labels";
+import { UNIT_WORKSPACE_TABS } from "@/modules/product/constants";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 
 type UnitWorkspaceProps = {
   initialData: UnitWorkspaceView;
@@ -60,6 +58,7 @@ export function UnitWorkspace({
   initialData,
   initialTab = "overview",
 }: UnitWorkspaceProps) {
+  const labels = useProductUiLabels();
   const [workspace, setWorkspace] = useState(initialData);
   const [syncedInitial, setSyncedInitial] = useState(initialData);
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -111,14 +110,14 @@ export function UnitWorkspace({
 
       if (!result.success) {
         setOverviewResult(
-          platformError("Could not save", result.error.message)
+          platformError(labels.actions.couldNotSave, result.error.message)
         );
         return;
       }
 
       setWorkspace(result.data);
       setOverviewResult(
-        platformSuccess("Unit updated", "Changes saved successfully.")
+        platformSuccess(labels.actions.unitUpdated, labels.actions.changesSaved)
       );
     });
   }
@@ -131,11 +130,11 @@ export function UnitWorkspace({
     await run(async () => {
       const result = await action(workspace.unit.id);
       if (!result.success) {
-        setHeaderResult(platformError("Action failed", result.error.message));
+        setHeaderResult(platformError(labels.actions.actionFailed, result.error.message));
         return;
       }
       setWorkspace(result.data);
-      setHeaderResult(platformSuccess("Status updated", successMessage));
+      setHeaderResult(platformSuccess(labels.actions.statusUpdated, successMessage));
     });
   }
 
@@ -161,16 +160,16 @@ export function UnitWorkspace({
     <main className="platform-workspace-main mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6">
       <SetBreadcrumbs
         items={[
-          { label: "Products", href: "/products" },
-          { label: UNIT_UI_LABELS.moduleName, href: "/products/units" },
+          labels.workspace.hubBreadcrumb,
+          { label: labels.unit.moduleName, href: "/products/units" },
           { label: workspace.unit.name },
         ]}
       />
 
       <PlatformWorkspaceHeader
         backHref="/products/units"
-        backLabel="Back to units"
-        workspaceLabel={UNIT_UI_LABELS.workspaceTitle}
+        backLabel={labels.unit.backToModule}
+        workspaceLabel={labels.unit.workspaceTitle}
         title={
           workspace.unit.isBaseUnit
             ? `${workspace.unit.name} (Base)`
@@ -185,7 +184,9 @@ export function UnitWorkspace({
                 <Button
                   type="button"
                   disabled={isProcessing}
-                  onClick={() => runLifecycle(activateUnitAction, "Unit activated.")}
+                  onClick={() =>
+                    runLifecycle(activateUnitAction, labels.actions.unitActivated)
+                  }
                 >
                   Activate
                 </Button>
@@ -195,7 +196,9 @@ export function UnitWorkspace({
                   type="button"
                   variant="outline"
                   disabled={isProcessing}
-                  onClick={() => runLifecycle(suspendUnitAction, "Unit suspended.")}
+                  onClick={() =>
+                    runLifecycle(suspendUnitAction, labels.actions.unitSuspended)
+                  }
                 >
                   Suspend
                 </Button>
@@ -220,11 +223,18 @@ export function UnitWorkspace({
       <PlatformTabs
         tabs={UNIT_WORKSPACE_TABS.map((tab) => ({
           id: tab.id,
-          label: tab.label,
+          label:
+            tab.id === "conversion-rules"
+              ? labels.unit.workspaceTabs.conversionRules
+              : labels.unit.workspaceTabs[
+                  tab.id === "audit-history"
+                    ? "auditHistory"
+                    : (tab.id as "overview" | "timeline")
+                ] ?? tab.id,
         }))}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        ariaLabel="Unit workspace sections"
+        ariaLabel={labels.unit.workspaceAriaLabel}
       />
 
       {activeTab === "overview" ? (
@@ -344,8 +354,8 @@ export function UnitWorkspace({
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>{UNIT_UI_LABELS.conversionHeading}</CardTitle>
-              <CardDescription>{UNIT_UI_LABELS.conversionDescription}</CardDescription>
+              <CardTitle>{labels.unit.conversionHeading}</CardTitle>
+              <CardDescription>{labels.unit.conversionDescription}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {workspace.conversionExamples.length === 0 ? (
@@ -418,20 +428,22 @@ export function UnitWorkspace({
       <PlatformConfirmDialog
         open={showArchiveConfirm}
         onOpenChange={setShowArchiveConfirm}
-        title="Archive unit?"
-        description="Archived units cannot be assigned to new offerings and become read-only."
-        confirmLabel="Archive"
+        title={labels.unit.archiveConfirmTitle}
+        description={labels.unit.archiveConfirmDescription}
+        confirmLabel={labels.unit.archiveConfirmLabel}
         isProcessing={isProcessing}
         onConfirm={async () => {
           await run(async () => {
             const result = await archiveUnitAction(workspace.unit.id);
             if (!result.success) {
-              setHeaderResult(platformError("Action failed", result.error.message));
+              setHeaderResult(platformError(labels.actions.actionFailed, result.error.message));
               return;
             }
             setWorkspace(result.data);
             setShowArchiveConfirm(false);
-            setHeaderResult(platformSuccess("Unit archived", "Status updated."));
+            setHeaderResult(
+              platformSuccess(labels.actions.unitArchived, labels.actions.statusUpdatedDetail)
+            );
           });
         }}
       />

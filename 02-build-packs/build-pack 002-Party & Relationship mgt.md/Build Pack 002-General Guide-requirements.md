@@ -1519,13 +1519,15 @@ BP-002 depends on the successful completion of:
 •	Enterprise Audit Framework
 Future Build Packs depending on BP-002 include:
 •	BP-003 Product & Service Catalogue
-•	BP-005 Sales & Checkout
-•	BP-007 Inventory & Purchasing
-•	BP-008 CRM & Lead Management
-•	BP-009 Bookings & Appointments
-•	BP-012 Expenses & Cashbook
-•	BP-013 Receivables & Collections
-•	BP-014 Reconciliation
+•	BP-004 CRM & Customer Engagement
+•	BP-005 Pricing, Tax & Commercial Rules
+•	BP-006 Sales, Orders & Service Delivery
+•	BP-007 Payments, Billing & Receipting
+•	BP-008 Inventory & Resource Management
+•	BP-009 Procurement & Supplier Management
+•	BP-010 Finance & Accounting Foundation
+•	BP-013 Product Management & Innovation *(do not use this ID for Receivables; SC-032 collections is unassigned in AV-1.8)*
+•	BP-014 Reconciliation *(historical — reconciliation matching is ENG-008)*
 •	BP-017 Workforce & Performance Management
 •	All Industry Solutions
 ________________________________________

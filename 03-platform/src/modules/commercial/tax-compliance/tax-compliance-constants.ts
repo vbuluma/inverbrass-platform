@@ -1,0 +1,133 @@
+/**
+ * Purpose:
+ * BP-005 IP-11 tax compliance constants (jurisdiction-agnostic).
+ * Kenya is the first configured jurisdiction — not hardcoded in engines.
+ *
+ * Implementation Package:
+ * BP-005 / IP-11 – Tax Compliance, Filing, Remittance Calendar & Evidence
+ */
+
+export const TAX_COMPLIANCE_IP = "IP-11" as const;
+
+export const TAX_COMPLIANCE_PERMISSIONS = {
+  READ: "CommercialManagement.TaxCompliance.Read",
+  MANAGE: "CommercialManagement.TaxCompliance.Manage",
+  FILE: "CommercialManagement.TaxCompliance.File",
+  REMIT: "CommercialManagement.TaxCompliance.Remit",
+  EVIDENCE: "CommercialManagement.TaxCompliance.Evidence",
+} as const;
+
+export const TAX_FILING_FREQUENCIES = {
+  MONTHLY: "MONTHLY",
+  QUARTERLY: "QUARTERLY",
+  ANNUAL: "ANNUAL",
+  EVENT: "EVENT",
+  CUSTOM: "CUSTOM",
+} as const;
+
+export type TaxFilingFrequency =
+  (typeof TAX_FILING_FREQUENCIES)[keyof typeof TAX_FILING_FREQUENCIES];
+
+export const TAX_COMPLIANCE_RULE_LIFECYCLE = {
+  DRAFT: "DRAFT",
+  ACTIVE: "ACTIVE",
+  SUSPENDED: "SUSPENDED",
+  RETIRED: "RETIRED",
+} as const;
+
+export type TaxComplianceRuleLifecycle =
+  (typeof TAX_COMPLIANCE_RULE_LIFECYCLE)[keyof typeof TAX_COMPLIANCE_RULE_LIFECYCLE];
+
+export const TAX_FILING_STATUSES = {
+  NOT_DUE: "NOT_DUE",
+  DUE: "DUE",
+  PREPARED: "PREPARED",
+  SUBMITTED: "SUBMITTED",
+  ACCEPTED: "ACCEPTED",
+  REJECTED: "REJECTED",
+  AMENDED: "AMENDED",
+  OVERDUE: "OVERDUE",
+} as const;
+
+export type TaxFilingStatus =
+  (typeof TAX_FILING_STATUSES)[keyof typeof TAX_FILING_STATUSES];
+
+export const TAX_REMITTANCE_STATUSES = {
+  NOT_DUE: "NOT_DUE",
+  DUE: "DUE",
+  PARTIALLY_PAID: "PARTIALLY_PAID",
+  PAID: "PAID",
+  OVERDUE: "OVERDUE",
+  DISPUTED: "DISPUTED",
+  WAIVED: "WAIVED",
+} as const;
+
+export type TaxRemittanceStatus =
+  (typeof TAX_REMITTANCE_STATUSES)[keyof typeof TAX_REMITTANCE_STATUSES];
+
+export const TAX_EVIDENCE_STATUSES = {
+  REQUIRED: "REQUIRED",
+  MISSING: "MISSING",
+  UPLOADED: "UPLOADED",
+  VERIFIED: "VERIFIED",
+  REJECTED: "REJECTED",
+  NOT_REQUIRED: "NOT_REQUIRED",
+} as const;
+
+export type TaxEvidenceStatus =
+  (typeof TAX_EVIDENCE_STATUSES)[keyof typeof TAX_EVIDENCE_STATUSES];
+
+export const TAX_COMPLIANCE_STATUSES = {
+  COMPLIANT: "COMPLIANT",
+  DUE: "DUE",
+  AT_RISK: "AT_RISK",
+  OVERDUE: "OVERDUE",
+  EVIDENCE_MISSING: "EVIDENCE_MISSING",
+  FILING_MISSING: "FILING_MISSING",
+  REMITTANCE_MISSING: "REMITTANCE_MISSING",
+  PARTIALLY_COMPLIANT: "PARTIALLY_COMPLIANT",
+  EXCEPTION: "EXCEPTION",
+  NOT_APPLICABLE: "NOT_APPLICABLE",
+} as const;
+
+export type TaxComplianceStatus =
+  (typeof TAX_COMPLIANCE_STATUSES)[keyof typeof TAX_COMPLIANCE_STATUSES];
+
+export const TAX_DUE_DATE_RULE_TYPES = {
+  FIXED_DAY_FOLLOWING_MONTH: "FIXED_DAY_FOLLOWING_MONTH",
+  FIXED_DAY_AFTER_PERIOD_END: "FIXED_DAY_AFTER_PERIOD_END",
+  EVENT_RELATIVE_DAYS: "EVENT_RELATIVE_DAYS",
+} as const;
+
+export type TaxDueDateRuleType =
+  (typeof TAX_DUE_DATE_RULE_TYPES)[keyof typeof TAX_DUE_DATE_RULE_TYPES];
+
+export const TAX_COMPLIANCE_EVENT_TYPES = {
+  PROFILE_CREATED: "PROFILE_CREATED",
+  REGISTRATION_ADDED: "REGISTRATION_ADDED",
+  RULE_ACTIVATED: "RULE_ACTIVATED",
+  OBLIGATION_CREATED: "OBLIGATION_CREATED",
+  OBLIGATION_AMENDED: "OBLIGATION_AMENDED",
+  PERIOD_GENERATED: "PERIOD_GENERATED",
+  FILING_PREPARED: "FILING_PREPARED",
+  FILING_SUBMITTED: "FILING_SUBMITTED",
+  FILING_ACCEPTED: "FILING_ACCEPTED",
+  FILING_REJECTED: "FILING_REJECTED",
+  REMITTANCE_RECORDED: "REMITTANCE_RECORDED",
+  EVIDENCE_UPLOADED: "EVIDENCE_UPLOADED",
+  EVIDENCE_VERIFIED: "EVIDENCE_VERIFIED",
+  EVIDENCE_REJECTED: "EVIDENCE_REJECTED",
+  MARKED_OVERDUE: "MARKED_OVERDUE",
+  EXCEPTION_RAISED: "EXCEPTION_RAISED",
+} as const;
+
+/** Example evidence types — configuration-driven, not industry-hardcoded. */
+export const TAX_EVIDENCE_TYPES = {
+  FILING_ACKNOWLEDGEMENT: "FILING_ACKNOWLEDGEMENT",
+  PAYMENT_CONFIRMATION: "PAYMENT_CONFIRMATION",
+  TAX_RETURN: "TAX_RETURN",
+  WITHHOLDING_CERTIFICATE: "WITHHOLDING_CERTIFICATE",
+  EXEMPTION_CERTIFICATE: "EXEMPTION_CERTIFICATE",
+  ASSESSMENT_NOTICE: "ASSESSMENT_NOTICE",
+  OTHER: "OTHER",
+} as const;

@@ -59,26 +59,47 @@ Relationship Types
 
 Seed the following (configurable):
 
+**Individual-oriented**
+
+Director
+Shareholder
+UBO (Ultimate Beneficial Owner)
+Trustee
+Guarantor
+Beneficiary
+Signatory
+Spouse
+Next of Kin
 Parent
 Guardian
+
+**Organisation-oriented**
+
+Parent Company
+Subsidiary
+Sister Company
+Franchise
+Partner
+Supplier
+Customer
+Agent
+
+**General (all editions)**
+
 Student
 Employee
 Employer
 Landlord
 Tenant
 Property Manager
-Customer
-Supplier
-Guarantor
-Next of Kin
 Doctor
 Patient
 Organization Contact
 Cooperative Member
 Donor
-Beneficiary
-Partner
 Contractor
+
+> **CRM consumption:** BP-004 IP-01 Customer 360 **reads** these relationships for the Relationship Network panel — BP-002 remains the single owner. Graph visualization is Phase 2; list and navigation first.
 
 Future relationship types shall be managed through the Configuration Engine.
 

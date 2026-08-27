@@ -20,3 +20,20 @@ export type {
   ResolvedRegulatoryRuleSet,
   ResolvedIdentifierRuleSet,
 } from "@/core/localization-regulatory/types";
+
+export {
+  DOCUMENT_NUMBERING_DOCUMENT_TYPES,
+  DOCUMENT_NUMBERING_ERROR_CODES,
+  DocumentNumberingError,
+} from "@/core/localization-regulatory/document-numbering";
+export type {
+  AllocatedDocumentNumber,
+  DocumentNumberingPort,
+  DocumentNumberingPolicy,
+} from "@/core/localization-regulatory/document-numbering";
+export {
+  ConfigurableDocumentNumberingService,
+  InMemoryDocumentNumberingStore,
+  ScriptedDocumentNumberingAdapter,
+  createScriptedDocumentNumberingAdapter,
+} from "@/core/localization-regulatory/services/document-numbering-service";

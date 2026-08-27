@@ -19,16 +19,19 @@ import {
   PRODUCT_TIMELINE_EVENT_CATEGORIES,
   PRODUCT_TIMELINE_EVENT_TYPES,
 } from "@/core/product-timeline";
-import { createIndustryExperienceService } from "@/core/industry-experience";
+import { createIndustryExperienceService, resolveBusinessTerminology } from "@/core/industry-experience";
+import { formatDynamicDuplicateValueMessage } from "@/core/validation/duplicate-validation-messages";
 import {
   PRODUCT_DEFAULT_PAGE_SIZE,
   PRODUCT_RECORD_SOURCE_CODES,
   PRODUCT_STATUS_CODES,
   type ProductStatusCode,
 } from "@/modules/product/constants";
-import { ProductError, PRODUCT_USER_MESSAGES } from "@/modules/product/errors";
+import { ProductError } from "@/modules/product/errors";
+import { resolveProductUserMessagesForContext } from "@/modules/product/resolve-product-user-messages";
 import { createProductReferenceRepository } from "@/modules/product/repositories/product-reference-repository";
 import { createProductRepository } from "@/modules/product/repositories/product-repository";
+import { createProductVariantService } from "@/modules/product/services/product-variant-service";
 import { recordProductEntityAudit } from "@/modules/product/services/product-audit-helper";
 import {
   canTransitionProductStatus,
@@ -50,10 +53,9 @@ import type {
   UpdateProductPayload,
 } from "@/modules/product/types";
 import {
-  createProductSchema,
+  buildProductValidators,
   productListFiltersSchema,
   productSearchQuerySchema,
-  updateProductSchema,
 } from "@/modules/product/validators/product-validators";
 
 type ProductRow = NonNullable<
@@ -72,6 +74,7 @@ export class ProductService {
   async getRegistrationCatalogues(
     context: CurrentBusinessContext
   ): Promise<ProductRegistrationCatalogues> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const industryContext =
       await this.industryExperienceService.getBusinessIndustryContext(
         context.businessId
@@ -94,7 +97,7 @@ export class ProductService {
     if (productTypes.length === 0 || productStatuses.length === 0) {
       throw new ProductError(
         "REFERENCE_DATA_MISSING",
-        PRODUCT_USER_MESSAGES.REFERENCE_DATA_MISSING,
+        msg.REFERENCE_DATA_MISSING,
         503
       );
     }
@@ -104,7 +107,7 @@ export class ProductService {
       productStatuses,
       currencies,
       ownerParties,
-      catalogueLabel: industryContext.offeringCatalogueNavLabel,
+      catalogueLabel: industryContext.offeringWorkspaceLabel,
       industryCode: industryContext.industryCode,
       industryName: industryContext.industryName,
       recordSources: [
@@ -191,7 +194,7 @@ export class ProductService {
       suspendedProducts,
       archivedProducts,
       recentlyUpdated,
-      catalogueLabel: industryContext.offeringCatalogueNavLabel,
+      catalogueLabel: industryContext.offeringWorkspaceLabel,
       industryCode: industryContext.industryCode,
       industryName: industryContext.industryName,
       statusSummary: statusGroups.map((group) => ({
@@ -212,12 +215,13 @@ export class ProductService {
     context: CurrentBusinessContext,
     filters: ProductListFilters = {}
   ): Promise<ProductListView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = productListFiltersSchema.safeParse(filters);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400,
         first?.path[0] ? String(first.path[0]) : undefined
       );
@@ -252,12 +256,13 @@ export class ProductService {
     context: CurrentBusinessContext,
     query: string
   ): Promise<ProductSummaryView[]> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const parsed = productSearchQuerySchema.safeParse({ query });
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400,
         first?.path[0] ? String(first.path[0]) : undefined
       );
@@ -275,6 +280,7 @@ export class ProductService {
     context: CurrentBusinessContext,
     productId: string
   ): Promise<ProductDetailView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const row = await this.productRepository.findByIdIncludingArchived(
       context.businessId,
       productId
@@ -283,7 +289,7 @@ export class ProductService {
     if (!row) {
       throw new ProductError(
         "PRODUCT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.PRODUCT_NOT_FOUND,
+        msg.PRODUCT_NOT_FOUND,
         404
       );
     }
@@ -295,12 +301,20 @@ export class ProductService {
     context: CurrentBusinessContext,
     payload: CreateProductPayload
   ): Promise<ProductDetailView> {
+    const msg = await resolveProductUserMessagesForContext(context);
+    const industryContext =
+      await this.industryExperienceService.getBusinessIndustryContext(
+        context.businessId
+      );
+    const terminology = resolveBusinessTerminology(industryContext.industryCode);
+    const { createProductSchema } = buildProductValidators(terminology);
+
     const parsed = createProductSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400,
         first?.path[0] ? String(first.path[0]) : undefined
       );
@@ -314,7 +328,11 @@ export class ProductService {
     if (exists) {
       throw new ProductError(
         "DUPLICATE_PRODUCT_CODE",
-        PRODUCT_USER_MESSAGES.DUPLICATE_PRODUCT_CODE,
+        formatDynamicDuplicateValueMessage(
+          terminology.offerings.codeLabel.toLowerCase(),
+          productCode,
+          terminology.offerings.singular
+        ),
         409,
         "productCode"
       );
@@ -326,7 +344,7 @@ export class ProductService {
     if (!typeValid) {
       throw new ProductError(
         "INVALID_PRODUCT_TYPE",
-        PRODUCT_USER_MESSAGES.INVALID_PRODUCT_TYPE,
+        msg.INVALID_PRODUCT_TYPE,
         400,
         "productTypeCode"
       );
@@ -341,7 +359,7 @@ export class ProductService {
       if (!owner) {
         throw new ProductError(
           "OWNER_PARTY_NOT_FOUND",
-          PRODUCT_USER_MESSAGES.OWNER_PARTY_NOT_FOUND,
+          msg.OWNER_PARTY_NOT_FOUND,
           400,
           "ownerPartyId"
         );
@@ -390,7 +408,7 @@ export class ProductService {
         productId: created.id,
         eventType: PRODUCT_TIMELINE_EVENT_TYPES.PRODUCT_CREATED,
         eventCategory: PRODUCT_TIMELINE_EVENT_CATEGORIES.REGISTRATION,
-        summary: `Product registered — ${created.productName}`,
+        summary: `${terminology.offerings.singular} registered — ${created.productName}`,
         referenceEntity: "product",
         referenceId: created.id,
       })
@@ -420,12 +438,20 @@ export class ProductService {
     productId: string,
     payload: UpdateProductPayload
   ): Promise<ProductDetailView> {
+    const msg = await resolveProductUserMessagesForContext(context);
+    const industryContext =
+      await this.industryExperienceService.getBusinessIndustryContext(
+        context.businessId
+      );
+    const terminology = resolveBusinessTerminology(industryContext.industryCode);
+    const { updateProductSchema } = buildProductValidators(terminology);
+
     const parsed = updateProductSchema.safeParse(payload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new ProductError(
         "INVALID_INPUT",
-        first?.message ?? PRODUCT_USER_MESSAGES.INVALID_INPUT,
+        first?.message ?? msg.INVALID_INPUT,
         400,
         first?.path[0] ? String(first.path[0]) : undefined
       );
@@ -449,7 +475,7 @@ export class ProductService {
       if (!owner) {
         throw new ProductError(
           "OWNER_PARTY_NOT_FOUND",
-          PRODUCT_USER_MESSAGES.OWNER_PARTY_NOT_FOUND,
+          msg.OWNER_PARTY_NOT_FOUND,
           400,
           "ownerPartyId"
         );
@@ -517,7 +543,7 @@ export class ProductService {
         productId,
         eventType: PRODUCT_TIMELINE_EVENT_TYPES.PRODUCT_UPDATED,
         eventCategory: PRODUCT_TIMELINE_EVENT_CATEGORIES.OPERATIONS,
-        summary: `Product updated — ${updated.productName}`,
+        summary: `${terminology.offerings.singular} updated — ${updated.productName}`,
         referenceEntity: "product",
         referenceId: productId,
       })
@@ -609,6 +635,7 @@ export class ProductService {
     timelineEventType: string,
     auditOperation: string
   ): Promise<ProductDetailView> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const existing = await this.productRepository.findByIdIncludingArchived(
       context.businessId,
       productId
@@ -617,7 +644,7 @@ export class ProductService {
     if (!existing) {
       throw new ProductError(
         "PRODUCT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.PRODUCT_NOT_FOUND,
+        msg.PRODUCT_NOT_FOUND,
         404
       );
     }
@@ -625,7 +652,7 @@ export class ProductService {
     if (!isProductStatusCode(existing.statusCode)) {
       throw new ProductError(
         "INVALID_STATUS_TRANSITION",
-        PRODUCT_USER_MESSAGES.INVALID_STATUS_TRANSITION,
+        msg.INVALID_STATUS_TRANSITION,
         400
       );
     }
@@ -633,7 +660,7 @@ export class ProductService {
     if (!canTransitionProductStatus(existing.statusCode, nextStatus)) {
       throw new ProductError(
         "INVALID_STATUS_TRANSITION",
-        PRODUCT_USER_MESSAGES.INVALID_STATUS_TRANSITION,
+        msg.INVALID_STATUS_TRANSITION,
         400
       );
     }
@@ -675,6 +702,10 @@ export class ProductService {
       after: { statusCode: nextStatus },
     });
 
+    if (nextStatus === PRODUCT_STATUS_CODES.ARCHIVED) {
+      await createProductVariantService().cascadeArchiveForProduct(context, productId);
+    }
+
     return this.getProduct(context, productId);
   }
 
@@ -682,6 +713,7 @@ export class ProductService {
     context: CurrentBusinessContext,
     productId: string
   ): Promise<ProductRow> {
+    const msg = await resolveProductUserMessagesForContext(context);
     const row = await this.productRepository.findById(
       context.businessId,
       productId
@@ -690,7 +722,7 @@ export class ProductService {
     if (!row) {
       throw new ProductError(
         "PRODUCT_NOT_FOUND",
-        PRODUCT_USER_MESSAGES.PRODUCT_NOT_FOUND,
+        msg.PRODUCT_NOT_FOUND,
         404
       );
     }
@@ -701,7 +733,7 @@ export class ProductService {
     ) {
       throw new ProductError(
         "ARCHIVED_PRODUCT_IMMUTABLE",
-        PRODUCT_USER_MESSAGES.ARCHIVED_PRODUCT_IMMUTABLE,
+        msg.ARCHIVED_PRODUCT_IMMUTABLE,
         400
       );
     }

@@ -1,4 +1,7 @@
 BP-003 IP-012 – Offering Analytics & Performance
+
+> **Implementation status (AV-1.5):** Complete. Analytics is implemented as a **reusable framework** (`offering_metric_definition`, `offering_metric_snapshot`). BP-003 consumes it via the Product Workspace **Analytics** tab. Platform-derived placeholder metrics are populated from existing offering data; business transaction metrics will be supplied by future Build Packs (Sales, Inventory, CRM, Finance).
+
 Objective
 
 Provide operational analytics and performance measurement for every offering, enabling businesses to understand how products and services perform without relying on external BI tools.
@@ -255,7 +258,7 @@ Insurance Products
 
 Medical Services
 
-Courses
+Offerings
 
 Future offering types
 

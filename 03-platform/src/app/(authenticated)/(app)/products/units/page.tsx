@@ -9,6 +9,7 @@
 import { redirect } from "next/navigation";
 
 import { getUnitDashboardAction } from "@/modules/product/actions/unit-actions";
+import { ProductModuleErrorPage } from "@/modules/product/components/product-module-error-page";
 import { UnitDashboard } from "@/modules/product/components/unit-dashboard";
 
 export default async function UnitsDashboardPage() {
@@ -23,10 +24,7 @@ export default async function UnitsDashboardPage() {
     }
 
     return (
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-xl font-semibold">Units of Measure</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{result.error.message}</p>
-      </main>
+      <ProductModuleErrorPage message={result.error.message} titleKind="dashboard" />
     );
   }
 

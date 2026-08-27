@@ -19,11 +19,11 @@ import {
   PRODUCT_WORKSPACE_TABS,
 } from "@/modules/product/constants";
 import { PRODUCT_TIMELINE_EVENT_TYPES } from "@/core/product-timeline/constants";
-import {
-  UNIT_UI_LABELS,
-  UNIT_WORKSPACE_TABS,
-} from "@/modules/product/unit-ui-labels";
+import { resolveBusinessTerminology } from "@/core/industry-experience/business-terminology";
+import { UNIT_WORKSPACE_TABS } from "@/modules/product/constants";
+import { buildUnitUiLabels } from "@/modules/product/product-terminology-labels";
 import { createUnitConversionService } from "@/modules/product/services/unit-conversion-service";
+import { DEFAULT_PRODUCT_USER_MESSAGES } from "@/modules/product/product-user-messages";
 import {
   applyRounding,
   canConvertWithinCategory,
@@ -216,7 +216,9 @@ function checkWorkspaceTabs(): SmokeResult[] {
     },
     {
       name: "unit ui labels",
-      ok: UNIT_UI_LABELS.dashboardTitle === "Units of Measure",
+      ok:
+        buildUnitUiLabels(resolveBusinessTerminology(null)).dashboardTitle ===
+        "Units of Measure",
     },
   ];
 }
@@ -240,6 +242,7 @@ function checkServiceFactories(): SmokeResult[] {
 function checkConversionService(): SmokeResult[] {
   const service = createUnitConversionService();
   const result = service.convert(
+    DEFAULT_PRODUCT_USER_MESSAGES,
     {
       id: "from",
       categoryId: "cat",

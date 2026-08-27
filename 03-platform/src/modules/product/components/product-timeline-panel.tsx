@@ -27,6 +27,8 @@ import {
   listProductTimelineAction,
   loadMoreProductTimelineAction,
 } from "@/modules/product/actions/product-timeline-actions";
+import { useBusinessTerminology } from "@/core/industry-experience/business-terminology-context";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 
 type ProductTimelinePanelProps = {
   productId: string;
@@ -56,6 +58,8 @@ export function ProductTimelinePanel({
   productId,
   initialData,
 }: ProductTimelinePanelProps) {
+  const labels = useProductUiLabels();
+  const terminology = useBusinessTerminology();
   const [data, setData] = useState(initialData);
   const [filters, setFilters] = useState<TimelineFilters>({
     category: "",
@@ -107,9 +111,9 @@ export function ProductTimelinePanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Product Timeline</CardTitle>
+        <CardTitle>{labels.workspace.timelineTitle}</CardTitle>
         <CardDescription>
-          Chronological activity history for this product.
+          Chronological activity history for this {terminology.offerings.singular.toLowerCase()}.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -209,7 +213,7 @@ export function ProductTimelinePanel({
         {data.events.length === 0 ? (
           <PlatformEmptyState
             title="No Timeline Events"
-            description="Product lifecycle and registration events will appear here."
+            description={labels.workspace.timelineEmptyDescription}
           />
         ) : (
           <div className="space-y-3">

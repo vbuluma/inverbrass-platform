@@ -19,6 +19,7 @@ export const SETUP_ERROR_CODES = {
   BUSINESS_NOT_DRAFT: "BUSINESS_NOT_DRAFT",
   BRANCH_REQUIRED: "BRANCH_REQUIRED",
   DUPLICATE_PHONE: "DUPLICATE_PHONE",
+  DUPLICATE_EMAIL: "DUPLICATE_EMAIL",
   PROVIDER_ERROR: "PROVIDER_ERROR",
 } as const;
 
@@ -30,18 +31,26 @@ export class SetupError extends Error {
   readonly statusCode: number;
   /** Optional form field to highlight; does not change workflow routing. */
   readonly field?: string;
+  /** Conflicting value for duplicate constraint messages (ENG-003j). */
+  readonly conflictValue?: string;
+  /** Human label for the conflicting field (e.g. "mobile number"). */
+  readonly conflictFieldLabel?: string;
 
   constructor(
     code: SetupErrorCode,
     message: string,
     statusCode = 400,
-    field?: string
+    field?: string,
+    conflictValue?: string,
+    conflictFieldLabel?: string
   ) {
     super(message);
     this.name = "SetupError";
     this.code = code;
     this.statusCode = statusCode;
     this.field = field;
+    this.conflictValue = conflictValue;
+    this.conflictFieldLabel = conflictFieldLabel;
   }
 }
 
@@ -59,5 +68,6 @@ export const SETUP_USER_MESSAGES = {
   BUSINESS_NOT_DRAFT: "Only draft businesses can be configured in setup.",
   BRANCH_REQUIRED: "Configure at least one branch before continuing.",
   DUPLICATE_PHONE: "That mobile number is already registered.",
+  DUPLICATE_EMAIL: "That email address is already registered.",
   PROVIDER_ERROR: "We could not save your setup progress. Please try again.",
 } as const;

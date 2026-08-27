@@ -5,7 +5,10 @@
 "use client";
 
 import { SearchIcon } from "lucide-react";
+import { useMemo } from "react";
 
+import { useBusinessTerminology } from "@/core/industry-experience/business-terminology-context";
+import { PLATFORM_NAV_LABELS } from "@/core/industry-experience/platform-terminology";
 import { Input } from "@/components/ui/input";
 import {
   Sheet,
@@ -20,18 +23,35 @@ type PlatformGlobalSearchShellProps = {
   onOpenChange: (open: boolean) => void;
 };
 
+function useGlobalSearchLabels() {
+  const terminology = useBusinessTerminology();
+
+  return useMemo(() => {
+    const partyPlural = terminology.entities.party.plural;
+    const offeringsPlural = terminology.offerings.plural;
+    const branchSingular = terminology.entities.branch.singular;
+
+    return {
+      description: `Global search foundation. Future: Ctrl+K to search ${partyPlural}, ${offeringsPlural}, Document, ${PLATFORM_NAV_LABELS.groups}, and more.`,
+      placeholder: `Search ${partyPlural.toLowerCase()}, documents, ${PLATFORM_NAV_LABELS.groups.toLowerCase()}…`,
+      partySearch: `${partyPlural} search`,
+      orgUnitSearch: `${branchSingular} search`,
+    };
+  }, [terminology]);
+}
+
 export function PlatformGlobalSearchShell({
   open,
   onOpenChange,
 }: PlatformGlobalSearchShellProps) {
+  const searchLabels = useGlobalSearchLabels();
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="top" className="mx-auto max-h-[85vh] w-full max-w-2xl overflow-y-auto">
         <SheetHeader>
           <SheetTitle>Search</SheetTitle>
-          <SheetDescription>
-            Global search foundation. Future: Ctrl+K to search Party, Product, Document, Group, and more.
-          </SheetDescription>
+          <SheetDescription>{searchLabels.description}</SheetDescription>
         </SheetHeader>
 
         <div className="relative mt-4">
@@ -40,7 +60,7 @@ export function PlatformGlobalSearchShell({
             aria-hidden
           />
           <Input
-            placeholder="Search parties, documents, groups…"
+            placeholder={searchLabels.placeholder}
             className="pl-9"
             autoFocus
             readOnly
@@ -51,10 +71,10 @@ export function PlatformGlobalSearchShell({
         <div className="mt-6 space-y-3 text-sm text-muted-foreground">
           <p className="font-medium text-foreground">Coming soon</p>
           <ul className="list-inside list-disc space-y-1">
-            <li>Party search</li>
+            <li>{searchLabels.partySearch}</li>
             <li>Document search</li>
-            <li>Group search</li>
-            <li>Organization unit search</li>
+            <li>{`${PLATFORM_NAV_LABELS.groups} search`}</li>
+            <li>{searchLabels.orgUnitSearch}</li>
             <li>Keyboard shortcut: Ctrl+K</li>
           </ul>
         </div>

@@ -1,0 +1,54 @@
+/**
+ * Purpose:
+ * Constants for Product Bundle Timeline.
+ *
+ * Implementation Package:
+ * BP-003 / IP-006 – Bundles & Packages Engine
+ */
+
+export const BUNDLE_TIMELINE_EVENT_CATEGORIES = {
+  REGISTRATION: "REGISTRATION",
+  LIFECYCLE: "LIFECYCLE",
+  CONFIGURATION: "CONFIGURATION",
+} as const;
+
+export type BundleTimelineEventCategory =
+  (typeof BUNDLE_TIMELINE_EVENT_CATEGORIES)[keyof typeof BUNDLE_TIMELINE_EVENT_CATEGORIES];
+
+export const BUNDLE_TIMELINE_EVENT_TYPES = {
+  BUNDLE_CREATED: "BUNDLE_CREATED",
+  BUNDLE_UPDATED: "BUNDLE_UPDATED",
+  BUNDLE_ACTIVATED: "BUNDLE_ACTIVATED",
+  BUNDLE_SUSPENDED: "BUNDLE_SUSPENDED",
+  BUNDLE_ARCHIVED: "BUNDLE_ARCHIVED",
+  BUNDLE_ITEM_ADDED: "BUNDLE_ITEM_ADDED",
+  BUNDLE_ITEM_REMOVED: "BUNDLE_ITEM_REMOVED",
+  BUNDLE_ITEM_QUANTITY_CHANGED: "BUNDLE_ITEM_QUANTITY_CHANGED",
+} as const;
+
+export type BundleTimelineEventType =
+  (typeof BUNDLE_TIMELINE_EVENT_TYPES)[keyof typeof BUNDLE_TIMELINE_EVENT_TYPES];
+
+export const BUNDLE_TIMELINE_SOURCE_MODULES = {
+  PRODUCT_BUNDLES: "PRODUCT_BUNDLES",
+} as const;
+
+export const BUNDLE_TIMELINE_VISIBILITY = {
+  STANDARD: "STANDARD",
+} as const;
+
+export const BUNDLE_TIMELINE_DEFAULT_PAGE_SIZE = 20;
+
+export const BUNDLE_TIMELINE_EVENT_TYPE_LABELS: Record<
+  BundleTimelineEventType,
+  string
+> = {
+  BUNDLE_CREATED: "Bundle created",
+  BUNDLE_UPDATED: "Bundle updated",
+  BUNDLE_ACTIVATED: "Bundle activated",
+  BUNDLE_SUSPENDED: "Bundle suspended",
+  BUNDLE_ARCHIVED: "Bundle archived",
+  BUNDLE_ITEM_ADDED: "Item added",
+  BUNDLE_ITEM_REMOVED: "Item removed",
+  BUNDLE_ITEM_QUANTITY_CHANGED: "Item quantity changed",
+};

@@ -1,7 +1,7 @@
 🏛️ InverBrass Platform: Final Blueprint (v1.0 Architecture & Documentation)
 This is the frozen, enterprise-ready InverBrass v1.0 Architecture Blueprint. It maximizes your velocity as a solo developer by prioritizing extreme modular uniformity and configuration over one-off custom code. [1]
 
-**Architecture Version:** AV-1.5 — see [01b – Architecture Versions](./01b-Architecture-Versions.md) for the full change history (from → to, reasoning). **Engine catalog locked** under AV-1.5 — next sub-engine ID: ENG-003n.
+**Architecture Version:** AV-1.6 — see [01b – Architecture Versions](./01b-Architecture-Versions.md) for the full change history (from → to, reasoning). **Engine catalog locked** under AV-1.5 — next sub-engine ID: ENG-003o.
 
 T**his & future architecture changes MUST support My core VISSION below**:
 ****Platform Principle & Vission PP-001 – Digital Business Platform**
@@ -192,7 +192,7 @@ Same engines underneath. Different experience above the Industry Edition boundar
 
 > **Canonical engine catalog:** [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3.
 
-> **v1.0 note:** ENG-003 sub-engines (003a–m) use flat extension IDs under one family. **AV-1.5 lock:** next ID is ENG-003n; no regrouping until AV-2.0. See [01b – Architecture Versions](./01b-Architecture-Versions.md) — AV-1.5 Engine Catalog Lock and Future Architecture Considerations.
+> **v1.0 note:** ENG-003 sub-engines (003a–n) use flat extension IDs under one family. **AV-1.5 lock:** next ID is ENG-003o; no regrouping until AV-2.0. See [01b – Architecture Versions](./01b-Architecture-Versions.md) — AV-1.5 Engine Catalog Lock and Future Architecture Considerations.
 
 | Engine ID | Platform Engine | Purpose | What it Handles |
 |-----------|-----------------|---------|-----------------|
@@ -211,6 +211,7 @@ Same engines underneath. Different experience above the Industry Edition boundar
 | **ENG-003k** | Industry Experience Engine | Presents an industry-native user experience on top of shared platform engines. | Industry Editions, navigation generation, menu visibility, terminology mapping, dashboard layouts, feature visibility, configuration visibility, product templates, workflow templates, report templates, landing pages, optional branding/themes. |
 | **ENG-003l** | Checklist & Completion Engine | Provides metadata-driven operational checklists that guide users through business processes, enforce mandatory steps, calculate completion, and prevent progression when required items are incomplete. | Checklist definitions, checklist instances, mandatory and optional items, sequence, blocking and warning rules, auto-complete rules, completion expressions, progress calculation, submission gates, manual completion, event-driven item completion. |
 | **ENG-003m** | Portfolio & Roadmap Engine | Provides structured planning and controlled evolution of portfolio subjects across the platform. | Roadmap items, releases, milestones, implementation progress, release history, retirement plans, timeline views — offerings, services, programmes, projects, regulatory initiatives, strategic initiatives. |
+| **ENG-003n** | Work Assignment & SLA Engine | Tracks ownership, assignment history, and time-based SLA across platform work items. | Assignment tracking, immutable assignment history, per-assignee SLA segments, cumulative lifecycle SLA, active/waiting/paused time, breach detection, queue metrics, SLA policy configuration by entity type. |
 | **ENG-004** | Rules Engine | Executes deterministic business rules. | Eligibility rules, validations, calculations, decision tables, configurable rule execution, business policies, rule versioning. |
 | **ENG-005** | Workflow Engine | Orchestrates business processes requiring approvals or multiple steps. | Maker-checker, approvals, escalations, routing, SLA monitoring, workflow history, task assignment, decision points. |
 | **ENG-006** | Payment Engine | Processes all incoming and outgoing financial transactions. | Cash, mobile money, bank transfers, cards, split payments, partial payments, refunds, credits, payment gateways. |
@@ -567,6 +568,82 @@ ENG-013 Audit Engine → release and milestone change history
 
 **BP-003 consumption pattern:** Product Workspace **Roadmap** tab renders ENG-003m data for `subject_type = offering`. No `offering_release` or `offering_roadmap_item` tables in the Product module.
 
+### ENG-003n — Work Assignment & SLA Engine
+
+**Purpose**
+
+Provides cross-cutting ownership tracking, assignment history, and time-based SLA measurement for any work item across the platform. Answers: *Who owns this work? How long has each owner held it? What is the total elapsed and processing time? Has SLA been breached?*
+
+This is a **cross-cutting platform capability** — not a CRM, sales, or service module concern. Build Packs **consume** ENG-003n through a shared consumption contract; they do not implement module-local assignment or SLA tables.
+
+> **Architecture note (AV-1.6 / AV-1.7):** BP-004 CRM documentation (Build Pack 004 folder) defines the ENG-003n consumption contract and **Customer 360 hub** in **IP-01 CRM Foundation & Customer 360**. ENG-004 remains the **Rules Engine** (scoring, routing rules); ENG-005 orchestrates approvals and escalations — it complements but does not replace ENG-003n segment tracking.
+
+**Core responsibilities**
+
+1. **Assignment tracking** — Record every assignment of a work item to a user, team, branch, business unit, or queue
+2. **Assignment history** — Maintain immutable history: previous owner, new owner, assigned by, date/time, reason, assignment type (manual / automatic / escalation / queue pull)
+3. **Per-assignee SLA segments** — Measure time with each assignee; close segment on reassignment; open new segment for new owner
+4. **Cumulative lifecycle SLA** — Roll up total processing time, total elapsed time, active working time, waiting time, paused time, and breached duration across all segments
+5. **SLA policies** — Configurable policies by entity type (lead, opportunity, case, visit report, quotation, etc.)
+6. **Pause and resume** — Support configured pause reasons (awaiting customer, legal hold) without inflating active working time
+7. **Breach detection** — Flag when segment or cumulative SLA exceeds policy thresholds
+8. **Queue metrics** — Expose current owner elapsed time, sum of prior owners' elapsed time, total lifecycle duration, SLA remaining, and breach flags for analytics
+9. **Event emission** — Publish assignment created, reassigned, SLA breached, and segment closed events
+
+**Business rules**
+
+| Rule | Description |
+|------|-------------|
+| Append-only history | Assignment and SLA segments are never overwritten; corrections via addendum audit entries only |
+| Segment closure | SLA timer for current assignee stops on ownership change; prior segment end time is recorded |
+| Segment opening | New SLA segment starts for new assignee on assignment |
+| Cumulative total | Total SLA equals cumulative processing duration across all assignee segments (excluding configured pause periods) |
+| Single owner | Work item has one current owner at a time; queue membership is tracked separately |
+| Policy binding | SLA policies bind to entity type and optional priority or classification |
+
+**Where it is used (examples)**
+
+| Consumer | Assignment / SLA Example |
+|----------|--------------------------|
+| BP-004 CRM (IP-01 contract) | Lead, opportunity, case, visit report ownership and TAT |
+| BP-005 Sales & Service Delivery | Work order and fulfilment assignment (future) |
+| BP-011 Workflow & Process Automation | Task routing metrics complementing ENG-005 |
+| Loan origination (Banking Edition) | Application handler segments and cumulative approval SLA |
+| Property maintenance | Ticket assignment and resolution TAT |
+
+**Relationship to other engines**
+
+```
+ENG-003a (configuration) → ENG-003n (SLA policies, entity types)
+        ↓
+Build Pack modules (CRM, Sales, Service, etc.) — call assignment/SLA services on owner change
+        ↓
+ENG-004 Rules Engine → optional routing/scoring rules for auto-assignment
+ENG-005 Workflow Engine → approvals, escalations on breach (complements ENG-003n)
+ENG-009 Notification Engine → owner change and breach alerts
+ENG-011 Reporting Engine → queue and TAT analytics
+ENG-013 Audit Engine → assignment history immutability
+```
+
+**Explicit non-ownership**
+
+- **ENG-004 Rules Engine** executes deterministic routing and scoring rules — it does not own assignment history or SLA segments
+- **ENG-005 Workflow Engine** orchestrates approval steps and escalation workflows — it consumes breach signals from ENG-003n
+- **Build Pack modules** own entity-specific SLA policy definitions and UI; ENG-003n owns segment storage and calculation
+
+**Canonical entities (planned)**
+
+| Entity | Purpose |
+|--------|---------|
+| `work_assignment` | Current owner binding for a work item (subject type + subject id) |
+| `work_assignment_history` | Immutable assignment change records |
+| `work_sla_segment` | Per-assignee SLA segment with start, end, durations, and breach state |
+| `work_sla_policy` | Configurable SLA thresholds by entity type, priority, and business |
+
+**Implementation location:** `03-platform/src/core/work-assignment-sla/` (planned)
+
+**BP-004 consumption pattern:** CRM modules call ENG-003n on every ownership change per IP-01 contract. No `lead_assignment_history` or module-local SLA tables in CRM.
+
 
 |                                         |                                                                                                                                                                                                                                                                                                                                                                    |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -665,6 +742,8 @@ The platform already has the core building blocks. The Industry Experience Layer
 ✔ Checklist & Completion Engine (ENG-003l — planned)
 
 ✔ Portfolio & Roadmap Engine (ENG-003m — planned)
+
+✔ Work Assignment & SLA Engine (ENG-003n — planned)
 
 ✔ Event Ingestion Engine (planned)
 

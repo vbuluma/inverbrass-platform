@@ -33,6 +33,9 @@ export type AuthActionResult<T> =
         message: string;
         /** Optional form field name to highlight after validation failure. */
         field?: string;
+        /** ENG-003j — conflicting value for duplicate constraint errors. */
+        conflictValue?: string;
+        conflictFieldLabel?: string;
       };
     };
 

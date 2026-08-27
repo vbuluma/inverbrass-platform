@@ -130,6 +130,10 @@ function toActionError(error: unknown): AuthActionResult<never> {
         code: error.code,
         message: error.message,
         ...(error.field ? { field: error.field } : {}),
+        ...(error.conflictValue ? { conflictValue: error.conflictValue } : {}),
+        ...(error.conflictFieldLabel
+          ? { conflictFieldLabel: error.conflictFieldLabel }
+          : {}),
       },
     };
   }

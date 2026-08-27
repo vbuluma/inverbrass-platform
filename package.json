@@ -1,0 +1,16 @@
+{
+  "name": "inverbrass-platform-workspace",
+  "private": true,
+  "description": "Repository root wrapper — run platform commands from here or from 03-platform/",
+  "scripts": {
+    "dev": "npm run dev --prefix 03-platform",
+    "dev:webpack": "npm run dev:webpack --prefix 03-platform",
+    "build": "npm run build --prefix 03-platform",
+    "start": "npm run start --prefix 03-platform",
+    "lint": "npm run lint --prefix 03-platform",
+    "typecheck": "npm run typecheck --prefix 03-platform",
+    "db:generate": "npm run db:generate --prefix 03-platform",
+    "db:migrate": "npm run db:migrate --prefix 03-platform",
+    "db:seed": "npm run db:seed --prefix 03-platform"
+  }
+}

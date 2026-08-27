@@ -33,7 +33,7 @@ Subscription Plans	Monthly Internet
 Memberships	Club Membership
 Insurance Products	Motor Cover
 Financial Products	Loans, Savings Accounts
-Education Products	Courses
+Education Products	Offerings
 Hospitality	Rooms, Packages
 Agriculture	Livestock, Inputs
 Healthcare	Procedures, Medicines
@@ -51,9 +51,9 @@ IP-007	Digital Catalogue	Website, Mobile, WhatsApp	Complete
 IP-008	Product Lifecycle	Draft → Active → Retired	Complete
 IP-009	Product Documents & Compliance	Images, manuals, certificates, compliance matrix	Complete
 IP-010	Product Relationships	Compatible, Accessory, Cross-sell	Complete
-IP-011	Pricing & Pricing Rules	Commercial pricing configuration	Complete
-IP-012	Offering Analytics & Performance	Performance KPIs and dashboard	Complete
-IP-013	Offering Governance	Owners, readiness, stewardship	**In scope — final BP-003 IP**
+IP-011	Pricing & Pricing Rules	Commercial pricing configuration (platform pricing_* capability)	Complete
+IP-012	Offering Analytics & Performance	Performance KPIs and dashboard (analytics framework)	Complete
+IP-013	Offering Governance	Owners, readiness, stewardship	Complete
 IP-014	Offering Roadmap & Release Management	~~Product roadmap and releases~~	**Retired → ENG-003m**
 IP-015	Product Intelligence	AI analytics, recommendations	**Deferred → ENG-003f / BP-013**
 
@@ -152,7 +152,7 @@ Vertical	Consumption
 Retail	Merchandise
 Property	Properties, Rental Units
 Healthcare	Services, Procedures
-Education	Courses, Fees
+Education	Offerings, Fees
 Hospitality	Rooms, Packages
 Agriculture	Crops, Livestock
 Banking	Financial Products

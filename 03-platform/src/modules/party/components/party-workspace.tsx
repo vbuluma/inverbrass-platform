@@ -53,6 +53,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { dateFieldValue, textFieldValue, useControlledForm } from "@/lib/forms";
+import { usePartyDashboardLabels } from "@/modules/party/party-terminology-labels";
 import {
   activatePartyAction,
   archivePartyAction,
@@ -155,6 +156,7 @@ export function PartyWorkspace({
   initialTab = "overview",
   showAddOrganizationalUnit = false,
 }: PartyWorkspaceProps) {
+  const partyLabels = usePartyDashboardLabels();
   const [party, setParty] = useState(initialParty);
   const [syncedInitialParty, setSyncedInitialParty] = useState(initialParty);
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -213,7 +215,7 @@ export function PartyWorkspace({
       );
       return;
     }
-    setResult(platformSuccess("Saved successfully.", successMessage));
+    setResult(platformSuccess(partyLabels.savedSuccessfully, successMessage));
     setIsDirty(false);
     setParty(result.data);
     overviewForm.reset(buildOverviewInitial(result.data));
@@ -314,7 +316,7 @@ export function PartyWorkspace({
       <SetBreadcrumbs items={breadcrumbs} />
       <PlatformWorkspaceHeader
         backHref="/parties"
-        backLabel="Back to Party Dashboard"
+        backLabel={partyLabels.backToPartyDashboard}
         workspaceLabel="Party Workspace"
         title={party.displayName}
         subtitle={`${party.partyNumber} · ${party.partyTypeName}`}

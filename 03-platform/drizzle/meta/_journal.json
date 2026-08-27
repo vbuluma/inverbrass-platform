@@ -225,6 +225,293 @@
       "when": 1784564588832,
       "tag": "0031_bp003_ip003_unit_engine",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1784564588833,
+      "tag": "0032_bp003_ip004_product_attributes",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1784564588834,
+      "tag": "0033_bp003_ip005_product_variants",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1784564588835,
+      "tag": "0034_bp003_ip006_product_bundles",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1784564588836,
+      "tag": "0035_bp003_ip007_digital_catalogue",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1784564588837,
+      "tag": "0036_bp003_ip008_product_lifecycle",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1784564588838,
+      "tag": "0037_bp003_ip009_offering_documents",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1784564588839,
+      "tag": "0038_bp003_ip010_offering_relationships",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1784564588840,
+      "tag": "0039_bp003_ip011_offering_pricing",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1784564588841,
+      "tag": "0040_bp003_ip012_offering_analytics",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1784564588842,
+      "tag": "0041_bp003_ip013_offering_governance",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1784564588843,
+      "tag": "0042_bp004_ip001_crm_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1784564588844,
+      "tag": "0043_bp004_ip002_lead_management",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1784564588845,
+      "tag": "0044_bp004_ip003_opportunity_management",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1784564588846,
+      "tag": "0045_bp004_ip004_account_contact_management",
+      "breakpoints": true
+    },
+      {
+        "idx": 46,
+        "version": "7",
+        "when": 1784564588843,
+        "tag": "0046_bp004_ip005_activity_task_management",
+        "breakpoints": true
+      },
+      {
+        "idx": 47,
+        "version": "7",
+        "when": 1784564588844,
+        "tag": "0047_bp004_ip005_activity_catalogues",
+        "breakpoints": true
+      },
+      {
+        "idx": 48,
+        "version": "7",
+        "when": 1784564588845,
+        "tag": "0048_bp004_ip006_calendar_appointment_management",
+        "breakpoints": true
+      },
+      {
+        "idx": 49,
+        "version": "7",
+        "when": 1784564588846,
+        "tag": "0049_bp004_ip006_appointment_minutes_and_extensions",
+        "breakpoints": true
+      },
+      {
+        "idx": 50,
+        "version": "7",
+        "when": 1784564588847,
+        "tag": "0050_bp004_ip007_visit_call_report_management",
+        "breakpoints": true
+      },
+      {
+        "idx": 51,
+        "version": "7",
+        "when": 1784564588848,
+        "tag": "0051_bp004_ip008_communication_management",
+        "breakpoints": true
+      },
+      {
+        "idx": 52,
+        "version": "7",
+        "when": 1784564588849,
+        "tag": "0052_bp004_ip009_case_service_request_management",
+        "breakpoints": true
+      },
+      {
+        "idx": 53,
+        "version": "7",
+        "when": 1784564588850,
+        "tag": "0053_bp004_ip013_crm_governance",
+        "breakpoints": true
+      },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1784564588851,
+      "tag": "0054_bp004_se_final_remediation",
+      "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1784564588852,
+      "tag": "0042_bp004_ip010_quotation_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1784564588853,
+      "tag": "0043_bp004_ip010_sales_order_approval",
+      "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1784564588854,
+      "tag": "0044_bp004_ip011_campaign_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1784564588855,
+      "tag": "0045_bp004_ip012_crm_analytics",
+      "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1784564588856,
+      "tag": "0055_bp005_ip008_commercial_governance",
+      "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1784564588857,
+      "tag": "0056_bp005_ip011_tax_compliance",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1784564588858,
+      "tag": "0057_bp006_ip001_sales_order_creation",
+      "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1784564588859,
+      "tag": "0058_bp006_ip002_order_lifecycle_fulfilment",
+      "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1784564588860,
+      "tag": "0059_bp006_ip003_delivery_inspection_service",
+      "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1784564588861,
+      "tag": "0060_bp006_ip004_amendments_cancellation_returns",
+      "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1784564588862,
+      "tag": "0061_bp007_ip001_payment_obligation_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1784564588863,
+      "tag": "0062_bp007_ip002_payment_initiation_processing",
+      "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1784564588864,
+      "tag": "0063_bp007_ip003_partial_split_payment_allocation",
+      "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1784564588865,
+      "tag": "0064_bp007_ip004_billing_invoicing_credit_sales",
+      "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1784564588866,
+      "tag": "0065_bp007_ip005_receipting_payment_evidence",
+      "breakpoints": true
+    },
+    {
+      "idx": 70,
+      "version": "7",
+      "when": 1784564588867,
+      "tag": "0066_bp007_ip006_refunds_reversals_adjustments",
+      "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1784564588868,
+      "tag": "0067_bp007_ip007_settlement_reconciliation_handoff",
+      "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1784564588869,
+      "tag": "0068_bp007_ip008_payment_exceptions_operations_controls",
+      "breakpoints": true
     }
   ]
 }

@@ -74,6 +74,11 @@ export {
   PlatformRecommendationsCard,
   type PlatformRecommendation,
 } from "@/components/platform/platform-recommendations-card";
+export {
+  PlatformStepProgress,
+  type PlatformStepProgressItem,
+  type PlatformStepProgressStatus,
+} from "@/components/platform/platform-step-progress";
 export { PlatformStickyActionBar } from "@/components/platform/platform-sticky-action-bar";
 export {
   PlatformTabPanel,

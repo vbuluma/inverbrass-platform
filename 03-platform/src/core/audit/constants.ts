@@ -1,9 +1,9 @@
-/**
+﻿/**
  * Purpose:
  * Constants for the reusable Enterprise Audit capability.
  *
  * Implementation Package:
- * BP-002 / IP-011 – Enterprise Audit History
+ * BP-002 / IP-011 â€“ Enterprise Audit History
  */
 
 export const AUDIT_OPERATIONS = {
@@ -51,6 +51,45 @@ export const AUDIT_ENTITY_NAMES = {
   PRODUCT_CLASSIFICATION_ASSIGNMENT: "product_classification_assignment",
   UNIT_OF_MEASURE: "unit_of_measure",
   UNIT_CATEGORY: "unit_category",
+  ATTRIBUTE_GROUP: "attribute_group",
+  PRODUCT_ATTRIBUTE_DEFINITION: "product_attribute_definition",
+  PRODUCT_ATTRIBUTE_ASSIGNMENT: "product_attribute_assignment",
+  PRODUCT_VARIANT: "product_variant",
+  PRODUCT_VARIANT_ATTRIBUTE: "product_variant_attribute",
+  PRODUCT_BUNDLE: "product_bundle",
+  PRODUCT_BUNDLE_ITEM: "product_bundle_item",
+  PRODUCT_CATALOGUE_PUBLICATION: "product_catalogue_publication",
+  PRODUCT_LIFECYCLE: "product_lifecycle",
+  OFFERING_DOCUMENT: "offering_document",
+  OFFERING_RELATIONSHIP: "offering_relationship",
+  PRICING_CATALOGUE: "pricing_catalogue",
+  PRICING_ITEM: "pricing_item",
+  OFFERING_METRIC_DEFINITION: "offering_metric_definition",
+  OFFERING_GOVERNANCE: "offering_governance",
+  CRM_RECORD: "crm_record",
+  CRM_LEAD: "crm_lead",
+  CRM_OPPORTUNITY: "crm_opportunity",
+  CRM_ACCOUNT: "crm_account",
+  CRM_ACCOUNT_CONTACT: "crm_account_contact",
+  CRM_ACTIVITY: "crm_activity",
+  CRM_APPOINTMENT: "crm_appointment",
+  CRM_VISIT: "crm_visit",
+  CRM_COMMUNICATION: "crm_communication",
+  CRM_CASE: "crm_case",
+  CRM_GOVERNANCE: "crm_governance",
+  CRM_MERGE_PROPOSAL: "crm_merge_proposal",
+  CRM_SLA_POLICY: "crm_sla_policy",
+  COMMERCIAL_RULE_VERSION: "commercial_rule_version",
+  COMMERCIAL_OVERRIDE_REQUEST: "commercial_override_request",
+  SALES_ORDER: "sales_order",
+  PAYMENT_OBLIGATION: "payment_obligation",
+  PAYMENT_TRANSACTION: "payment_transaction",
+  PAYMENT_ALLOCATION: "payment_allocation",
+  PAYMENT_INVOICE: "payment_invoice",
+  PAYMENT_RECEIPT: "payment_receipt",
+  PAYMENT_REFUND: "payment_refund",
+  PAYMENT_SETTLEMENT: "payment_settlement",
+  PAYMENT_EXCEPTION: "payment_exception",
 } as const;
 
 export type AuditEntityName =
@@ -76,8 +115,52 @@ export const AUDIT_ENTITY_LABELS: Record<AuditEntityName, string> = {
   product_classification_assignment: "Classification Assignment",
   unit_of_measure: "Unit of Measure",
   unit_category: "Unit Category",
+  attribute_group: "Attribute Group",
+  product_attribute_definition: "Attribute Definition",
+  product_attribute_assignment: "Attribute Assignment",
+  product_variant: "Product Variant",
+  product_variant_attribute: "Variant Attribute Override",
+  product_bundle: "Product Bundle",
+  product_bundle_item: "Bundle Item",
+  product_catalogue_publication: "Catalogue Publication",
+  product_lifecycle: "Product Lifecycle",
+  offering_document: "Offering Document",
+  offering_relationship: "Offering Relationship",
+  pricing_catalogue: "Pricing Catalogue",
+  pricing_item: "Pricing Item",
+  offering_metric_definition: "Offering Metric Definition",
+  offering_governance: "Offering Governance",
+  crm_record: "CRM Record",
+  crm_lead: "CRM Lead",
+  crm_opportunity: "CRM Opportunity",
+  crm_account: "CRM Account",
+  crm_account_contact: "CRM Account Contact",
+  crm_activity: "CRM Activity",
+  crm_appointment: "CRM Appointment",
+  crm_visit: "CRM Visit",
+  crm_communication: "CRM Communication",
+  crm_case: "CRM Case",
+  crm_governance: "CRM Governance",
+  crm_merge_proposal: "CRM Merge Proposal",
+  crm_sla_policy: "CRM SLA Policy",
+  commercial_rule_version: "Commercial Rule Version",
+  commercial_override_request: "Commercial Override Request",
+  sales_order: "Sales Order",
+  payment_obligation: "Payment Obligation",
+  payment_transaction: "Payment Transaction",
+  payment_allocation: "Payment Allocation",
+  payment_invoice: "Payment Invoice",
+  payment_receipt: "Payment Receipt",
+  payment_refund: "Payment Refund",
+  payment_settlement: "Payment Settlement",
+  payment_exception: "Payment Exception",
 };
 
+/**
+ * Source modules for audit provenance.
+ * CRM_MANAGEMENT = CRM Core (records, leads, accounts, opportunities).
+ * CRM_* = later BP-004 IP capability modules (distinct audit sources).
+ */
 export const AUDIT_SOURCE_MODULES = {
   PARTY_MANAGEMENT: "party_management",
   PARTY_ROLES: "party_roles",
@@ -91,6 +174,22 @@ export const AUDIT_SOURCE_MODULES = {
   PARTY_COMMUNICATION_PREFERENCES: "party_communication_preferences",
   PARTY_IDENTITY_REGULATORY: "party_identity_regulatory",
   PRODUCT_MANAGEMENT: "product_management",
+  PRODUCT_LIFECYCLE: "product_lifecycle",
+  OFFERING_DOCUMENTS: "offering_documents",
+  OFFERING_RELATIONSHIPS: "offering_relationships",
+  OFFERING_PRICING: "offering_pricing",
+  OFFERING_ANALYTICS: "offering_analytics",
+  OFFERING_GOVERNANCE: "offering_governance",
+  CRM_MANAGEMENT: "crm_management",
+  CRM_ACTIVITY: "crm_activity",
+  CRM_APPOINTMENT: "crm_appointment",
+  CRM_VISIT: "crm_visit",
+  CRM_COMMUNICATION: "crm_communication",
+  CRM_CASE: "crm_case",
+  CRM_GOVERNANCE: "crm_governance",
+  COMMERCIAL_GOVERNANCE: "commercial_governance",
+  SALES_ORDERS: "sales_orders",
+  PAYMENTS: "payments",
 } as const;
 
 export type AuditSourceModule =
@@ -109,6 +208,27 @@ export const AUDIT_SOURCE_MODULE_LABELS: Record<AuditSourceModule, string> = {
   party_communication_preferences: "Party Communication & Consent Preferences",
   party_identity_regulatory: "Party Identity & Regulatory",
   product_management: "Product Management",
+  product_lifecycle: "Product Lifecycle",
+  offering_documents: "Offering Documents",
+  offering_relationships: "Offering Relationships",
+  offering_pricing: "Offering Pricing",
+  offering_analytics: "Offering Analytics",
+  offering_governance: "Offering Governance",
+  crm_management: "CRM Management",
+  crm_activity: "CRM Activity",
+  crm_appointment: "CRM Appointment",
+  crm_visit: "CRM Visit",
+  crm_communication: "CRM Communication",
+  crm_case: "CRM Case",
+  crm_governance: "CRM Governance",
+  commercial_governance: "Commercial Governance",
+  sales_orders: "Sales Orders",
+  payments: "Payments",
 };
 
 export const AUDIT_DEFAULT_PAGE_SIZE = 25;
+
+
+
+
+

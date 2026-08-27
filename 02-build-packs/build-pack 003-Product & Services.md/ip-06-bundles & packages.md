@@ -847,4 +847,37 @@ When complete provide ONLY:
 Stop after IP-006.
 Do NOT begin IP-007.
 
+---
+
+## Implementation Record — IP-006 (2026-08-01)
+
+**Branch:** `feature/bp003-catalogue`  
+**Migration:** `03-platform/drizzle/0034_bp003_ip006_product_bundles.sql`  
+**Smoke script:** `03-platform/scripts/bp003-ip006-product-bundles-smoke-validation.ts`
+
+### Delivered
+
+- Product bundle CRUD, lifecycle (activate/suspend/archive), item management, and search
+- Bundle registration wizard (details → select products → configure → review)
+- Duplicate item prevention; inactive/archived product rejection
+- Pricing strategy and availability placeholders (no calculations)
+- Bundle timeline + product timeline events + ENG-013 audit
+- Industry Experience bundle terminology (`bundle-terminology.ts`)
+- Dashboard at `/products/bundles`, registration at `/products/bundles/new`, workspace at `/products/bundles/[bundleId]`
+- Product Workspace **Bundles** tab — bundles containing this product
+
+### Integration handover (shared files — not edited per agent rules)
+
+1. `03-platform/src/db/schema/index.ts` — export IP-004 through IP-006 schema modules
+2. `03-platform/drizzle/meta/_journal.json` — register migrations `0032`–`0034`
+3. Run migrations against Supabase PostgreSQL before runtime use
+
+### Quality gates
+
+| Gate | Result |
+|------|--------|
+| ESLint | Pass (0 errors) |
+| Production build | Pass |
+| Smoke validation | 53/54 pass (journal registration pending integration) |
+
 This prompt keeps IP-006 tightly scoped while ensuring it integrates cleanly with your existing Product Foundation and leaves pricing, inventory, and advanced commercial logic for later Build Packs.

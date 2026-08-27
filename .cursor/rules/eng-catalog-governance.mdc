@@ -20,7 +20,7 @@ alwaysApply: true
 
 - **Active baseline:** ENG-001 – ENG-016 (see catalog §3)
 - **Phase 2 (introduce only when needed):** ENG-017 – ENG-019
-- **Extension IDs:** ENG-015a (compliance layer on ENG-015); ENG-003a–m (Configuration Engine sub-engines); **next: ENG-003n**
+- **Extension IDs:** ENG-015a (compliance layer on ENG-015); ENG-003a–n (Configuration Engine sub-engines); **next: ENG-003o**
 
 ## AV-1.5 Engine Catalog Lock (LOCKED)
 
@@ -30,7 +30,7 @@ Effective until AV-2.0 is deliberately initiated:
 |------|-------------|
 | No renumbering | Do not rename or reassign existing engine IDs under AV-1.x |
 | No regrouping | Do not create engine families or restructure ENG-003 under AV-1.x |
-| New capabilities | Assign **ENG-003n**, **ENG-003o**, … — record in catalog §3 first |
+| New capabilities | Assign **ENG-003o**, **ENG-003p**, … — record in catalog §3 first |
 | AV-2.0 only | Regrouping requires AV-2.0 approval + migration map + Merge Registry |
 
 See `01-enterprise-architecture/01b-Architecture-Versions.md` — AV-1.5 Engine Catalog Lock and AV-2.0 review triggers.
@@ -94,7 +94,7 @@ After approval:
 
 | Pattern | Treatment |
 |---------|-----------|
-| ENG-003a–m | Sub-engines under ENG-003; keep as separate rows |
+| ENG-003a–n | Sub-engines under ENG-003; keep as separate rows |
 | ENG-015a | Extension of ENG-015 (compliance layer); keep both unless user approves merge |
 | ENG-017 (Localization duplicate) → ENG-003b | Merged; retired ID lives only in §3.1 Merge Registry |
 | ENG-017 (Phase 2) | Identity Resolution Engine — distinct future capability; not the retired ID |
@@ -113,14 +113,14 @@ Do not merge without explicit approval when engines are **complementary**:
 
 ## AV-2.0 — Future engine family regrouping (planning only)
 
-ENG-003 was originally Platform Foundation / Metadata. It now has **13 sub-engines** (003a–m). v1.0 keeps flat sub-engine IDs — this is valid and governed above.
+ENG-003 was originally Platform Foundation / Metadata. It now has **14 sub-engines** (003a–n). v1.0 keeps flat sub-engine IDs — this is valid and governed above.
 
 When the platform outgrows a single ENG-003 family, **AV-2.0** may introduce logical groupings, for example:
 
 - **ENG-003 Platform Metadata Services** — Configuration (003a), Localization (003b), Organization (003c), …
 - **Platform Intelligence Services** (family ID TBD) — Checklist (003l → 017a), Portfolio (003m → 017b), Product Intelligence (003f → 017c), Event Ingestion (003d → 017d), …
 
-**Do not regroup or renumber under AV-1.x** — AV-1.5 Engine Catalog Lock is in force. New sub-engines: **ENG-003n**, **ENG-003o**, …
+**Do not regroup or renumber under AV-1.x** — AV-1.5 Engine Catalog Lock is in force. New sub-engines: **ENG-003o**, **ENG-003p**, …
 
 AV-2.0 review triggers (see Architecture Versions): ENG-003 reaches 20 sub-engines → review required; >3 capability domains → consider regrouping; multi-team ownership boundaries → create families; AI misclassification → review taxonomy.
 

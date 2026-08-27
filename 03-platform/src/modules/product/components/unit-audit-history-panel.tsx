@@ -14,7 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { UnitAuditHistoryPanelView } from "@/modules/product/types";
-import { UNIT_UI_LABELS } from "@/modules/product/unit-ui-labels";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 
 type UnitAuditHistoryPanelProps = {
   initialData: UnitAuditHistoryPanelView;
@@ -32,10 +32,12 @@ function formatDateTime(value: string): string {
 }
 
 export function UnitAuditHistoryPanel({ initialData }: UnitAuditHistoryPanelProps) {
+  const labels = useProductUiLabels();
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{UNIT_UI_LABELS.auditHeading}</CardTitle>
+        <CardTitle>{labels.unit.auditHeading}</CardTitle>
         <CardDescription>
           Immutable record of unit changes (ENG-013).
         </CardDescription>

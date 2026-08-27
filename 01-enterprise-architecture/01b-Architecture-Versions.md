@@ -5,7 +5,7 @@
 | Attribute | Value |
 |-----------|-------|
 | Document Name | Architecture Versions |
-| Current Version | **AV-1.5** |
+| Current Version | **AV-1.8** |
 | Former Name | Architecture Decision Record (ADR) — enterprise scope |
 | Scope | Entire InverBrass Enterprise Architecture |
 | Audience | Product Owner, Solution Architect, Developers, AI Coding Assistants |
@@ -34,7 +34,7 @@ Build-pack–scoped decisions (e.g. ADR-009–021 in BP-001) remain in their del
 | **Reasoning required** | Every version entry must explain why the change was made and what problem it solves. |
 | **Increment on material change** | Bump the minor version (AV-1.x) when engine IDs, platform layers, ownership rules, foundation freeze status, or cross-document principles change. |
 | **Major version** | Bump AV-2.0 only for breaking platform-wide restructuring (e.g. monolith → microservices, tenant model change, **engine family regrouping**). |
-| **AV-1.5 engine catalog lock** | **Locked.** No renumbering. No regrouping. New platform capabilities continue as **ENG-003n**, **ENG-003o**, etc. until an **AV-2.0** review is deliberately initiated. See [AV-1.5 Engine Catalog Lock](#av-15-engine-catalog-lock). |
+| **AV-1.5 engine catalog lock** | **Locked.** No renumbering. No regrouping. New platform capabilities continue as **ENG-003o**, **ENG-003p**, etc. until an **AV-2.0** review is deliberately initiated. See [AV-1.5 Engine Catalog Lock](#av-15-engine-catalog-lock). |
 | **Engine merges** | Engine ID merges are recorded here **and** in [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3.1 Engine Merge Registry. |
 | **Foundation freeze** | Foundation freeze declarations are recorded here **and** in [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3.2 Foundation Freeze Registry. |
 | **Build-pack ADRs** | BP-specific ADRs (authentication, IAM, etc.) stay in build-pack deliverables; reference them from implementation notes when relevant. |
@@ -52,7 +52,7 @@ Add a new AV entry when any of the following change:
 
 Do **not** add an AV entry for routine build-pack IP completion unless it introduces a new cross-cutting architectural mechanism.
 
-Do **not** regroup or renumber ENG-003 sub-engines under AV-1.x — **AV-1.5 Engine Catalog Lock** is in force. New IDs: ENG-003n, ENG-003o, …
+Do **not** regroup or renumber ENG-003 sub-engines under AV-1.x — **AV-1.5 Engine Catalog Lock** is in force. New IDs: ENG-003o, ENG-003p, …
 
 ---
 
@@ -256,7 +256,7 @@ Virtually every business process has a "have I completed everything?" requiremen
 | Field | Value |
 |-------|-------|
 | **Date** | 2026-07-31 |
-| **Status** | **Current** |
+| **Status** | Superseded by AV-1.6 |
 | **Author** | Solution Architect |
 
 #### From → To
@@ -293,22 +293,131 @@ Roadmap and release management is not unique to products. The same capability is
 
 | Rule | Requirement |
 |------|-------------|
-| **No renumbering** | Existing engine IDs (ENG-001 – ENG-016, ENG-003a–m, ENG-015a, Phase 2 ENG-017 – ENG-019) must not be renamed or reassigned under AV-1.x |
+| **No renumbering** | Existing engine IDs (ENG-001 – ENG-016, ENG-003a–n, ENG-015a, Phase 2 ENG-017 – ENG-019) must not be renamed or reassigned under AV-1.x |
 | **No regrouping** | ENG-003 sub-engines remain a flat family — no engine families, no parent/child restructure under AV-1.x |
-| **New capabilities** | Assign the next sequential sub-engine ID: **ENG-003n**, **ENG-003o**, … Record in [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3 before implementation |
+| **New capabilities** | Assign the next sequential sub-engine ID: **ENG-003o**, **ENG-003p**, … Record in [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3 before implementation |
 | **AV-2.0 only** | Engine family regrouping, ID migration, or taxonomy restructure requires explicit **AV-2.0** approval, migration map, and Merge Registry updates |
 
 This lock preserves implementation stability while the platform grows. Defer family regrouping to AV-2.0 — see [Future Architecture Considerations (AV-2.0)](#future-architecture-considerations-av-20).
 
 ---
 
+### AV-1.6 — Work Assignment & SLA Engine (ENG-003n); CRM 13-IP Baseline
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-08-02 |
+| **Status** | **Superseded in part by AV-1.7** (CRM catalog ID is **BP-004**, not BP-008; ENG-003n content remains current) |
+| **Author** | Solution Architect |
+
+#### From → To
+
+| Area | From | To |
+|------|------|-----|
+| Work assignment & SLA | Implied in ENG-005 Workflow ("SLA monitoring, task assignment") without dedicated ownership | **ENG-003n Work Assignment & SLA Engine** — assignment history, per-assignee segments, cumulative lifecycle SLA, queue metrics |
+| ENG-004 scope | Risk of conflating Rules Engine with SLA tracking | **ENG-004 unchanged** — Rules Engine only; SLA is ENG-003n |
+| ENG-005 scope | Implied SLA ownership | **ENG-005 refocused** — approvals, escalations, workflow orchestration; complements ENG-003n breach signals |
+| CRM documentation (then labeled BP-008 in draft catalog) | Legacy 15-IP model in `build-pack 004-CRM.md/` | **13-IP baseline** in `Build Pack 004 - Customer Relationship Management/` — IP-01 through IP-13 (**canonical ID BP-004** per AV-1.7) |
+| CRM IP structure | Activities, calendar, visits combined or scattered | **IP-05** Activities, **IP-06** Calendar, **IP-07** Visit & Call Reports (standalone); IP-04 merges accounts + contacts |
+| CRM consumption contract | Per-module SLA duplication risk | **IP-01** defines ENG-003n consumption contract and **Customer 360 hub** for all CRM work items |
+| Next ENG-003 sub-engine ID | ENG-003n (reserved) | **ENG-003n registered**; next ID **ENG-003o** |
+
+#### Reasoning
+
+Assignment history and SLA measurement apply across CRM, sales, service, lending, and operations — not only within workflow steps. Implementing SLA segments inside each Build Pack would duplicate logic and prevent cross-module queue analytics. ENG-003n elevates the capability to platform level while ENG-005 retains approval orchestration. CRM documentation is restructured to 13 IPs with explicit boundaries between calendar scheduling (IP-06) and visit/call report documentation with collaborative approval (IP-07).
+
+#### Affected Documents
+
+- [01 – Enterprise Solution Architecture](./01-Enterprise-Solution-Architecture.md) §5 — ENG-003n specification
+- [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3 — ENG-003n row; BP-004 CRM baseline note
+- [03 – Enterprise Domain Model](./03-Enterprise-Domain-Model.md) — Work Assignment & SLA capability
+- [13 – Platform Blueprint](./13-platform-blueprint.md) — ENG-003n in platform layer
+- `Build Pack 004 - Customer Relationship Management/` — 13 IP specifications and scope
+- `.cursor/rules/eng-catalog-governance.mdc` — next ID ENG-003o
+
+#### Implementation Notes (planned)
+
+- Module: `03-platform/src/core/work-assignment-sla/` (not yet implemented)
+- BP-004 IP-01 defines consumption contract; IP-02, IP-03, IP-07, IP-09 consume ENG-003n for entity-specific SLA policies
+- ENG-005 escalation workflows triggered on ENG-003n breach events
+
+---
+
+### AV-1.7 — Build Pack ID realignment (CRM remains BP-004)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-08-12 |
+| **Status** | Superseded by AV-1.8 |
+| **Author** | Integration Manager / Solution Architect |
+
+#### From → To
+
+| Area | From (prior catalog draft) | To (canonical) |
+|------|----------------------------|----------------|
+| CRM & Customer Engagement | BP-008 | **BP-004** (locked to implemented delivery) |
+| Pricing, Tax & Commercial Rules | BP-004 | **BP-005** |
+| Sales, Orders & Service Delivery | BP-005 | **BP-006** |
+| Payments, Billing & Receipting | BP-006 | **BP-007** |
+| Inventory & Resource Management | BP-007 | **BP-008** |
+| BP-001–BP-003, BP-009–BP-013 | Unchanged | Unchanged |
+
+#### Reasoning
+
+CRM was delivered and certified as Build Pack 004. Retaining CRM as BP-008 would force a permanent delivery/catalog mismatch. Catalog IDs are realigned so **CRM stays BP-004** and remaining commercial/operations packs follow in logical order: Pricing → Sales → Payments → Inventory → Procurement → Finance → Workflow → Analytics → Product Innovation.
+
+#### Affected Documents
+
+- [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) — Build Pack table + Industry Edition pack lists
+- [11 – Development Roadmap](./11-Development-Roadmap.md) — canonical sequence + status
+- [01 – Enterprise Solution Architecture](./01-Enterprise-Solution-Architecture.md) — CRM references updated to BP-004
+- CRM folder `Build Pack 004 - Customer Relationship Management/` — remains authoritative for BP-004
+
+---
+
+### AV-1.8 — BP-007 Payments ownership lock
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-08-25 |
+| **Status** | **Current** |
+| **Author** | Integration Manager / Solution Architect |
+
+#### From → To
+
+| Area | From | To |
+|------|------|-----|
+| BP-007 key capabilities | Billing, invoicing, receipts, **collections**, refunds, allocation, **reconciliation** | Obligation, four-dimension catalogues, adapter orchestration, initiation, split/allocation, invoicing & credit sales, receipts, refunds, settlement **handoff** |
+| Collections (SC-032) | Implied in BP-007 catalog keys; some narrative used **BP-013 Receivables** | **Out of BP-007.** Future capability — **no pack ID in AV-1.8**. Canonical **BP-013 remains Product Management & Innovation** |
+| Reconciliation | Listed as BP-007 in-pack work | **ENG-008** later. BP-007 IP-07 = handoff only |
+| Provider integration | Unspecified (risk of pack-direct Daraja) | **ENG-006 adapters via ENG-003e**. Pack does not own rails |
+| Payment dimensions | Flattened methods in BP-001 / Doc 10 (Credit listed as a method) | Independent **method / rail / provider / channel**. Credit = billing, not tender |
+| Pack documentation | No BP-007 folder | `02-build-packs/build pack 007-Payments Billing & Receipting/` — IP-01–IP-08 specified; implementation not started |
+
+#### Reasoning
+
+BP-006 is certified and must hand off a payment-ready contract. Documenting BP-007 without locking ownership would recreate the old ID collision (Receivables as BP-013) and would let the pack become a processor or a reconciliation engine. AV-1.8 records the lock so implementation prompts cannot reuse those IDs.
+
+#### Affected Documents
+
+- [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) — BP-007 row
+- [11 – Development Roadmap](./11-Development-Roadmap.md) — BP-007 IP list; historical BP-013 Receivables note
+- `02-build-packs/build pack 007-Payments Billing & Receipting/` — Scope + IP-01–IP-08
+- `02-build-packs/build pack 006-Sales-Orders & Service Delivery/Build Pack-006 Scope.md` — reconciliation owner line
+
+#### Implementation impact
+
+Documentation only. No payment runtime yet. Existing unused `payment_method` / `payment_network` / `payment_provider` / `payment_channel` schema is the catalogue target for IP-01.
+
+---
+
 ## Future Architecture Considerations (AV-2.0)
 
-> **Status:** Recorded for planning only. **Not in effect.** Current v1.0 IDs (ENG-003a–m, ENG-017 Identity Resolution, etc.) remain canonical until an explicit **AV-2.0** approval and migration plan.
+> **Status:** Recorded for planning only. **Not in effect.** Current v1.0 IDs (ENG-003a–n, ENG-017 Identity Resolution, etc.) remain canonical until an explicit **AV-2.0** approval and migration plan.
 
 ### Context — ENG-003 family growth
 
-ENG-003 was originally intended to represent **Platform Foundation / Metadata** engines. The family has grown to **13 sub-engines** (ENG-003a through ENG-003m):
+ENG-003 was originally intended to represent **Platform Foundation / Metadata** engines. The family has grown to **14 sub-engines** (ENG-003a through ENG-003n):
 
 | ID | Engine |
 |----|--------|
@@ -325,6 +434,7 @@ ENG-003 was originally intended to represent **Platform Foundation / Metadata** 
 | ENG-003k | Industry Experience |
 | ENG-003l | Checklist & Completion |
 | ENG-003m | Portfolio & Roadmap |
+| ENG-003n | Work Assignment & SLA |
 
 This remains **technically valid for v1.0** — flat sub-engine IDs under ENG-003 are governed by `.cursor/rules/eng-catalog-governance.mdc`. As the platform matures, the breadth of the family may warrant **logical grouping** into engine families with clearer domain boundaries.
 
@@ -372,11 +482,11 @@ Formal AV-2.0 engine-taxonomy review is **required** when any trigger below is m
 | Multiple implementation teams require ownership boundaries | Create engine families |
 | AI prompts frequently misclassify engines | Review engine taxonomy |
 
-**Current count (AV-1.5):** 13 sub-engines (ENG-003a – ENG-003m). Next assigned ID: **ENG-003n**.
+**Current count (AV-1.6):** 14 sub-engines (ENG-003a – ENG-003n). Next assigned ID: **ENG-003o**.
 
 **Capability domain examples** (for the "3 domains" trigger): Metadata & Configuration, Regulatory & Identity, Integration & Events, Intelligence & Analytics, Experience & Presentation, Operations & Performance. More than three of these actively represented under ENG-003 warrants regrouping consideration.
 
-Until an AV-2.0 review is deliberately initiated: **continue adding sub-engines as ENG-003n, ENG-003o, …** per the AV-1.5 lock. Record each new ID in the catalog before implementation.
+Until an AV-2.0 review is deliberately initiated: **continue adding sub-engines as ENG-003o, ENG-003p, …** per the AV-1.5 lock. Record each new ID in the catalog before implementation.
 
 ---
 

@@ -225,7 +225,7 @@ Consultations
 Procedures
 Education
 
-Courses
+Offerings
 
 Programmes
 Classes
@@ -690,7 +690,7 @@ Offers
 
 Education
 
-Courses
+Offerings
 
 Do not hardcode.
 
@@ -826,3 +826,43 @@ Get Featured Products
 Search Catalogue
 Get Products by Classification
 Get Products by Channel
+
+---
+
+## Implementation Record — IP-007 (2026-08-01)
+
+**Branch:** `feature/bp003-catalogue`  
+**Migration:** `03-platform/drizzle/0035_bp003_ip007_digital_catalogue.sql`  
+**Smoke script:** `03-platform/scripts/bp003-ip007-digital-catalogue-smoke-validation.ts`
+
+### Delivered
+
+- Channel catalogue (`catalogue_channel`) seeded with WEBSITE, MOBILE_APP, CUSTOMER_PORTAL, PARTNER_PORTAL, WHATSAPP, QR, API, MARKETPLACE
+- Per-product channel publications (`product_catalogue_publication`) with visibility, scheduling, featured/recommended, QR metadata placeholders
+- Publishing rules: only **ACTIVE** products publishable; schedule validation (`publish_from < publish_to`); one publication per product+channel
+- `ProductCatalogueService` — dashboard, workspace, panel, upsert, search, `getPublishedProducts()` capability for future channel/API consumers
+- Industry Experience catalogue terminology (`digital-catalogue-terminology.ts`)
+- Product timeline + ENG-013 audit for publish/unpublish, visibility, channel, featured, schedule events
+- Dashboard at `/products/catalogue`, workspace at `/products/catalogue/[productId]`
+- Product Workspace **Catalogue** tab — publication summary and workspace link
+- Mock channel preview panels (Website, Mobile, WhatsApp, QR, portals)
+
+### Out of scope (per spec)
+
+Shopping cart, checkout, payments, pricing, inventory, marketplace APIs, recommendation engine, QR generation service
+
+### Integration handover (shared files — not edited per agent rules)
+
+1. `03-platform/src/db/schema/index.ts` — export IP-004 through IP-007 schema modules
+2. `03-platform/drizzle/meta/_journal.json` — register migrations `0032`–`0035`
+3. Run migrations against Supabase PostgreSQL before runtime use
+
+### Quality gates
+
+| Gate | Result |
+|------|--------|
+| ESLint | Pass (0 errors) |
+| Production build | Pass |
+| Smoke validation | 38/39 pass (journal registration pending integration) |
+
+Stop after IP-007. Do NOT begin IP-008.

@@ -59,6 +59,8 @@ import type { CurrentBusinessContext } from "@/core/auth/types";
 import { hashPassword } from "@/core/auth/utils/password-hasher";
 import { normalizeMobileNumber } from "@/core/auth/utils/phone-normalizer";
 import { generateTemporaryPassword } from "@/core/auth/utils/temporary-password";
+import { PLATFORM_NAV_OFFERING_LABEL } from "@/core/industry-experience/platform-terminology";
+import { formatDuplicateValueMessage } from "@/core/validation/duplicate-validation-messages";
 import { getDb } from "@/db/client";
 import * as schema from "@/db/schema";
 import { business } from "@/db/schema/business";
@@ -279,9 +281,12 @@ export class BusinessSetupService {
       const parsed = businessDetailsSchema.safeParse(payload);
 
       if (!parsed.success) {
+        const issue = parsed.error.issues[0];
         throw new SetupError(
           SETUP_ERROR_CODES.INVALID_INPUT,
-          parsed.error.issues[0]?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT
+          issue?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT,
+          400,
+          issue?.path[0]?.toString()
         );
       }
 
@@ -398,9 +403,12 @@ export class BusinessSetupService {
       const parsed = countryStepSchema.safeParse(payload);
 
       if (!parsed.success) {
+        const issue = parsed.error.issues[0];
         throw new SetupError(
           SETUP_ERROR_CODES.INVALID_INPUT,
-          parsed.error.issues[0]?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT
+          issue?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT,
+          400,
+          issue?.path[0]?.toString()
         );
       }
 
@@ -495,9 +503,12 @@ export class BusinessSetupService {
       const parsed = baseCurrencySchema.safeParse(payload);
 
       if (!parsed.success) {
+        const issue = parsed.error.issues[0];
         throw new SetupError(
           SETUP_ERROR_CODES.INVALID_INPUT,
-          parsed.error.issues[0]?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT
+          issue?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT,
+          400,
+          issue?.path[0]?.toString()
         );
       }
 
@@ -855,9 +866,12 @@ export class BusinessSetupService {
       const parsed = branchSetupSchema.safeParse(payload);
 
       if (!parsed.success) {
+        const issue = parsed.error.issues[0];
         throw new SetupError(
           SETUP_ERROR_CODES.INVALID_INPUT,
-          parsed.error.issues[0]?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT
+          issue?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT,
+          400,
+          issue?.path[0]?.toString()
         );
       }
 
@@ -992,9 +1006,12 @@ export class BusinessSetupService {
       const parsed = employeeSetupSchema.safeParse(payload);
 
       if (!parsed.success) {
+        const issue = parsed.error.issues[0];
         throw new SetupError(
           SETUP_ERROR_CODES.INVALID_INPUT,
-          parsed.error.issues[0]?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT
+          issue?.message ?? SETUP_USER_MESSAGES.INVALID_INPUT,
+          400,
+          issue?.path[0]?.toString()
         );
       }
 
@@ -1052,7 +1069,12 @@ export class BusinessSetupService {
           );
         }
 
-        await this.assertPhoneAvailable(phoneE164, db);
+        await this.assertPhoneAvailable(phoneE164, employee.mobileNumber.trim(), db);
+
+        const normalizedEmail = employee.email?.trim();
+        if (normalizedEmail) {
+          await this.assertEmailAvailable(normalizedEmail, db);
+        }
 
         const temporaryPassword = generateTemporaryPassword();
         const passwordHash = await hashPassword(temporaryPassword);
@@ -1395,7 +1417,7 @@ export class BusinessSetupService {
 
     const expressProductsHint =
       profileDefinition.postActivationCta === "products"
-        ? " Add Products & Services next to start selling."
+        ? ` Add ${PLATFORM_NAV_OFFERING_LABEL} next to start selling.`
         : "";
 
     return {
@@ -1802,6 +1824,7 @@ export class BusinessSetupService {
 
   private async assertPhoneAvailable(
     phoneNumberE164: string,
+    displayPhone: string,
     dbClient: DbClient = getDb()
   ) {
     const [existing] = await dbClient
@@ -1813,7 +1836,38 @@ export class BusinessSetupService {
     if (existing) {
       throw new SetupError(
         SETUP_ERROR_CODES.DUPLICATE_PHONE,
-        SETUP_USER_MESSAGES.DUPLICATE_PHONE
+        formatDuplicateValueMessage(
+          "mobile number",
+          displayPhone,
+          "Employee"
+        ),
+        400,
+        "mobileNumber",
+        displayPhone,
+        "mobile number"
+      );
+    }
+  }
+
+  private async assertEmailAvailable(
+    email: string,
+    dbClient: DbClient = getDb()
+  ) {
+    const normalized = email.trim().toLowerCase();
+    const [existing] = await dbClient
+      .select({ id: platformUser.id })
+      .from(platformUser)
+      .where(eq(platformUser.email, normalized))
+      .limit(1);
+
+    if (existing) {
+      throw new SetupError(
+        SETUP_ERROR_CODES.DUPLICATE_EMAIL,
+        formatDuplicateValueMessage("email", email.trim(), "Employee"),
+        400,
+        "email",
+        email.trim(),
+        "email"
       );
     }
   }

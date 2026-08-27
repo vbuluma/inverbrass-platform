@@ -30,7 +30,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { searchUnitsAction } from "@/modules/product/actions/unit-actions";
 import type { UnitDashboardView, UnitView } from "@/modules/product/types";
-import { UNIT_UI_LABELS } from "@/modules/product/unit-ui-labels";
+import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 
 type UnitDashboardProps = {
   data: UnitDashboardView;
@@ -48,6 +48,7 @@ function formatDate(iso: string): string {
 }
 
 export function UnitDashboard({ data }: UnitDashboardProps) {
+  const labels = useProductUiLabels();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<UnitView[] | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -86,7 +87,7 @@ export function UnitDashboard({ data }: UnitDashboardProps) {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6">
       <div className="space-y-3">
-        <PageBackLink href="/products" label="Back to products" />
+        <PageBackLink href="/products" label={labels.unit.backLabel} />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-3">
@@ -95,10 +96,10 @@ export function UnitDashboard({ data }: UnitDashboardProps) {
               </span>
               <div>
                 <h1 className="text-2xl font-semibold tracking-tight">
-                  {UNIT_UI_LABELS.dashboardTitle}
+                  {labels.unit.dashboardTitle}
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  {UNIT_UI_LABELS.dashboardDescription}
+                  {labels.unit.dashboardDescription}
                 </p>
               </div>
             </div>
@@ -109,20 +110,20 @@ export function UnitDashboard({ data }: UnitDashboardProps) {
             className={cn(buttonVariants({ variant: "default" }), "gap-2")}
           >
             <PlusIcon className="size-4" aria-hidden />
-            {UNIT_UI_LABELS.quickActionRegister}
+            {labels.unit.quickActionRegister}
           </Link>
         </div>
       </div>
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <PlatformKpiCard label={UNIT_UI_LABELS.metricsTotal} value={data.totalUnits} />
-        <PlatformKpiCard label={UNIT_UI_LABELS.metricsActive} value={data.activeUnits} />
+        <PlatformKpiCard label={labels.unit.metricsTotal} value={data.totalUnits} />
+        <PlatformKpiCard label={labels.unit.metricsActive} value={data.activeUnits} />
         <PlatformKpiCard
-          label={UNIT_UI_LABELS.metricsCategories}
+          label={labels.unit.metricsCategories}
           value={data.categoryCount}
         />
         <PlatformKpiCard
-          label={UNIT_UI_LABELS.metricsRecent}
+          label={labels.unit.metricsRecent}
           value={data.recentlyUpdated.length}
         />
       </section>
@@ -138,14 +139,14 @@ export function UnitDashboard({ data }: UnitDashboardProps) {
             className={cn(buttonVariants({ variant: "default" }), "gap-2")}
           >
             <PlusIcon className="size-4" aria-hidden />
-            {UNIT_UI_LABELS.quickActionRegister}
+            {labels.unit.quickActionRegister}
           </Link>
           <Link
             href="/products/classifications"
             prefetch={false}
             className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
           >
-            {UNIT_UI_LABELS.quickActionCategories}
+            {labels.unit.quickActionCategories}
           </Link>
         </div>
       </section>
@@ -186,7 +187,7 @@ export function UnitDashboard({ data }: UnitDashboardProps) {
             "Try a different code or symbol",
             "Register a new unit of measure",
           ]}
-          createLabel={UNIT_UI_LABELS.quickActionRegister}
+          createLabel={labels.unit.quickActionRegister}
           onCreate={() => {
             window.location.assign("/products/units/new");
           }}
@@ -278,7 +279,7 @@ export function UnitDashboard({ data }: UnitDashboardProps) {
           <PlatformEmptyState
             title="No units yet"
             description="Register units or rely on platform defaults seeded for your business."
-            actionLabel={UNIT_UI_LABELS.quickActionRegister}
+            actionLabel={labels.unit.quickActionRegister}
             actionHref="/products/units/new"
           />
         ) : (
