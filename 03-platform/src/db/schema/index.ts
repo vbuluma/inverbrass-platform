@@ -202,3 +202,34 @@ export {
 } from "./sales-exception";
 export { campaign, campaignMember } from "./campaign";
 export { crmMetricDefinition, crmMetricSnapshot } from "./crm-analytics";
+export { stockItemType } from "./stock-item-type";
+export { inventoryLocationType } from "./inventory-location-type";
+export { inventoryLocation } from "./inventory-location";
+export { stockItem } from "./stock-item";
+export { stockItemLocation } from "./stock-item-location";
+export { inventoryMovement } from "./inventory-movement";
+export { inventoryBalance } from "./inventory-balance";
+export { inventoryOperationControl } from "./inventory-operation-control";
+export { inventoryOperationPolicy } from "./inventory-operation-policy";
+export { inventoryReceipt, inventoryReceiptLine } from "./inventory-receipt";
+export {
+  inventoryOpeningBalance,
+  inventoryOpeningBalanceLine,
+} from "./inventory-opening-balance";
+export { inventoryIdempotency } from "./inventory-idempotency";
+export { inventoryReservation, inventoryFulfilment } from "./inventory-reservation";
+export { inventoryAdjustment, inventoryAdjustmentLine } from "./inventory-adjustment";
+export {
+  inventoryStocktake,
+  inventoryStocktakeLine,
+  inventoryStocktakeCount,
+} from "./inventory-stocktake";
+export { inventoryLot } from "./inventory-lot";
+export { inventoryTrackedUnit } from "./inventory-tracked-unit";
+export { inventoryLineTrace } from "./inventory-line-trace";
+export { inventoryTraceAllocation } from "./inventory-trace-allocation";
+export { inventoryReplenishmentAdvice } from "./inventory-replenishment-advice";
+export { inventoryControlChange } from "./inventory-control-change";
+export { inventoryOpsIncidentType } from "./inventory-ops-incident-type";
+export { inventoryOpsIncident, inventoryOpsIncidentEvent } from "./inventory-ops-incident";
+export { inventoryTransfer, inventoryTransferLine } from "./inventory-transfer";

@@ -17,7 +17,7 @@ Canonical Build Pack IDs are defined in `[02-Platform-Module-Catalog.md](./02-Pl
 | 5     | **BP-005**    | Pricing, Tax & Commercial Rules        | ⏳ Planned (tax, discounts, promotions beyond BP-003 offering price items)                |
 | 6     | **BP-006**    | Sales, Orders & Service Delivery       | ✅ Complete — IP-01–IP-06 certified (2026-08-24); bookings out of scope; BP-007 not started |
 | 7     | **BP-007**    | Payments, Billing & Receipting         | ✅ Implemented (IP-01–IP-08) |
-| 8     | **BP-008**    | Inventory & Resource Management        | ⏳ Planned                                                                                |
+| 8     | **BP-008**    | Inventory & Resource Management        | ✅ Implemented — IP-01–IP-09 |
 | 9     | **BP-009**    | Procurement & Supplier Management      | ⏳ Planned                                                                                |
 | 10    | **BP-010**    | Finance & Accounting Foundation        | ⏳ Planned                                                                                |
 | 11    | **BP-011**    | Workflow & Business Process Automation | ⏳ Planned                                                                                |
@@ -116,8 +116,20 @@ Customer AR from BP-006 payment-ready contracts. Four-dimension catalogues (meth
 | IP-07 | Settlement & Reconciliation Handoff | ✅ Implemented |
 | IP-08 | Payment Exceptions, Operations & Controls | ✅ Implemented |
 
-**BP-008 Inventory & Resource Management** — ⏳ Planned  
-Stock, warehouses, transfers, adjustments, operational assets.
+**BP-008 Inventory & Resource Management** — ✅ Implemented (IP-01–IP-09)  
+Quantity stock ledger for BP-003 inventory-tracked offerings. Consumes BP-006 fulfilment-ready contract. **Not** BP-009. **Not** a WMS, MRP, purchasing system, or GL.
+
+| IP | Implementation Package | Status |
+|----|------------------------|--------|
+| IP-01 | Inventory Foundation & Stock Ledger | ✅ Implemented |
+| IP-02 | Stock Receiving & Opening Balances | ✅ Implemented |
+| IP-03 | Stock Reservation & Sales Deduction | ✅ Implemented |
+| IP-04 | Stock Transfers & Multi-Location | ✅ Implemented |
+| IP-05 | Stock Adjustments, Damage, Loss & Returns | ✅ Implemented |
+| IP-06 | Stocktake & Inventory Reconciliation | ✅ Implemented |
+| IP-07 | Batch, Expiry & Serial Resource Tracking | ✅ Implemented |
+| IP-08 | Reorder & Inventory Controls | ✅ Implemented |
+| IP-09 | Inventory Operations, Exceptions & Controls | ✅ Implemented |
 
 ---
 
@@ -254,7 +266,7 @@ I would make one small enhancement. Add a simple Status column from day one. It 
 | R2b     | BP-005 Pricing, Tax & Commercial Rules  | ⏳ Planned                    |
 | R2b     | BP-006 Sales, Orders & Service Delivery | ✅ Complete (IP-01–IP-06) |
 | R2b     | BP-007 Payments, Billing & Receipting   | ✅ Implemented (IP-01–IP-08) |
-| R2b     | BP-008 Inventory & Resource Management  | ⏳ Planned                    |
+| R2b     | BP-008 Inventory & Resource Management  | 📋 Specified (IP-01–IP-09) |
 | R3      | BP-009–BP-013                           | ⏳ Planned                    |
 
 

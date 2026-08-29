@@ -80,7 +80,23 @@ export class ScriptedDocumentNumberingAdapter implements DocumentNumberingPort {
           ? "POL-RF"
           : input.documentType === DOCUMENT_NUMBERING_DOCUMENT_TYPES.PAYMENT_EXCEPTION
             ? "POL-EXC"
-            : "POL-INV";
+            : input.documentType === DOCUMENT_NUMBERING_DOCUMENT_TYPES.STOCK_RECEIPT
+              ? "POL-GR"
+              : input.documentType === DOCUMENT_NUMBERING_DOCUMENT_TYPES.OPENING_BALANCE
+                ? "POL-OPEN"
+                : input.documentType === DOCUMENT_NUMBERING_DOCUMENT_TYPES.STOCK_RESERVATION
+                  ? "POL-RSV"
+                  : input.documentType === DOCUMENT_NUMBERING_DOCUMENT_TYPES.STOCK_ADJUSTMENT
+                    ? "POL-AJ"
+                    : input.documentType === DOCUMENT_NUMBERING_DOCUMENT_TYPES.STOCKTAKE
+                      ? "POL-STK"
+                      : input.documentType === DOCUMENT_NUMBERING_DOCUMENT_TYPES.STOCK_CONTROL_ADVICE
+                        ? "POL-SCA"
+                        : input.documentType === DOCUMENT_NUMBERING_DOCUMENT_TYPES.INVENTORY_EXCEPTION
+                          ? "POL-IEX"
+                          : input.documentType === DOCUMENT_NUMBERING_DOCUMENT_TYPES.STOCK_TRANSFER
+                            ? "POL-TR"
+                            : "POL-INV";
     return {
       number: `${prefix}-${String(this.sequence).padStart(6, "0")}`,
       policyId: `numbering-policy-${input.documentType.toLowerCase()}`,

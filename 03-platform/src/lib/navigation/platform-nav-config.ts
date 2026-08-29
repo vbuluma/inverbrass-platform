@@ -31,6 +31,7 @@ import {
   UsersIcon,
   UsersRoundIcon,
   LifeBuoyIcon,
+  WarehouseIcon,
 } from "lucide-react";
 import type { PlatformNavItem } from "@/lib/navigation/types";
 export const PLATFORM_BRAND = {
@@ -104,6 +105,12 @@ export const BUSINESS_APP_NAV_ITEMS: PlatformNavItem[] = [
     label: "Payments",
     href: "/payments",
     icon: BanknoteIcon,
+  },
+  {
+    id: "inventory",
+    label: "Inventory",
+    href: "/inventory",
+    icon: WarehouseIcon,
   },
   {
     id: "invoices",

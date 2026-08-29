@@ -66,6 +66,13 @@ const AVAILABLE_OPERATION_MODULES = [
     icon: UsersIcon,
     href: "/parties",
   },
+  {
+    id: "inventory",
+    title: "Inventory",
+    description: "Stock items, locations, and opening quantities.",
+    icon: WarehouseIcon,
+    href: "/inventory",
+  },
 ] as const;
 
 const OPERATION_MODULES: FutureModule[] = [
@@ -80,12 +87,6 @@ const OPERATION_MODULES: FutureModule[] = [
     title: "Sales",
     description: "Record sales and take payments.",
     icon: ShoppingBagIcon,
-  },
-  {
-    id: "inventory",
-    title: "Inventory",
-    description: "Stock levels and movements.",
-    icon: WarehouseIcon,
   },
   {
     id: "reports",
@@ -392,7 +393,7 @@ export function BusinessDashboard({ data }: BusinessDashboardProps) {
                   </CardHeader>
                   <CardContent className="px-4">
                     <p className="text-xs font-medium text-emerald-800">
-                      Open Parties
+                      Open {action.title}
                     </p>
                   </CardContent>
                 </Card>

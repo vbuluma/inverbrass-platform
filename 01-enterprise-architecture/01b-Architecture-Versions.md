@@ -5,7 +5,7 @@
 | Attribute | Value |
 |-----------|-------|
 | Document Name | Architecture Versions |
-| Current Version | **AV-1.8** |
+| Current Version | **AV-1.9** |
 | Former Name | Architecture Decision Record (ADR) — enterprise scope |
 | Scope | Entire InverBrass Enterprise Architecture |
 | Audience | Product Owner, Solution Architect, Developers, AI Coding Assistants |
@@ -380,7 +380,7 @@ CRM was delivered and certified as Build Pack 004. Retaining CRM as BP-008 would
 | Field | Value |
 |-------|-------|
 | **Date** | 2026-08-25 |
-| **Status** | **Current** |
+| **Status** | Superseded by AV-1.9 |
 | **Author** | Integration Manager / Solution Architect |
 
 #### From → To
@@ -408,6 +408,43 @@ BP-006 is certified and must hand off a payment-ready contract. Documenting BP-0
 #### Implementation impact
 
 Documentation only. No payment runtime yet. Existing unused `payment_method` / `payment_network` / `payment_provider` / `payment_channel` schema is the catalogue target for IP-01.
+
+---
+
+### AV-1.9 — BP-008 Inventory ownership lock
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-08-27 |
+| **Status** | **Current** |
+| **Author** | Integration Manager / Solution Architect |
+
+#### From → To
+
+| Area | From | To |
+|------|------|-----|
+| Inventory pack ID | Risk of documenting inventory as “BP-009” because it has nine IPs | **BP-008** Inventory & Resource Management. **BP-009** remains Procurement & Supplier Management |
+| On-hand | Risk of writable stock field | **Derived from stock ledger** |
+| Sales deduction | Risk of scraping sales order lines | Consume **BP-006 fulfilment-ready contract** |
+| Receiving | Risk of embedding purchase orders | IP-02 goods received / opening balance **without** BP-009 POs |
+| Reorder | Risk of auto-creating POs | **Signal only**; PO is BP-009 |
+| Stocktake | Risk of calling it ENG-008 reconciliation | **Quantity count vs ledger**; not statement matching |
+| Valuation | Implied in inventory | **BP-010** later; v1 is quantity-first |
+| Pack documentation | No BP-008 folder | `02-build-packs/build pack 008-Inventory & Resource Management/` — Scope + IP-01–IP-09 specified; implementation not started |
+
+#### Reasoning
+
+BP-007 v1 is certified. The next pack is inventory. Naming that pack BP-009 because it contains IP-01–IP-09 would collide with locked Procurement. AV-1.9 records the lock so implementation prompts cannot misnumber the pack or turn inventory into purchasing, GL, or WMS.
+
+#### Affected Documents
+
+- [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) — BP-008 row
+- [11 – Development Roadmap](./11-Development-Roadmap.md) — BP-008 IP list
+- `02-build-packs/build pack 008-Inventory & Resource Management/` — Scope + IP-01–IP-09
+
+#### Implementation impact
+
+Documentation only. No inventory runtime yet. Implementation starts at IP-01 after this specification is approved.
 
 ---
 

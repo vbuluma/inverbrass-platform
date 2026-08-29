@@ -90,6 +90,23 @@ export const AUDIT_ENTITY_NAMES = {
   PAYMENT_REFUND: "payment_refund",
   PAYMENT_SETTLEMENT: "payment_settlement",
   PAYMENT_EXCEPTION: "payment_exception",
+  STOCK_ITEM: "stock_item",
+  INVENTORY_LOCATION: "inventory_location",
+  STOCK_ITEM_LOCATION: "stock_item_location",
+  INVENTORY_MOVEMENT: "inventory_movement",
+  INVENTORY_BALANCE: "inventory_balance",
+  INVENTORY_RECEIPT: "inventory_receipt",
+  INVENTORY_OPENING_BALANCE: "inventory_opening_balance",
+  INVENTORY_RESERVATION: "inventory_reservation",
+  INVENTORY_FULFILMENT: "inventory_fulfilment",
+  INVENTORY_ADJUSTMENT: "inventory_adjustment",
+  INVENTORY_STOCKTAKE: "inventory_stocktake",
+  INVENTORY_LOT: "inventory_lot",
+  INVENTORY_TRACKED_UNIT: "inventory_tracked_unit",
+  INVENTORY_REPLENISHMENT_ADVICE: "inventory_replenishment_advice",
+  INVENTORY_CONTROL_CHANGE: "inventory_control_change",
+  INVENTORY_OPS_INCIDENT: "inventory_ops_incident",
+  INVENTORY_TRANSFER: "inventory_transfer",
 } as const;
 
 export type AuditEntityName =
@@ -154,6 +171,23 @@ export const AUDIT_ENTITY_LABELS: Record<AuditEntityName, string> = {
   payment_refund: "Payment Refund",
   payment_settlement: "Payment Settlement",
   payment_exception: "Payment Exception",
+  stock_item: "Stock Item",
+  inventory_location: "Inventory Location",
+  stock_item_location: "Stock Item Location",
+  inventory_movement: "Inventory Movement",
+  inventory_balance: "Inventory Balance",
+  inventory_receipt: "Stock Receipt",
+  inventory_opening_balance: "Opening Balance",
+  inventory_reservation: "Stock Reservation",
+  inventory_fulfilment: "Stock Deduction",
+  inventory_adjustment: "Stock Adjustment",
+  inventory_stocktake: "Stocktake",
+  inventory_lot: "Batch",
+  inventory_tracked_unit: "Serial",
+  inventory_replenishment_advice: "Replenishment Advice",
+  inventory_control_change: "Inventory Control Change",
+  inventory_ops_incident: "Inventory Exception",
+  inventory_transfer: "Stock Transfer",
 };
 
 /**
@@ -190,6 +224,7 @@ export const AUDIT_SOURCE_MODULES = {
   COMMERCIAL_GOVERNANCE: "commercial_governance",
   SALES_ORDERS: "sales_orders",
   PAYMENTS: "payments",
+  INVENTORY: "inventory_management",
 } as const;
 
 export type AuditSourceModule =
@@ -224,6 +259,7 @@ export const AUDIT_SOURCE_MODULE_LABELS: Record<AuditSourceModule, string> = {
   commercial_governance: "Commercial Governance",
   sales_orders: "Sales Orders",
   payments: "Payments",
+  inventory_management: "Inventory Management",
 };
 
 export const AUDIT_DEFAULT_PAGE_SIZE = 25;

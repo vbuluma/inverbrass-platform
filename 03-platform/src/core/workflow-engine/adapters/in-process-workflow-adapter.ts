@@ -12,15 +12,21 @@ import type { WorkflowEnginePort } from "@/core/workflow-engine/ports";
 import { WORKFLOW_OPERATIONS } from "@/core/workflow-engine/constants";
 import type {
   EvaluateExceptionResolutionInput,
+  EvaluateOperationApprovalInput,
   EvaluateRefundApprovalInput,
   RefundApprovalDecision,
 } from "@/core/workflow-engine/types";
 
 export class InProcessWorkflowAdapter implements WorkflowEnginePort {
   requiresApproval: boolean;
+  requiresApprovalByOperation: Record<string, boolean>;
 
-  constructor(options?: { requiresApproval?: boolean }) {
+  constructor(options?: {
+    requiresApproval?: boolean;
+    requiresApprovalByOperation?: Record<string, boolean>;
+  }) {
     this.requiresApproval = options?.requiresApproval ?? false;
+    this.requiresApprovalByOperation = options?.requiresApprovalByOperation ?? {};
   }
 
   async evaluateRefundApproval(
@@ -43,17 +49,31 @@ export class InProcessWorkflowAdapter implements WorkflowEnginePort {
     };
   }
 
-  assertDistinctActors(requesterId: string, approverId: string): void {
+  async evaluateOperationApproval(
+    input: EvaluateOperationApprovalInput
+  ): Promise<RefundApprovalDecision> {
+    const required =
+      this.requiresApprovalByOperation[input.operationCode] ?? this.requiresApproval;
+    return {
+      required,
+      operation: input.operationCode,
+    };
+  }
+
+  assertDistinctActors(requesterId: string, approverId: string, message?: string): void {
     if (requesterId.trim() && requesterId === approverId) {
       throw new WorkflowEngineError(
         WORKFLOW_ENGINE_ERROR_CODES.SELF_APPROVAL,
-        "The person who requested this refund cannot approve it.",
+        message ?? "The person who requested this refund cannot approve it.",
         409
       );
     }
   }
 }
 
-export function createInProcessWorkflowAdapter(options?: { requiresApproval?: boolean }) {
+export function createInProcessWorkflowAdapter(options?: {
+  requiresApproval?: boolean;
+  requiresApprovalByOperation?: Record<string, boolean>;
+}) {
   return new InProcessWorkflowAdapter(options);
 }

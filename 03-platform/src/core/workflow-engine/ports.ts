@@ -8,6 +8,7 @@
 
 import type {
   EvaluateExceptionResolutionInput,
+  EvaluateOperationApprovalInput,
   EvaluateRefundApprovalInput,
   RefundApprovalDecision,
 } from "@/core/workflow-engine/types";
@@ -19,5 +20,12 @@ export type WorkflowEnginePort = {
   evaluateExceptionResolution(
     input: EvaluateExceptionResolutionInput
   ): Promise<RefundApprovalDecision>;
-  assertDistinctActors(requesterId: string, approverId: string): void;
+  evaluateOperationApproval(
+    input: EvaluateOperationApprovalInput
+  ): Promise<RefundApprovalDecision>;
+  assertDistinctActors(
+    requesterId: string,
+    approverId: string,
+    message?: string
+  ): void;
 };

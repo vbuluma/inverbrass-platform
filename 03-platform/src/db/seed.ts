@@ -55,6 +55,10 @@ import { seedAccountReference } from "@/db/seeds/account-reference-seed";
 import { seedPaymentCatalogues } from "@/db/seeds/payment-catalogue-seed";
 import { seedInvoicePaymentTerms } from "@/db/seeds/invoice-payment-terms-seed";
 import { seedDocumentNumberingPolicies } from "@/db/seeds/document-numbering-policy-seed";
+import { seedStockItemTypes } from "@/db/seeds/stock-item-types-seed";
+import { seedInventoryLocationTypes } from "@/db/seeds/inventory-location-types-seed";
+import { seedInventoryOperationControls } from "@/db/seeds/inventory-operation-controls-seed";
+import { seedInventoryOpsIncidentTypes } from "@/db/seeds/inventory-ops-incident-types-seed";
 
 async function runSeed() {
   const connectionString = process.env.DATABASE_URL;
@@ -314,6 +318,30 @@ async function runSeed() {
     const numberingResults = await seedDocumentNumberingPolicies(db);
     console.log(
       `documentNumberingPolicies: inserted=${numberingResults.inserted}, updated=${numberingResults.updated}, skipped=${numberingResults.skipped}`
+    );
+
+    console.log("Seeding stock item types...");
+    const stockItemTypeResults = await seedStockItemTypes(db);
+    console.log(
+      `stockItemTypes: inserted=${stockItemTypeResults.inserted}, updated=${stockItemTypeResults.updated}, skipped=${stockItemTypeResults.skipped}`
+    );
+
+    console.log("Seeding inventory location types...");
+    const locationTypeResults = await seedInventoryLocationTypes(db);
+    console.log(
+      `inventoryLocationTypes: inserted=${locationTypeResults.inserted}, updated=${locationTypeResults.updated}, skipped=${locationTypeResults.skipped}`
+    );
+
+    console.log("Seeding inventory operation controls...");
+    const operationControlResults = await seedInventoryOperationControls(db);
+    console.log(
+      `inventoryOperationControls: inserted=${operationControlResults.inserted}, updated=${operationControlResults.updated}, skipped=${operationControlResults.skipped}`
+    );
+
+    console.log("Seeding inventory exception types...");
+    const incidentTypeResults = await seedInventoryOpsIncidentTypes(db);
+    console.log(
+      `inventoryOpsIncidentTypes: inserted=${incidentTypeResults.inserted}, updated=${incidentTypeResults.updated}, skipped=${incidentTypeResults.skipped}`
     );
 
     console.log("✅ Seed completed.");

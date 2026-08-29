@@ -512,6 +512,76 @@
       "when": 1784564588869,
       "tag": "0068_bp007_ip008_payment_exceptions_operations_controls",
       "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1784564588870,
+      "tag": "0069_bp008_ip001_inventory_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1784564588871,
+      "tag": "0070_bp008_ip002_stock_receiving_opening_balances",
+      "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1784564588872,
+      "tag": "0071_bp008_ip002_uom_conversion_inbound_quantities",
+      "breakpoints": true
+    },
+    {
+      "idx": 76,
+      "version": "7",
+      "when": 1784564588873,
+      "tag": "0072_bp008_ip003_stock_reservation_sales_deduction",
+      "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1784564588874,
+      "tag": "0073_bp008_ip005_stock_adjustments_damage_loss_returns",
+      "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1784564588875,
+      "tag": "0074_bp008_ip006_stocktake_inventory_reconciliation",
+      "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "7",
+      "when": 1784564588876,
+      "tag": "0075_bp008_ip007_batch_expiry_serial_tracking",
+      "breakpoints": true
+    },
+    {
+      "idx": 80,
+      "version": "7",
+      "when": 1784564588877,
+      "tag": "0076_bp008_ip008_inventory_controls",
+      "breakpoints": true
+    },
+    {
+      "idx": 81,
+      "version": "7",
+      "when": 1784564588878,
+      "tag": "0077_bp008_ip009_inventory_operations",
+      "breakpoints": true
+    },
+    {
+      "idx": 82,
+      "version": "7",
+      "when": 1784564588879,
+      "tag": "0078_bp008_ip004_stock_transfers",
+      "breakpoints": true
     }
   ]
 }

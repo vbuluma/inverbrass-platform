@@ -14,6 +14,7 @@ export {
 export type { WorkflowEnginePort } from "@/core/workflow-engine/ports";
 export type {
   EvaluateExceptionResolutionInput,
+  EvaluateOperationApprovalInput,
   EvaluateRefundApprovalInput,
   RefundApprovalDecision,
 } from "@/core/workflow-engine/types";
