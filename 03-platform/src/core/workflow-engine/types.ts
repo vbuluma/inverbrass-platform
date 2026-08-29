@@ -22,3 +22,8 @@ export type EvaluateExceptionResolutionInput = {
   businessId: string;
   resolutionCode: string;
 };
+
+export type EvaluateOperationApprovalInput = {
+  businessId: string;
+  operationCode: string;
+};
