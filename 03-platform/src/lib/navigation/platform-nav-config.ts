@@ -1,43 +1,73 @@
 ﻿/**
  * Purpose:
- * Central navigation registry for the InverBrass platform shell (IP-007).
+ * Central navigation registry for the InverBrass platform shell (IP-007 / NAV-001).
  *
  * Design rationale:
  * All Build Packs inherit navigation from this config — modules must not
- * duplicate nav items locally.
+ * duplicate nav items locally. Top-level entries are user-job hubs, not IPs.
  */
 import {
+  AlertTriangleIcon,
+  ArchiveIcon,
+  ArrowLeftRightIcon,
   BanknoteIcon,
+  BarChart3Icon,
+  BookmarkIcon,
+  BoxesIcon,
   Building2Icon,
   CalculatorIcon,
   CalendarDaysIcon,
   CheckSquareIcon,
+  ClipboardCheckIcon,
   ClockIcon,
-  GitBranchIcon,
-  HandshakeIcon,
   FileTextIcon,
-  BarChart3Icon,
+  FolderTreeIcon,
+  GitBranchIcon,
+  GlobeIcon,
+  HandshakeIcon,
   LayersIcon,
   LayoutDashboardIcon,
+  LifeBuoyIcon,
   MapPinIcon,
   MegaphoneIcon,
   MessageSquareIcon,
   PackageIcon,
+  RulerIcon,
   SettingsIcon,
   ShieldCheckIcon,
   ShoppingCartIcon,
+  SlidersHorizontalIcon,
   StarIcon,
   TargetIcon,
   UsersIcon,
   UsersRoundIcon,
-  LifeBuoyIcon,
   WarehouseIcon,
 } from "lucide-react";
 import type { PlatformNavItem } from "@/lib/navigation/types";
+
 export const PLATFORM_BRAND = {
   name: "InverBrass",
   tagline: "Digitalization Platform",
 } as const;
+
+export const PRIMARY_HUB_IDS = [
+  "dashboard",
+  "parties",
+  "products",
+  "crm",
+  "sales",
+  "payments",
+  "inventory",
+  "settings",
+] as const;
+
+export const MOBILE_PRIMARY_NAV_IDS = [
+  "dashboard",
+  "crm",
+  "sales",
+  "payments",
+] as const;
+
 /** Primary left navigation for authenticated business operations. */
 export const BUSINESS_APP_NAV_ITEMS: PlatformNavItem[] = [
   {
@@ -45,182 +75,334 @@ export const BUSINESS_APP_NAV_ITEMS: PlatformNavItem[] = [
     label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboardIcon,
+    mobilePrimary: true,
   },
   {
     id: "parties",
     label: "Parties",
     href: "/parties",
     icon: UsersIcon,
-  },
-  {
-    id: "groups",
-    label: "Groups",
-    href: "/groups",
-    icon: UsersRoundIcon,
+    children: [
+      {
+        id: "groups",
+        label: "Groups",
+        href: "/groups",
+        icon: UsersRoundIcon,
+      },
+    ],
   },
   {
     id: "products",
     label: "Offerings",
     href: "/products",
     icon: PackageIcon,
+    children: [
+      {
+        id: "product-catalogue",
+        label: "Catalogue",
+        href: "/products/catalogue",
+        icon: GlobeIcon,
+      },
+      {
+        id: "product-classifications",
+        label: "Classifications",
+        href: "/products/classifications",
+        icon: FolderTreeIcon,
+      },
+      {
+        id: "product-units",
+        label: "Units",
+        href: "/products/units",
+        icon: RulerIcon,
+      },
+      {
+        id: "product-variants",
+        label: "Variants",
+        href: "/products/variants",
+        icon: BoxesIcon,
+      },
+      {
+        id: "product-bundles",
+        label: "Bundles",
+        href: "/products/bundles",
+        icon: LayersIcon,
+      },
+    ],
   },
   {
-    id: "customers",
-    label: "Customers",
-    href: "/customers",
+    id: "crm",
+    label: "CRM",
+    href: "/crm",
     icon: HandshakeIcon,
-  },
-  {
-    id: "leads",
-    label: "Leads",
-    href: "/leads",
-    icon: TargetIcon,
-  },
-  {
-    id: "opportunities",
-    label: "Opportunities",
-    href: "/opportunities",
-    icon: GitBranchIcon,
-  },
-  {
-    id: "accounts",
-    label: "Accounts",
-    href: "/accounts",
-    icon: Building2Icon,
-  },
-  {
-    id: "quotations",
-    label: "Quotations",
-    href: "/quotations",
-    icon: FileTextIcon,
+    mobilePrimary: true,
+    children: [
+      {
+        id: "customers",
+        label: "Customer Profile",
+        href: "/customers",
+        icon: HandshakeIcon,
+      },
+      {
+        id: "crm-pipeline",
+        label: "Pipeline",
+        icon: GitBranchIcon,
+        children: [
+          {
+            id: "leads",
+            label: "Leads",
+            href: "/leads",
+            icon: TargetIcon,
+          },
+          {
+            id: "opportunities",
+            label: "Opportunities",
+            href: "/opportunities",
+            icon: GitBranchIcon,
+          },
+          {
+            id: "accounts",
+            label: "Accounts",
+            href: "/accounts",
+            icon: Building2Icon,
+          },
+          {
+            id: "quotations",
+            label: "Quotations",
+            href: "/quotations",
+            icon: FileTextIcon,
+          },
+        ],
+      },
+      {
+        id: "crm-engagement",
+        label: "Engagement",
+        icon: MessageSquareIcon,
+        children: [
+          {
+            id: "crm-activities",
+            label: "Activities",
+            href: "/crm/activities",
+            icon: CheckSquareIcon,
+          },
+          {
+            id: "crm-appointments",
+            label: "Appointments",
+            href: "/crm/appointments",
+            icon: CalendarDaysIcon,
+          },
+          {
+            id: "crm-visits",
+            label: "Visits",
+            href: "/crm/visits",
+            icon: MapPinIcon,
+          },
+          {
+            id: "crm-communications",
+            label: "Communications",
+            href: "/crm/communications",
+            icon: MessageSquareIcon,
+          },
+          {
+            id: "crm-cases",
+            label: "Cases",
+            href: "/crm/cases",
+            icon: LifeBuoyIcon,
+          },
+        ],
+      },
+      {
+        id: "campaigns",
+        label: "Campaigns",
+        href: "/campaigns",
+        icon: MegaphoneIcon,
+      },
+      {
+        id: "crm-analytics",
+        label: "Analytics",
+        href: "/crm-analytics",
+        icon: BarChart3Icon,
+      },
+    ],
   },
   {
     id: "sales",
     label: "Sales",
     href: "/sales",
     icon: ShoppingCartIcon,
+    mobilePrimary: true,
+    children: [
+      {
+        id: "commercial-resolve",
+        label: "Price a sale",
+        href: "/commercial/resolve",
+        icon: CalculatorIcon,
+      },
+      {
+        id: "sales-convert-quote",
+        label: "Convert quote",
+        href: "/sales/convert-quote",
+        icon: FileTextIcon,
+      },
+    ],
   },
   {
     id: "payments",
     label: "Payments",
     href: "/payments",
     icon: BanknoteIcon,
+    mobilePrimary: true,
+    children: [
+      {
+        id: "invoices",
+        label: "Invoices",
+        href: "/invoices",
+        icon: FileTextIcon,
+      },
+      {
+        id: "receipts",
+        label: "Receipts",
+        href: "/receipts",
+        icon: FileTextIcon,
+      },
+      {
+        id: "payment-reviews",
+        label: "Payment reviews",
+        href: "/payments/exceptions",
+        icon: ShieldCheckIcon,
+      },
+    ],
   },
   {
     id: "inventory",
     label: "Inventory",
     href: "/inventory",
     icon: WarehouseIcon,
-  },
-  {
-    id: "invoices",
-    label: "Invoices",
-    href: "/invoices",
-    icon: FileTextIcon,
-  },
-  {
-    id: "receipts",
-    label: "Receipts",
-    href: "/receipts",
-    icon: FileTextIcon,
-  },
-  {
-    id: "payment-reviews",
-    label: "Payment reviews",
-    href: "/payments/exceptions",
-    icon: ShieldCheckIcon,
-  },
-  {
-    id: "commercial-resolve",
-    label: "Price a sale",
-    href: "/commercial/resolve",
-    icon: CalculatorIcon,
-  },
-  {
-    id: "commercial-governance",
-    label: "Commercial rules",
-    href: "/commercial/governance",
-    icon: ShieldCheckIcon,
-  },
-  {
-    id: "tax-compliance",
-    label: "Tax obligations",
-    href: "/commercial/tax-compliance",
-    icon: FileTextIcon,
-  },
-  {
-    id: "campaigns",
-    label: "Campaigns",
-    href: "/campaigns",
-    icon: MegaphoneIcon,
-  },
-  {
-    id: "crm-analytics",
-    label: "CRM Analytics",
-    href: "/crm-analytics",
-    icon: BarChart3Icon,
-  },
-  {
-    id: "crm-activities",
-    label: "Activities",
-    href: "/crm/activities",
-    icon: CheckSquareIcon,
-  },
-  {
-    id: "crm-appointments",
-    label: "Appointments",
-    href: "/crm/appointments",
-    icon: CalendarDaysIcon,
-  },
-  {
-    id: "crm-visits",
-    label: "Visits",
-    href: "/crm/visits",
-    icon: MapPinIcon,
-  },
-  {
-    id: "crm-communications",
-    label: "Communications",
-    href: "/crm/communications",
-    icon: MessageSquareIcon,
-  },
-  {
-    id: "crm-cases",
-    label: "Cases",
-    href: "/crm/cases",
-    icon: LifeBuoyIcon,
-  },
-  {
-    id: "crm-governance",
-    label: "CRM Governance",
-    href: "/crm/governance",
-    icon: ShieldCheckIcon,
-  },
-  {
-    id: "solutions",
-    label: "Solutions",
-    icon: LayersIcon,
-    placeholder: true,
-  },
-  {
-    id: "favorites",
-    label: "Favorites",
-    icon: StarIcon,
-    placeholder: true,
-  },
-  {
-    id: "recent",
-    label: "Recent Items",
-    icon: ClockIcon,
-    placeholder: true,
+    children: [
+      {
+        id: "inventory-locations",
+        label: "Locations",
+        href: "/inventory/locations",
+        icon: MapPinIcon,
+      },
+      {
+        id: "inventory-operations",
+        label: "Operations",
+        icon: ArrowLeftRightIcon,
+        children: [
+          {
+            id: "inventory-receive",
+            label: "Receiving",
+            href: "/inventory/receive",
+            icon: PackageIcon,
+          },
+          {
+            id: "inventory-opening-balances",
+            label: "Opening balances",
+            href: "/inventory/opening-balances",
+            icon: ArchiveIcon,
+          },
+          {
+            id: "inventory-transfers",
+            label: "Transfers",
+            href: "/inventory/transfers",
+            icon: ArrowLeftRightIcon,
+          },
+          {
+            id: "inventory-reservations",
+            label: "Reservations",
+            href: "/inventory/reservations",
+            icon: BookmarkIcon,
+          },
+          {
+            id: "inventory-adjustments",
+            label: "Adjustments",
+            href: "/inventory/adjustments",
+            icon: ArchiveIcon,
+          },
+          {
+            id: "inventory-stocktakes",
+            label: "Stocktake",
+            href: "/inventory/stocktakes",
+            icon: ClipboardCheckIcon,
+          },
+        ],
+      },
+      {
+        id: "inventory-controls-group",
+        label: "Controls",
+        icon: SlidersHorizontalIcon,
+        children: [
+          {
+            id: "inventory-traceability",
+            label: "Traceability",
+            href: "/inventory/traceability",
+            icon: ClipboardCheckIcon,
+          },
+          {
+            id: "inventory-controls",
+            label: "Inventory controls",
+            href: "/inventory/controls",
+            icon: SlidersHorizontalIcon,
+          },
+          {
+            id: "inventory-exceptions",
+            label: "Exceptions",
+            href: "/inventory/exceptions",
+            icon: AlertTriangleIcon,
+          },
+        ],
+      },
+    ],
   },
   {
     id: "settings",
     label: "Settings",
     href: "/settings",
     icon: SettingsIcon,
+    children: [
+      {
+        id: "commercial-governance",
+        label: "Commercial rules",
+        href: "/commercial/governance",
+        icon: ShieldCheckIcon,
+      },
+      {
+        id: "tax-compliance",
+        label: "Tax obligations",
+        href: "/commercial/tax-compliance",
+        icon: FileTextIcon,
+      },
+      {
+        id: "crm-governance",
+        label: "CRM Governance",
+        href: "/crm/governance",
+        icon: ShieldCheckIcon,
+      },
+    ],
+  },
+  {
+    id: "solutions",
+    label: "Solutions",
+    icon: LayersIcon,
+    placeholder: true,
+    utility: true,
+  },
+  {
+    id: "favorites",
+    label: "Favorites",
+    icon: StarIcon,
+    placeholder: true,
+    utility: true,
+  },
+  {
+    id: "recent",
+    label: "Recent Items",
+    icon: ClockIcon,
+    placeholder: true,
+    utility: true,
   },
 ];
+
 export const PLACEHOLDER_MESSAGES: Record<string, string> = {
   solutions:
     "Industry Solutions (Property, Healthcare, Schools, and more) will appear here as Build Packs ship.",

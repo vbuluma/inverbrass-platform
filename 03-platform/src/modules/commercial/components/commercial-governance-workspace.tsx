@@ -291,10 +291,11 @@ export function CommercialGovernanceWorkspace() {
       <SetBreadcrumbs
         items={[
           { label: "Dashboard", href: "/dashboard" },
+          { label: "Settings", href: "/settings" },
           { label: "Commercial rules" },
         ]}
       />
-      <PageBackLink href="/dashboard" label="Back to dashboard" />
+      <PageBackLink href="/settings" label="Back to Settings" />
 
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">

@@ -29,6 +29,7 @@ import { product } from "@/db/schema/product";
 import { productTimeline } from "@/db/schema/product-timeline";
 import { BUSINESS_APP_NAV_ITEMS } from "@/lib/navigation/platform-nav-config";
 import { BUSINESS_APP_PREFIXES } from "@/lib/navigation/business-app-routes";
+import { navContainsHref } from "@/lib/navigation/nav-tree";
 import { createPricingResolutionAdapter } from "@/modules/crm/adapters/pricing-resolution-adapter";
 import { createBusinessSetupService } from "@/modules/business/onboarding/services/business-setup-service";
 import { createDefaultConfigurationSettings } from "@/modules/business/onboarding/services/setup-rules";
@@ -694,7 +695,7 @@ async function main() {
   for (const href of ["/dashboard", "/parties", "/products", "/settings"]) {
     record(
       `nav:${href}`,
-      BUSINESS_APP_NAV_ITEMS.some((item) => item.href === href) ? "PASS" : "FAIL"
+      navContainsHref(BUSINESS_APP_NAV_ITEMS, href) ? "PASS" : "FAIL"
     );
   }
   for (const prefix of ["/dashboard", "/parties", "/products", "/settings"]) {

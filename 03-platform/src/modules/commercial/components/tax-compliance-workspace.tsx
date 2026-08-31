@@ -214,11 +214,12 @@ export function TaxComplianceWorkspace() {
     <main className="space-y-4 p-4 sm:p-6">
       <SetBreadcrumbs
         items={[
-          { label: "Price a sale", href: "/commercial/resolve" },
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Settings", href: "/settings" },
           { label: "Tax obligations" },
         ]}
       />
-      <PageBackLink href="/commercial/resolve" label="Back to Price a sale" />
+      <PageBackLink href="/settings" label="Back to Settings" />
 
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">

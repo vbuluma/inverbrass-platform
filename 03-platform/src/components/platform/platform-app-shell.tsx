@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 
 import { BreadcrumbNav } from "@/components/platform/breadcrumb-nav";
 import { PlatformHeader } from "@/components/platform/platform-header";
+import { PlatformMobileBottomNav } from "@/components/platform/platform-mobile-bottom-nav";
 import {
   PlatformSidebar,
   PlatformSidebarDesktop,
@@ -40,7 +41,7 @@ export function PlatformAppShell({ context, children }: PlatformAppShellProps) {
           />
         ) : null}
 
-        <div className="platform-workspace-main flex min-w-0 flex-1 flex-col shadow-[inset_1px_0_0_0_rgba(0,0,0,0.04)]">
+        <div className="platform-workspace-main flex min-w-0 flex-1 flex-col pb-16 shadow-[inset_1px_0_0_0_rgba(0,0,0,0.04)] lg:pb-0">
           {context.showSidebar ? (
             <div className="border-b border-border px-4 py-2 sm:px-6">
               <BreadcrumbNav />
@@ -49,6 +50,13 @@ export function PlatformAppShell({ context, children }: PlatformAppShellProps) {
           <div className="flex-1">{children}</div>
         </div>
       </div>
+
+      {context.showSidebar ? (
+        <PlatformMobileBottomNav
+          onMoreClick={() => setMobileNavOpen(true)}
+          navLabelOverrides={context.navLabelOverrides}
+        />
+      ) : null}
 
       {context.showSidebar ? (
         <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>

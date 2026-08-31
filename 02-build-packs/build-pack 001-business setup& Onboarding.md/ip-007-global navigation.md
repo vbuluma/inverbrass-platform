@@ -54,10 +54,14 @@ Minimum framework entries (when edition profile is not yet loaded):
 
 Dashboard
 Parties
-Modules (placeholder)
-Favorites (placeholder)
-Recent Items (placeholder)
+Offerings
+CRM
+Sales
+Payments
+Inventory
 Settings
+
+NAV-001: these are capability hubs. Implementation Packages add nested capabilities or hub-landing actions — they must not add a new top-level sidebar item.
 
 Must be reusable across all Build Packs and Industry Editions.
 

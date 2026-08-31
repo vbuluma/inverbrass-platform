@@ -79,7 +79,7 @@ export function OpportunityDashboard({ data }: OpportunityDashboardProps) {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6">
       <div className="space-y-3">
-        <PageBackLink href="/dashboard" label="Back to dashboard" />
+        <PageBackLink href="/crm" label="Back to CRM" />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex items-center gap-3">
             <span className="flex size-11 items-center justify-center rounded-lg bg-violet-50 text-violet-800 ring-1 ring-violet-200">

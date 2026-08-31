@@ -13,10 +13,14 @@ export const PLATFORM_NAV_LABELS = {
   parties: "Parties",
   groups: "Groups",
   offerings: PLATFORM_NAV_OFFERING_LABEL,
+  crm: "CRM",
+  sales: "Sales",
+  payments: "Payments",
+  inventory: "Inventory",
+  settings: "Settings",
   solutions: "Solutions",
   favorites: "Favorites",
   recent: "Recent Items",
-  settings: "Settings",
 } as const;
 
 export function resolvePlatformNavOfferingLabel(): string {

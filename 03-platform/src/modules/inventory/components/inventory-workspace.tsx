@@ -2,21 +2,24 @@
 
 /**
  * Purpose:
- * Inventory foundation workspace — stock items, locations, and opening stock.
+ * Inventory hub workspace — stock position, primary operations, and nested capabilities.
  *
  * Implementation Package:
  * BP-008 / IP-01 – Inventory Foundation & Stock Item Master
+ * NAV-001 hub landing (IPs remain nested under Inventory).
  */
 
-import { useState, useTransition } from "react";
 import { WarehouseIcon } from "lucide-react";
 import Link from "next/link";
 
 import { PageBackLink } from "@/components/platform/page-back-link";
-import { PlatformEmptyState, PlatformKpiCard } from "@/components/platform";
+import {
+  PlatformEmptyState,
+  PlatformHubSections,
+  PlatformKpiCard,
+} from "@/components/platform";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { createLocationAction } from "@/modules/inventory/actions/inventory-actions";
 import type { InventoryDashboardView, InventoryTransferSummary } from "@/modules/inventory/types";
 
 type InventoryStockTotals = {
@@ -36,30 +39,6 @@ export function InventoryWorkspace({
   transferSummary,
   stockTotals,
 }: InventoryWorkspaceProps) {
-  const [code, setCode] = useState("");
-  const [name, setName] = useState("");
-  const [locationTypeCode, setLocationTypeCode] = useState(
-    data.locationTypes[0]?.code ?? ""
-  );
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
-
-  function onCreateLocation() {
-    setError(null);
-    startTransition(async () => {
-      const result = await createLocationAction({
-        code,
-        name,
-        locationTypeCode,
-      });
-      if (!result.success) {
-        setError(result.error.message);
-        return;
-      }
-      window.location.assign("/inventory");
-    });
-  }
-
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6">
       <div className="space-y-3">
@@ -71,7 +50,7 @@ export function InventoryWorkspace({
           <div>
             <h1 className="text-2xl font-semibold">Inventory</h1>
             <p className="text-sm text-muted-foreground">
-              Set up what you stock, where it is held, and opening quantities.
+              Hold, move, and control stock across locations.
             </p>
           </div>
         </div>
@@ -80,150 +59,120 @@ export function InventoryWorkspace({
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <PlatformKpiCard label="Stock items" value={String(data.stockItemCount)} />
         <PlatformKpiCard label="Locations" value={String(data.locationCount)} />
+        <PlatformKpiCard label="On Hand" value={stockTotals?.onHand ?? "—"} />
+        <PlatformKpiCard label="Available" value={stockTotals?.available ?? "—"} />
+        <PlatformKpiCard label="Reserved" value={stockTotals?.reserved ?? "—"} />
+        <PlatformKpiCard
+          label="In Transit"
+          value={transferSummary?.inTransitQuantity ?? "0"}
+        />
         <PlatformKpiCard label="Low stock" value={String(data.lowStockCount)} />
-        <PlatformKpiCard label="Out of stock" value={String(data.outOfStockCount)} />
-        {stockTotals ? (
-          <>
-            <PlatformKpiCard label="Total Stock" value={stockTotals.onHand} />
-            <PlatformKpiCard label="Available" value={stockTotals.available} />
-            <PlatformKpiCard label="Reserved" value={stockTotals.reserved} />
-          </>
-        ) : null}
-        {transferSummary ? (
-          <>
-            <PlatformKpiCard label="In Transit" value={transferSummary.inTransitQuantity} />
-            <PlatformKpiCard label="Open Transfers" value={String(transferSummary.openTransferCount)} />
-          </>
-        ) : null}
+        <PlatformKpiCard label="Open Transfers" value={String(transferSummary?.openTransferCount ?? 0)} />
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        <Link href="/inventory/items/new" className={cn(buttonVariants(), "h-10")}>
-          Add stock item
-        </Link>
-        <Link
-          href="/inventory/locations"
-          className={cn(buttonVariants({ variant: "outline" }), "h-10")}
-        >
-          Manage locations
-        </Link>
-        <Link
-          href="/inventory/receive"
-          className={cn(buttonVariants({ variant: "outline" }), "h-10")}
-        >
+      <div className="flex flex-wrap gap-2">
+        <Link href="/inventory/receive" className={cn(buttonVariants(), "h-10")}>
           Receive stock
-        </Link>
-        <Link
-          href="/inventory/opening-balances"
-          className={cn(buttonVariants({ variant: "outline" }), "h-10")}
-        >
-          Opening balances
-        </Link>
-        <Link
-          href="/inventory/availability"
-          className={cn(buttonVariants({ variant: "outline" }), "h-10")}
-        >
-          Availability
-        </Link>
-        <Link
-          href="/inventory/reservations"
-          className={cn(buttonVariants({ variant: "outline" }), "h-10")}
-        >
-          Reservations
-        </Link>
-        <Link
-          href="/inventory/adjustments"
-          className={cn(buttonVariants({ variant: "outline" }), "h-10")}
-        >
-          Adjustments
-        </Link>
-        <Link
-          href="/inventory/stocktakes"
-          className={cn(buttonVariants({ variant: "outline" }), "h-10")}
-        >
-          Stocktakes
-        </Link>
-        <Link
-          href="/inventory/traceability"
-          className={cn(buttonVariants({ variant: "outline" }), "h-10")}
-        >
-          Traceability
-        </Link>
-        <Link
-          href="/inventory/controls"
-          className={cn(buttonVariants({ variant: "outline" }), "h-10")}
-        >
-          Inventory controls
-        </Link>
-        <Link
-          href="/inventory/exceptions"
-          className={cn(buttonVariants({ variant: "outline" }), "h-10")}
-        >
-          Exceptions
         </Link>
         <Link
           href="/inventory/transfers"
           className={cn(buttonVariants({ variant: "outline" }), "h-10")}
         >
-          Transfers
+          Transfer stock
+        </Link>
+        <Link
+          href="/inventory/adjustments"
+          className={cn(buttonVariants({ variant: "outline" }), "h-10")}
+        >
+          Adjust stock
+        </Link>
+        <Link
+          href="/inventory/stocktakes"
+          className={cn(buttonVariants({ variant: "outline" }), "h-10")}
+        >
+          Stocktake
         </Link>
       </div>
 
-      <section className="rounded-xl border bg-white p-4">
-        <h2 className="text-base font-semibold">Add a location</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Locations are stores or warehouses where stock is held.
-        </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <label className="flex flex-col gap-1 text-sm">
-            Code
-            <input
-              value={code}
-              onChange={(event) => setCode(event.target.value)}
-              className="h-10 rounded-md border px-3"
-              placeholder="MAIN"
-              autoComplete="off"
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            Name
-            <input
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              className="h-10 rounded-md border px-3"
-              placeholder="Main store"
-              autoComplete="off"
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            Type
-            <select
-              value={locationTypeCode}
-              onChange={(event) => setLocationTypeCode(event.target.value)}
-              className="h-10 rounded-md border px-3"
-            >
-              {data.locationTypes.map((row) => (
-                <option key={row.code} value={row.code}>
-                  {row.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <button
-          type="button"
-          className={cn(buttonVariants(), "mt-4 h-10")}
-          onClick={onCreateLocation}
-          disabled={isPending || !code.trim() || !name.trim()}
-        >
-          {isPending ? "Saving…" : "Save location"}
-        </button>
-        {error ? (
-          <p className="mt-3 text-sm text-red-700" role="alert">
-            {error}
-          </p>
-        ) : null}
-      </section>
+      <PlatformHubSections
+        sections={[
+          {
+            title: "Stock",
+            links: [
+              {
+                href: "/inventory/locations",
+                label: "Locations",
+                description: "Stores and warehouses where stock is held.",
+              },
+              {
+                href: "/inventory/items/new",
+                label: "Add stock item",
+                description: "Track a catalogue offering as stock.",
+              },
+              {
+                href: "/inventory/availability",
+                label: "Availability",
+                description: "On hand, reserved, and available quantities.",
+              },
+              {
+                href: "/inventory/opening-balances",
+                label: "Opening balances",
+                description: "Record opening stock for a location.",
+              },
+            ],
+          },
+          {
+            title: "Operations",
+            links: [
+              {
+                href: "/inventory/receive",
+                label: "Receiving",
+                description: "Receive stock into a location.",
+              },
+              {
+                href: "/inventory/transfers",
+                label: "Transfers",
+                description: "Move stock between locations.",
+              },
+              {
+                href: "/inventory/reservations",
+                label: "Reservations",
+                description: "Hold stock for confirmed sales.",
+              },
+              {
+                href: "/inventory/adjustments",
+                label: "Adjustments",
+                description: "Damage, loss, and returns.",
+              },
+              {
+                href: "/inventory/stocktakes",
+                label: "Stocktakes",
+                description: "Count, variance, and reconciliation.",
+              },
+            ],
+          },
+          {
+            title: "Controls",
+            links: [
+              {
+                href: "/inventory/traceability",
+                label: "Traceability",
+                description: "Batch, expiry, and serial tracking.",
+              },
+              {
+                href: "/inventory/controls",
+                label: "Inventory controls",
+                description: "Reorder signals and control settings.",
+              },
+              {
+                href: "/inventory/exceptions",
+                label: "Exceptions",
+                description: "Operational issues that need attention.",
+              },
+            ],
+          },
+        ]}
+      />
 
       <section className="space-y-2">
         <h2 className="text-base font-semibold">Stock items</h2>
@@ -231,6 +180,8 @@ export function InventoryWorkspace({
           <PlatformEmptyState
             title="No stock items yet"
             description="Add a product from the catalogue as a stock item to get started."
+            actionLabel="Add stock item"
+            actionHref="/inventory/items/new"
           />
         ) : (
           <ul className="divide-y rounded-xl border bg-white">

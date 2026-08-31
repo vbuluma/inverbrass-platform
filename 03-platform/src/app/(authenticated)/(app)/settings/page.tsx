@@ -93,6 +93,51 @@ export default async function BusinessSettingsPage() {
         </CardContent>
       </Card>
 
+      <section aria-labelledby="settings-governance-heading" className="space-y-3">
+        <h2 id="settings-governance-heading" className="text-lg font-semibold">
+          Rules and governance
+        </h2>
+        <div className="grid gap-3">
+          {[
+            {
+              href: "/commercial/governance",
+              title: "Commercial rules",
+              description: "Approve and activate pricing, tax, and commercial policies.",
+            },
+            {
+              href: "/commercial/tax-compliance",
+              title: "Tax obligations",
+              description: "Tax configuration, remittance, and evidence.",
+            },
+            {
+              href: "/crm/governance",
+              title: "CRM Governance",
+              description: "Ownership, duplicates, and relationship administration.",
+            },
+          ].map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              prefetch={false}
+              className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Card className="transition-colors hover:bg-muted/30">
+                <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
+                  <div>
+                    <CardTitle className="text-base">{item.title}</CardTitle>
+                    <CardDescription>{item.description}</CardDescription>
+                  </div>
+                  <ArrowRightIcon
+                    className="size-4 shrink-0 text-muted-foreground"
+                    aria-hidden
+                  />
+                </CardHeader>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       <section aria-labelledby="settings-sections-heading" className="space-y-3">
         <h2 id="settings-sections-heading" className="text-lg font-semibold">
           Configuration

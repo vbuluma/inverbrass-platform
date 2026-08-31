@@ -52,6 +52,7 @@ import { createPartyRepository } from "@/modules/party/repositories/party-reposi
 import { CAMPAIGN_TYPE_CODES } from "@/modules/crm/constants";
 import { BUSINESS_APP_NAV_ITEMS } from "@/lib/navigation/platform-nav-config";
 import { BUSINESS_APP_PREFIXES } from "@/lib/navigation/business-app-routes";
+import { navContainsHref } from "@/lib/navigation/nav-tree";
 import { CRM_WORKSPACE_TABS } from "@/modules/crm/constants";
 
 type Result = {
@@ -177,7 +178,7 @@ async function main() {
     "/crm/governance",
   ];
   for (const href of requiredNav) {
-    const ok = BUSINESS_APP_NAV_ITEMS.some((i) => i.href === href);
+    const ok = navContainsHref(BUSINESS_APP_NAV_ITEMS, href);
     record(`nav:${href}`, ok ? "PASS" : "FAIL");
   }
   for (const prefix of [

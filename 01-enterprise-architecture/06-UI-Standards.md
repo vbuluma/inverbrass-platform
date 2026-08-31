@@ -56,6 +56,23 @@ Every form shall provide a clear Cancel, Back, or Close action.
 Users shall be able to switch Business (tenant) without signing out.
 Users shall be be able to access Profile and Preferences from any page.
 Navigation shall remain consistent across all Build Packs.
+
+NAV-001 Hub-first information architecture
+
+Build Packs and IPs are delivery boundaries, not navigation boundaries.
+
+Primary desktop navigation is limited to user-job hubs:
+
+Dashboard, Parties, Offerings, CRM, Sales, Payments, Inventory, Settings.
+
+Nested capabilities (for example Transfers, Invoices, Leads) belong under those hubs. A new top-level item is permitted only when it represents a distinct user job that cannot live in an existing hub.
+
+Desktop: collapsible left sidebar with hub → group → capability.
+
+Mobile: bottom bar with Dashboard, CRM, Sales, Payments, and More. Remaining hubs open from More.
+
+Favorites and Recent are shortcuts, not business modules.
+
 Where to implement
 
 This shouldn't be added to a specific Build Pack. It belongs in the Platform Foundation, because every future module (Parties, Sales, Inventory, Property, Schools, Healthcare, etc.) will inherit it.

@@ -30,7 +30,7 @@ type CrmModuleErrorPageProps = {
   title?: string;
   /** Where the "back" link should go. Defaults to /customers. */
   backHref?: string;
-  /** Label for the back link / button. Defaults to "Back to customers". */
+  /** Label for the back link / button. Defaults to "Back to Customer Profile". */
   backLabel?: string;
 };
 
@@ -39,7 +39,7 @@ export function CrmModuleErrorPage({
   titleKind = "dashboard",
   title,
   backHref = "/customers",
-  backLabel = "Back to customers",
+  backLabel = "Back to Customer Profile",
 }: CrmModuleErrorPageProps) {
   const resolvedTitle =
     title ??
@@ -47,7 +47,7 @@ export function CrmModuleErrorPage({
       ? "Customer profile unavailable"
       : titleKind === "registration"
         ? "Registration unavailable"
-        : "Customers unavailable");
+        : "Customer Profile unavailable");
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
