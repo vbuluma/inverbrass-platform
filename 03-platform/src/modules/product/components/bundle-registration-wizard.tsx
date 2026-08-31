@@ -30,7 +30,6 @@ import {
 } from "@/modules/product/actions/product-bundle-actions";
 import {
   BUNDLE_REGISTRATION_STEP_IDS,
-  BUNDLE_WORKSPACE_TABS,
 } from "@/modules/product/constants";
 import { useProductUiLabels } from "@/modules/product/product-terminology-labels";
 import type {

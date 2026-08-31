@@ -332,7 +332,7 @@ async function caughtCode(run: () => Promise<unknown>): Promise<string | null> {
 
 async function runCoreCases(): Promise<SmokeResult[]> {
   const results: SmokeResult[] = [];
-  const { sales, delivery, store, audit, disposition } = harness();
+  const { sales, delivery, store, audit } = harness();
   const inspector = ctx("biz-a", "inspector-1");
   const otherBiz = ctx("biz-b", "other-1");
 

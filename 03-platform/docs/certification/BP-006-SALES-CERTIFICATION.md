@@ -18,7 +18,7 @@ BP-001 → BP-006 continuity holds for the locked sales path:
 
 Amount due is the BP-005 expected payable. Creating a sale is not payment. Inspection 80 / 15 / 5 leaves outstanding 20. Return + replace keeps 20; return + credit leaves 5. Downstream contracts carry quantities and amount due without collected tender or stock-on-hand.
 
-BP-007 and BP-008 feature code was **not** required to pass this record.
+BP-007 payment collection was **not** required to pass this record. BP-008 inventory may exist; sales must not write inventory state.
 
 ---
 
@@ -50,8 +50,8 @@ Maker cannot approve own confirmation, inspection, cancellation, return, or amen
 |-------|-------|
 | Order number | `SO-000001` |
 | Expected amount | `300.000000` |
-| Snapshot id | `4b2dffa7-5d92-470d-8769-d6bcf95dae29` |
-| Commercial contract id | `c10-6e3904ec` |
+| Snapshot id | `95dfdb0c-62cc-4a39-b1ea-77c6d6b8ab08` |
+| Commercial contract id | `c10-971d18fa` |
 
 ---
 
@@ -75,7 +75,7 @@ RT-12 is this record plus J-07 tenancy / fail-closed proofs.
 |------------|-------------------------|
 | Price/tax/discount engine | Sales does not call BP-003 pricing service or write `pricing_item` |
 | Payment | No payment module; no cash/M-Pesa tender as system of record; collected amount null |
-| Inventory | No inventory module; `stockOnHand` null; `inventoryExecuted` false |
+| Inventory | Sales does not mutate inventory ledger, balance, or reservation state. Fulfilment handoff is consumed by BP-008. `stockOnHand` null; `inventoryExecuted` false |
 | Quotation master | Sales converts eligible quotations; it does not construct `QuotationService` |
 | Bookings | `schedulerExecuted` remains false |
 

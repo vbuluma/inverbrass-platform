@@ -122,7 +122,7 @@ function harness(options?: {
     },
   };
   const amountDue = options?.amountDue ?? "10000";
-  let contract: PaymentReadyContract | null =
+  const contract: PaymentReadyContract | null =
     options?.contract === undefined
       ? validContract({
           expectedAmount: amountDue,
@@ -701,6 +701,82 @@ async function runCoreCases(): Promise<SmokeResult[]> {
   results.push({
     name: "amount:cannot-exceed-outstanding",
     ok: exceed,
+  });
+
+  const replayEnv = harness({
+    adapter: new ScriptedPaymentInitiationAdapter({ outcome: "SUCCESSFUL" }),
+  });
+  const replayOb = await replayEnv.obligations.createObligation(ctx("biz-a"), {
+    orderId: "order-1",
+  });
+  const firstPay = await replayEnv.payments.initiatePayment(ctx("biz-a"), {
+    obligationId: replayOb.id,
+    methodId: "method-mm",
+    amount: "10000",
+    currency: "KES",
+    idempotencyKey: "pay-replay-1",
+  });
+  const replayPay = await replayEnv.payments.initiatePayment(ctx("biz-a"), {
+    obligationId: replayOb.id,
+    methodId: "method-mm",
+    amount: "10000",
+    currency: "KES",
+    idempotencyKey: "pay-replay-1",
+  });
+  const replayTxns = await replayEnv.store.transactionPort.listByObligation(
+    "biz-a",
+    replayOb.id
+  );
+  results.push({
+    name: "remediation:new-payment-valid-obligation",
+    ok:
+      firstPay.transaction.status === PAYMENT_STATUS_CODES.SUCCESSFUL &&
+      firstPay.transaction.id === replayPay.transaction.id,
+    detail: `status=${firstPay.transaction.status}`,
+  });
+  results.push({
+    name: "remediation:successful-replay-returns-original",
+    ok:
+      firstPay.transaction.id === replayPay.transaction.id &&
+      replayTxns.length === 1,
+    detail: `txns=${replayTxns.length}`,
+  });
+  results.push({
+    name: "remediation:replay-does-not-call-engine-again",
+    ok: replayEnv.adapter.initiateCalls.length === 1,
+    detail: `calls=${replayEnv.adapter.initiateCalls.length}`,
+  });
+
+  const crossReplay = await expectError(
+    () =>
+      replayEnv.payments.initiatePayment(ctx("biz-b"), {
+        obligationId: replayOb.id,
+        methodId: "method-mm",
+        amount: "10000",
+        currency: "KES",
+        idempotencyKey: "pay-replay-1",
+      }),
+    PAYMENT_ERROR_CODES.OBLIGATION_NOT_FOUND
+  );
+  results.push({
+    name: "remediation:same-key-other-business-fails-closed",
+    ok: crossReplay,
+  });
+
+  const ineligible = await expectError(
+    () =>
+      replayEnv.payments.initiatePayment(ctx("biz-a"), {
+        obligationId: replayOb.id,
+        methodId: "method-mm",
+        amount: "10000",
+        currency: "KES",
+        idempotencyKey: "pay-new-after-paid",
+      }),
+    PAYMENT_ERROR_CODES.OBLIGATION_NOT_ELIGIBLE
+  );
+  results.push({
+    name: "remediation:new-payment-ineligible-obligation-still-fails",
+    ok: ineligible,
   });
 
   return results;

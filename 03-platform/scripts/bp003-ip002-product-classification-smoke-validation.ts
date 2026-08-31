@@ -23,7 +23,6 @@ import { resolveBusinessTerminology } from "@/core/industry-experience/business-
 import {
   PRODUCT_CLASSIFICATION_STATUS_CODES,
   PRODUCT_CLASSIFICATION_TYPE_CODES,
-  PRODUCT_CLASSIFICATION_WORKSPACE_TABS,
   PRODUCT_WORKSPACE_TABS,
 } from "@/modules/product/constants";
 import {
@@ -39,20 +38,12 @@ import {
 import {
   canAssignToClassification,
   canTransitionClassificationStatus,
-  computeHierarchyLevel,
-  isValidDirectParent,
   normalizeClassificationCode,
   resolveDefaultClassificationStatus,
-  shouldAssignAsPrimary,
   wouldCreateCircularHierarchy,
 } from "@/modules/product/services/product-classification-rules";
 import { createProductClassificationService } from "@/modules/product/services/product-classification-service";
-import {
-  assignProductClassificationSchema,
-  createProductClassificationSchema,
-  moveProductClassificationSchema,
-  searchProductClassificationsSchema,
-} from "@/modules/product/validators/product-classification-validators";
+import { createProductClassificationSchema } from "@/modules/product/validators/product-classification-validators";
 
 const ROOT = path.resolve(__dirname, "..");
 

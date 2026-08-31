@@ -21,7 +21,6 @@ export function buildProductUserMessages(
   const bundle = terminology.bundles.singular;
   const bundles = terminology.bundles.plural;
   const category = terminology.categories.singular;
-  const categories = terminology.categories.plural;
   const hub = terminology.offerings.hubTitle;
 
   return {

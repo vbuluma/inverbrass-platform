@@ -42,7 +42,7 @@ import {
   readCommercialTaxHandoff,
   type CommercialTaxHandoffPayload,
 } from "@/modules/commercial/commercial-journey-handoff";
-import type { TaxComplianceDashboardView } from "@/modules/commercial";
+import type { TaxComplianceDashboardView } from "@/modules/commercial/tax-compliance/tax-compliance-types";
 
 type Panel = "dashboard" | "registration" | "obligation" | "evidence" | "calendar";
 

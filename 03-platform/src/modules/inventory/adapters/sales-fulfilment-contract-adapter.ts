@@ -32,6 +32,7 @@ export class SalesFulfilmentContractAdapter implements InventorySalesFulfilmentP
           orderLineId: line.orderLineId,
           offeringId: line.offeringId,
           orderedQuantity: line.orderedQuantity,
+          salesUomId: line.salesUomId,
           outstandingQuantity: line.outstandingQuantity,
           acceptedQuantity: line.acceptedQuantity,
           lineType: line.lineType,

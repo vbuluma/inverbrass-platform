@@ -42,12 +42,12 @@ import {
   type CommercialStepDefinition,
   type CommercialStepStatus,
 } from "@/modules/commercial/components/commercial-resolution-stepper";
-import {
-  COMMERCIAL_RULE_TYPE_CODES,
-  type CommercialGovernanceEventView,
-  type CommercialGovernanceWorkspaceView,
-  type CommercialRuleVersionView,
-} from "@/modules/commercial";
+import { COMMERCIAL_RULE_TYPE_CODES } from "@/modules/commercial/constants";
+import type {
+  CommercialGovernanceEventView,
+  CommercialGovernanceWorkspaceView,
+  CommercialRuleVersionView,
+} from "@/modules/commercial/types";
 
 type GovernanceStepId = "base-price" | "components" | "tax" | "review";
 

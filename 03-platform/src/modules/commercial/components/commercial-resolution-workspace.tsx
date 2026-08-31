@@ -52,16 +52,15 @@ import {
   type CommercialStepId,
   type CommercialStepStatus,
 } from "@/modules/commercial/components/commercial-resolution-stepper";
-import {
-  TAX_TREATMENT_CODES,
-  type CommercialSnapshot,
-  type CommercialTransactionContract,
-  type ExpectedCommercialAmount,
-  type ResolvedBasePrice,
-  type ResolvedCommercialComposition,
-  type TaxResolutionResult,
-  type TaxTreatmentCode,
-} from "@/modules/commercial";
+import { TAX_TREATMENT_CODES, type TaxTreatmentCode } from "@/modules/commercial/constants";
+import type {
+  CommercialSnapshot,
+  CommercialTransactionContract,
+  ExpectedCommercialAmount,
+  ResolvedBasePrice,
+  ResolvedCommercialComposition,
+  TaxResolutionResult,
+} from "@/modules/commercial/types";
 import { searchCrmRecordsAction } from "@/modules/crm/actions/crm-actions";
 import type { CrmSummaryView } from "@/modules/crm/types";
 import { searchProductsAction } from "@/modules/product/actions/product-actions";

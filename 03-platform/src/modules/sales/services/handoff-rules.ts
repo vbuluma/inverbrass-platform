@@ -127,6 +127,10 @@ export function toFulfilmentHandoffContract(
       offeringId: line.offeringId,
       description: line.description,
       orderedQuantity: line.orderedQuantity,
+      // BP-006 does not persist a sale-line UOM. The field is on the
+      // handoff so inventory can consume an explicit UOM when present.
+      // Inventory must never treat a missing value as purchase UOM.
+      salesUomId: null,
       deliveredQuantity: line.deliveredQuantity,
       acceptedQuantity: line.acceptedQuantity,
       rejectedQuantity: line.rejectedQuantity,

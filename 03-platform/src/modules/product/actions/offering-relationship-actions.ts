@@ -18,11 +18,6 @@ import { AuthError } from "@/core/auth/errors";
 import { createAuthService } from "@/core/auth/services/auth-service";
 import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
-import {
-  platformError,
-  platformSuccess,
-} from "@/core/platform/platform-action-helpers";
-import type { PlatformActionResult } from "@/core/platform/types";
 import { ProductError } from "@/modules/product/errors";
 import { createOfferingRelationshipService } from "@/modules/product/services/offering-relationship-service";
 import type {
@@ -84,23 +79,6 @@ function toActionError(error: unknown): AuthActionResult<never> {
       message: "We could not complete that product action. Please try again.",
     },
   };
-}
-
-function toPlatformError(error: unknown): PlatformActionResult<never> {
-  if (isNextRedirectError(error)) {
-    throw error;
-  }
-  if (error instanceof ProductError) {
-    return platformError(error.message, error.message, error.field);
-  }
-  if (error instanceof AuthError) {
-    return platformError(error.message, error.message);
-  }
-  console.error("[offering-relationship-actions] Unexpected error", error);
-  return platformError(
-    "Unexpected error",
-    "We could not complete that product action. Please try again."
-  );
 }
 
 function revalidateProductPath(productId: string) {

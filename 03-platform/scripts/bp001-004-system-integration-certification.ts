@@ -38,7 +38,6 @@ import { createOpportunityHandoffAdapter } from "@/modules/crm/adapters/opportun
 import { CRM_STATUS_CODES, CRM_TYPE_CODES, CRM_WORKSPACE_TABS } from "@/modules/crm/constants";
 import { CrmError } from "@/modules/crm/errors";
 import { LEAD_STATUS_CODES } from "@/modules/crm/lead/constants";
-import { LeadError } from "@/modules/crm/lead/errors";
 import { createLeadService } from "@/modules/crm/lead/services/lead-service";
 import { OpportunityError } from "@/modules/crm/opportunity/errors";
 import { createOpportunityService } from "@/modules/crm/opportunity/services/opportunity-service";
@@ -306,14 +305,17 @@ function checkApplicationWiring() {
     );
   }
   // Leads are a top-level business route (/leads), not a C360 workspace tab.
+  // Tab ids are a closed union that does not include "leads"; collect them as
+  // strings so the runtime assertion remains (no tab owns leads).
+  const c360TabIds: string[] = CRM_WORKSPACE_TABS.map((tab) => tab.id);
   record(
     "wiring:leads-route-not-c360-tab",
-    !CRM_WORKSPACE_TABS.some((t) => t.id === "leads") &&
+    !c360TabIds.includes("leads") &&
       BUSINESS_APP_NAV_ITEMS.some((i) => i.href === "/leads")
       ? "PASS"
       : "FAIL",
     "leads owned by /leads route"
-  )
+  );
 
   record(
     "wiring:browser-ui",

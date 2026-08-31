@@ -40,7 +40,6 @@ import { ProductClassificationTimelinePanel } from "@/modules/product/components
 import {
   activateProductClassificationAction,
   archiveProductClassificationAction,
-  deactivateProductClassificationAction,
   moveProductClassificationAction,
   updateProductClassificationAction,
 } from "@/modules/product/actions/product-classification-actions";

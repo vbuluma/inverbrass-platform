@@ -20,7 +20,6 @@ import {
   PRICING_ITEM_STATUS_CODES,
   PRODUCT_WORKSPACE_TABS,
 } from "@/modules/product/constants";
-import { buildPricingUiLabels } from "@/modules/product/product-terminology-labels";
 import { createPricingService } from "@/modules/product/services/pricing-service";
 import {
   buildPricingDimensionKey,

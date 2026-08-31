@@ -354,10 +354,26 @@ function checkStaticProofs(): SmokeResult[] {
         !salesSource.includes("@/modules/payment"),
     },
     {
-      name: "ac-003:no-inventory-module-required",
+      name: "ac-003:sales-must-not-write-inventory",
       ok:
-        !existsSync(path.join(ROOT, "src/modules/inventory")) &&
-        !salesSource.includes("@/modules/inventory"),
+        !salesSource.includes("@/modules/inventory") &&
+        !salesSource.includes("@/db/schema/inventory") &&
+        !salesSource.includes("createStockReservationService") &&
+        !salesSource.includes("fulfilReservation") &&
+        !salesSource.includes("postSaleDeduction") &&
+        !salesSource.includes("inventory_balance") &&
+        !salesSource.includes("inventory_reservation") &&
+        !salesSource.includes("inventory_movement") &&
+        salesSource.includes("toFulfilmentHandoffContract") &&
+        salesSource.includes("inventoryExecuted: false") &&
+        salesSource.includes("stockMoved: false") &&
+        existsSync(
+          path.join(ROOT, "src/modules/inventory/adapters/sales-fulfilment-contract-adapter.ts")
+        ) &&
+        readFileSync(
+          path.join(ROOT, "src/modules/inventory/adapters/sales-fulfilment-contract-adapter.ts"),
+          "utf8"
+        ).includes("toFulfilmentHandoffContract"),
     },
     {
       name: "boundary:no-price-tax-engine-in-sales",
@@ -771,7 +787,7 @@ BP-001 → BP-006 continuity holds for the locked sales path:
 
 Amount due is the BP-005 expected payable. Creating a sale is not payment. Inspection 80 / 15 / 5 leaves outstanding 20. Return + replace keeps 20; return + credit leaves 5. Downstream contracts carry quantities and amount due without collected tender or stock-on-hand.
 
-BP-007 and BP-008 feature code was **not** required to pass this record.
+BP-007 payment collection was **not** required to pass this record. BP-008 inventory may exist; sales must not write inventory state.
 
 ---
 
@@ -818,7 +834,7 @@ RT-12 is this record plus J-07 tenancy / fail-closed proofs.
 |------------|-------------------------|
 | Price/tax/discount engine | Sales does not call BP-003 pricing service or write \`pricing_item\` |
 | Payment | No payment module; no cash/M-Pesa tender as system of record; collected amount null |
-| Inventory | No inventory module; \`stockOnHand\` null; \`inventoryExecuted\` false |
+| Inventory | Sales does not mutate inventory ledger, balance, or reservation state. Fulfilment handoff is consumed by BP-008. \`stockOnHand\` null; \`inventoryExecuted\` false |
 | Quotation master | Sales converts eligible quotations; it does not construct \`QuotationService\` |
 | Bookings | \`schedulerExecuted\` remains false |
 
