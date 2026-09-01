@@ -25,6 +25,12 @@ const STATIC_SEGMENTS: Record<string, string> = {
   invoices: "Invoices",
   receipts: "Receipts",
   inventory: "Inventory",
+  procurement: "Procurement",
+  suppliers: "Suppliers",
+  requests: "Purchase Requests",
+  sourcing: "Sourcing",
+  evaluations: "Evaluations",
+  awards: "Awards",
   commercial: "Commercial",
   resolve: "Price a sale",
   governance: "Governance",
@@ -123,8 +129,19 @@ const HUB_CRUMB_RULES: HubCrumbRule[] = [
     crumbs: [{ label: "Payments", href: "/payments" }],
   },
   {
-    match: (segments) => segments[0] === "groups",
-    crumbs: [{ label: "Parties", href: "/parties" }],
+    match: (segments) =>
+      segments[0] === "procurement" && segments[1] === "requests",
+    crumbs: [{ label: "Procurement", href: "/procurement" }],
+    skipFirst: 1,
+  },
+  {
+    match: (segments) =>
+      segments[0] === "procurement" && segments[1] === "sourcing",
+    crumbs: [
+      { label: "Procurement", href: "/procurement" },
+      { label: "Sourcing", href: "/procurement/sourcing" },
+    ],
+    skipFirst: 2,
   },
 ];
 

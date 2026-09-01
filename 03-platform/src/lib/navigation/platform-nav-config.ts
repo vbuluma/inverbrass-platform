@@ -39,6 +39,7 @@ import {
   SlidersHorizontalIcon,
   StarIcon,
   TargetIcon,
+  TruckIcon,
   UsersIcon,
   UsersRoundIcon,
   WarehouseIcon,
@@ -58,6 +59,7 @@ export const PRIMARY_HUB_IDS = [
   "sales",
   "payments",
   "inventory",
+  "procurement",
   "settings",
 ] as const;
 
@@ -351,6 +353,87 @@ export const BUSINESS_APP_NAV_ITEMS: PlatformNavItem[] = [
             icon: AlertTriangleIcon,
           },
         ],
+      },
+    ],
+  },
+  {
+    id: "procurement",
+    label: "Procurement",
+    href: "/procurement",
+    icon: TruckIcon,
+    children: [
+      {
+        id: "suppliers",
+        label: "Suppliers",
+        href: "/procurement/suppliers",
+        icon: TruckIcon,
+      },
+      {
+        id: "purchase-requests",
+        label: "Purchase Requests",
+        href: "/procurement/requests",
+        icon: FileTextIcon,
+      },
+      {
+        id: "procurement-sourcing",
+        label: "Sourcing",
+        icon: FileTextIcon,
+        children: [
+          {
+            id: "procurement-rfx",
+            label: "RFX",
+            href: "/procurement/sourcing",
+            icon: FileTextIcon,
+          },
+          {
+            id: "procurement-evaluations",
+            label: "Evaluations",
+            href: "/procurement/sourcing/evaluations",
+            icon: ClipboardCheckIcon,
+          },
+          {
+            id: "procurement-awards",
+            label: "Awards",
+            href: "/procurement/sourcing/awards",
+            icon: CheckSquareIcon,
+          },
+        ],
+      },
+      {
+        id: "procurement-orders",
+        label: "Purchase orders",
+        href: "/procurement/orders",
+        icon: FileTextIcon,
+      },
+      {
+        id: "procurement-contracts",
+        label: "Contracts",
+        href: "/procurement/contracts",
+        icon: FileTextIcon,
+      },
+      {
+        id: "procurement-receiving",
+        label: "Receiving",
+        href: "/procurement/receiving",
+        icon: FileTextIcon,
+      },
+      {
+        id: "procurement-invoices",
+        label: "Supplier invoices",
+        href: "/procurement/invoices",
+        icon: FileTextIcon,
+      },
+      {
+        id: "procurement-exceptions",
+        label: "Exceptions",
+        href: "/procurement/exceptions",
+        icon: FileTextIcon,
+      },
+      {
+        id: "procurement-analytics",
+        label: "Analytics",
+        href: "/procurement/analytics",
+        icon: FileTextIcon,
       },
     ],
   },

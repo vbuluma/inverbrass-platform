@@ -21,6 +21,9 @@ export class InventoryControlWorkflowAdapter implements WorkflowEnginePort {
 
   evaluateRefundApproval = this.inner.evaluateRefundApproval.bind(this.inner);
   evaluateExceptionResolution = this.inner.evaluateExceptionResolution.bind(this.inner);
+  evaluatePurchaseRequestApproval = this.inner.evaluatePurchaseRequestApproval.bind(
+    this.inner
+  );
   assertDistinctActors = this.inner.assertDistinctActors.bind(this.inner);
 
   async evaluateOperationApproval(

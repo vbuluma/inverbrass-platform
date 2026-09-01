@@ -60,6 +60,74 @@ function main() {
     "hubs:no-customers-top-level",
     !primary.some((item) => item.id === "customers" || item.label === "Customers")
   );
+  record(
+    results,
+    "hubs:no-suppliers-top-level",
+    !primary.some((item) => item.id === "suppliers" || item.label === "Suppliers")
+  );
+
+  const procurementHub = primary.find((item) => item.id === "procurement");
+  record(results, "hubs:procurement-label", procurementHub?.label === "Procurement");
+  record(results, "hubs:procurement-href", procurementHub?.href === "/procurement");
+  record(
+    results,
+    "hubs:procurement-not-mobile-primary",
+    procurementHub?.mobilePrimary !== true
+  );
+  const suppliersNav = flattenPlatformNavItems(BUSINESS_APP_NAV_ITEMS).find(
+    (item) => item.id === "suppliers"
+  );
+  record(results, "procurement:suppliers-href", suppliersNav?.href === "/procurement/suppliers");
+  record(results, "procurement:suppliers-label", suppliersNav?.label === "Suppliers");
+  record(
+    results,
+    "procurement:suppliers-nested",
+    Boolean(procurementHub?.children?.some((child) => child.id === "suppliers"))
+  );
+  const sourcingNav = procurementHub?.children?.find(
+    (child) => child.id === "procurement-sourcing"
+  );
+  record(results, "procurement:sourcing-group", sourcingNav?.label === "Sourcing");
+  const purchaseRequestsNav = procurementHub?.children?.find(
+    (child) => child.id === "purchase-requests"
+  );
+  record(
+    results,
+    "procurement:purchase-requests-href",
+    purchaseRequestsNav?.href === "/procurement/requests"
+  );
+  record(
+    results,
+    "procurement:rfx-href",
+    sourcingNav?.children?.some((child) => child.href === "/procurement/sourcing") === true
+  );
+  record(
+    results,
+    "procurement:evaluations-href",
+    sourcingNav?.children?.some(
+      (child) => child.href === "/procurement/sourcing/evaluations"
+    ) === true
+  );
+  record(
+    results,
+    "procurement:awards-href",
+    sourcingNav?.children?.some((child) => child.href === "/procurement/sourcing/awards") ===
+      true
+  );
+  record(
+    results,
+    "procurement:no-rfx-nav",
+    !flattenPlatformNavItems(BUSINESS_APP_NAV_ITEMS).some((item) =>
+      ["/procurement/rfq", "/procurement/rfi", "/procurement/rfp"].includes(item.href ?? "")
+    )
+  );
+  record(
+    results,
+    "hubs:no-purchase-requests-top-level",
+    !primary.some(
+      (item) => item.id === "purchase-requests" || item.label === "Purchase Requests"
+    )
+  );
 
   const customersNav = flattenPlatformNavItems(BUSINESS_APP_NAV_ITEMS).find(
     (item) => item.id === "customers" || item.href === "/customers"
@@ -143,6 +211,12 @@ function main() {
     "/inventory/traceability",
     "/inventory/controls",
     "/inventory/exceptions",
+    "/procurement",
+    "/procurement/suppliers",
+    "/procurement/requests",
+    "/procurement/sourcing",
+    "/procurement/sourcing/evaluations",
+    "/procurement/sourcing/awards",
     "/settings",
   ];
   for (const href of preservedHrefs) {
@@ -155,6 +229,7 @@ function main() {
 
   const prefixes = [
     "/inventory",
+    "/procurement",
     "/commercial",
     "/crm",
     "/sales",
@@ -213,7 +288,9 @@ function main() {
   record(
     results,
     "language:no-ip-labels",
-    !config.includes('label: "IP-') && !config.includes("BP-008")
+    !config.includes('label: "IP-') &&
+      !config.includes('label: "BP-') &&
+      !config.includes('label: "PROC-')
   );
 
   const failed = results.filter((row) => !row.ok);

@@ -16,6 +16,16 @@ export const permissionActionCodeByLabel = {
   File: "FILE",
   Remit: "REMIT",
   Evidence: "EVIDENCE",
+  Issue: "ISSUE",
+  Amend: "AMEND",
+  Close: "CLOSE",
+  CallOff: "CALLOFF",
+  Confirm: "CONFIRM",
+  Inspect: "INSPECT",
+  Discrepancy: "DISCREPANCY",
+  Match: "MATCH",
+  Resolve: "RESOLVE",
+  Propose: "PROPOSE",
 } as const;
 
 export type PermissionActionLabel = keyof typeof permissionActionCodeByLabel;

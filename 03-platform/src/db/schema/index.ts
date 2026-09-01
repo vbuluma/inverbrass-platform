@@ -233,3 +233,89 @@ export { inventoryControlChange } from "./inventory-control-change";
 export { inventoryOpsIncidentType } from "./inventory-ops-incident-type";
 export { inventoryOpsIncident, inventoryOpsIncidentEvent } from "./inventory-ops-incident";
 export { inventoryTransfer, inventoryTransferLine } from "./inventory-transfer";
+export {
+  procurementSupplierCategory,
+  procurementSupplierCapability,
+  procurementStatus,
+  procurementQualificationStatus,
+  procurementQualificationType,
+  procurementContractType,
+} from "./procurement-reference";
+export {
+  procurementProfile,
+  procurementProfileCategory,
+  procurementProfileCapability,
+} from "./procurement-profile";
+export {
+  supplierQualification,
+  procurementQualificationEvidence,
+} from "./supplier-qualification";
+export {
+  procurementRequestControl,
+  procurementPurchaseRequest,
+  procurementPurchaseRequestLine,
+  procurementRequestDocument,
+} from "./procurement-purchase-request";
+export {
+  procurementSourcingEvent,
+  procurementSourcingEventPr,
+  procurementSourcingInvitation,
+  procurementSupplierQuote,
+  procurementSupplierQuoteLine,
+  procurementSupplierQuotePaymentTerm,
+  procurementSourcingClarification,
+  procurementAward,
+  procurementAwardLine,
+  procurementSourcingControl,
+  procurementSourcingOpeningRule,
+  procurementSourcingEvaluationPhase,
+  procurementSourcingEvaluationCommittee,
+  procurementSourcingPhaseScore,
+} from "./procurement-sourcing";
+export {
+  procurementPoControl,
+  procurementPurchaseOrder,
+  procurementPurchaseOrderVersion,
+  procurementPurchaseOrderLine,
+  procurementPurchaseOrderPaymentTerm,
+  procurementPoSupplierToken,
+  procurementPoSupplierResponse,
+} from "./procurement-purchase-order";
+export {
+  procurementContractControl,
+  procurementContract,
+  procurementContractVersion,
+  procurementContractPeriodValue,
+  procurementContractPaymentTerm,
+} from "./procurement-contract";
+export {
+  procurementReceivingControl,
+  procurementReceipt,
+  procurementReceiptLine,
+  procurementReceiptHandoff,
+} from "./procurement-receiving";
+export {
+  procurementInvoiceControl,
+  procurementSupplierInvoice,
+  procurementSupplierInvoiceLine,
+  procurementInvoiceMatch,
+  procurementInvoiceMatchLine,
+  procurementApHandoff,
+} from "./procurement-invoice";
+export {
+  procurementExceptionControl,
+  procurementExceptionType,
+  procurementException,
+  procurementExceptionLink,
+  procurementExceptionAction,
+} from "./procurement-exception";
+export {
+  procurementPerformanceControl,
+  procurementPerformanceMeasure,
+  procurementPerformanceEvent,
+  procurementSupplierScorecard,
+  procurementScorecardMeasure,
+  procurementPerformanceEvaluation,
+  procurementPerformanceEvaluationRating,
+  procurementGovernanceProposal,
+} from "./procurement-performance";

@@ -27,3 +27,12 @@ export type EvaluateOperationApprovalInput = {
   businessId: string;
   operationCode: string;
 };
+
+export type EvaluatePurchaseRequestApprovalInput = {
+  businessId: string;
+  operationCode: string;
+  amount?: string;
+  currencyCode?: string;
+  categoryCode?: string;
+  procurementType?: string;
+};

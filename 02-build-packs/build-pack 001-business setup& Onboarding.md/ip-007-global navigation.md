@@ -59,9 +59,12 @@ CRM
 Sales
 Payments
 Inventory
+Procurement
 Settings
 
 NAV-001: these are capability hubs. Implementation Packages add nested capabilities or hub-landing actions — they must not add a new top-level sidebar item.
+
+**AV-1.11:** Procurement is the approved buy-side hub. It is added to runtime navigation with BP-009 IP-01 as `Procurement → Suppliers`. Until those pages exist, do not register an empty Procurement item. Do not promote Suppliers (or future RFX/PO/Contract items) to a top-level hub. Mobile: Procurement is under More, not the bottom bar. See `02-build-packs/build pack 009-Procurement & Supplier Management/BP-009 Navigation Hub.md`.
 
 Must be reusable across all Build Packs and Industry Editions.
 

@@ -107,6 +107,16 @@ export const AUDIT_ENTITY_NAMES = {
   INVENTORY_CONTROL_CHANGE: "inventory_control_change",
   INVENTORY_OPS_INCIDENT: "inventory_ops_incident",
   INVENTORY_TRANSFER: "inventory_transfer",
+  PROCUREMENT_PROFILE: "procurement_profile",
+  SUPPLIER_QUALIFICATION: "supplier_qualification",
+  PURCHASE_REQUEST: "purchase_request",
+  SOURCING_EVENT: "sourcing_event",
+  PROCUREMENT_CONTRACT: "procurement_contract",
+  PROCUREMENT_RECEIPT: "procurement_receipt",
+  PROCUREMENT_SUPPLIER_INVOICE: "procurement_supplier_invoice",
+  PROCUREMENT_EXCEPTION: "procurement_exception",
+  PROCUREMENT_SCORECARD: "procurement_scorecard",
+  PROCUREMENT_GOVERNANCE: "procurement_governance",
 } as const;
 
 export type AuditEntityName =
@@ -188,6 +198,16 @@ export const AUDIT_ENTITY_LABELS: Record<AuditEntityName, string> = {
   inventory_control_change: "Inventory Control Change",
   inventory_ops_incident: "Inventory Exception",
   inventory_transfer: "Stock Transfer",
+  procurement_profile: "Procurement Profile",
+  supplier_qualification: "Supplier Qualification",
+  purchase_request: "Purchase Request",
+  sourcing_event: "Sourcing Event",
+  procurement_contract: "Procurement Contract",
+  procurement_receipt: "Procurement Receipt",
+  procurement_supplier_invoice: "Supplier Invoice",
+  procurement_exception: "Procurement Exception",
+  procurement_scorecard: "Supplier Scorecard",
+  procurement_governance: "Supplier Governance",
 };
 
 /**
@@ -225,6 +245,7 @@ export const AUDIT_SOURCE_MODULES = {
   SALES_ORDERS: "sales_orders",
   PAYMENTS: "payments",
   INVENTORY: "inventory_management",
+  PROCUREMENT: "procurement_management",
 } as const;
 
 export type AuditSourceModule =
@@ -260,6 +281,7 @@ export const AUDIT_SOURCE_MODULE_LABELS: Record<AuditSourceModule, string> = {
   sales_orders: "Sales Orders",
   payments: "Payments",
   inventory_management: "Inventory Management",
+  procurement_management: "Procurement",
 };
 
 export const AUDIT_DEFAULT_PAGE_SIZE = 25;

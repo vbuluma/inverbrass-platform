@@ -19,6 +19,7 @@ export const BUSINESS_APP_PREFIXES = [
   "/invoices",
   "/receipts",
   "/inventory",
+  "/procurement",
   "/commercial",
   "/campaigns",
   "/crm-analytics",
