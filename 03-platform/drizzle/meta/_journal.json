@@ -582,6 +582,104 @@
       "when": 1784564588879,
       "tag": "0078_bp008_ip004_stock_transfers",
       "breakpoints": true
+    },
+    {
+      "idx": 83,
+      "version": "7",
+      "when": 1784564588880,
+      "tag": "0079_bp009_ip001_procurement_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1784564588881,
+      "tag": "0080_bp009_ip002_purchase_requests",
+      "breakpoints": true
+    },
+    {
+      "idx": 85,
+      "version": "7",
+      "when": 1784564588882,
+      "tag": "0081_bp009_ip003_sourcing_evaluation",
+      "breakpoints": true
+    },
+    {
+      "idx": 86,
+      "version": "7",
+      "when": 1784564588883,
+      "tag": "0082_bp009_ip003_rfx_controls",
+      "breakpoints": true
+    },
+    {
+      "idx": 87,
+      "version": "7",
+      "when": 1784564588884,
+      "tag": "0083_bp009_ip004_supplier_response",
+      "breakpoints": true
+    },
+    {
+      "idx": 88,
+      "version": "7",
+      "when": 1784564588885,
+      "tag": "0084_bp009_evaluation_workflow",
+      "breakpoints": true
+    },
+    {
+      "idx": 89,
+      "version": "7",
+      "when": 1784564588886,
+      "tag": "0085_bp009_ip005_evaluation_award",
+      "breakpoints": true
+    },
+    {
+      "idx": 90,
+      "version": "7",
+      "when": 1784564588887,
+      "tag": "0086_bp009_ip006_award_lines_purchase_orders",
+      "breakpoints": true
+    },
+    {
+      "idx": 91,
+      "version": "7",
+      "when": 1784564588888,
+      "tag": "0087_bp009_ip007_contract_management",
+      "breakpoints": true
+    },
+    {
+      "idx": 92,
+      "version": "7",
+      "when": 1784564588889,
+      "tag": "0088_bp009_ip008_procurement_receiving",
+      "breakpoints": true
+    },
+    {
+      "idx": 93,
+      "version": "7",
+      "when": 1784564588890,
+      "tag": "0089_bp009_ip009_supplier_invoice",
+      "breakpoints": true
+    },
+    {
+      "idx": 94,
+      "version": "7",
+      "when": 1784564588891,
+      "tag": "0090_bp009_ip010_procurement_exceptions",
+      "breakpoints": true
+    },
+    {
+      "idx": 95,
+      "version": "7",
+      "when": 1784564688891,
+      "tag": "0091_bp009_ip011_supplier_performance",
+      "breakpoints": true
+    },
+    {
+      "idx": 97,
+      "version": "7",
+      "when": 1784564888891,
+      "tag": "0093_bp009_ip03_criteria_lock_governance",
+      "breakpoints": true
     }
   ]
 }

@@ -286,6 +286,7 @@ export type InventoryFulfilmentHandoffContract = {
     offeringId: string;
     description: string | null;
     orderedQuantity: string;
+    salesUomId: string | null;
     deliveredQuantity: string;
     acceptedQuantity: string;
     rejectedQuantity: string;

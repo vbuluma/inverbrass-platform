@@ -8,6 +8,7 @@ export const BUSINESS_APP_PREFIXES = [
   "/parties",
   "/groups",
   "/products",
+  "/crm",
   "/customers",
   "/leads",
   "/opportunities",
@@ -17,9 +18,11 @@ export const BUSINESS_APP_PREFIXES = [
   "/payments",
   "/invoices",
   "/receipts",
+  "/inventory",
+  "/procurement",
+  "/commercial",
   "/campaigns",
   "/crm-analytics",
-  "/crm",
   "/settings",
 ];
 

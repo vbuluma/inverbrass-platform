@@ -811,6 +811,7 @@ export type InventorySalesFulfilmentLine = {
   orderLineId: string;
   offeringId: string;
   orderedQuantity: string;
+  salesUomId?: string | null;
   outstandingQuantity: string;
   acceptedQuantity: string;
   lineType: string;

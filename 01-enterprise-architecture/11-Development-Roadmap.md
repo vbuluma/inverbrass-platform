@@ -18,7 +18,7 @@ Canonical Build Pack IDs are defined in `[02-Platform-Module-Catalog.md](./02-Pl
 | 6     | **BP-006**    | Sales, Orders & Service Delivery       | ✅ Complete — IP-01–IP-06 certified (2026-08-24); bookings out of scope; BP-007 not started |
 | 7     | **BP-007**    | Payments, Billing & Receipting         | ✅ Implemented (IP-01–IP-08) |
 | 8     | **BP-008**    | Inventory & Resource Management        | ✅ Implemented — IP-01–IP-09 |
-| 9     | **BP-009**    | Procurement & Supplier Management      | ⏳ Planned                                                                                |
+| 9     | **BP-009**    | Procurement & Supplier Management      | 🔧 In progress — IP-01–IP-02 implemented; IP-03 partial (sourcing hosts IP-04/IP-05 header path). AV-1.12 lock: enhance, do not rebuild. IP-06+ specified |
 | 10    | **BP-010**    | Finance & Accounting Foundation        | ⏳ Planned                                                                                |
 | 11    | **BP-011**    | Workflow & Business Process Automation | ⏳ Planned                                                                                |
 | 12    | **BP-012**    | Analytics, AI & Decision Intelligence  | ⏳ Planned                                                                                |
@@ -137,7 +137,24 @@ Quantity stock ledger for BP-003 inventory-tracked offerings. Consumes BP-006 fu
 
 ### Release 3 — Extended Operations & Intelligence
 
-**BP-009** Procurement & Supplier Management — ⏳ Planned  
+**BP-009** Procurement & Supplier Management — 🔧 In progress (AV-1.10 ownership lock; AV-1.11 Procurement hub IA; AV-1.12 sourcing IP boundary + configurable tender opening)  
+End-to-end buy-side procurement on BP-002 Party identity. **Not** a second supplier master. **Not** BP-008 inventory ledger. **Not** BP-010 GL. **Not** BP-007 customer AR. BP-008 reorder is a **signal only**. Outgoing payment rails remain an **open v1 decision**; IP-09 produces payment-ready / AP handoff only. Navigation: **Procurement** hub. Do **not** implement IP-04/IP-05 as a second engine.
+
+| IP | Implementation Package | Status |
+|----|------------------------|--------|
+| IP-01 | Procurement Foundation & Supplier Relationship | 🔧 Implemented |
+| IP-02 | Purchase Requests & Procurement Approval | 🔧 Implemented |
+| IP-03 | RFX Management | 🔧 Partial — create/invite in code; criteria lock and opening policy specified |
+| IP-04 | Supplier Response & Collaboration | 🔧 Partial — header portal/quotes in sourcing; enhance, do not rebuild |
+| IP-05 | Evaluation, Award & Sourcing Decision | 🔧 Partial — commercial header award in sourcing; enhance, do not rebuild |
+| IP-06 | Purchase Order Management | 📋 Specified — blocked on award-line handoff |
+| IP-07 | Contract Management | 📋 Specified |
+| IP-08 | Procurement Receiving & Fulfilment Handoff | 📋 Specified |
+| IP-09 | Supplier Invoice & Matching | 📋 Specified |
+| IP-10 | Procurement Exceptions & Controls | 📋 Specified |
+| IP-11 | Supplier Performance & Governance | 📋 Specified |
+| IP-12 | Procurement Analytics & Lifecycle Intelligence | 📋 Specified |
+
 **BP-010** Finance & Accounting Foundation — ⏳ Planned  
 **BP-011** Workflow & Business Process Automation — ⏳ Planned  
 **BP-012** Analytics, AI & Decision Intelligence — ⏳ Planned  
@@ -267,7 +284,8 @@ I would make one small enhancement. Add a simple Status column from day one. It 
 | R2b     | BP-006 Sales, Orders & Service Delivery | ✅ Complete (IP-01–IP-06) |
 | R2b     | BP-007 Payments, Billing & Receipting   | ✅ Implemented (IP-01–IP-08) |
 | R2b     | BP-008 Inventory & Resource Management  | 📋 Specified (IP-01–IP-09) |
-| R3      | BP-009–BP-013                           | ⏳ Planned                    |
+| R3      | BP-009 Procurement & Supplier Management | 🔧 In progress (AV-1.12) |
+| R3      | BP-010–BP-013                           | ⏳ Planned                    |
 
 
 As the project grows, this single table becomes your executive progress tracker without needing a separate project plan. It's simple, practical, and aligns with your goal of managing the project as a solo founder using AI-assisted development.

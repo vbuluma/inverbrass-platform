@@ -56,6 +56,27 @@ Every form shall provide a clear Cancel, Back, or Close action.
 Users shall be able to switch Business (tenant) without signing out.
 Users shall be be able to access Profile and Preferences from any page.
 Navigation shall remain consistent across all Build Packs.
+
+NAV-001 Hub-first information architecture
+
+Build Packs and IPs are delivery boundaries, not navigation boundaries.
+
+Primary desktop navigation is limited to user-job hubs:
+
+Dashboard, Parties, Offerings, CRM, Sales, Payments, Inventory, Procurement, Settings.
+
+**AV-1.11:** Procurement is an approved primary hub (buy-side work). Suppliers, RFQs, Purchase Requests, Purchase Orders, Contracts, and Supplier Performance are nested capabilities — never top-level peers. Runtime registration occurred with BP-009 IP-01; Sourcing (RFX / Evaluations / Awards) is nested under Procurement. Canonical IA: `02-build-packs/build pack 009-Procurement & Supplier Management/BP-009 Navigation Hub.md`.
+
+**AV-1.12:** Evaluations and Awards are views of the same sourcing events, not separate hubs. Do not add a top-level Tender Opening or Evaluation Engine item.
+
+Nested capabilities (for example Transfers, Invoices, Leads, Suppliers) belong under those hubs. A new top-level item is permitted only when it represents a distinct user job that cannot live in an existing hub.
+
+Desktop: collapsible left sidebar with hub → group → capability.
+
+Mobile: bottom bar with Dashboard, CRM, Sales, Payments, and More. Remaining hubs (including Inventory and Procurement) open from More. Do not add a new hub to the bottom bar solely because it is new.
+
+Favorites and Recent are shortcuts, not business modules.
+
 Where to implement
 
 This shouldn't be added to a specific Build Pack. It belongs in the Platform Foundation, because every future module (Parties, Sales, Inventory, Property, Schools, Healthcare, etc.) will inherit it.

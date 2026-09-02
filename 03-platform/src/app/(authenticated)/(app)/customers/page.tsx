@@ -1,6 +1,6 @@
 /**
  * Purpose:
- * Customers Dashboard page.
+ * Customer Profile list page.
  *
  * Implementation Package:
  * BP-004 / IP-001 – CRM Foundation & Customer 360

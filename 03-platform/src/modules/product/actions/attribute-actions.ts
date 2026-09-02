@@ -8,12 +8,11 @@
  * BP-003 / IP-004 – Product Attributes Engine
  */
 
+import { requireProductChannelContext as requireProductContext } from "@/core/channel-experience/helpers/domain-channel-entry";
 import { revalidatePath } from "next/cache";
 
 import type { AuthActionResult } from "@/core/auth/actions/auth-actions";
 import { AuthError } from "@/core/auth/errors";
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 import { ProductError } from "@/modules/product/errors";
 import { createAttributeAssignmentService } from "@/modules/product/services/attribute-assignment-service";
@@ -39,32 +38,7 @@ import type {
   UpdateAttributeGroupPayload,
   UpdateAttributeOptionPayload,
 } from "@/modules/product/types";
-
-async function requireProductContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-
-  if (!user) {
-    throw new ProductError(
-      "SESSION_REQUIRED",
-      "Your session has expired. Please sign in again.",
-      401
-    );
-  }
-
-  const businessContextService = createBusinessContextService();
-  const context = await businessContextService.getCurrentContext();
-
-  if (!context) {
-    throw new ProductError(
-      "BUSINESS_CONTEXT_REQUIRED",
-      "Select a business before managing products.",
-      403
-    );
-  }
-
-  return context;
-}
+
 
 function isNextDynamicServerError(error: unknown): boolean {
   return (

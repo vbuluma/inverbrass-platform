@@ -27,7 +27,6 @@ import {
   computeCommercialIntegrityHash,
   createCommercialCompositionService,
   createCommercialResolutionService,
-  type CommercialResolution,
   type CommercialResolutionRequest,
   type ResolvedBasePrice,
 } from "@/modules/commercial";

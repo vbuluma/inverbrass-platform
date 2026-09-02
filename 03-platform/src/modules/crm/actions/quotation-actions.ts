@@ -8,12 +8,11 @@
  * BP-004 / IP-10 – Quotations & Sales Pipeline
  */
 
+import { requireCrmChannelContext as requireCrmContext } from "@/core/channel-experience/helpers/domain-channel-entry";
 import { revalidatePath } from "next/cache";
 
 import type { AuthActionResult } from "@/core/auth/actions/auth-actions";
 import { AuthError } from "@/core/auth/errors";
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 import { CrmError } from "@/modules/crm/errors";
 import { createQuotationCustomer360Provider } from "@/modules/crm/quotation/services/quotation-customer-360-provider";
@@ -33,26 +32,7 @@ import type {
   UpdateQuotationHeaderPayload,
   UpdateQuotationLinePayload,
 } from "@/modules/crm/quotation/types";
-
-async function requireCrmContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-  if (!user) {
-    throw new CrmError("SESSION_REQUIRED", "Your session has expired. Please sign in again.", 401);
-  }
-
-  const businessContextService = createBusinessContextService();
-  const context = await businessContextService.getCurrentContext();
-  if (!context) {
-    throw new CrmError(
-      "BUSINESS_CONTEXT_REQUIRED",
-      "Select a business to continue.",
-      403
-    );
-  }
-
-  return context;
-}
+
 
 function isNextDynamicServerError(error: unknown): boolean {
   return (

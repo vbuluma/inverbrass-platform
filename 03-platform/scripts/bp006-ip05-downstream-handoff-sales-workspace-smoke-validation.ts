@@ -373,7 +373,8 @@ async function runCoreCases(): Promise<SmokeResult[]> {
       handoff.fulfilment.inventoryExecuted === false &&
       handoff.fulfilment.lines[0]?.orderedQuantity === "1" &&
       handoff.fulfilment.customerId === confirmed.customerId &&
-      Boolean(handoff.fulfilment.lines[0]?.orderLineId),
+      Boolean(handoff.fulfilment.lines[0]?.orderLineId) &&
+      handoff.fulfilment.lines[0]?.salesUomId === null,
   });
 
   results.push({

@@ -181,8 +181,10 @@ function checkArchitecture(): SmokeResult[] {
     {
       name: "UX:downstream-contract-panel",
       ok:
-        workspace.includes("Downstream commercial contract (IP-10)") &&
-        workspace.includes("setContract"),
+        workspace.includes("Commercial result") &&
+        workspace.includes("setContract") &&
+        workspace.includes("expectedPayable") &&
+        workspace.includes("Next action"),
     },
     {
       name: "TC-16:bp003-remains-price-master",
@@ -473,7 +475,7 @@ function runExternal(scriptRelative: string, name: string): SmokeResult {
     detail:
       run.status === 0
         ? undefined
-        : (run.stdout || run.stderr || `exit=${run.status}`).slice(0, 400),
+        : (run.stdout || run.stderr || `exit=${run.status}`).slice(-800),
   };
 }
 

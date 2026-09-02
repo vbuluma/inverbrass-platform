@@ -52,16 +52,15 @@ import {
   type CommercialStepId,
   type CommercialStepStatus,
 } from "@/modules/commercial/components/commercial-resolution-stepper";
-import {
-  TAX_TREATMENT_CODES,
-  type CommercialSnapshot,
-  type CommercialTransactionContract,
-  type ExpectedCommercialAmount,
-  type ResolvedBasePrice,
-  type ResolvedCommercialComposition,
-  type TaxResolutionResult,
-  type TaxTreatmentCode,
-} from "@/modules/commercial";
+import { TAX_TREATMENT_CODES, type TaxTreatmentCode } from "@/modules/commercial/constants";
+import type {
+  CommercialSnapshot,
+  CommercialTransactionContract,
+  ExpectedCommercialAmount,
+  ResolvedBasePrice,
+  ResolvedCommercialComposition,
+  TaxResolutionResult,
+} from "@/modules/commercial/types";
 import { searchCrmRecordsAction } from "@/modules/crm/actions/crm-actions";
 import type { CrmSummaryView } from "@/modules/crm/types";
 import { searchProductsAction } from "@/modules/product/actions/product-actions";
@@ -748,10 +747,11 @@ export function CommercialResolutionWorkspace({
       <SetBreadcrumbs
         items={[
           { label: "Dashboard", href: "/dashboard" },
+          { label: "Sales", href: "/sales" },
           { label: "Price a sale" },
         ]}
       />
-      <PageBackLink href="/dashboard" label="Back to dashboard" />
+      <PageBackLink href="/sales" label="Back to Sales" />
 
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">Price a sale</h1>
@@ -764,7 +764,7 @@ export function CommercialResolutionWorkspace({
             href="/customers"
             className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
           >
-            Customers
+            Customer Profile
           </Link>
           <Link
             href="/products"

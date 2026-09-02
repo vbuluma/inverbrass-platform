@@ -132,6 +132,17 @@ export function assertSaleCancelled(contract: InventorySalesFulfilmentContract):
   }
 }
 
+export function resolveSaleFulfilQuantity(
+  explicitQuantity: string | undefined,
+  remainingReserved: string
+): string {
+  const explicit = explicitQuantity?.trim();
+  if (explicit) {
+    return explicit;
+  }
+  return remainingReserved;
+}
+
 export function requirePhysicalSaleLine(
   contract: InventorySalesFulfilmentContract,
   salesOrderLineId: string

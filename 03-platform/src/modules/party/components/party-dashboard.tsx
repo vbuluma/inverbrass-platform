@@ -18,6 +18,7 @@ import Link from "next/link";
 
 import { PageBackLink } from "@/components/platform/page-back-link";
 import { PlatformEmptyState } from "@/components/platform/platform-empty-state";
+import { PlatformHubSections } from "@/components/platform/platform-hub-sections";
 import { PlatformKpiCard } from "@/components/platform/platform-kpi-card";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -82,6 +83,14 @@ export function PartyDashboard({ data }: PartyDashboardProps) {
               <Building2Icon className="size-4" aria-hidden />
               {labels.createOrganization}
             </Link>
+            <Link
+              href="/groups"
+              prefetch={false}
+              className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
+            >
+              <NetworkIcon className="size-4" aria-hidden />
+              Groups
+            </Link>
           </div>
         </div>
       </div>
@@ -98,6 +107,21 @@ export function PartyDashboard({ data }: PartyDashboardProps) {
         <PlatformKpiCard label={labels.organizations} value={data.organizations} />
         <PlatformKpiCard label={labels.activeParties} value={data.activeParties} />
       </section>
+
+      <PlatformHubSections
+        sections={[
+          {
+            title: "Party management",
+            links: [
+              {
+                href: "/groups",
+                label: "Groups",
+                description: "Collections of people and organisations.",
+              },
+            ],
+          },
+        ]}
+      />
 
       <section aria-labelledby="party-roles-heading" className="space-y-3">
         <h2

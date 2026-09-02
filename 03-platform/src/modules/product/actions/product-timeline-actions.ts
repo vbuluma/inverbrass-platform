@@ -8,35 +8,13 @@
  * BP-003 / IP-001 – Product & Service Foundation
  */
 
+import { requireProductChannelContext as requireContext } from "@/core/channel-experience/helpers/domain-channel-entry";
 import type { AuthActionResult } from "@/core/auth/actions/auth-actions";
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import type { ProductTimelinePanelView } from "@/core/product-timeline";
 import { ProductError } from "@/modules/product/errors";
 import { createProductTimelineQueryService } from "@/modules/product/services/product-timeline-query-service";
 import type { ProductTimelineListFiltersInput } from "@/modules/product/validators/product-timeline-validators";
-
-async function requireContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-  if (!user) {
-    throw new ProductError(
-      "SESSION_REQUIRED",
-      "Your session has expired. Please sign in again.",
-      401
-    );
-  }
-  const businessContextService = createBusinessContextService();
-  const context = await businessContextService.getCurrentContext();
-  if (!context) {
-    throw new ProductError(
-      "BUSINESS_CONTEXT_REQUIRED",
-      "Select a business before managing products.",
-      403
-    );
-  }
-  return context;
-}
+
 
 function toError(error: unknown): AuthActionResult<never> {
   if (error instanceof ProductError) {

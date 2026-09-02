@@ -23,6 +23,7 @@ import { NetworkIcon } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 
 import { SetBreadcrumbs } from "@/components/platform/breadcrumb-context";
+import { PartyProcurementLink } from "@/modules/procurement/components/party-procurement-link";
 import {
   PlatformFavoriteButton,
   PlatformFormActionFooter,
@@ -652,6 +653,7 @@ export function PartyWorkspace({
           </Card>
 
           <div className="platform-workspace-guidance-column space-y-4">
+            <PartyProcurementLink partyId={party.id} />
             <PlatformRecentActivityCard events={recentActivity} />
             <PlatformRecommendationsCard recommendations={recommendations} />
             <Card className="h-fit">

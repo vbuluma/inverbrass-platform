@@ -14,7 +14,11 @@ import { BanknoteIcon } from "lucide-react";
 import Link from "next/link";
 
 import { PageBackLink } from "@/components/platform/page-back-link";
-import { PlatformEmptyState, PlatformKpiCard } from "@/components/platform";
+import {
+  PlatformEmptyState,
+  PlatformHubSections,
+  PlatformKpiCard,
+} from "@/components/platform";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { createPaymentObligationAction } from "@/modules/payments/actions/payment-obligation-actions";
@@ -52,12 +56,7 @@ export function PaymentsWorkspace({ data }: PaymentsWorkspaceProps) {
           <div>
             <h1 className="text-2xl font-semibold">Payments</h1>
             <p className="text-sm text-muted-foreground">
-              Record the amount due from a confirmed sale. Collection is not started yet.
-            </p>
-            <p className="text-sm">
-              <Link href="/payments/exceptions" className="underline">
-                Review payment issues
-              </Link>
+              Record the amount due from a confirmed sale, then invoice, collect, and receipt.
             </p>
           </div>
         </div>
@@ -69,6 +68,31 @@ export function PaymentsWorkspace({ data }: PaymentsWorkspaceProps) {
         <PlatformKpiCard label="Part paid" value={String(data.partialCount ?? 0)} />
         <PlatformKpiCard label="Still due" value={String(data.outstandingCount ?? 0)} />
       </div>
+
+      <PlatformHubSections
+        sections={[
+          {
+            title: "Collect and record",
+            links: [
+              {
+                href: "/invoices",
+                label: "Invoices",
+                description: "Bills issued against amounts due.",
+              },
+              {
+                href: "/receipts",
+                label: "Receipts",
+                description: "Evidence of payments received.",
+              },
+              {
+                href: "/payments/exceptions",
+                label: "Payment reviews",
+                description: "Exceptions and issues that need attention.",
+              },
+            ],
+          },
+        ]}
+      />
 
       <section className="rounded-xl border bg-white p-4">
         <h2 className="text-base font-semibold">Record amount due</h2>

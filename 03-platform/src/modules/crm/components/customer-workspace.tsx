@@ -89,7 +89,8 @@ export function CustomerWorkspace({
   const breadcrumbs = useMemo(
     () => [
       { label: "Dashboard", href: "/dashboard" },
-      { label: labels.pageTitle.replace(" Dashboard", ""), href: "/customers" },
+      { label: "CRM", href: "/crm" },
+      { label: labels.pageTitle, href: "/customers" },
       { label: customer.displayName },
     ],
     [customer.displayName, labels.pageTitle]

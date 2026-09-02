@@ -218,7 +218,9 @@ export function reservationUomId(
   if (requested) {
     return requested;
   }
-  return stockItem.salesUomId ?? stockItem.purchaseUomId ?? stockItem.baseUomId;
+  // Sale/reservation quantities must never be inferred as purchase UOM.
+  // Explicit requested UOM, then stock-item sales UOM, then base UOM.
+  return stockItem.salesUomId ?? stockItem.baseUomId;
 }
 
 export function inboundExpectedScopeKey(header: {

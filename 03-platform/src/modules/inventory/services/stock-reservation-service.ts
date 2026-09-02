@@ -90,6 +90,7 @@ import {
   nextReservationStatus,
   remainingReservedQuantity,
   requirePhysicalSaleLine,
+  resolveSaleFulfilQuantity,
 } from "@/modules/inventory/services/inventory-reservation-rules";
 import { normalizeOptionalText } from "@/modules/inventory/services/stock-item-rules";
 import { ConfigurableDocumentNumberingService } from "@/core/localization-regulatory/services/document-numbering-service";
@@ -544,20 +545,6 @@ export class StockReservationService {
   ) {
     const businessId = context.businessId;
     const header = await this.requireReservation(businessId, reservationId);
-    const control = await this.requireControl(
-      businessId,
-      INVENTORY_OPERATION_CODES.STOCK_DEDUCTION
-    );
-    const decision = await this.deps.workflow.evaluateOperationApproval({
-      businessId,
-      operationCode: control.code,
-    });
-    if (decision.required) {
-      this.assertChecker(header.createdBy ?? header.submittedBy, actorId(context));
-    }
-    if (!isFulfillableStatus(header.status)) {
-      throw new InventoryError(INVENTORY_ERROR_CODES.RESERVATION_NOT_FULFILLABLE);
-    }
     const fulfilmentReference = command.fulfilmentReference.trim();
     if (!fulfilmentReference) {
       throw new InventoryError(INVENTORY_ERROR_CODES.INVALID_INPUT, undefined, 400, {
@@ -567,17 +554,6 @@ export class StockReservationService {
     const idempotencyKey =
       normalizeOptionalText(command.idempotencyKey) ??
       `${INVENTORY_IDEMPOTENCY_OPERATIONS.FULFIL_RESERVATION}:${header.id}:${fulfilmentReference}`;
-    const stockItem = await this.requireInboundStockItem(
-      businessId,
-      header.stockItemId,
-      header.locationId
-    );
-    const uomId = command.uomId?.trim() || header.uomId;
-    const converted = resolveInboundBaseQuantity({
-      enteredQuantity: command.quantity,
-      enteredUomId: uomId,
-      stockItem,
-    });
     const lockKey = `${businessId}:availability:${header.stockItemId}:${header.locationId}`;
     return this.deps.locks.runExclusive(lockKey, async () => {
       const current = await this.requireReservation(businessId, reservationId);
@@ -592,9 +568,31 @@ export class StockReservationService {
         });
         return this.toView(businessId, current.id);
       }
+      const control = await this.requireControl(
+        businessId,
+        INVENTORY_OPERATION_CODES.STOCK_DEDUCTION
+      );
+      const decision = await this.deps.workflow.evaluateOperationApproval({
+        businessId,
+        operationCode: control.code,
+      });
+      if (decision.required) {
+        this.assertChecker(current.createdBy ?? current.submittedBy, actorId(context));
+      }
       if (!isFulfillableStatus(current.status)) {
         throw new InventoryError(INVENTORY_ERROR_CODES.RESERVATION_NOT_FULFILLABLE);
       }
+      const stockItem = await this.requireInboundStockItem(
+        businessId,
+        current.stockItemId,
+        current.locationId
+      );
+      const uomId = command.uomId?.trim() || current.uomId;
+      const converted = resolveInboundBaseQuantity({
+        enteredQuantity: command.quantity,
+        enteredUomId: uomId,
+        stockItem,
+      });
       const remaining = remainingReservedQuantity(current.remainingQuantity, "0");
       assertDeductionWithinReservation({
         requestedBase: converted.baseQuantity,
@@ -731,6 +729,7 @@ export class StockReservationService {
       stockItemId: stockItem.id,
       locationId,
       quantity: quantity ?? line.outstandingQuantity ?? line.orderedQuantity,
+      uomId: line.salesUomId ?? undefined,
       salesOrderId: contract.orderId,
       salesOrderLineId: line.orderLineId,
       salesOrderNumber: contract.orderNumber,
@@ -748,7 +747,7 @@ export class StockReservationService {
     const contract = await this.requireSaleContract(context, orderId);
     assertSaleDeductible(contract);
     requirePhysicalSaleLine(contract, salesOrderLineId);
-    const reservation = await this.deps.reservations.findActiveBySaleLine(
+    const reservation = await this.findReservationForSaleLine(
       context.businessId,
       salesOrderLineId
     );
@@ -756,9 +755,19 @@ export class StockReservationService {
       throw new InventoryError(INVENTORY_ERROR_CODES.RESERVATION_NOT_FOUND, undefined, 404);
     }
     const line = contract.lines.find((row) => row.orderLineId === salesOrderLineId);
+    const explicit = normalizeOptionalText(quantity);
+    const stockItem = await this.deps.stockItems.findById(
+      context.businessId,
+      reservation.stockItemId
+    );
     return this.fulfilReservation(context, reservation.id, {
-      quantity: quantity ?? line?.acceptedQuantity ?? reservation.remainingQuantity,
+      quantity: resolveSaleFulfilQuantity(quantity, reservation.remainingQuantity),
       fulfilmentReference,
+      // Remaining reserved is stored in base UOM. An explicit quantity uses
+      // the sale-line UOM; otherwise convert remaining as base, never purchase.
+      uomId: explicit
+        ? (line?.salesUomId ?? undefined)
+        : (stockItem?.baseUomId ?? undefined),
       idempotencyKey: `${INVENTORY_IDEMPOTENCY_OPERATIONS.FULFIL_RESERVATION}:${reservation.id}:${fulfilmentReference}`,
     });
   }
@@ -775,6 +784,20 @@ export class StockReservationService {
       views.push(await this.releaseReservation(context, row.id));
     }
     return views;
+  }
+
+  private async findReservationForSaleLine(businessId: string, salesOrderLineId: string) {
+    const active = await this.deps.reservations.findActiveBySaleLine(
+      businessId,
+      salesOrderLineId
+    );
+    if (active) {
+      return active;
+    }
+    const rows = await this.deps.reservations.listByBusiness(businessId);
+    return (
+      rows.find((row) => row.salesOrderLineId === salesOrderLineId) ?? null
+    );
   }
 
   private async requireSaleContract(context: CurrentBusinessContext, orderId: string) {

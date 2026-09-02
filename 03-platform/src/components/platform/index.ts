@@ -26,6 +26,11 @@ export {
 } from "@/components/platform/platform-enterprise-dashboard-header";
 export { PlatformEmptyState } from "@/components/platform/platform-empty-state";
 export {
+  PlatformHubSections,
+  type PlatformHubSection,
+  type PlatformHubSectionLink,
+} from "@/components/platform/platform-hub-sections";
+export {
   PlatformSearchState,
   type PlatformSearchStateStatus,
 } from "@/components/platform/platform-search-state";

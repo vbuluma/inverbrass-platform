@@ -29,6 +29,7 @@ import { partyTimeline } from "@/db/schema/party-timeline";
 import { product } from "@/db/schema/product";
 import { productTimeline } from "@/db/schema/product-timeline";
 import { BUSINESS_APP_PREFIXES } from "@/lib/navigation/business-app-routes";
+import { navContainsHref } from "@/lib/navigation/nav-tree";
 import { BUSINESS_APP_NAV_ITEMS } from "@/lib/navigation/platform-nav-config";
 import { createBusinessSetupService } from "@/modules/business/onboarding/services/business-setup-service";
 import { createDefaultConfigurationSettings } from "@/modules/business/onboarding/services/setup-rules";
@@ -38,7 +39,6 @@ import { createOpportunityHandoffAdapter } from "@/modules/crm/adapters/opportun
 import { CRM_STATUS_CODES, CRM_TYPE_CODES, CRM_WORKSPACE_TABS } from "@/modules/crm/constants";
 import { CrmError } from "@/modules/crm/errors";
 import { LEAD_STATUS_CODES } from "@/modules/crm/lead/constants";
-import { LeadError } from "@/modules/crm/lead/errors";
 import { createLeadService } from "@/modules/crm/lead/services/lead-service";
 import { OpportunityError } from "@/modules/crm/opportunity/errors";
 import { createOpportunityService } from "@/modules/crm/opportunity/services/opportunity-service";
@@ -266,6 +266,7 @@ function checkApplicationWiring() {
     { href: "/dashboard", page: "src/app/(authenticated)/(app)/dashboard" },
     { href: "/parties", page: "src/app/(authenticated)/(app)/parties/page.tsx" },
     { href: "/products", page: "src/app/(authenticated)/(app)/products/page.tsx" },
+    { href: "/crm", page: "src/app/(authenticated)/(app)/crm/page.tsx" },
     { href: "/customers", page: "src/app/(authenticated)/(app)/customers/page.tsx" },
     { href: "/accounts", page: "src/app/(authenticated)/(app)/accounts/page.tsx" },
     { href: "/leads", page: "src/app/(authenticated)/(app)/leads/page.tsx" },
@@ -274,7 +275,7 @@ function checkApplicationWiring() {
   ];
 
   for (const route of routes) {
-    const navOk = BUSINESS_APP_NAV_ITEMS.some((i) => i.href === route.href);
+    const navOk = navContainsHref(BUSINESS_APP_NAV_ITEMS, route.href);
     const prefixOk = BUSINESS_APP_PREFIXES.some(
       (p) => route.href === p || route.href.startsWith(`${p}/`)
     );
@@ -305,15 +306,18 @@ function checkApplicationWiring() {
       entry ? `available=${entry.available}` : "missing"
     );
   }
-  // Leads are a top-level business route (/leads), not a C360 workspace tab.
+  // Leads are owned by the /leads route under the CRM hub, not a C360 workspace tab.
+  // Tab ids are a closed union that does not include "leads"; collect them as
+  // strings so the runtime assertion remains (no tab owns leads).
+  const c360TabIds: string[] = CRM_WORKSPACE_TABS.map((tab) => tab.id);
   record(
     "wiring:leads-route-not-c360-tab",
-    !CRM_WORKSPACE_TABS.some((t) => t.id === "leads") &&
-      BUSINESS_APP_NAV_ITEMS.some((i) => i.href === "/leads")
+    !c360TabIds.includes("leads") &&
+      navContainsHref(BUSINESS_APP_NAV_ITEMS, "/leads")
       ? "PASS"
       : "FAIL",
-    "leads owned by /leads route"
-  )
+    "leads owned by /leads route under CRM"
+  );
 
   record(
     "wiring:browser-ui",

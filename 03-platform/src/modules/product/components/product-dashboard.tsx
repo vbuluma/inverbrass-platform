@@ -9,23 +9,17 @@
 "use client";
 
 import {
-  ArchiveIcon,
-  BoxesIcon,
   FilePlusIcon,
-  FolderTreeIcon,
-  GlobeIcon,
-  LayersIcon,
   PackageIcon,
   PlusIcon,
-  RulerIcon,
   SearchIcon,
-  TagsIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 
 import { PageBackLink } from "@/components/platform/page-back-link";
 import { PlatformEmptyState } from "@/components/platform/platform-empty-state";
+import { PlatformHubSections } from "@/components/platform/platform-hub-sections";
 import { PlatformKpiCard } from "@/components/platform/platform-kpi-card";
 import { PlatformSearchState } from "@/components/platform/platform-search-state";
 import { buttonVariants } from "@/components/ui/button";
@@ -219,64 +213,53 @@ export function ProductDashboard({ data }: ProductDashboardProps) {
             <FilePlusIcon className="size-4" aria-hidden />
             Register {terminology.offerings.singular}
           </Link>
-          <Link
-            href="/products/classifications"
-            prefetch={false}
-            className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
-          >
-            <FolderTreeIcon className="size-4" aria-hidden />
-            {labels.quickActions.classifications}
-          </Link>
-          <Link
-            href="/products/units"
-            prefetch={false}
-            className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
-          >
-            <RulerIcon className="size-4" aria-hidden />
-            Units of Measure
-          </Link>
-          <Link
-            href="/products/attributes"
-            prefetch={false}
-            className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
-          >
-            <TagsIcon className="size-4" aria-hidden />
-            {labels.quickActions.attributes}
-          </Link>
-          <Link
-            href="/products/variants"
-            prefetch={false}
-            className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
-          >
-            <BoxesIcon className="size-4" aria-hidden />
-            {labels.quickActions.variants}
-          </Link>
-          <Link
-            href="/products/bundles"
-            prefetch={false}
-            className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
-          >
-            <LayersIcon className="size-4" aria-hidden />
-            {labels.quickActions.bundles}
-          </Link>
-          <Link
-            href="/products/catalogue"
-            prefetch={false}
-            className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
-          >
-            <GlobeIcon className="size-4" aria-hidden />
-            {labels.quickActions.digitalCatalogue}
-          </Link>
-          <Link
-            href="/products/new"
-            prefetch={false}
-            className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
-          >
-            <ArchiveIcon className="size-4" aria-hidden />
-            Import / Migrate
-          </Link>
         </div>
       </section>
+
+      <PlatformHubSections
+        sections={[
+          {
+            title: "Catalogue",
+            links: [
+              {
+                href: "/products/catalogue",
+                label: labels.quickActions.digitalCatalogue,
+                description: "Published offerings available to sell.",
+              },
+              {
+                href: "/products/classifications",
+                label: labels.quickActions.classifications,
+                description: "How offerings are grouped.",
+              },
+              {
+                href: "/products/variants",
+                label: labels.quickActions.variants,
+                description: "SKUs and sellable variants.",
+              },
+              {
+                href: "/products/bundles",
+                label: labels.quickActions.bundles,
+                description: "Packaged offering combinations.",
+              },
+            ],
+          },
+          {
+            title: "Setup",
+            links: [
+              {
+                href: "/products/units",
+                label: "Units of Measure",
+                description: "Units used when selling and stocking.",
+              },
+              {
+                href: "/products/attributes",
+                label: labels.quickActions.attributes,
+                description: "Shared offering attributes.",
+              },
+            ],
+          },
+        ]}
+      />
 
       <section aria-labelledby="product-search-heading" className="space-y-3">
         <h2

@@ -5,7 +5,7 @@
 | Attribute | Value |
 |-----------|-------|
 | Document Name | Architecture Versions |
-| Current Version | **AV-1.9** |
+| Current Version | **AV-1.13** |
 | Former Name | Architecture Decision Record (ADR) — enterprise scope |
 | Scope | Entire InverBrass Enterprise Architecture |
 | Audience | Product Owner, Solution Architect, Developers, AI Coding Assistants |
@@ -57,6 +57,44 @@ Do **not** regroup or renumber ENG-003 sub-engines under AV-1.x — **AV-1.5 Eng
 ---
 
 ## Version History
+
+### AV-1.13 — Channel & Experience Engine (ENG-003o); Web Reference; Procurement RBAC Fix
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-09-02 |
+| **Status** | **Current** |
+| **Author** | Solution Architect |
+
+#### From → To
+
+| Area | From | To |
+|------|------|-----|
+| Channel layer | Not present — Server Actions as implicit boundary | **ENG-003o Channel & Experience Engine** — gateway, registry, policy, identity, session foundation |
+| Next ENG-003 sub-engine ID | ENG-003o (reserved) | **ENG-003o registered**; next ID **ENG-003p** |
+| Web channel | Next.js pages/actions call domain directly | **Web Channel Adapter** — BP-009 procurement as reference path |
+| Procurement RBAC | `ALL_PROCUREMENT_PERMISSIONS` at action layer | **PermissionResolutionService** (ENG-002) — runtime role permissions |
+| Conversational channels | N/A | Architecture hooks only — WhatsApp/Messenger/Instagram **not implemented** |
+| Intent / NL | N/A | Intent→Capability **contract only** — no LLM |
+
+#### Reasoning
+
+Baseline assessment ([14 – Channel Assessment](./14-Channel-Experience-Layer-Baseline-Assessment.md)) confirmed domain services are channel-agnostic but no Channel & Experience Layer existed. Procurement exposed a critical RBAC bypass that would propagate to any future channel. ENG-003o establishes the canonical boundary with Web as the first proof; conversational channels remain future adapters enabled by policy.
+
+#### Affected Documents
+
+- [15 – ENG-003o Channel & Experience Engine](./15-ENG-003o-Channel-Experience-Engine.md) — **new**
+- [01 – Enterprise Solution Architecture](./01-Enterprise-Solution-Architecture.md) §5 — ENG-003o
+- [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3 — ENG-003o row
+
+#### Implementation Impact
+
+- `03-platform/src/core/channel-experience/` — ENG-003o engine
+- `03-platform/src/core/auth/services/permission-resolution-service.ts` — ENG-002 runtime permissions
+- `03-platform/src/modules/procurement/helpers/procurement-channel-context.ts` — Web reference path
+- BP-009 actions/pages — RBAC fix + channel gateway entry
+
+---
 
 ### AV-1.0 — Initial Enterprise Architecture Baseline
 
@@ -416,7 +454,7 @@ Documentation only. No payment runtime yet. Existing unused `payment_method` / `
 | Field | Value |
 |-------|-------|
 | **Date** | 2026-08-27 |
-| **Status** | **Current** |
+| **Status** | Superseded by AV-1.10 |
 | **Author** | Integration Manager / Solution Architect |
 
 #### From → To
@@ -448,7 +486,127 @@ Documentation only. No inventory runtime yet. Implementation starts at IP-01 aft
 
 ---
 
+### AV-1.10 — BP-009 Procurement ownership lock
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-08-31 |
+| **Status** | Superseded by AV-1.11 |
+| **Author** | Integration Manager / Solution Architect |
+
+#### From → To
+
+| Area | From | To |
+|------|------|-----|
+| Pack documentation | Catalog row only; no BP-009 folder | `02-build-packs/build pack 009-Procurement & Supplier Management/` — Scope + IP-01–IP-12 specified; implementation not started |
+| Supplier master | Risk of a second supplier list inside procurement | **BP-002 Party** owns identity. BP-009 owns **procurement relationship** (profile, qualification, status, performance) |
+| Inventory | Risk of posting on-hand on goods receipt | **BP-008** owns ledger/on-hand. BP-009 IP-08 is **receipt instruction / handoff** only |
+| Reorder → PO | Risk of inventory creating POs | Unchanged from AV-1.9: BP-008 signal → BP-009 Purchase Request. **PO is BP-009** |
+| GL / AP rails | Risk of procurement posting journals or paying suppliers | **BP-010** owns GL. Outgoing payment rails remain an **open v1 decision**. IP-09 = match + **payment-ready / AP handoff** |
+| Customer AR | Risk of reusing BP-007 payment catalogues for supplier pay | **BP-007** remains customer AR. BP-009 does not create customer receipts |
+| Matching | Risk of calling invoice match ENG-008 | **2-way / 3-way match is BP-009 IP-09** (PO/receipt/invoice). ENG-008 remains statement/settlement matching |
+| IP structure | Informal “suppliers, RFQs, POs” | **12 IPs** frozen at scope: Foundation → PR → RFX → Response → Award → PO → Contract → Receiving handoff → Invoice match → Exceptions → Performance → Analytics |
+
+#### Reasoning
+
+BP-008 v1 is implemented. The next operations pack is procurement. Documenting BP-009 without locking ownership would recreate a second supplier master, a shadow inventory ledger, or a premature AP/GL engine. AV-1.10 records the lock so implementation prompts start at IP-01 (procurement profile on Party) and cannot implement RFX, PO, matching, receiving or payment in that increment. Supplier payment rails stay explicitly open.
+
+#### Affected Documents
+
+- [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) — BP-009 row
+- [11 – Development Roadmap](./11-Development-Roadmap.md) — BP-009 IP list
+- `02-build-packs/build pack 009-Procurement & Supplier Management/` — Scope + IP-01–IP-12
+
+#### Implementation impact
+
+Documentation only. No procurement runtime yet. Implementation starts at **IP-01 — Procurement Foundation & Supplier Relationship** after this specification is approved. IP-01 must not implement RFX, PO, invoice matching, receiving or payment.
+
+---
+
+### AV-1.11 — Procurement hub information architecture lock
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-08-31 |
+| **Status** | Superseded by AV-1.12 |
+| **Author** | Integration Manager / Solution Architect |
+
+#### From → To
+
+| Area | From | To |
+|------|------|-----|
+| Primary hubs (NAV-001) | Dashboard, Parties, Offerings, CRM, Sales, Payments, Inventory, Settings | Same list **plus Procurement** after Inventory, before Settings |
+| Suppliers in navigation | Risk of a top-level Suppliers hub or IP-labelled procurement menu | **Suppliers** is nested under **Procurement**. Qualification, categories, blacklisting, preferred, and eligibility live on Supplier Profile — not as sidebar modules |
+| Future buy-side items | Risk of RFQ, PO, Contract, Receiving, Invoice, Performance as top-level peers | Target tree nested under Procurement (Sourcing, Purchasing, Contracts, Receiving, Supplier Invoices, Supplier Performance, Analytics). Expose only when implemented |
+| IP-01 exposed tree | Unspecified | `Procurement → Suppliers` only. No empty/fake items for later IPs |
+| Mobile | Unspecified for procurement | Existing pattern: Dashboard, CRM, Sales, Payments, More. Procurement under **More**, not the bottom bar |
+| Runtime nav | Live sidebar has no Procurement hub | Unchanged until IP-01 pages exist. Shared files (`platform-nav-config.ts`, `business-app-routes.ts`, breadcrumbs, IA certification) are updated at IP-01 merge — not as empty placeholders |
+| Ownership | Unchanged from AV-1.10 | Unchanged: Party identity BP-002; inventory on-hand BP-008; customer AR BP-007; GL BP-010; payment rails open v1 |
+
+#### Reasoning
+
+AV-1.10 locked *what* BP-009 owns. Without an IA lock, IP-01 could still ship a second primary hub named Suppliers, expose unimplemented RFX/PO items, or fork a procurement-specific navigation shell. AV-1.11 records hub-first navigation so the user job is “buy something → Procurement → manage a supplier”, and later IPs extend the same hub without another redesign.
+
+#### Affected Documents
+
+- [06 – UI/UX Standards](./06-UI-Standards.md) — NAV-001 hub list
+- [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) — AV-1.11 note
+- [11 – Development Roadmap](./11-Development-Roadmap.md) — BP-009 navigation note
+- `02-build-packs/build-pack 001-business setup& Onboarding.md/ip-007-global navigation.md` — minimum hub list
+- `02-build-packs/build pack 009-Procurement & Supplier Management/BP-009 Navigation Hub.md` — canonical IA
+- `02-build-packs/build pack 009-Procurement & Supplier Management/Build Pack-009 Scope.md` — §18
+- `02-build-packs/build pack 009-Procurement & Supplier Management/IP-01 Procurement Foundation & Supplier Relationship.md` — NAV-001–NAV-020
+
+#### Implementation impact
+
+Documentation only at the time of AV-1.11. Runtime Procurement hub was added with IP-01 and later sourcing routes. Engine catalog (ENG-001–ENG-019 / ENG-003a–n) is unchanged.
+
+---
+
+### AV-1.12 — BP-009 sourcing IP boundary and configurable tender opening
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-09-01 |
+| **Status** | Superseded by AV-1.13 |
+| **Author** | Integration Manager / Solution Architect |
+
+#### From → To
+
+| Area | From | To |
+|------|------|-----|
+| IP-03 written scope | Bundled RFX + response + evaluation + award; next IP described as PO | IP-03 = RFX + criteria lock + opening policy. IP-04 = response. IP-05 = evaluation/award. IP-06 = PO |
+| Code vs labels | Header portal, quote versions, commercial savings, and header award shipped under IP-03 | **Reclassify, do not rebuild.** One `SourcingService`. Certify capabilities under IP-04/IP-05 |
+| Tender opening | Implied always-open buyer comparison, or assumed universal sealed Maker-Checker | **Configurable:** Organisation Default, Standard, Maker-Checker. Enforcement rules by RFX value, category, type, risk may **mandate** Maker-Checker. Users cannot weaken a mandate |
+| Standard opening | Risk of treating Standard as “no controls” | Standard still requires RBAC, audit, bid submission locking, bid version integrity, and access logging. Difference is **no** second-person unseal gate |
+| Evaluation model | Mixed criteria list (price/quality/delivery as one table) | Technical **phases** (Desktop, Demo, PoC, Reference, Site visit) + Financial weight/basis. Payment terms are IP-04 financial proposal, not scores |
+| Engine catalog | Unchanged | **Unchanged.** Opening policy is BP-009 configuration; Maker-Checker opening uses ENG-005 when required. No ENG-003o |
+
+#### Reasoning
+
+The implemented sourcing slice already contains IP-04/IP-05 capabilities. A greenfield IP-04/IP-05 would duplicate portal, quotes, savings, and award. SME customers need a simple default (Standard opening). Larger or high-risk organisations need sealed bids with Maker-Checker. Always-on governance must not disappear when Standard is selected.
+
+#### Affected Documents
+
+- `02-build-packs/build pack 009-Procurement & Supplier Management/IP-03 RFX Management.md`
+- `02-build-packs/build pack 009-Procurement & Supplier Management/IP-04 Supplier Response & Collaboration.md`
+- `02-build-packs/build pack 009-Procurement & Supplier Management/IP-05 Evaluation, Award & Sourcing Decision.md`
+- `02-build-packs/build pack 009-Procurement & Supplier Management/Build Pack-009 Scope.md`
+- `02-build-packs/build pack 009-Procurement & Supplier Management/IP-06 Purchase Order Management.md`
+- `02-build-packs/build pack 009-Procurement & Supplier Management/IP-01 Procurement Foundation & Supplier Relationship.md`
+- `02-build-packs/build pack 009-Procurement & Supplier Management/BP-009 Navigation Hub.md`
+- [11 – Development Roadmap](./11-Development-Roadmap.md)
+- [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md)
+- [06 – UI/UX Standards](./06-UI-Standards.md)
+
+#### Implementation impact
+
+**Documentation lock only in this version.** No schema, route, or service changes in AV-1.12. Next code increments require explicit approval and must enhance existing sourcing artefacts. Engine catalog lock (AV-1.5) is unchanged.
+
+---
+
 ## Future Architecture Considerations (AV-2.0)
+
 
 > **Status:** Recorded for planning only. **Not in effect.** Current v1.0 IDs (ENG-003a–n, ENG-017 Identity Resolution, etc.) remain canonical until an explicit **AV-2.0** approval and migration plan.
 
@@ -519,7 +677,7 @@ Formal AV-2.0 engine-taxonomy review is **required** when any trigger below is m
 | Multiple implementation teams require ownership boundaries | Create engine families |
 | AI prompts frequently misclassify engines | Review engine taxonomy |
 
-**Current count (AV-1.6):** 14 sub-engines (ENG-003a – ENG-003n). Next assigned ID: **ENG-003o**.
+**Current count (AV-1.13):** 15 sub-engines (ENG-003a – ENG-003o). Next assigned ID: **ENG-003p**.
 
 **Capability domain examples** (for the "3 domains" trigger): Metadata & Configuration, Regulatory & Identity, Integration & Events, Intelligence & Analytics, Experience & Presentation, Operations & Performance. More than three of these actively represented under ENG-003 warrants regrouping consideration.
 

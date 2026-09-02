@@ -17,9 +17,9 @@ import { useBusinessTerminology } from "@/core/industry-experience/business-term
 export function buildCrmDashboardLabels(terminology: BusinessTerminology) {
   const customer = terminology.entities.customer;
   return {
-    pageTitle: `${customer.plural} Dashboard`,
+    pageTitle: `${customer.singular} Profile`,
     registerCustomer: `Register ${customer.singular}`,
-    backToDashboard: `Back to ${customer.plural.toLowerCase()}`,
+    backToDashboard: `Back to ${customer.singular} Profile`,
     searchPlaceholder: `Search ${customer.plural.toLowerCase()}...`,
     emptyTitle: `No ${customer.plural.toLowerCase()} yet`,
     emptyDescription: `Register your first ${customer.singular.toLowerCase()} from an existing party.`,

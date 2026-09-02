@@ -413,6 +413,187 @@ export const permissions: PermissionSeed[] = [
     "Upload and verify tax compliance evidence document references.",
     640
   ),
+  permission("Procurement", "Supplier", "Read", "View procurement suppliers.", 650),
+  permission(
+    "Procurement",
+    "Supplier",
+    "Create",
+    "Register a procurement profile on an existing party.",
+    660
+  ),
+  permission(
+    "Procurement",
+    "Supplier",
+    "Update",
+    "Update procurement profile categories, capabilities, and terms.",
+    670
+  ),
+  permission(
+    "Procurement",
+    "Qualification",
+    "Manage",
+    "Record and update supplier qualification.",
+    680
+  ),
+  permission(
+    "Procurement",
+    "Status",
+    "Manage",
+    "Change procurement status including suspend and deactivate.",
+    690
+  ),
+  permission(
+    "Procurement",
+    "Preferred",
+    "Manage",
+    "Set or clear preferred supplier status.",
+    700
+  ),
+  permission(
+    "Procurement",
+    "Blacklist",
+    "Manage",
+    "Blacklist or lift a supplier blacklist.",
+    710
+  ),
+  permission("Procurement", "Request", "Read", "View purchase requests.", 720),
+  permission(
+    "Procurement",
+    "Request",
+    "Create",
+    "Create purchase requests.",
+    730
+  ),
+  permission(
+    "Procurement",
+    "Request",
+    "Update",
+    "Update draft or returned purchase requests.",
+    740
+  ),
+  permission(
+    "Procurement",
+    "Request",
+    "Execute",
+    "Submit purchase requests for approval.",
+    750
+  ),
+  permission(
+    "Procurement",
+    "Request",
+    "Approve",
+    "Approve, reject, or return purchase requests.",
+    760
+  ),
+  permission(
+    "Procurement",
+    "Request",
+    "Deactivate",
+    "Cancel purchase requests before sourcing.",
+    770
+  ),
+  permission("Procurement", "Sourcing", "Read", "View RFX, evaluations, and awards.", 780),
+  permission(
+    "Procurement",
+    "Sourcing",
+    "Create",
+    "Create sourcing events and invite suppliers.",
+    790
+  ),
+  permission(
+    "Procurement",
+    "Sourcing",
+    "Update",
+    "Update sourcing recommendations and record quotes.",
+    800
+  ),
+  permission(
+    "Procurement",
+    "Sourcing",
+    "Approve",
+    "Finalize evaluation and award suppliers.",
+    810
+  ),
+  permission("Procurement", "PurchaseOrder", "Read", "View purchase orders.", 820),
+  permission("Procurement", "PurchaseOrder", "Create", "Create purchase orders.", 830),
+  permission("Procurement", "PurchaseOrder", "Update", "Update draft purchase orders.", 840),
+  permission(
+    "Procurement",
+    "PurchaseOrder",
+    "Execute",
+    "Submit purchase orders for approval.",
+    850
+  ),
+  permission(
+    "Procurement",
+    "PurchaseOrder",
+    "Approve",
+    "Approve or reject purchase orders.",
+    860
+  ),
+  permission("Procurement", "PurchaseOrder", "Issue", "Issue approved purchase orders.", 870),
+  permission("Procurement", "PurchaseOrder", "Amend", "Amend issued purchase orders.", 880),
+  permission(
+    "Procurement",
+    "PurchaseOrder",
+    "Deactivate",
+    "Cancel purchase orders.",
+    890
+  ),
+  permission("Procurement", "PurchaseOrder", "Close", "Close fulfilled purchase orders.", 900),
+  permission("Procurement", "Contract", "Read", "View procurement contracts.", 910),
+  permission("Procurement", "Contract", "Create", "Create procurement contracts.", 920),
+  permission("Procurement", "Contract", "Update", "Update draft contracts.", 930),
+  permission(
+    "Procurement",
+    "Contract",
+    "Execute",
+    "Submit contracts for approval.",
+    940
+  ),
+  permission(
+    "Procurement",
+    "Contract",
+    "Approve",
+    "Approve or reject contracts.",
+    950
+  ),
+  permission("Procurement", "Contract", "Activate", "Activate executed contracts.", 960),
+  permission("Procurement", "Contract", "Amend", "Amend active contracts.", 970),
+  permission("Procurement", "Contract", "CallOff", "Create contract call-off orders.", 980),
+  permission(
+    "Procurement",
+    "Contract",
+    "Deactivate",
+    "Suspend or terminate contracts.",
+    990
+  ),
+  permission("Procurement", "Contract", "Close", "Close completed contracts.", 1000),
+  permission("Procurement", "Receiving", "Read", "View procurement receipts.", 1010),
+  permission("Procurement", "Receiving", "Create", "Create procurement receipts.", 1020),
+  permission("Procurement", "Receiving", "Confirm", "Confirm procurement receipts.", 1030),
+  permission("Procurement", "Receiving", "Reject", "Reject procurement receipts.", 1040),
+  permission("Procurement", "Receiving", "Inspect", "Record receipt inspection outcomes.", 1050),
+  permission("Procurement", "Receiving", "Discrepancy", "Record receipt discrepancies.", 1060),
+  permission("Procurement", "Invoice", "Read", "View supplier invoices.", 1070),
+  permission("Procurement", "Invoice", "Create", "Capture supplier invoices.", 1080),
+  permission("Procurement", "Invoice", "Update", "Update draft supplier invoices.", 1090),
+  permission("Procurement", "Invoice", "Execute", "Submit supplier invoices for matching.", 1100),
+  permission("Procurement", "Invoice", "Match", "Run invoice matching.", 1110),
+  permission("Procurement", "Invoice", "Approve", "Approve matched supplier invoices.", 1120),
+  permission("Procurement", "Invoice", "Reject", "Reject supplier invoices.", 1130),
+  permission("Procurement", "Exception", "Read", "View procurement exceptions.", 1140),
+  permission("Procurement", "Exception", "Create", "Raise procurement exceptions.", 1150),
+  permission("Procurement", "Exception", "Assign", "Assign procurement exception owners.", 1160),
+  permission("Procurement", "Exception", "Resolve", "Resolve procurement exceptions.", 1170),
+  permission("Procurement", "Exception", "Approve", "Approve procurement exception closures.", 1180),
+  permission("Procurement", "Exception", "Close", "Close procurement exceptions.", 1190),
+  permission("Procurement", "Exception", "Deactivate", "Cancel procurement exceptions.", 1200),
+  permission("Procurement", "Performance", "Read", "View supplier performance scorecards.", 1210),
+  permission("Procurement", "Performance", "Manage", "Refresh supplier performance scorecards.", 1220),
+  permission("Procurement", "Governance", "Propose", "Propose supplier governance changes.", 1230),
+  permission("Procurement", "Governance", "Approve", "Approve supplier governance changes.", 1240),
+  permission("Procurement", "Analytics", "Read", "View procurement analytics and lifecycle intelligence.", 1250),
 ];
 
 export function getPermissionActionCode(seed: PermissionSeed): string {

@@ -1,11 +1,10 @@
 "use server";
 
+import { requireCrmChannelContext as requireVisitContext } from "@/core/channel-experience/helpers/domain-channel-entry";
 import { revalidatePath } from "next/cache";
 
 import type { AuthActionResult } from "@/core/auth/actions/auth-actions";
 import { AuthError } from "@/core/auth/errors";
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 import {
   platformError,
@@ -34,28 +33,7 @@ import type {
 export type CrmVisitActionResult<T> = AuthActionResult<T> & {
   platform?: PlatformActionResult<T>;
 };
-
-async function requireVisitContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-  if (!user) {
-    throw new CrmVisitError(
-      "SESSION_REQUIRED",
-      CRM_VISIT_USER_MESSAGES.SESSION_REQUIRED,
-      401
-    );
-  }
-  const businessContextService = createBusinessContextService();
-  const context = await businessContextService.getCurrentContext();
-  if (!context) {
-    throw new CrmVisitError(
-      "BUSINESS_CONTEXT_REQUIRED",
-      CRM_VISIT_USER_MESSAGES.BUSINESS_CONTEXT_REQUIRED,
-      403
-    );
-  }
-  return context;
-}
+
 
 function mapVisitError(error: unknown): AuthActionResult<never> {
   if (error instanceof CrmVisitError) {

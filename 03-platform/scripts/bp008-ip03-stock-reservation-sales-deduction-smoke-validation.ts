@@ -231,7 +231,12 @@ function harness(options?: {
 async function setupStock(
   foundation: InventoryFoundationService,
   actor = ctx("biz-a"),
-  options?: { opening?: string; salesUom?: boolean; missingConversion?: boolean }
+  options?: {
+    opening?: string;
+    salesUom?: boolean;
+    purchaseUom?: boolean;
+    missingConversion?: boolean;
+  }
 ) {
   const itemA = await foundation.createStockItem(actor, {
     productId: "product-a",
@@ -239,6 +244,12 @@ async function setupStock(
     itemTypeCode: STOCK_ITEM_TYPE_CODES.STOCKED_ITEM,
     baseUomId: "uom-ea",
     stockTrackingEnabled: true,
+    ...(options?.purchaseUom
+      ? {
+          purchaseUomId: "uom-box",
+          conversionFactor: options.missingConversion ? null : "12",
+        }
+      : {}),
     ...(options?.salesUom
       ? {
           salesUomId: "uom-box",
@@ -688,6 +699,9 @@ async function runCoreCases(): Promise<SmokeResult[]> {
 
   results.push(...(await runUomCases()));
   results.push(...(await runSalesCases()));
+  results.push(...(await runSaleUomHandoffCases()));
+  results.push(...(await runSaleFulfilQuantityCases()));
+  results.push(...(await runFulfilmentIdempotencyCases()));
   results.push(...(await runConcurrencyCases()));
   results.push(...(await runApprovalCases()));
   results.push(...(await runTenantCases()));
@@ -871,6 +885,313 @@ async function runSalesCases(): Promise<SmokeResult[]> {
         created.salesOrderId === "so-1" &&
         !JSON.stringify(saleContract()).includes("paymentStatus") &&
         fulfilled.status === INVENTORY_RESERVATION_STATUSES.FULFILLED,
+    },
+  ];
+}
+
+async function runSaleUomHandoffCases(): Promise<SmokeResult[]> {
+  const maker = ctx("biz-a");
+
+  const eaSales = new FakeSalesFulfilmentPort();
+  eaSales.seed(saleContract({ line: { orderedQuantity: "20", outstandingQuantity: "20", salesUomId: "uom-ea" } }));
+  const eaEnv = harness({ sales: eaSales });
+  const eaStock = await setupStock(eaEnv.foundation, maker, { opening: "120" });
+  const eaReserved = await eaEnv.reservation.createReservationFromSale(
+    maker,
+    "so-1",
+    "line-1",
+    eaStock.location.id
+  );
+  const eaFulfilled = await eaEnv.reservation.fulfilReservationFromSale(
+    maker,
+    "so-1",
+    "line-1",
+    "FUL-EA-20"
+  );
+
+  const purchaseOnly = new FakeSalesFulfilmentPort();
+  purchaseOnly.seed(
+    saleContract({ line: { orderedQuantity: "20", outstandingQuantity: "20", acceptedQuantity: "0" } })
+  );
+  const purchaseEnv = harness({ sales: purchaseOnly });
+  const purchaseStock = await setupStock(purchaseEnv.foundation, maker, {
+    opening: "120",
+    purchaseUom: true,
+  });
+  const purchaseReserved = await purchaseEnv.reservation.createReservationFromSale(
+    maker,
+    "so-1",
+    "line-1",
+    purchaseStock.location.id
+  );
+
+  const boxSale = new FakeSalesFulfilmentPort();
+  boxSale.seed(
+    saleContract({
+      line: { orderedQuantity: "2", outstandingQuantity: "2", salesUomId: "uom-box" },
+    })
+  );
+  const boxEnv = harness({ sales: boxSale });
+  const boxStock = await setupStock(boxEnv.foundation, maker, {
+    opening: "120",
+    purchaseUom: true,
+    salesUom: true,
+  });
+  const boxReserved = await boxEnv.reservation.createReservationFromSale(
+    maker,
+    "so-1",
+    "line-1",
+    boxStock.location.id
+  );
+  const boxFulfilled = await boxEnv.reservation.fulfilReservationFromSale(
+    maker,
+    "so-1",
+    "line-1",
+    "FUL-BOX-2"
+  );
+
+  return [
+    {
+      name: "remediation:ea-sale-against-ea-base",
+      ok:
+        eaReserved.requestedQuantity === "20" &&
+        eaReserved.baseQuantity === "20" &&
+        eaReserved.uomCode === "EA" &&
+        eaFulfilled.fulfilledQuantity === "20",
+      detail: `reserved=${eaReserved.baseQuantity} fulfilled=${eaFulfilled.fulfilledQuantity}`,
+    },
+    {
+      name: "remediation:purchase-uom-never-used-as-sales-uom",
+      ok:
+        purchaseReserved.baseQuantity === "20" &&
+        purchaseReserved.uomCode === "EA" &&
+        purchaseReserved.conversionFactor === "1",
+      detail: `base=${purchaseReserved.baseQuantity} uom=${purchaseReserved.uomCode}`,
+    },
+    {
+      name: "remediation:box-purchase-ea-sale-handoff",
+      ok:
+        boxReserved.requestedQuantity === "2" &&
+        boxReserved.baseQuantity === "24" &&
+        boxReserved.uomCode === "BOX" &&
+        boxFulfilled.fulfilledQuantity === "24",
+      detail: `requested=${boxReserved.requestedQuantity} base=${boxReserved.baseQuantity}`,
+    },
+  ];
+}
+
+async function runSaleFulfilQuantityCases(): Promise<SmokeResult[]> {
+  const maker = ctx("biz-a");
+  try {
+  const sales = new FakeSalesFulfilmentPort();
+  sales.seed(
+    saleContract({
+      line: { orderedQuantity: "20", outstandingQuantity: "20", acceptedQuantity: "0" },
+    })
+  );
+  const env = harness({ sales });
+  const stock = await setupStock(env.foundation, maker, { opening: "80" });
+  const reserved = await env.reservation.createReservationFromSale(
+    maker,
+    "so-1",
+    "line-1",
+    stock.location.id
+  );
+  const first = await env.reservation.fulfilReservationFromSale(
+    maker,
+    "so-1",
+    "line-1",
+    "FUL-REMAINING"
+  );
+  const afterFull = availabilityFor(
+    await env.reservation.listAvailability(maker),
+    stock.itemA.id,
+    stock.location.id
+  );
+
+  const partialSales = new FakeSalesFulfilmentPort();
+  partialSales.seed(
+    saleContract({
+      line: { orderedQuantity: "20", outstandingQuantity: "20", acceptedQuantity: "0" },
+    })
+  );
+  const partialEnv = harness({ sales: partialSales });
+  const partialStock = await setupStock(partialEnv.foundation, maker, { opening: "80" });
+  await partialEnv.reservation.createReservationFromSale(
+    maker,
+    "so-1",
+    "line-1",
+    partialStock.location.id
+  );
+  const partial = await partialEnv.reservation.fulfilReservationFromSale(
+    maker,
+    "so-1",
+    "line-1",
+    "FUL-PARTIAL",
+    "8"
+  );
+  const over = await caughtCode(() =>
+    partialEnv.reservation.fulfilReservationFromSale(
+      maker,
+      "so-1",
+      "line-1",
+      "FUL-OVER",
+      "13"
+    )
+  );
+  const remainder = await partialEnv.reservation.fulfilReservationFromSale(
+    maker,
+    "so-1",
+    "line-1",
+    "FUL-REST"
+  );
+  const replay = await partialEnv.reservation.fulfilReservationFromSale(
+    maker,
+    "so-1",
+    "line-1",
+    "FUL-REST"
+  );
+  const saleDeductions = [...partialEnv.store.movements.values()].filter(
+    (row) => row.movementType === INVENTORY_MOVEMENT_TYPES.SALE_DEDUCTION
+  );
+
+  return [
+    {
+      name: "remediation:fulfil-without-accepted-quantity",
+      ok:
+        reserved.remainingQuantity === "20" &&
+        first.status === INVENTORY_RESERVATION_STATUSES.FULFILLED &&
+        first.fulfilledQuantity === "20" &&
+        afterFull?.onHand === "60",
+      detail: `status=${first.status} onHand=${afterFull?.onHand}`,
+    },
+    {
+      name: "remediation:partial-then-remaining-fulfilment",
+      ok:
+        partial.status === INVENTORY_RESERVATION_STATUSES.PARTIALLY_FULFILLED &&
+        remainder.status === INVENTORY_RESERVATION_STATUSES.FULFILLED &&
+        remainder.fulfilledQuantity === "20",
+      detail: `${partial.status} -> ${remainder.status}`,
+    },
+    {
+      name: "remediation:cannot-fulfil-beyond-remaining",
+      ok: over === INVENTORY_ERROR_CODES.DEDUCTION_EXCEEDS_RESERVATION,
+      detail: over ?? undefined,
+    },
+    {
+      name: "remediation:sale-fulfil-replay-single-deduction",
+      ok:
+        replay.id === remainder.id &&
+        saleDeductions.length === 2 &&
+        remainder.fulfilments.length === 2,
+      detail: `movements=${saleDeductions.length} fulfilments=${remainder.fulfilments.length}`,
+    },
+  ];
+  } catch (error) {
+    return [
+      {
+        name: "remediation:fulfil-quantity-cases",
+        ok: false,
+        detail: error instanceof Error ? error.message : String(error),
+      },
+    ];
+  }
+}
+
+async function runFulfilmentIdempotencyCases(): Promise<SmokeResult[]> {
+  const maker = ctx("biz-a");
+  const env = harness();
+  const stock = await setupStock(env.foundation, maker, { opening: "40" });
+  const reserved = await env.reservation.createReservation(maker, {
+    stockItemId: stock.itemA.id,
+    locationId: stock.location.id,
+    quantity: "10",
+  });
+  const first = await env.reservation.fulfilReservation(maker, reserved.id, {
+    quantity: "10",
+    fulfilmentReference: "FUL-IDEM",
+    idempotencyKey: "fulfil-key-1",
+  });
+  const replay = await env.reservation.fulfilReservation(maker, reserved.id, {
+    quantity: "10",
+    fulfilmentReference: "FUL-IDEM",
+    idempotencyKey: "fulfil-key-1",
+  });
+  const afterReplay = availabilityFor(
+    await env.reservation.listAvailability(maker),
+    stock.itemA.id,
+    stock.location.id
+  );
+  const deductions = [...env.store.movements.values()].filter(
+    (row) => row.movementType === INVENTORY_MOVEMENT_TYPES.SALE_DEDUCTION
+  );
+  const newKey = await caughtCode(() =>
+    env.reservation.fulfilReservation(maker, reserved.id, {
+      quantity: "10",
+      fulfilmentReference: "FUL-NEW",
+      idempotencyKey: "fulfil-key-2",
+    })
+  );
+  const cross = await caughtCode(() =>
+    env.reservation.fulfilReservation(ctx("biz-b"), reserved.id, {
+      quantity: "10",
+      fulfilmentReference: "FUL-IDEM",
+      idempotencyKey: "fulfil-key-1",
+    })
+  );
+
+  const concurrentEnv = harness();
+  const concurrentStock = await setupStock(concurrentEnv.foundation, maker, { opening: "10" });
+  const concurrentReserved = await concurrentEnv.reservation.createReservation(maker, {
+    stockItemId: concurrentStock.itemA.id,
+    locationId: concurrentStock.location.id,
+    quantity: "6",
+  });
+  const [left, right] = await Promise.allSettled([
+    concurrentEnv.reservation.fulfilReservation(maker, concurrentReserved.id, {
+      quantity: "6",
+      fulfilmentReference: "FUL-CONCURRENT",
+      idempotencyKey: "fulfil-concurrent",
+    }),
+    concurrentEnv.reservation.fulfilReservation(maker, concurrentReserved.id, {
+      quantity: "6",
+      fulfilmentReference: "FUL-CONCURRENT",
+      idempotencyKey: "fulfil-concurrent",
+    }),
+  ]);
+  const concurrentOk = [left, right].filter((row) => row.status === "fulfilled");
+  const concurrentDeductions = [...concurrentEnv.store.movements.values()].filter(
+    (row) => row.movementType === INVENTORY_MOVEMENT_TYPES.SALE_DEDUCTION
+  );
+
+  return [
+    {
+      name: "remediation:fulfil-replay-returns-original",
+      ok:
+        first.id === replay.id &&
+        first.fulfilledQuantity === replay.fulfilledQuantity &&
+        replay.status === INVENTORY_RESERVATION_STATUSES.FULFILLED,
+      detail: `status=${replay.status}`,
+    },
+    {
+      name: "remediation:fulfil-replay-single-sale-deduction",
+      ok: deductions.length === 1 && afterReplay?.onHand === "30",
+      detail: `movements=${deductions.length} onHand=${afterReplay?.onHand}`,
+    },
+    {
+      name: "remediation:new-key-after-complete-rejected",
+      ok: newKey === INVENTORY_ERROR_CODES.RESERVATION_NOT_FULFILLABLE,
+      detail: newKey ?? undefined,
+    },
+    {
+      name: "remediation:cross-business-fulfil-replay-fails-closed",
+      ok: cross === INVENTORY_ERROR_CODES.RESERVATION_NOT_FOUND,
+      detail: cross ?? undefined,
+    },
+    {
+      name: "remediation:concurrent-duplicate-fulfilment-single-effect",
+      ok: concurrentOk.length === 2 && concurrentDeductions.length === 1,
+      detail: `ok=${concurrentOk.length} movements=${concurrentDeductions.length}`,
     },
   ];
 }

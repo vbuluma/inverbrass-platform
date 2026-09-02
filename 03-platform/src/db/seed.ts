@@ -59,6 +59,7 @@ import { seedStockItemTypes } from "@/db/seeds/stock-item-types-seed";
 import { seedInventoryLocationTypes } from "@/db/seeds/inventory-location-types-seed";
 import { seedInventoryOperationControls } from "@/db/seeds/inventory-operation-controls-seed";
 import { seedInventoryOpsIncidentTypes } from "@/db/seeds/inventory-ops-incident-types-seed";
+import { seedProcurementCatalogues } from "@/db/seeds/procurement-catalogues-seed";
 
 async function runSeed() {
   const connectionString = process.env.DATABASE_URL;
@@ -342,6 +343,18 @@ async function runSeed() {
     const incidentTypeResults = await seedInventoryOpsIncidentTypes(db);
     console.log(
       `inventoryOpsIncidentTypes: inserted=${incidentTypeResults.inserted}, updated=${incidentTypeResults.updated}, skipped=${incidentTypeResults.skipped}`
+    );
+
+    console.log("Seeding procurement catalogues...");
+    const procurementResults = await seedProcurementCatalogues(db);
+    console.log(
+      `procurementCategories: inserted=${procurementResults.categories.inserted}, updated=${procurementResults.categories.updated}, skipped=${procurementResults.categories.skipped}`
+    );
+    console.log(
+      `procurementCapabilities: inserted=${procurementResults.capabilities.inserted}, updated=${procurementResults.capabilities.updated}, skipped=${procurementResults.capabilities.skipped}`
+    );
+    console.log(
+      `procurementStatuses: inserted=${procurementResults.statuses.inserted}, updated=${procurementResults.statuses.updated}, skipped=${procurementResults.statuses.skipped}`
     );
 
     console.log("✅ Seed completed.");

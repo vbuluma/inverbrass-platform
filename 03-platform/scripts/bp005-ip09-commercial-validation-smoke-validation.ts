@@ -222,13 +222,25 @@ function checkUxStructuredErrors(): SmokeResult {
     ),
     "utf8"
   );
+  const errors = readFileSync(
+    path.join(ROOT, "src/modules/commercial/errors.ts"),
+    "utf8"
+  );
+  const rules = readFileSync(
+    path.join(
+      ROOT,
+      "src/modules/commercial/services/commercial-validation-rules.ts"
+    ),
+    "utf8"
+  );
   return {
     name: "UX:structured-error-feedback",
     ok:
       workspace.includes("actionableHint") &&
-      workspace.includes("No commercial payable was produced") &&
       actions.includes("toStructuredCommercialError") &&
-      actions.includes("payableProduced"),
+      actions.includes("payableProduced") &&
+      (errors.includes("no payable was produced") ||
+        rules.includes("No payable was produced.")),
   };
 }
 

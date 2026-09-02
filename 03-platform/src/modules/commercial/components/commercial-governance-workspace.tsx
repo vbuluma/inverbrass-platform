@@ -42,12 +42,12 @@ import {
   type CommercialStepDefinition,
   type CommercialStepStatus,
 } from "@/modules/commercial/components/commercial-resolution-stepper";
-import {
-  COMMERCIAL_RULE_TYPE_CODES,
-  type CommercialGovernanceEventView,
-  type CommercialGovernanceWorkspaceView,
-  type CommercialRuleVersionView,
-} from "@/modules/commercial";
+import { COMMERCIAL_RULE_TYPE_CODES } from "@/modules/commercial/constants";
+import type {
+  CommercialGovernanceEventView,
+  CommercialGovernanceWorkspaceView,
+  CommercialRuleVersionView,
+} from "@/modules/commercial/types";
 
 type GovernanceStepId = "base-price" | "components" | "tax" | "review";
 
@@ -291,10 +291,11 @@ export function CommercialGovernanceWorkspace() {
       <SetBreadcrumbs
         items={[
           { label: "Dashboard", href: "/dashboard" },
+          { label: "Settings", href: "/settings" },
           { label: "Commercial rules" },
         ]}
       />
-      <PageBackLink href="/dashboard" label="Back to dashboard" />
+      <PageBackLink href="/settings" label="Back to Settings" />
 
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">

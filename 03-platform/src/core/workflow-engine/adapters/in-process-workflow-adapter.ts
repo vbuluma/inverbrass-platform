@@ -13,6 +13,7 @@ import { WORKFLOW_OPERATIONS } from "@/core/workflow-engine/constants";
 import type {
   EvaluateExceptionResolutionInput,
   EvaluateOperationApprovalInput,
+  EvaluatePurchaseRequestApprovalInput,
   EvaluateRefundApprovalInput,
   RefundApprovalDecision,
 } from "@/core/workflow-engine/types";
@@ -58,6 +59,19 @@ export class InProcessWorkflowAdapter implements WorkflowEnginePort {
       required,
       operation: input.operationCode,
     };
+  }
+
+  async evaluatePurchaseRequestApproval(
+    input: EvaluatePurchaseRequestApprovalInput
+  ): Promise<RefundApprovalDecision> {
+    void input.amount;
+    void input.currencyCode;
+    void input.categoryCode;
+    void input.procurementType;
+    return this.evaluateOperationApproval({
+      businessId: input.businessId,
+      operationCode: input.operationCode || WORKFLOW_OPERATIONS.PURCHASE_REQUEST_APPROVAL,
+    });
   }
 
   assertDistinctActors(requesterId: string, approverId: string, message?: string): void {

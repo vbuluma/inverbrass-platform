@@ -76,7 +76,7 @@ export function CrmGovernanceDashboard({ data: initial }: Props) {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6">
       <div className="space-y-3">
-        <PageBackLink href="/crm/cases" label="Back to CRM" />
+        <PageBackLink href="/settings" label="Back to Settings" />
         <div className="flex items-center gap-3">
           <span className="flex size-11 items-center justify-center rounded-lg bg-sky-50 text-sky-800 ring-1 ring-sky-200">
             <ShieldCheckIcon className="size-5" aria-hidden />
@@ -86,8 +86,7 @@ export function CrmGovernanceDashboard({ data: initial }: Props) {
               CRM Governance
             </h1>
             <p className="text-sm text-muted-foreground">
-              Ownership, readiness, duplicates, and SLA administration. Keyed by
-              party until IP-01 adds crm_record_id.
+              Ownership, readiness, duplicates, and SLA administration.
             </p>
           </div>
         </div>

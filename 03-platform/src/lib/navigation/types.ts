@@ -5,6 +5,7 @@
  * Architecture Dependency:
  * AD-009 Authentication & Business Onboarding
  * 06-UI-Standards.md §4 — Global Navigation & Session Management
+ * NAV-001 — Hub-first information architecture
  */
 
 import type { LucideIcon } from "lucide-react";
@@ -23,6 +24,12 @@ export type PlatformNavItem = {
   placeholder?: boolean;
   /** Optional badge for future notifications/counts. */
   badge?: string;
+  /** Nested capabilities under this hub or group. */
+  children?: PlatformNavItem[];
+  /** Utility/shortcut item — not a business hub. */
+  utility?: boolean;
+  /** Shown in the mobile primary (bottom) bar. */
+  mobilePrimary?: boolean;
 };
 
 export type PlatformChromeMode = "platform" | "business-app";

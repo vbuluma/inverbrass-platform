@@ -8,18 +8,12 @@
  * BP-003 / IP-008 – Product Lifecycle Management
  */
 
+import { requireProductChannelContext as requireContext } from "@/core/channel-experience/helpers/domain-channel-entry";
 import { revalidatePath } from "next/cache";
 
 import type { AuthActionResult } from "@/core/auth/actions/auth-actions";
 import { AuthError } from "@/core/auth/errors";
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
-import {
-  platformError,
-  platformSuccess,
-} from "@/core/platform/platform-action-helpers";
-import type { PlatformActionResult } from "@/core/platform/types";
 import { ProductError } from "@/modules/product/errors";
 import { createProductLifecycleService } from "@/modules/product/services/product-lifecycle-service";
 import type {
@@ -28,30 +22,7 @@ import type {
   ScheduleLifecycleActionPayload,
   SetReplacementProductPayload,
 } from "@/modules/product/types";
-
-async function requireContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-  if (!user) {
-    throw new ProductError(
-      "SESSION_REQUIRED",
-      "Your session has expired. Please sign in again.",
-      401
-    );
-  }
-
-  const businessContextService = createBusinessContextService();
-  const context = await businessContextService.getCurrentContext();
-  if (!context) {
-    throw new ProductError(
-      "BUSINESS_CONTEXT_REQUIRED",
-      "Select a business before managing products.",
-      403
-    );
-  }
-
-  return context;
-}
+
 
 function toActionError(error: unknown): AuthActionResult<never> {
   if (isNextRedirectError(error)) {
@@ -81,22 +52,6 @@ function toActionError(error: unknown): AuthActionResult<never> {
         error instanceof Error ? error.message : "An unexpected error occurred.",
     },
   };
-}
-
-function toPlatformError(error: unknown): PlatformActionResult<never> {
-  if (isNextRedirectError(error)) {
-    throw error;
-  }
-  if (error instanceof ProductError) {
-    return platformError(error.message, error.message, error.field);
-  }
-  if (error instanceof AuthError) {
-    return platformError(error.message, error.message);
-  }
-  return platformError(
-    "Unexpected error",
-    error instanceof Error ? error.message : "An unexpected error occurred."
-  );
 }
 
 function revalidateProductPaths(productId: string) {

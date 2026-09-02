@@ -225,6 +225,13 @@ export class PaymentInitiationService {
     command: InitiatePaymentCommand
   ): Promise<PaymentInitiationResult> {
     this.assertContext(context);
+    const explicitKey = command.idempotencyKey?.trim();
+    if (explicitKey) {
+      const replay = await this.findExistingInitiation(context, explicitKey);
+      if (replay) {
+        return replay;
+      }
+    }
     const obligation = await this.requireEligibleObligation(context, command.obligationId);
     const amount = (command.amount?.trim() || obligation.outstandingAmount).trim();
     const currency = (command.currency?.trim() || obligation.currencyCode).trim().toUpperCase();
@@ -1003,6 +1010,22 @@ export class PaymentInitiationService {
       );
     }
     return byRef;
+  }
+
+  private async findExistingInitiation(
+    context: CurrentBusinessContext,
+    rawKey: string
+  ): Promise<PaymentInitiationResult | null> {
+    const idempotencyKey = rawKey.slice(0, 180);
+    const existing = await this.deps.transactions.findByIdempotencyKey(
+      context.businessId,
+      idempotencyKey
+    );
+    if (!existing) {
+      return null;
+    }
+    const obligation = await this.requireObligation(context, existing.obligationId);
+    return this.toResult(existing, obligation);
   }
 
   private async requireEligibleObligation(

@@ -46,7 +46,6 @@ import { documentType } from "@/db/schema/document-type";
 import { platformUser } from "@/db/schema/platform-user";
 import { mapOfferingDocumentsToEvidence } from "@/modules/product/adapters/offering-document-evidence-adapter";
 import {
-  OFFERING_DOCUMENT_ALLOWED_MIME_TYPES,
   OFFERING_DOCUMENT_MAX_SIZE_BYTES,
   OFFERING_DOCUMENT_STATUS_CODES,
   OFFERING_DOCUMENT_STORAGE_BUCKET,
