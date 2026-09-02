@@ -8,13 +8,9 @@
 import { revalidatePath } from "next/cache";
 
 import { AuthError } from "@/core/auth/errors";
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
-import {
-  ALL_PROCUREMENT_PERMISSIONS,
-  ProcurementError,
-} from "@/modules/procurement";
+import { ProcurementError } from "@/modules/procurement";
+import { requireProcurementChannelContext } from "@/modules/procurement/helpers/procurement-channel-context";
 import { createSourcingService } from "@/modules/procurement/services/sourcing-service";
 import type {
   OpenBidsCommand,
@@ -27,7 +23,6 @@ import type {
   EvaluationWorkspaceView,
   ExtendTenderCommand,
   InviteSupplierCommand,
-  ProcurementActor,
   RecordDueDiligenceCommand,
   SetupEvaluationCommitteeCommand,
   SourcingEventListFilter,
@@ -45,24 +40,6 @@ export type SourcingActionError = {
 export type SourcingActionResult<T> =
   | { success: true; data: T }
   | { success: false; error: SourcingActionError };
-
-async function requireContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-  if (!user) {
-    throw new ProcurementError("SESSION_REQUIRED", undefined, 401);
-  }
-  const businessContextService = createBusinessContextService();
-  const context = await businessContextService.getCurrentContext();
-  if (!context) {
-    throw new ProcurementError("BUSINESS_CONTEXT_REQUIRED", undefined, 403);
-  }
-  const actor: ProcurementActor = {
-    userId: user.platformUserId,
-    permissions: ALL_PROCUREMENT_PERMISSIONS,
-  };
-  return { context, actor };
-}
 
 function toActionError(error: unknown): SourcingActionResult<never> {
   if (isNextRedirectError(error)) {
@@ -107,7 +84,7 @@ export async function listSourcingEventsAction(
   filter: SourcingEventListFilter = {}
 ): Promise<SourcingActionResult<SourcingEventListView[]>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createSourcingService().list(context, actor, filter);
     return { success: true, data };
   } catch (error) {
@@ -119,7 +96,7 @@ export async function getEvaluationAction(
   eventId: string
 ): Promise<SourcingActionResult<EvaluationWorkspaceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createSourcingService().getEvaluation(context, actor, eventId);
     return { success: true, data };
   } catch (error) {
@@ -131,7 +108,7 @@ export async function createSourcingEventAction(
   input: CreateSourcingEventCommand
 ): Promise<SourcingActionResult<EvaluationWorkspaceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createSourcingService().create(context, actor, input);
     revalidateSourcing(data.id);
     return { success: true, data };
@@ -145,7 +122,7 @@ export async function inviteSupplierAction(
   input: InviteSupplierCommand
 ): Promise<SourcingActionResult<EvaluationWorkspaceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createSourcingService().inviteSupplier(context, actor, eventId, input);
     revalidateSourcing(data.id);
     return { success: true, data };
@@ -159,7 +136,7 @@ export async function recordSupplierQuoteAction(
   input: SubmitQuoteCommand
 ): Promise<SourcingActionResult<EvaluationWorkspaceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createSourcingService().submitQuote(context, actor, eventId, input);
     revalidateSourcing(data.id);
     return { success: true, data };
@@ -173,7 +150,7 @@ export async function withdrawSupplierQuoteAction(
   profileId: string
 ): Promise<SourcingActionResult<EvaluationWorkspaceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createSourcingService().withdrawQuote(context, actor, eventId, profileId);
     revalidateSourcing(data.id);
     return { success: true, data };
@@ -187,7 +164,7 @@ export async function askClarificationAction(
   input: AskClarificationCommand
 ): Promise<SourcingActionResult<EvaluationWorkspaceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createSourcingService().askClarification(context, actor, eventId, input);
     revalidateSourcing(data.id);
     return { success: true, data };
@@ -201,7 +178,7 @@ export async function answerClarificationAction(
   input: AnswerClarificationCommand
 ): Promise<SourcingActionResult<EvaluationWorkspaceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createSourcingService().answerClarification(context, actor, eventId, input);
     revalidateSourcing(data.id);
     return { success: true, data };
@@ -215,7 +192,7 @@ export async function awardSourcingAction(
   input: AwardSourcingCommand
 ): Promise<SourcingActionResult<EvaluationWorkspaceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createSourcingService().awardSuppliers(context, actor, eventId, input);
     revalidateSourcing(data.id);
     return { success: true, data };
@@ -229,7 +206,7 @@ export async function extendTenderAction(
   input: ExtendTenderCommand
 ): Promise<SourcingActionResult<EvaluationWorkspaceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createSourcingService().extendTender(context, actor, eventId, input);
     revalidateSourcing(data.id);
     return { success: true, data };
@@ -242,7 +219,7 @@ export async function closeTenderAction(
   eventId: string
 ): Promise<SourcingActionResult<EvaluationWorkspaceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createSourcingService().closeTender(context, actor, eventId);
     revalidateSourcing(data.id);
     return { success: true, data };
@@ -256,7 +233,7 @@ export async function setupEvaluationCommitteeAction(
   input: SetupEvaluationCommitteeCommand
 ): Promise<SourcingActionResult<EvaluationWorkspaceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createSourcingService().setupEvaluationCommittee(
       context,
       actor,
@@ -275,7 +252,7 @@ export async function configureEvaluationCriteriaAction(
   input: ConfigureEvaluationCriteriaCommand
 ): Promise<SourcingActionResult<EvaluationWorkspaceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createSourcingService().configureEvaluationCriteria(
       context,
       actor,
@@ -293,7 +270,7 @@ export async function lockEvaluationCriteriaAction(
   eventId: string
 ): Promise<SourcingActionResult<EvaluationWorkspaceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createSourcingService().lockEvaluationCriteria(context, actor, eventId);
     revalidateSourcing(data.id);
     return { success: true, data };
@@ -307,7 +284,7 @@ export async function approveAwardAction(
   input: { approvedBy?: string | null } = {}
 ): Promise<SourcingActionResult<EvaluationWorkspaceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createSourcingService().approveAward(context, actor, eventId, input);
     revalidateSourcing(data.id);
     return { success: true, data };
@@ -320,7 +297,7 @@ export async function startEvaluationAction(
   eventId: string
 ): Promise<SourcingActionResult<EvaluationWorkspaceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createSourcingService().startEvaluation(context, actor, eventId);
     revalidateSourcing(data.id);
     return { success: true, data };
@@ -334,7 +311,7 @@ export async function recordDueDiligenceAction(
   input: RecordDueDiligenceCommand
 ): Promise<SourcingActionResult<EvaluationWorkspaceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createSourcingService().recordDueDiligence(
       context,
       actor,
@@ -353,7 +330,7 @@ export async function openBidsAction(
   input: OpenBidsCommand = {}
 ): Promise<SourcingActionResult<EvaluationWorkspaceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createSourcingService().openBids(context, actor, eventId, input);
     revalidateSourcing(data.id);
     return { success: true, data };
@@ -367,7 +344,7 @@ export async function recordPhaseScoresAction(
   input: RecordPhaseScoresCommand
 ): Promise<SourcingActionResult<EvaluationWorkspaceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createSourcingService().recordPhaseScores(
       context,
       actor,

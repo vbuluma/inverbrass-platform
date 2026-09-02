@@ -8,11 +8,10 @@
  * BP-007 / IP-04 – Billing, Invoicing & Credit Sales
  */
 
+import { requirePaymentChannelContext as requireInvoiceContext } from "@/core/channel-experience/helpers/domain-channel-entry";
 import { revalidatePath } from "next/cache";
 
 import { AuthError } from "@/core/auth/errors";
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 import { PaymentObligationError } from "@/modules/payments/errors";
 import { createPaymentInvoiceService } from "@/modules/payments/services/payment-invoice-service";
@@ -29,20 +28,7 @@ export type InvoiceActionResult<T> =
       success: false;
       error: { code: string; message: string; field?: string; entity?: string };
     };
-
-async function requireInvoiceContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-  if (!user) {
-    throw new PaymentObligationError("SESSION_REQUIRED", undefined, 401);
-  }
-  const businessContextService = createBusinessContextService();
-  const context = await businessContextService.getCurrentContext();
-  if (!context) {
-    throw new PaymentObligationError("BUSINESS_CONTEXT_REQUIRED", undefined, 403);
-  }
-  return context;
-}
+
 
 function toActionError(error: unknown): InvoiceActionResult<never> {
   if (isNextRedirectError(error)) {

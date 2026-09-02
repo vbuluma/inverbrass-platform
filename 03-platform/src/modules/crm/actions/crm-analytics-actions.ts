@@ -8,10 +8,9 @@
  * BP-004 / IP-12 – CRM Analytics & Dashboards
  */
 
+import { requireCrmChannelContext as requireCrmContext } from "@/core/channel-experience/helpers/domain-channel-entry";
 import type { AuthActionResult } from "@/core/auth/actions/auth-actions";
 import { AuthError } from "@/core/auth/errors";
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 import { createCrmAnalyticsService } from "@/modules/crm/analytics/services/crm-analytics-service";
 import type {
@@ -21,26 +20,7 @@ import type {
   CrmCustomerAnalyticsView,
 } from "@/modules/crm/analytics/types";
 import { CrmError } from "@/modules/crm/errors";
-
-async function requireCrmContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-  if (!user) {
-    throw new CrmError("SESSION_REQUIRED", "Your session has expired. Please sign in again.", 401);
-  }
-
-  const businessContextService = createBusinessContextService();
-  const context = await businessContextService.getCurrentContext();
-  if (!context) {
-    throw new CrmError(
-      "BUSINESS_CONTEXT_REQUIRED",
-      "Select a business to continue.",
-      403
-    );
-  }
-
-  return context;
-}
+
 
 function isNextDynamicServerError(error: unknown): boolean {
   return (

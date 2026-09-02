@@ -1,11 +1,10 @@
 "use server";
 
+import { requireCrmChannelContext as requireCaseContext } from "@/core/channel-experience/helpers/domain-channel-entry";
 import { revalidatePath } from "next/cache";
 
 import type { AuthActionResult } from "@/core/auth/actions/auth-actions";
 import { AuthError } from "@/core/auth/errors";
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 import {
   platformError,
@@ -34,27 +33,7 @@ import type {
 export type CrmCaseActionResult<T> = AuthActionResult<T> & {
   platform?: PlatformActionResult<T>;
 };
-
-async function requireCaseContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-  if (!user) {
-    throw new CrmCaseError(
-      "SESSION_REQUIRED",
-      CRM_CASE_USER_MESSAGES.SESSION_REQUIRED,
-      401
-    );
-  }
-  const context = await createBusinessContextService().getCurrentContext();
-  if (!context) {
-    throw new CrmCaseError(
-      "BUSINESS_CONTEXT_REQUIRED",
-      CRM_CASE_USER_MESSAGES.BUSINESS_CONTEXT_REQUIRED,
-      403
-    );
-  }
-  return context;
-}
+
 
 function mapCaseError(error: unknown): AuthActionResult<never> {
   if (error instanceof CrmCaseError) {

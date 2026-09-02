@@ -212,6 +212,7 @@ Same engines underneath. Different experience above the Industry Edition boundar
 | **ENG-003l** | Checklist & Completion Engine | Provides metadata-driven operational checklists that guide users through business processes, enforce mandatory steps, calculate completion, and prevent progression when required items are incomplete. | Checklist definitions, checklist instances, mandatory and optional items, sequence, blocking and warning rules, auto-complete rules, completion expressions, progress calculation, submission gates, manual completion, event-driven item completion. |
 | **ENG-003m** | Portfolio & Roadmap Engine | Provides structured planning and controlled evolution of portfolio subjects across the platform. | Roadmap items, releases, milestones, implementation progress, release history, retirement plans, timeline views — offerings, services, programmes, projects, regulatory initiatives, strategic initiatives. |
 | **ENG-003n** | Work Assignment & SLA Engine | Tracks ownership, assignment history, and time-based SLA across platform work items. | Assignment tracking, immutable assignment history, per-assignee SLA segments, cumulative lifecycle SLA, active/waiting/paused time, breach detection, queue metrics, SLA policy configuration by entity type. |
+| **ENG-003o** | Channel & Experience Engine | Provides the channel-neutral boundary through which users access business capabilities. | Channel adapters, gateway, capability registry, channel→capability policy, identity resolution, session/context, intent→capability orchestration, Web/App/Staff presentation adapters; future conversational adapters. |
 | **ENG-004** | Rules Engine | Executes deterministic business rules. | Eligibility rules, validations, calculations, decision tables, configurable rule execution, business policies, rule versioning. |
 | **ENG-005** | Workflow Engine | Orchestrates business processes requiring approvals or multiple steps. | Maker-checker, approvals, escalations, routing, SLA monitoring, workflow history, task assignment, decision points. |
 | **ENG-006** | Payment Engine | Processes all incoming and outgoing financial transactions. | Cash, mobile money, bank transfers, cards, split payments, partial payments, refunds, credits, payment gateways. |
@@ -643,6 +644,57 @@ ENG-013 Audit Engine → assignment history immutability
 **Implementation location:** `03-platform/src/core/work-assignment-sla/` (planned)
 
 **BP-004 consumption pattern:** CRM modules call ENG-003n on every ownership change per IP-01 contract. No `lead_assignment_history` or module-local SLA tables in CRM.
+
+### ENG-003o — Channel & Experience Engine
+
+**Purpose**
+
+Provides the **channel-neutral boundary** through which users access business capabilities. Web, App, Staff, and future Conversational interfaces are **channels** — not separate business systems. Domain Build Packs remain the system of record.
+
+> **Authoritative principle:** InverBrass is the business operating platform. Channels do not own business logic.
+
+**Core responsibilities**
+
+1. **Channel adapters** — Web (reference), App, Staff, API, future WhatsApp/Messenger/Instagram
+2. **Channel Gateway** — tenant resolution → identity → authentication → authorization → capability → domain contract
+3. **Capability registry** — canonical business actions/queries with owning domain, permissions, and audit requirements
+4. **Channel → Capability policy** — per-channel enablement separate from domain logic
+5. **Identity resolution** — channel identity → Party/Staff → Tenant → roles/permissions
+6. **Session/context foundation** — session ID, correlation ID, tenant, actor, channel (no full conversational engine in v1)
+7. **Intent → Capability model** — contract for future NL/conversational channels; intents never mutate domain state directly
+
+**Implementation location:** `03-platform/src/core/channel-experience/`
+
+**Web-first reference path**
+
+```
+Web UI → Web Channel Adapter → Channel Gateway → Capability → Domain Service
+```
+
+BP-009 procurement server actions and pages use the Web adapter as the first migrated domain entry point.
+
+**Explicit non-ownership**
+
+- Sales, payment, inventory, procurement lifecycle rules — remain in owning BPs
+- CRM `crm_communication_channel` — interaction metadata, not experience channel gateway
+- Product `catalogue_channel` — distribution dimension, not user experience channel
+- Payment `payment_channel` — payment rail catalogue (ENG-006), not experience channel
+
+**IP boundaries (frozen scope)**
+
+| IP | Scope |
+|----|-------|
+| IP-01 | Channel Adapter Contract & Gateway |
+| IP-02 | Capability Registry & Channel Policy |
+| IP-03 | Channel Identity Resolution |
+| IP-04 | Session / Context / Cross-Channel Context |
+| IP-05 | Intent → Capability → Domain Orchestration |
+| IP-06 | Human Escalation & Channel Handoff |
+| IP-07 | Conversational Channel Adapter (future WhatsApp/social) |
+| IP-08 | Web/App/Staff Presentation Adapters |
+| IP-09 | Certification, Channel Contract Tests & Regression |
+
+See [15 – ENG-003o Channel & Experience Engine](./15-ENG-003o-Channel-Experience-Engine.md) for full specification.
 
 
 |                                         |                                                                                                                                                                                                                                                                                                                                                                    |

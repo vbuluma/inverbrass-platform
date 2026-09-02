@@ -4,7 +4,8 @@ import { InvoiceWorkspace } from "@/modules/procurement/components/invoice-works
 import { createInvoiceService } from "@/modules/procurement/services/invoice-service";
 import { createAuthService } from "@/core/auth/services/auth-service";
 import { createBusinessContextService } from "@/core/auth/services/business-context-service";
-import { ALL_PROCUREMENT_PERMISSIONS } from "@/modules/procurement/constants";
+import { resolveProcurementActor } from "@/modules/procurement/helpers/procurement-channel-context";
+import type { InvoiceView } from "@/modules/procurement/types";
 
 type InvoicePageProps = {
   params: Promise<{ invoiceId: string }>;
@@ -19,13 +20,17 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
   if (!user || !context) {
     notFound();
   }
+
+  let invoice: InvoiceView;
   try {
-    const invoice = await createInvoiceService().get(context, {
-      userId: user.platformUserId,
-      permissions: ALL_PROCUREMENT_PERMISSIONS,
-    }, invoiceId);
-    return <InvoiceWorkspace invoice={invoice} />;
+    invoice = await createInvoiceService().get(
+      context,
+      await resolveProcurementActor(context),
+      invoiceId
+    );
   } catch {
     notFound();
   }
+
+  return <InvoiceWorkspace invoice={invoice} />;
 }

@@ -4,7 +4,9 @@ import { ExceptionWorkspace } from "@/modules/procurement/components/exception-w
 import { createExceptionService } from "@/modules/procurement/services/exception-service";
 import { createAuthService } from "@/core/auth/services/auth-service";
 import { createBusinessContextService } from "@/core/auth/services/business-context-service";
-import { ALL_PROCUREMENT_PERMISSIONS, ProcurementError } from "@/modules/procurement";
+import { ProcurementError } from "@/modules/procurement";
+import { resolveProcurementActor } from "@/modules/procurement/helpers/procurement-channel-context";
+import type { ExceptionView } from "@/modules/procurement/types";
 
 type ExceptionDetailPageProps = {
   params: Promise<{ exceptionId: string }>;
@@ -19,16 +21,20 @@ export default async function ExceptionDetailPage({ params }: ExceptionDetailPag
   if (!user || !context) {
     notFound();
   }
+
+  let exception: ExceptionView;
   try {
-    const exception = await createExceptionService().get(context, {
-      userId: user.platformUserId,
-      permissions: ALL_PROCUREMENT_PERMISSIONS,
-    }, exceptionId);
-    return <ExceptionWorkspace exception={exception} currentUserId={user.platformUserId} />;
+    exception = await createExceptionService().get(
+      context,
+      await resolveProcurementActor(context),
+      exceptionId
+    );
   } catch (error) {
     if (error instanceof ProcurementError && error.code === "EXCEPTION_NOT_FOUND") {
       notFound();
     }
     throw error;
   }
+
+  return <ExceptionWorkspace exception={exception} currentUserId={user.platformUserId} />;
 }

@@ -7,10 +7,9 @@
 
 import { revalidatePath } from "next/cache";
 
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
-import { ALL_PROCUREMENT_PERMISSIONS, ProcurementError } from "@/modules/procurement";
+import { ProcurementError } from "@/modules/procurement";
+import { requireProcurementChannelContext } from "@/modules/procurement/helpers/procurement-channel-context";
 import { createPerformanceService } from "@/modules/procurement/services/performance-service";
 import type {
   GovernanceProposalRecord,
@@ -23,23 +22,6 @@ export type PerformanceActionError = { code: string; message: string; field?: st
 export type PerformanceActionResult<T> =
   | { success: true; data: T }
   | { success: false; error: PerformanceActionError };
-
-async function requireContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-  if (!user) {
-    throw new ProcurementError("SESSION_REQUIRED", undefined, 401);
-  }
-  const businessContextService = createBusinessContextService();
-  const context = await businessContextService.getCurrentContext();
-  if (!context) {
-    throw new ProcurementError("BUSINESS_CONTEXT_REQUIRED", undefined, 403);
-  }
-  return {
-    context,
-    actor: { userId: user.platformUserId, permissions: ALL_PROCUREMENT_PERMISSIONS },
-  };
-}
 
 function toError(error: unknown): PerformanceActionError {
   if (error instanceof ProcurementError) {
@@ -60,7 +42,7 @@ export async function getSupplierPerformanceAction(
   profileId: string
 ): Promise<PerformanceActionResult<SupplierProfilePerformanceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createPerformanceService().getProfilePerformance(context, actor, profileId);
     return { success: true, data };
   } catch (error) {
@@ -72,7 +54,7 @@ export async function refreshSupplierScorecardAction(
   profileId: string
 ): Promise<PerformanceActionResult<SupplierScorecardView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createPerformanceService().refreshScorecard(context, actor, profileId);
     revalidateProfile(profileId);
     return { success: true, data };
@@ -86,7 +68,7 @@ export async function proposeGovernanceAction(
   input: ProposeGovernanceCommand
 ): Promise<PerformanceActionResult<GovernanceProposalRecord>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createPerformanceService().proposeGovernance(context, actor, profileId, input);
     revalidateProfile(profileId);
     return { success: true, data };
@@ -100,7 +82,7 @@ export async function approveGovernanceAction(
   proposalId: string
 ): Promise<PerformanceActionResult<GovernanceProposalRecord>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createPerformanceService().approveGovernance(context, actor, proposalId);
     revalidateProfile(profileId);
     return { success: true, data };
@@ -115,7 +97,7 @@ export async function rejectGovernanceAction(
   reason?: string | null
 ): Promise<PerformanceActionResult<GovernanceProposalRecord>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createPerformanceService().rejectGovernance(context, actor, proposalId, reason);
     revalidateProfile(profileId);
     return { success: true, data };
@@ -129,7 +111,7 @@ export async function submitInternalEvaluationAction(
   input: import("@/modules/procurement/types").SubmitPerformanceEvaluationCommand
 ): Promise<PerformanceActionResult<import("@/modules/procurement/types").PerformanceEvaluationRecord>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createPerformanceService().submitInternalEvaluation(
       context,
       actor,
@@ -148,7 +130,7 @@ export async function submitSupplierSelfEvaluationAction(
   input: import("@/modules/procurement/types").SubmitPerformanceEvaluationCommand
 ): Promise<PerformanceActionResult<import("@/modules/procurement/types").PerformanceEvaluationRecord>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createPerformanceService().submitSupplierSelfEvaluation(
       context,
       actor,
@@ -167,7 +149,7 @@ export async function updatePerformanceControlAction(
   input: import("@/modules/procurement/types").UpdatePerformanceControlCommand
 ): Promise<PerformanceActionResult<import("@/modules/procurement/types").PerformanceControlRecord>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createPerformanceService().updatePerformanceControl(context, actor, input);
     revalidateProfile(profileId);
     return { success: true, data };
@@ -180,7 +162,7 @@ export async function rankSuppliersForInvitationAction(
   profileIds: string[]
 ): Promise<PerformanceActionResult<import("@/modules/procurement/types").SupplierPerformanceRanking[]>> {
   try {
-    const { context } = await requireContext();
+    const { context } = await requireProcurementChannelContext();
     const preferredByProfile = Object.fromEntries(profileIds.map((id) => [id, false]));
     const data = await createPerformanceService().rankSuppliers(
       context,

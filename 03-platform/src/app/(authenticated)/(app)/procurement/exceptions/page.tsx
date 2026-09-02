@@ -2,7 +2,7 @@ import { ExceptionList } from "@/modules/procurement/components/exception-list";
 import { createExceptionService } from "@/modules/procurement/services/exception-service";
 import { createAuthService } from "@/core/auth/services/auth-service";
 import { createBusinessContextService } from "@/core/auth/services/business-context-service";
-import { ALL_PROCUREMENT_PERMISSIONS } from "@/modules/procurement/constants";
+import { resolveProcurementActor } from "@/modules/procurement/helpers/procurement-channel-context";
 import type { ExceptionListFilter } from "@/modules/procurement/types";
 
 type ExceptionsPageProps = {
@@ -25,10 +25,11 @@ export default async function ExceptionsPage({ searchParams }: ExceptionsPagePro
   };
   const rows =
     user && context
-      ? await createExceptionService().list(context, {
-          userId: user.platformUserId,
-          permissions: ALL_PROCUREMENT_PERMISSIONS,
-        }, filter)
+      ? await createExceptionService().list(
+          context,
+          await resolveProcurementActor(context),
+          filter
+        )
       : [];
   return <ExceptionList initialRows={rows} filter={params.status} />;
 }

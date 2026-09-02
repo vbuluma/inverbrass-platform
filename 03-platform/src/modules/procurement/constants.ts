@@ -232,6 +232,7 @@ export const PROCUREMENT_PERMISSIONS = {
 export type ProcurementPermission =
   (typeof PROCUREMENT_PERMISSIONS)[keyof typeof PROCUREMENT_PERMISSIONS];
 
+/** @deprecated Smoke-test and certification scripts only — never use at runtime entry points. */
 export const ALL_PROCUREMENT_PERMISSIONS = Object.values(PROCUREMENT_PERMISSIONS);
 
 export const STATUS_CODES_REQUIRING_REASON: ProcurementStatusCode[] = [

@@ -5,14 +5,12 @@
  * Server actions for BP-005 / IP-08 Commercial Governance workspace.
  */
 
+import { requireCommercialGovernanceChannelContext } from "@/core/channel-experience/helpers/domain-channel-entry";
 import type { AuthActionResult } from "@/core/auth/actions/auth-actions";
 import { AuthError } from "@/core/auth/errors";
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 import {
   CommercialError,
-  COMMERCIAL_GOVERNANCE_PERMISSIONS,
   createCommercialGovernanceService,
   type CommercialGovernanceActor,
   type CommercialGovernanceWorkspaceView,
@@ -21,39 +19,6 @@ import {
   type UpsertCommercialGovernancePolicyInput,
 } from "@/modules/commercial";
 import { getProcessCommercialGovernanceStore } from "@/modules/commercial/services/commercial-governance-drizzle-store";
-
-async function requireContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-  if (!user) {
-    throw new CommercialError(
-      "INVALID_INPUT",
-      "Your session has expired. Please sign in again.",
-      401,
-      "session"
-    );
-  }
-  const businessContextService = createBusinessContextService();
-  const context = await businessContextService.getCurrentContext();
-  if (!context) {
-    throw new CommercialError(
-      "BUSINESS_CONTEXT_MISMATCH",
-      "Select a business before managing commercial governance.",
-      403,
-      "businessId"
-    );
-  }
-  return { context, user };
-}
-
-/** Workspace actors receive full governance permissions until RBAC runtime gate ships. */
-function actorFromUser(user: { platformUserId: string }): CommercialGovernanceActor {
-  return {
-    userId: user.platformUserId,
-    permissions: Object.values(COMMERCIAL_GOVERNANCE_PERMISSIONS),
-    roleCode: "OWNER",
-  };
-}
 
 function toActionError(error: unknown): AuthActionResult<never> {
   if (isNextRedirectError(error)) {
@@ -100,11 +65,19 @@ function service() {
   );
 }
 
+function governanceServiceActor(
+  actor: Awaited<
+    ReturnType<typeof requireCommercialGovernanceChannelContext>
+  >["actor"]
+): CommercialGovernanceActor {
+  return { ...actor, permissions: [...actor.permissions] };
+}
+
 export async function loadCommercialGovernanceWorkspaceAction(): Promise<
   AuthActionResult<CommercialGovernanceWorkspaceView>
 > {
   try {
-    const { context } = await requireContext();
+    const { context } = await requireCommercialGovernanceChannelContext();
     const data = service().getWorkspace(context);
     return { success: true, data };
   } catch (error) {
@@ -116,8 +89,8 @@ export async function upsertCommercialGovernancePolicyAction(
   input: UpsertCommercialGovernancePolicyInput
 ): Promise<AuthActionResult<CommercialGovernanceWorkspaceView>> {
   try {
-    const { context, user } = await requireContext();
-    service().upsertPolicy(context, actorFromUser(user), input);
+    const { context, actor } = await requireCommercialGovernanceChannelContext();
+    service().upsertPolicy(context, governanceServiceActor(actor), input);
     return { success: true, data: service().getWorkspace(context) };
   } catch (error) {
     return toActionError(error);
@@ -128,8 +101,8 @@ export async function createCommercialRuleDraftAction(
   input: CreateCommercialRuleDraftInput
 ): Promise<AuthActionResult<CommercialRuleVersionView>> {
   try {
-    const { context, user } = await requireContext();
-    const data = service().createDraft(context, actorFromUser(user), input);
+    const { context, actor } = await requireCommercialGovernanceChannelContext();
+    const data = service().createDraft(context, governanceServiceActor(actor), input);
     return { success: true, data };
   } catch (error) {
     return toActionError(error);
@@ -140,10 +113,10 @@ export async function submitCommercialRuleAction(
   ruleVersionId: string
 ): Promise<AuthActionResult<CommercialRuleVersionView>> {
   try {
-    const { context, user } = await requireContext();
+    const { context, actor } = await requireCommercialGovernanceChannelContext();
     const result = service().submitForApproval(
       context,
-      actorFromUser(user),
+      governanceServiceActor(actor),
       ruleVersionId
     );
     return { success: true, data: result.rule };
@@ -156,10 +129,10 @@ export async function approveCommercialRuleAction(
   ruleVersionId: string
 ): Promise<AuthActionResult<CommercialRuleVersionView>> {
   try {
-    const { context, user } = await requireContext();
+    const { context, actor } = await requireCommercialGovernanceChannelContext();
     const data = service().approve(
       context,
-      actorFromUser(user),
+      governanceServiceActor(actor),
       ruleVersionId
     );
     return { success: true, data };
@@ -173,10 +146,10 @@ export async function rejectCommercialRuleAction(
   reason: string
 ): Promise<AuthActionResult<CommercialRuleVersionView>> {
   try {
-    const { context, user } = await requireContext();
+    const { context, actor } = await requireCommercialGovernanceChannelContext();
     const data = service().reject(
       context,
-      actorFromUser(user),
+      governanceServiceActor(actor),
       ruleVersionId,
       reason
     );
@@ -190,10 +163,10 @@ export async function activateCommercialRuleAction(
   ruleVersionId: string
 ): Promise<AuthActionResult<CommercialRuleVersionView>> {
   try {
-    const { context, user } = await requireContext();
+    const { context, actor } = await requireCommercialGovernanceChannelContext();
     const data = service().activate(
       context,
-      actorFromUser(user),
+      governanceServiceActor(actor),
       ruleVersionId
     );
     return { success: true, data };
@@ -207,10 +180,10 @@ export async function suspendCommercialRuleAction(
   reason: string
 ): Promise<AuthActionResult<CommercialRuleVersionView>> {
   try {
-    const { context, user } = await requireContext();
+    const { context, actor } = await requireCommercialGovernanceChannelContext();
     const data = service().suspend(
       context,
-      actorFromUser(user),
+      governanceServiceActor(actor),
       ruleVersionId,
       reason
     );
@@ -230,7 +203,7 @@ export async function getCommercialRuleHistoryAction(
   >
 > {
   try {
-    const { context } = await requireContext();
+    const { context } = await requireCommercialGovernanceChannelContext();
     const data = service().getRuleHistory(context, ruleVersionId);
     return { success: true, data };
   } catch (error) {

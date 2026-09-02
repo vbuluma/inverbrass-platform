@@ -7,13 +7,9 @@
 
 import { revalidatePath } from "next/cache";
 
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
-import {
-  ALL_PROCUREMENT_PERMISSIONS,
-  ProcurementError,
-} from "@/modules/procurement";
+import { ProcurementError } from "@/modules/procurement";
+import { requireProcurementChannelContext } from "@/modules/procurement/helpers/procurement-channel-context";
 import { createExceptionService } from "@/modules/procurement/services/exception-service";
 import type {
   AssignExceptionCommand,
@@ -23,7 +19,6 @@ import type {
   ExceptionListView,
   ExceptionTypeRecord,
   ExceptionView,
-  ProcurementActor,
   ResolveExceptionCommand,
 } from "@/modules/procurement/types";
 
@@ -36,23 +31,6 @@ export type ExceptionActionError = {
 export type ExceptionActionResult<T> =
   | { success: true; data: T }
   | { success: false; error: ExceptionActionError };
-
-async function requireContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-  if (!user) {
-    throw new ProcurementError("SESSION_REQUIRED", undefined, 401);
-  }
-  const businessContextService = createBusinessContextService();
-  const context = await businessContextService.getCurrentContext();
-  if (!context) {
-    throw new ProcurementError("BUSINESS_CONTEXT_REQUIRED", undefined, 403);
-  }
-  return {
-    context,
-    actor: { userId: user.platformUserId, permissions: ALL_PROCUREMENT_PERMISSIONS },
-  };
-}
 
 function toError(error: unknown): ExceptionActionError {
   if (error instanceof ProcurementError) {
@@ -76,7 +54,7 @@ export async function listExceptionsAction(
   filter: ExceptionListFilter = {}
 ): Promise<ExceptionActionResult<ExceptionListView[]>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createExceptionService().list(context, actor, filter);
     return { success: true, data };
   } catch (error) {
@@ -88,7 +66,7 @@ export async function listExceptionTypesAction(): Promise<
   ExceptionActionResult<ExceptionTypeRecord[]>
 > {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createExceptionService().listTypes(context, actor);
     return { success: true, data };
   } catch (error) {
@@ -100,7 +78,7 @@ export async function getExceptionAction(
   exceptionId: string
 ): Promise<ExceptionActionResult<ExceptionView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createExceptionService().get(context, actor, exceptionId);
     return { success: true, data };
   } catch (error) {
@@ -112,7 +90,7 @@ export async function createExceptionAction(
   input: CreateExceptionCommand
 ): Promise<ExceptionActionResult<ExceptionView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createExceptionService().create(context, actor, input);
     revalidateExceptionPaths(data.id);
     return { success: true, data };
@@ -126,7 +104,7 @@ export async function assignExceptionAction(
   input: AssignExceptionCommand
 ): Promise<ExceptionActionResult<ExceptionView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createExceptionService().assign(context, actor, exceptionId, input);
     revalidateExceptionPaths(exceptionId);
     return { success: true, data };
@@ -139,7 +117,7 @@ export async function startExceptionAction(
   exceptionId: string
 ): Promise<ExceptionActionResult<ExceptionView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createExceptionService().startProgress(context, actor, exceptionId);
     revalidateExceptionPaths(exceptionId);
     return { success: true, data };
@@ -153,7 +131,7 @@ export async function resolveExceptionAction(
   input: ResolveExceptionCommand
 ): Promise<ExceptionActionResult<ExceptionView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createExceptionService().resolve(context, actor, exceptionId, input);
     revalidateExceptionPaths(exceptionId);
     return { success: true, data };
@@ -166,7 +144,7 @@ export async function approveExceptionAction(
   exceptionId: string
 ): Promise<ExceptionActionResult<ExceptionView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createExceptionService().approveClose(context, actor, exceptionId);
     revalidateExceptionPaths(exceptionId);
     return { success: true, data };
@@ -180,7 +158,7 @@ export async function cancelExceptionAction(
   input: ExceptionDecisionCommand
 ): Promise<ExceptionActionResult<ExceptionView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createExceptionService().cancel(context, actor, exceptionId, input);
     revalidateExceptionPaths(exceptionId);
     return { success: true, data };

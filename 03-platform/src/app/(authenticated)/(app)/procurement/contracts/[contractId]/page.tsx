@@ -2,9 +2,10 @@ import { notFound } from "next/navigation";
 
 import { createAuthService } from "@/core/auth/services/auth-service";
 import { createBusinessContextService } from "@/core/auth/services/business-context-service";
-import { ALL_PROCUREMENT_PERMISSIONS } from "@/modules/procurement/constants";
 import { ContractWorkspace } from "@/modules/procurement/components/contract-workspace";
+import { resolveProcurementActor } from "@/modules/procurement/helpers/procurement-channel-context";
 import { createContractService } from "@/modules/procurement/services/contract-service";
+import type { ContractView } from "@/modules/procurement/types";
 
 type ContractDetailPageProps = {
   params: Promise<{ contractId: string }>;
@@ -19,13 +20,17 @@ export default async function ContractDetailPage({ params }: ContractDetailPageP
   if (!user || !context) {
     notFound();
   }
+
+  let view: ContractView;
   try {
-    const view = await createContractService().get(context, {
-      userId: user.platformUserId,
-      permissions: ALL_PROCUREMENT_PERMISSIONS,
-    }, contractId);
-    return <ContractWorkspace initial={view} />;
+    view = await createContractService().get(
+      context,
+      await resolveProcurementActor(context),
+      contractId
+    );
   } catch {
     notFound();
   }
+
+  return <ContractWorkspace initial={view} />;
 }

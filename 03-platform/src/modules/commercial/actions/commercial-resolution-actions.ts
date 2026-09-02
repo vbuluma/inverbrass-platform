@@ -11,9 +11,8 @@
  * BP-005 / IP-07 – Expected commercial amount
  */
 
+import { requireCommercialChannelContext as requireCommercialContext } from "@/core/channel-experience/helpers/domain-channel-entry";
 import { AuthError } from "@/core/auth/errors";
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 import {
   CommercialError,
@@ -51,32 +50,7 @@ export type CommercialActionError = {
 export type CommercialActionResult<T> =
   | { success: true; data: T }
   | { success: false; error: CommercialActionError };
-
-async function requireCommercialContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-  if (!user) {
-    throw new CommercialError(
-      "INVALID_INPUT",
-      "Your session has expired. Please sign in again.",
-      401,
-      "session"
-    );
-  }
-
-  const businessContextService = createBusinessContextService();
-  const context = await businessContextService.getCurrentContext();
-  if (!context) {
-    throw new CommercialError(
-      "BUSINESS_CONTEXT_MISMATCH",
-      "Select a business before resolving commercial amounts.",
-      403,
-      "businessId"
-    );
-  }
-
-  return context;
-}
+
 
 function toActionError(error: unknown): CommercialActionResult<never> {
   if (isNextRedirectError(error)) {

@@ -8,13 +8,9 @@
 import { revalidatePath } from "next/cache";
 
 import { AuthError } from "@/core/auth/errors";
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
-import {
-  ALL_PROCUREMENT_PERMISSIONS,
-  ProcurementError,
-} from "@/modules/procurement";
+import { ProcurementError } from "@/modules/procurement";
+import { requireProcurementChannelContext } from "@/modules/procurement/helpers/procurement-channel-context";
 import { createProcurementFoundationService } from "@/modules/procurement/services/procurement-foundation-service";
 import { createPurchaseRequestService } from "@/modules/procurement/services/purchase-request-service";
 import { createExceptionService } from "@/modules/procurement/services/exception-service";
@@ -22,7 +18,6 @@ import type {
   ChangeProcurementStatusCommand,
   CreateProcurementProfileCommand,
   EligibilityView,
-  ProcurementActor,
   ProcurementCataloguesView,
   ProcurementDashboardView,
   ProcurementPartyRef,
@@ -43,24 +38,6 @@ export type ProcurementActionError = {
 export type ProcurementActionResult<T> =
   | { success: true; data: T }
   | { success: false; error: ProcurementActionError };
-
-async function requireProcurementContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-  if (!user) {
-    throw new ProcurementError("SESSION_REQUIRED", undefined, 401);
-  }
-  const businessContextService = createBusinessContextService();
-  const context = await businessContextService.getCurrentContext();
-  if (!context) {
-    throw new ProcurementError("BUSINESS_CONTEXT_REQUIRED", undefined, 403);
-  }
-  const actor: ProcurementActor = {
-    userId: user.platformUserId,
-    permissions: ALL_PROCUREMENT_PERMISSIONS,
-  };
-  return { context, actor };
-}
 
 function toActionError(error: unknown): ProcurementActionResult<never> {
   if (isNextRedirectError(error)) {
@@ -95,7 +72,9 @@ export async function getProcurementDashboardAction(): Promise<
   ProcurementActionResult<ProcurementDashboardView>
 > {
   try {
-    const { context, actor } = await requireProcurementContext();
+    const { context, actor } = await requireProcurementChannelContext(
+      "PROCUREMENT_DASHBOARD"
+    );
     const foundation = createProcurementFoundationService();
     const requests = createPurchaseRequestService();
     const exceptions = createExceptionService();
@@ -121,7 +100,7 @@ export async function getProcurementCataloguesAction(): Promise<
   ProcurementActionResult<ProcurementCataloguesView>
 > {
   try {
-    const { context, actor } = await requireProcurementContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createProcurementFoundationService().getCatalogues(context, actor);
     return { success: true, data };
   } catch (error) {
@@ -133,7 +112,7 @@ export async function searchProcurementPartiesAction(
   query: string
 ): Promise<ProcurementActionResult<ProcurementPartyRef[]>> {
   try {
-    const { context, actor } = await requireProcurementContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createProcurementFoundationService().searchParties(
       context,
       actor,
@@ -149,7 +128,7 @@ export async function listProcurementSuppliersAction(
   filter: SupplierListFilter = {}
 ): Promise<ProcurementActionResult<SupplierListView[]>> {
   try {
-    const { context, actor } = await requireProcurementContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createProcurementFoundationService().listSuppliers(
       context,
       actor,
@@ -165,7 +144,7 @@ export async function getProcurementSupplierAction(
   profileId: string
 ): Promise<ProcurementActionResult<SupplierProfileView>> {
   try {
-    const { context, actor } = await requireProcurementContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createProcurementFoundationService().getSupplier(
       context,
       actor,
@@ -181,7 +160,7 @@ export async function getProcurementSupplierByPartyAction(
   partyId: string
 ): Promise<ProcurementActionResult<SupplierProfileView | null>> {
   try {
-    const { context, actor } = await requireProcurementContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createProcurementFoundationService().getSupplierByParty(
       context,
       actor,
@@ -197,7 +176,7 @@ export async function createProcurementProfileAction(
   input: CreateProcurementProfileCommand
 ): Promise<ProcurementActionResult<SupplierProfileView>> {
   try {
-    const { context, actor } = await requireProcurementContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createProcurementFoundationService().createProfile(
       context,
       actor,
@@ -218,7 +197,7 @@ export async function updateProcurementProfileAction(
   input: UpdateProcurementProfileCommand
 ): Promise<ProcurementActionResult<SupplierProfileView>> {
   try {
-    const { context, actor } = await requireProcurementContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createProcurementFoundationService().updateProfile(
       context,
       actor,
@@ -237,7 +216,7 @@ export async function changeProcurementStatusAction(
   input: ChangeProcurementStatusCommand
 ): Promise<ProcurementActionResult<SupplierProfileView>> {
   try {
-    const { context, actor } = await requireProcurementContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createProcurementFoundationService().changeStatus(
       context,
       actor,
@@ -258,7 +237,7 @@ export async function setProcurementPreferredAction(
   input: SetPreferredCommand
 ): Promise<ProcurementActionResult<SupplierProfileView>> {
   try {
-    const { context, actor } = await requireProcurementContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createProcurementFoundationService().setPreferred(
       context,
       actor,
@@ -279,7 +258,7 @@ export async function recordProcurementQualificationAction(
   input: RecordQualificationCommand
 ): Promise<ProcurementActionResult<SupplierProfileView>> {
   try {
-    const { context, actor } = await requireProcurementContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createProcurementFoundationService().recordQualification(
       context,
       actor,
@@ -297,7 +276,7 @@ export async function checkSupplierEligibilityAction(
   supplierPartyId: string
 ): Promise<ProcurementActionResult<EligibilityView>> {
   try {
-    const { context, actor } = await requireProcurementContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createProcurementFoundationService().checkEligibility(
       context,
       actor,

@@ -5,14 +5,12 @@
  * Server actions for BP-005 IP-11 tax compliance workspace.
  */
 
+import { requireTaxComplianceChannelContext } from "@/core/channel-experience/helpers/domain-channel-entry";
 import type { AuthActionResult } from "@/core/auth/actions/auth-actions";
 import { AuthError } from "@/core/auth/errors";
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 import {
   CommercialError,
-  TAX_COMPLIANCE_PERMISSIONS,
   createTaxComplianceService,
   getProcessTaxComplianceStore,
   type TaxComplianceDashboardView,
@@ -24,36 +22,7 @@ import {
   type TaxRegistrationView,
   type TaxRemittanceView,
 } from "@/modules/commercial";
-
-async function requireContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-  if (!user) {
-    throw new CommercialError(
-      "INVALID_INPUT",
-      "Your session has expired. Please sign in again.",
-      401,
-      "session"
-    );
-  }
-  const businessContextService = createBusinessContextService();
-  const context = await businessContextService.getCurrentContext();
-  if (!context) {
-    throw new CommercialError(
-      "BUSINESS_CONTEXT_MISMATCH",
-      "Select a business before managing tax compliance.",
-      403,
-      "businessId"
-    );
-  }
-  return {
-    context,
-    actor: {
-      userId: user.platformUserId,
-      permissions: Object.values(TAX_COMPLIANCE_PERMISSIONS),
-    },
-  };
-}
+import type { TaxComplianceActor } from "@/modules/commercial/tax-compliance/tax-compliance-types";
 
 function toActionError(error: unknown): AuthActionResult<never> {
   if (isNextRedirectError(error)) throw error;
@@ -86,11 +55,17 @@ function service() {
   return createTaxComplianceService(getProcessTaxComplianceStore());
 }
 
+function taxComplianceServiceActor(
+  actor: Awaited<ReturnType<typeof requireTaxComplianceChannelContext>>["actor"]
+): TaxComplianceActor {
+  return { ...actor, permissions: [...actor.permissions] };
+}
+
 export async function loadTaxComplianceDashboardAction(): Promise<
   AuthActionResult<TaxComplianceDashboardView>
 > {
   try {
-    const { context } = await requireContext();
+    const { context } = await requireTaxComplianceChannelContext();
     return { success: true, data: service().getDashboard(context) };
   } catch (error) {
     return toActionError(error);
@@ -101,8 +76,8 @@ export async function createTaxComplianceProfileAction(input: {
   countryCode: string;
 }): Promise<AuthActionResult<TaxComplianceProfileView>> {
   try {
-    const { context, actor } = await requireContext();
-    const data = service().createProfile(context, actor, {
+    const { context, actor } = await requireTaxComplianceChannelContext();
+    const data = service().createProfile(context, taxComplianceServiceActor(actor), {
       countryCode: input.countryCode,
       seedJurisdictionTemplates: true,
     });
@@ -119,8 +94,8 @@ export async function addTaxRegistrationAction(input: {
   taxTypeCode?: string | null;
 }): Promise<AuthActionResult<TaxRegistrationView>> {
   try {
-    const { context, actor } = await requireContext();
-    const data = service().addRegistration(context, actor, input);
+    const { context, actor } = await requireTaxComplianceChannelContext();
+    const data = service().addRegistration(context, taxComplianceServiceActor(actor), input);
     return { success: true, data };
   } catch (error) {
     return toActionError(error);
@@ -132,8 +107,8 @@ export async function generateTaxCalendarPeriodAction(input: {
   asOf: string;
 }): Promise<AuthActionResult<TaxFilingPeriodView>> {
   try {
-    const { context, actor } = await requireContext();
-    const data = service().generateCalendarPeriod(context, actor, input);
+    const { context, actor } = await requireTaxComplianceChannelContext();
+    const data = service().generateCalendarPeriod(context, taxComplianceServiceActor(actor), input);
     return { success: true, data };
   } catch (error) {
     return toActionError(error);
@@ -152,8 +127,8 @@ export async function createTaxObligationFromSnapshotAction(input: {
   obligationDate: string;
 }): Promise<AuthActionResult<TaxObligationView>> {
   try {
-    const { context, actor } = await requireContext();
-    const data = service().createObligationFromSnapshot(context, actor, input);
+    const { context, actor } = await requireTaxComplianceChannelContext();
+    const data = service().createObligationFromSnapshot(context, taxComplianceServiceActor(actor), input);
     return { success: true, data };
   } catch (error) {
     return toActionError(error);
@@ -167,10 +142,10 @@ export async function transitionTaxFilingAction(input: {
   notes?: string | null;
 }): Promise<AuthActionResult<TaxFilingView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireTaxComplianceChannelContext();
     const data = service().transitionFiling(
       context,
-      actor,
+      taxComplianceServiceActor(actor),
       input.obligationId,
       input.toStatus,
       {
@@ -190,10 +165,10 @@ export async function recordTaxRemittanceAction(input: {
   paymentReference?: string | null;
 }): Promise<AuthActionResult<TaxRemittanceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireTaxComplianceChannelContext();
     const data = service().recordRemittance(
       context,
-      actor,
+      taxComplianceServiceActor(actor),
       input.obligationId,
       input.amountRemitted,
       { paymentReference: input.paymentReference }
@@ -211,8 +186,8 @@ export async function uploadTaxEvidenceAction(input: {
   description?: string | null;
 }): Promise<AuthActionResult<TaxEvidenceView>> {
   try {
-    const { context, actor } = await requireContext();
-    const data = service().uploadEvidence(context, actor, input);
+    const { context, actor } = await requireTaxComplianceChannelContext();
+    const data = service().uploadEvidence(context, taxComplianceServiceActor(actor), input);
     return { success: true, data };
   } catch (error) {
     return toActionError(error);

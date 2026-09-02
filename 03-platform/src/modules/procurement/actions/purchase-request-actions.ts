@@ -8,18 +8,13 @@
 import { revalidatePath } from "next/cache";
 
 import { AuthError } from "@/core/auth/errors";
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
-import {
-  ALL_PROCUREMENT_PERMISSIONS,
-  ProcurementError,
-} from "@/modules/procurement";
+import { ProcurementError } from "@/modules/procurement";
+import { requireProcurementChannelContext } from "@/modules/procurement/helpers/procurement-channel-context";
 import { createPurchaseRequestService } from "@/modules/procurement/services/purchase-request-service";
 import type {
   AttachPurchaseRequestDocumentCommand,
   CreatePurchaseRequestCommand,
-  ProcurementActor,
   PurchaseRequestDecisionCommand,
   PurchaseRequestListFilter,
   PurchaseRequestListView,
@@ -36,24 +31,6 @@ export type PurchaseRequestActionError = {
 export type PurchaseRequestActionResult<T> =
   | { success: true; data: T }
   | { success: false; error: PurchaseRequestActionError };
-
-async function requireContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-  if (!user) {
-    throw new ProcurementError("SESSION_REQUIRED", undefined, 401);
-  }
-  const businessContextService = createBusinessContextService();
-  const context = await businessContextService.getCurrentContext();
-  if (!context) {
-    throw new ProcurementError("BUSINESS_CONTEXT_REQUIRED", undefined, 403);
-  }
-  const actor: ProcurementActor = {
-    userId: user.platformUserId,
-    permissions: ALL_PROCUREMENT_PERMISSIONS,
-  };
-  return { context, actor };
-}
 
 function toActionError(error: unknown): PurchaseRequestActionResult<never> {
   if (isNextRedirectError(error)) {
@@ -96,7 +73,7 @@ export async function listPurchaseRequestsAction(
   filter: PurchaseRequestListFilter = {}
 ): Promise<PurchaseRequestActionResult<PurchaseRequestListView[]>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createPurchaseRequestService().list(context, actor, filter);
     return { success: true, data };
   } catch (error) {
@@ -108,7 +85,7 @@ export async function getPurchaseRequestAction(
   requestId: string
 ): Promise<PurchaseRequestActionResult<PurchaseRequestView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createPurchaseRequestService().get(context, actor, requestId);
     return { success: true, data };
   } catch (error) {
@@ -120,7 +97,7 @@ export async function createPurchaseRequestAction(
   input: CreatePurchaseRequestCommand
 ): Promise<PurchaseRequestActionResult<PurchaseRequestView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createPurchaseRequestService().create(context, actor, input);
     revalidateRequest(data.id);
     return { success: true, data };
@@ -134,7 +111,7 @@ export async function updatePurchaseRequestAction(
   input: UpdatePurchaseRequestCommand
 ): Promise<PurchaseRequestActionResult<PurchaseRequestView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createPurchaseRequestService().update(
       context,
       actor,
@@ -153,7 +130,7 @@ export async function attachPurchaseRequestDocumentAction(
   input: AttachPurchaseRequestDocumentCommand
 ): Promise<PurchaseRequestActionResult<PurchaseRequestView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createPurchaseRequestService().attachDocument(
       context,
       actor,
@@ -171,7 +148,7 @@ export async function submitPurchaseRequestAction(
   requestId: string
 ): Promise<PurchaseRequestActionResult<PurchaseRequestView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createPurchaseRequestService().submit(context, actor, requestId);
     revalidateRequest(requestId);
     return { success: true, data };
@@ -184,7 +161,7 @@ export async function approvePurchaseRequestAction(
   requestId: string
 ): Promise<PurchaseRequestActionResult<PurchaseRequestView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createPurchaseRequestService().approve(context, actor, requestId);
     revalidateRequest(requestId);
     return { success: true, data };
@@ -198,7 +175,7 @@ export async function rejectPurchaseRequestAction(
   input: PurchaseRequestDecisionCommand
 ): Promise<PurchaseRequestActionResult<PurchaseRequestView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createPurchaseRequestService().reject(
       context,
       actor,
@@ -217,7 +194,7 @@ export async function returnPurchaseRequestAction(
   input: PurchaseRequestDecisionCommand
 ): Promise<PurchaseRequestActionResult<PurchaseRequestView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createPurchaseRequestService().returnRequest(
       context,
       actor,
@@ -236,7 +213,7 @@ export async function cancelPurchaseRequestAction(
   input: PurchaseRequestDecisionCommand = {}
 ): Promise<PurchaseRequestActionResult<PurchaseRequestView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createPurchaseRequestService().cancel(
       context,
       actor,

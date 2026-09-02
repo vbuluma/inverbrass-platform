@@ -8,12 +8,11 @@
  * BP-004 / IP-04 – Customer & Contact Management
  */
 
+import { requireCrmChannelContext as requireAccountContext } from "@/core/channel-experience/helpers/domain-channel-entry";
 import { revalidatePath } from "next/cache";
 
 import type { AuthActionResult } from "@/core/auth/actions/auth-actions";
 import { AuthError } from "@/core/auth/errors";
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 import { AccountError } from "@/modules/crm/account/errors";
 import { createAccountService } from "@/modules/crm/account/services/account-service";
@@ -33,26 +32,7 @@ import { createPartyService } from "@/modules/party/services/party-service";
 import type { PartySearchResultView } from "@/modules/party/types";
 
 export type AccountActionResult<T> = AuthActionResult<T>;
-
-async function requireAccountContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-  if (!user) {
-    throw new AccountError(
-      "INVALID_INPUT",
-      "Your session has expired. Please sign in again.",
-      401
-    );
-  }
-
-  const businessContextService = createBusinessContextService();
-  const context = await businessContextService.getCurrentContext();
-  if (!context) {
-    throw new AccountError("INVALID_INPUT", "Select a business to continue.", 403);
-  }
-
-  return context;
-}
+
 
 function mapError(error: unknown): AccountActionResult<never> {
   if (isNextRedirectError(error)) throw error;

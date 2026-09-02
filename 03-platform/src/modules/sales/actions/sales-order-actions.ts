@@ -12,12 +12,11 @@
  * BP-006 / IP-05 – Downstream Handoff & Sales Workspace
  */
 
+import { requireSalesChannelContext as requireSalesContext } from "@/core/channel-experience/helpers/domain-channel-entry";
 import { revalidatePath } from "next/cache";
 
 import type { AuthActionResult } from "@/core/auth/actions/auth-actions";
 import { AuthError } from "@/core/auth/errors";
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 import type {
   CommercialSnapshot,
@@ -47,20 +46,7 @@ export type SalesActionError = {
 export type SalesActionResult<T> =
   | { success: true; data: T }
   | { success: false; error: SalesActionError };
-
-async function requireSalesContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-  if (!user) {
-    throw new SalesOrderError("SESSION_REQUIRED", undefined, 401);
-  }
-  const businessContextService = createBusinessContextService();
-  const context = await businessContextService.getCurrentContext();
-  if (!context) {
-    throw new SalesOrderError("BUSINESS_CONTEXT_REQUIRED", undefined, 403);
-  }
-  return context;
-}
+
 
 function toActionError(error: unknown): SalesActionResult<never> {
   if (isNextRedirectError(error)) {

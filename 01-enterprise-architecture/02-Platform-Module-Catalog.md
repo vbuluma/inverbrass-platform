@@ -157,6 +157,7 @@ Every reusable processing capability is owned by exactly one Core Platform Engin
 | **ENG-003l** | Checklist & Completion Engine               | Provides metadata-driven operational checklists that guide processes and enforce completion. | Checklist definitions, checklist instances, mandatory and optional items, sequence, blocking rules, auto-complete rules, completion expressions, progress calculation, submission gates, warnings, manual completion, event-driven item completion. | Planned                     |
 | **ENG-003m** | Portfolio & Roadmap Engine                  | Provides structured planning and controlled evolution of any portfolio subject.         | Roadmap items, releases, milestones, implementation progress, release history, retirement plans, timeline views, portfolio initiatives — offerings, services, programmes, projects, regulatory and strategic initiatives. | Planned                     |
 | **ENG-003n** | Work Assignment & SLA Engine                | Tracks ownership, assignment history, and time-based SLA across work items.               | Assignment tracking, immutable assignment history, per-assignee SLA segments, cumulative lifecycle SLA, active/waiting/paused time, breach detection, queue metrics, SLA policy configuration by entity type.              | Planned                     |
+| **ENG-003o** | Channel & Experience Engine                 | Provides the channel-neutral boundary through which users access business capabilities.   | Channel adapters, gateway, capability registry, channel policy, identity resolution, session/context, intent→capability mapping, Web/App/Staff presentation adapters; future conversational adapters (WhatsApp, Messenger, etc.). | Partial (IP-01–03, Web ref) |
 | **ENG-004**  | Rules Engine                                | Executes deterministic business rules.                                                  | Eligibility rules, validations, calculations, decision tables, configurable rule execution, business policies, rule versioning.                                                                                          | Planned                     |
 | **ENG-005**  | Workflow Engine                             | Orchestrates business processes requiring approvals or multiple steps.                  | Maker-checker, approvals, escalations, routing, SLA monitoring, workflow history, task assignment, decision points.                                                                                                      | Planned                     |
 | **ENG-006**  | Payment Engine                              | Processes all incoming and outgoing financial transactions.                             | Cash, mobile money, bank transfers, cards, split payments, partial payments, refunds, credits, payment gateways.                                                                                                         | Planned                     |
@@ -173,9 +174,9 @@ Every reusable processing capability is owned by exactly one Core Platform Engin
 
 > **Extension ID:** **ENG-015a** — Document & Compliance Engine (compliance scoring and requirement matching layer on ENG-015). Partial (BP-002). Not a separate baseline row; implements the compliance-evidence slice of ENG-015.
 
-> **Extension IDs:** **ENG-003k** — Industry Experience Engine. **ENG-003l** — Checklist & Completion Engine. **ENG-003m** — Portfolio & Roadmap Engine. **ENG-003n** — Work Assignment & SLA Engine. Sub-engines under ENG-003 alongside ENG-003a–n. **Next ID (AV-1.5 lock): ENG-003o.**
+> **Extension IDs:** **ENG-003k** — Industry Experience Engine. **ENG-003l** — Checklist & Completion Engine. **ENG-003m** — Portfolio & Roadmap Engine. **ENG-003n** — Work Assignment & SLA Engine. **ENG-003o** — Channel & Experience Engine. Sub-engines under ENG-003 alongside ENG-003a–o. **Next ID (AV-1.5 lock): ENG-003p.**
 
-> **ENG-003 family note:** ENG-003 originally represented Platform Foundation / Metadata; the family now spans 14 sub-engines (003a–n). **AV-1.5 Engine Catalog Lock:** no renumbering, no regrouping — new capabilities use **ENG-003o**, **ENG-003p**, … until AV-2.0 is deliberately initiated. Possible AV-2.0 regrouping is recorded in [01b – Architecture Versions](./01b-Architecture-Versions.md) — Future Architecture Considerations.
+> **ENG-003 family note:** ENG-003 originally represented Platform Foundation / Metadata; the family now spans 15 sub-engines (003a–o). **AV-1.5 Engine Catalog Lock:** no renumbering, no regrouping — new capabilities use **ENG-003p**, **ENG-003q**, … until AV-2.0 is deliberately initiated. Possible AV-2.0 regrouping is recorded in [01b – Architecture Versions](./01b-Architecture-Versions.md) — Future Architecture Considerations.
 
 > **ENG-001 – ENG-016** are the active v1.0 baseline engine IDs. Retired or merged IDs are recorded in §3.1 below — not as separate active catalog rows.
 
@@ -248,7 +249,7 @@ New platform capabilities (checklist, portfolio roadmap, work assignment & SLA, 
 | Single Owner             | Every engine has one owning service in `03-platform/src/core/`                 |
 | Consume, Don't Duplicate | Domain modules call engine services; they never reimplement engine logic       |
 | Configuration First      | Engine behaviour adapts through configuration (`ENG-003a`) before code changes |
-| AV-1.5 Catalog Lock      | New sub-engines: ENG-003o, ENG-003p, … — no renumbering or regrouping until AV-2.0 |
+| AV-1.5 Catalog Lock      | New sub-engines: ENG-003p, ENG-003q, … — no renumbering or regrouping until AV-2.0 |
 | Audit Cross-Cut          | All mutating engine operations emit events via **ENG-013**                     |
 
 

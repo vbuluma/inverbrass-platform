@@ -8,11 +8,10 @@
  * BP-008 / IP-05 – Stock Adjustments, Damage, Loss & Returns
  */
 
+import { requireInventoryChannelContext as requireInventoryContext } from "@/core/channel-experience/helpers/domain-channel-entry";
 import { revalidatePath } from "next/cache";
 
 import { AuthError } from "@/core/auth/errors";
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 import { InventoryError } from "@/modules/inventory/errors";
 import { createStockAdjustmentService } from "@/modules/inventory/services/stock-adjustment-service";
@@ -31,20 +30,7 @@ export type InventoryAdjustmentActionError = {
 export type InventoryAdjustmentActionResult<T> =
   | { success: true; data: T }
   | { success: false; error: InventoryAdjustmentActionError };
-
-async function requireInventoryContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-  if (!user) {
-    throw new InventoryError("SESSION_REQUIRED", undefined, 401);
-  }
-  const businessContextService = createBusinessContextService();
-  const context = await businessContextService.getCurrentContext();
-  if (!context) {
-    throw new InventoryError("BUSINESS_CONTEXT_REQUIRED", undefined, 403);
-  }
-  return context;
-}
+
 
 function toActionError(error: unknown): InventoryAdjustmentActionResult<never> {
   if (isNextRedirectError(error)) {

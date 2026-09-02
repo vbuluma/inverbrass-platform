@@ -1,11 +1,10 @@
 "use server";
 
+import { requireCrmChannelContext as requireGovernanceContext } from "@/core/channel-experience/helpers/domain-channel-entry";
 import { revalidatePath } from "next/cache";
 
 import type { AuthActionResult } from "@/core/auth/actions/auth-actions";
 import { AuthError } from "@/core/auth/errors";
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 import {
   CRM_GOVERNANCE_USER_MESSAGES,
@@ -34,27 +33,7 @@ import type {
 } from "@/modules/crm-governance/types";
 
 export type CrmGovernanceActionResult<T> = AuthActionResult<T>;
-
-async function requireGovernanceContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-  if (!user) {
-    throw new CrmGovernanceError(
-      "SESSION_REQUIRED",
-      CRM_GOVERNANCE_USER_MESSAGES.SESSION_REQUIRED,
-      401
-    );
-  }
-  const context = await createBusinessContextService().getCurrentContext();
-  if (!context) {
-    throw new CrmGovernanceError(
-      "BUSINESS_CONTEXT_REQUIRED",
-      CRM_GOVERNANCE_USER_MESSAGES.BUSINESS_CONTEXT_REQUIRED,
-      403
-    );
-  }
-  return context;
-}
+
 
 function mapGovernanceError(error: unknown): AuthActionResult<never> {
   if (error instanceof CrmGovernanceError) {

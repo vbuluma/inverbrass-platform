@@ -8,12 +8,11 @@
  * BP-004 / IP-02 – Lead Management
  */
 
+import { requireCrmChannelContext as requireLeadContext } from "@/core/channel-experience/helpers/domain-channel-entry";
 import { revalidatePath } from "next/cache";
 
 import type { AuthActionResult } from "@/core/auth/actions/auth-actions";
 import { AuthError } from "@/core/auth/errors";
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 import { createPartyService } from "@/modules/party/services/party-service";
 import type { PartySearchResultView } from "@/modules/party/types";
@@ -34,32 +33,7 @@ import type {
 } from "@/modules/crm/lead/types";
 
 export type LeadActionResult<T> = AuthActionResult<T>;
-
-async function requireLeadContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-
-  if (!user) {
-    throw new LeadError(
-      "INVALID_INPUT",
-      "Your session has expired. Please sign in again.",
-      401
-    );
-  }
-
-  const businessContextService = createBusinessContextService();
-  const context = await businessContextService.getCurrentContext();
-
-  if (!context) {
-    throw new LeadError(
-      "INVALID_INPUT",
-      "Select a business to continue.",
-      403
-    );
-  }
-
-  return context;
-}
+
 
 function mapLeadError(error: unknown): LeadActionResult<never> {
   if (error instanceof LeadError) {

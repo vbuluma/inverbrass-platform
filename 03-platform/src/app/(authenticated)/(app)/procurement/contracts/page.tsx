@@ -2,7 +2,7 @@ import { ContractList } from "@/modules/procurement/components/contract-list";
 import { createContractService } from "@/modules/procurement/services/contract-service";
 import { createAuthService } from "@/core/auth/services/auth-service";
 import { createBusinessContextService } from "@/core/auth/services/business-context-service";
-import { ALL_PROCUREMENT_PERMISSIONS } from "@/modules/procurement/constants";
+import { resolveProcurementActor } from "@/modules/procurement/helpers/procurement-channel-context";
 
 export default async function ContractsPage() {
   const authService = createAuthService();
@@ -11,10 +11,10 @@ export default async function ContractsPage() {
   const context = await businessContextService.getCurrentContext();
   const rows =
     user && context
-      ? await createContractService().list(context, {
-          userId: user.platformUserId,
-          permissions: ALL_PROCUREMENT_PERMISSIONS,
-        })
+      ? await createContractService().list(
+          context,
+          await resolveProcurementActor(context)
+        )
       : [];
   return <ContractList initialRows={rows} />;
 }

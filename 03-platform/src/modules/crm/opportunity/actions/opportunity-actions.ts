@@ -8,12 +8,11 @@
  * BP-004 / IP-03 – Opportunity Management
  */
 
+import { requireCrmChannelContext as requireOpportunityContext } from "@/core/channel-experience/helpers/domain-channel-entry";
 import { revalidatePath } from "next/cache";
 
 import type { AuthActionResult } from "@/core/auth/actions/auth-actions";
 import { AuthError } from "@/core/auth/errors";
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 import { OpportunityError } from "@/modules/crm/opportunity/errors";
 import { createOpportunityService } from "@/modules/crm/opportunity/services/opportunity-service";
@@ -29,26 +28,7 @@ import type {
 } from "@/modules/crm/opportunity/types";
 
 export type OpportunityActionResult<T> = AuthActionResult<T>;
-
-async function requireOpportunityContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-  if (!user) {
-    throw new OpportunityError(
-      "INVALID_INPUT",
-      "Your session has expired. Please sign in again.",
-      401
-    );
-  }
-
-  const businessContextService = createBusinessContextService();
-  const context = await businessContextService.getCurrentContext();
-  if (!context) {
-    throw new OpportunityError("INVALID_INPUT", "Select a business to continue.", 403);
-  }
-
-  return context;
-}
+
 
 function mapError(error: unknown): OpportunityActionResult<never> {
   if (isNextRedirectError(error)) throw error;

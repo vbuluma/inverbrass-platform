@@ -11,10 +11,9 @@
  * BP-002 / IP-002 – Party Roles
  */
 
+import { requirePartyChannelContext as requirePartyContext } from "@/core/channel-experience/helpers/domain-channel-entry";
 import type { AuthActionResult } from "@/core/auth/actions/auth-actions";
 import { AuthError } from "@/core/auth/errors";
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
 import { PartyError } from "@/modules/party/errors";
 import { createPartyRoleService } from "@/modules/party/services/party-role-service";
@@ -34,32 +33,7 @@ function isNextDynamicServerError(error: unknown): boolean {
     String((error as { digest: string }).digest).includes("DYNAMIC_SERVER_USAGE")
   );
 }
-
-async function requirePartyContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-
-  if (!user) {
-    throw new PartyError(
-      "SESSION_REQUIRED",
-      "Your session has expired. Please sign in again.",
-      401
-    );
-  }
-
-  const businessContextService = createBusinessContextService();
-  const context = await businessContextService.getCurrentContext();
-
-  if (!context) {
-    throw new PartyError(
-      "BUSINESS_CONTEXT_REQUIRED",
-      "Select a business before managing parties.",
-      403
-    );
-  }
-
-  return context;
-}
+
 
 function toActionError(error: unknown): AuthActionResult<never> {
   if (isNextRedirectError(error) || isNextDynamicServerError(error)) {

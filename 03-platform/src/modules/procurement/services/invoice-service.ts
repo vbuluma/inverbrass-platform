@@ -262,7 +262,7 @@ export class InvoiceService {
       throw new ProcurementError(PROCUREMENT_ERROR_CODES.PROFILE_NOT_FOUND, undefined, 404);
     }
 
-    let purchaseOrderId: string | null = input.purchaseOrderId ?? null;
+    const purchaseOrderId: string | null = input.purchaseOrderId ?? null;
     let purchaseOrderVersionId: string | null = null;
     let poLines: Awaited<ReturnType<PurchaseOrderStorePort["listLines"]>> = [];
     if (purchaseOrderId) {

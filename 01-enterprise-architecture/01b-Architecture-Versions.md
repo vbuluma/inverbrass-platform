@@ -5,7 +5,7 @@
 | Attribute | Value |
 |-----------|-------|
 | Document Name | Architecture Versions |
-| Current Version | **AV-1.12** |
+| Current Version | **AV-1.13** |
 | Former Name | Architecture Decision Record (ADR) — enterprise scope |
 | Scope | Entire InverBrass Enterprise Architecture |
 | Audience | Product Owner, Solution Architect, Developers, AI Coding Assistants |
@@ -57,6 +57,44 @@ Do **not** regroup or renumber ENG-003 sub-engines under AV-1.x — **AV-1.5 Eng
 ---
 
 ## Version History
+
+### AV-1.13 — Channel & Experience Engine (ENG-003o); Web Reference; Procurement RBAC Fix
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-09-02 |
+| **Status** | **Current** |
+| **Author** | Solution Architect |
+
+#### From → To
+
+| Area | From | To |
+|------|------|-----|
+| Channel layer | Not present — Server Actions as implicit boundary | **ENG-003o Channel & Experience Engine** — gateway, registry, policy, identity, session foundation |
+| Next ENG-003 sub-engine ID | ENG-003o (reserved) | **ENG-003o registered**; next ID **ENG-003p** |
+| Web channel | Next.js pages/actions call domain directly | **Web Channel Adapter** — BP-009 procurement as reference path |
+| Procurement RBAC | `ALL_PROCUREMENT_PERMISSIONS` at action layer | **PermissionResolutionService** (ENG-002) — runtime role permissions |
+| Conversational channels | N/A | Architecture hooks only — WhatsApp/Messenger/Instagram **not implemented** |
+| Intent / NL | N/A | Intent→Capability **contract only** — no LLM |
+
+#### Reasoning
+
+Baseline assessment ([14 – Channel Assessment](./14-Channel-Experience-Layer-Baseline-Assessment.md)) confirmed domain services are channel-agnostic but no Channel & Experience Layer existed. Procurement exposed a critical RBAC bypass that would propagate to any future channel. ENG-003o establishes the canonical boundary with Web as the first proof; conversational channels remain future adapters enabled by policy.
+
+#### Affected Documents
+
+- [15 – ENG-003o Channel & Experience Engine](./15-ENG-003o-Channel-Experience-Engine.md) — **new**
+- [01 – Enterprise Solution Architecture](./01-Enterprise-Solution-Architecture.md) §5 — ENG-003o
+- [02 – Platform Module Catalog](./02-Platform-Module-Catalog.md) §3 — ENG-003o row
+
+#### Implementation Impact
+
+- `03-platform/src/core/channel-experience/` — ENG-003o engine
+- `03-platform/src/core/auth/services/permission-resolution-service.ts` — ENG-002 runtime permissions
+- `03-platform/src/modules/procurement/helpers/procurement-channel-context.ts` — Web reference path
+- BP-009 actions/pages — RBAC fix + channel gateway entry
+
+---
 
 ### AV-1.0 — Initial Enterprise Architecture Baseline
 
@@ -530,7 +568,7 @@ Documentation only at the time of AV-1.11. Runtime Procurement hub was added wit
 | Field | Value |
 |-------|-------|
 | **Date** | 2026-09-01 |
-| **Status** | **Current** |
+| **Status** | Superseded by AV-1.13 |
 | **Author** | Integration Manager / Solution Architect |
 
 #### From → To
@@ -639,7 +677,7 @@ Formal AV-2.0 engine-taxonomy review is **required** when any trigger below is m
 | Multiple implementation teams require ownership boundaries | Create engine families |
 | AI prompts frequently misclassify engines | Review engine taxonomy |
 
-**Current count (AV-1.6):** 14 sub-engines (ENG-003a – ENG-003n). Next assigned ID: **ENG-003o**.
+**Current count (AV-1.13):** 15 sub-engines (ENG-003a – ENG-003o). Next assigned ID: **ENG-003p**.
 
 **Capability domain examples** (for the "3 domains" trigger): Metadata & Configuration, Regulatory & Identity, Integration & Events, Intelligence & Analytics, Experience & Presentation, Operations & Performance. More than three of these actively represented under ENG-003 warrants regrouping consideration.
 

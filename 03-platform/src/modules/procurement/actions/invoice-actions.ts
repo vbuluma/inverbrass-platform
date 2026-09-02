@@ -7,13 +7,9 @@
 
 import { revalidatePath } from "next/cache";
 
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
-import {
-  ALL_PROCUREMENT_PERMISSIONS,
-  ProcurementError,
-} from "@/modules/procurement";
+import { ProcurementError } from "@/modules/procurement";
+import { requireProcurementChannelContext } from "@/modules/procurement/helpers/procurement-channel-context";
 import { createInvoiceService } from "@/modules/procurement/services/invoice-service";
 import type {
   CreateSupplierInvoiceCommand,
@@ -21,7 +17,6 @@ import type {
   InvoiceListView,
   InvoiceView,
   PaymentReadyListView,
-  ProcurementActor,
 } from "@/modules/procurement/types";
 
 export type InvoiceActionError = {
@@ -33,23 +28,6 @@ export type InvoiceActionError = {
 export type InvoiceActionResult<T> =
   | { success: true; data: T }
   | { success: false; error: InvoiceActionError };
-
-async function requireContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-  if (!user) {
-    throw new ProcurementError("SESSION_REQUIRED", undefined, 401);
-  }
-  const businessContextService = createBusinessContextService();
-  const context = await businessContextService.getCurrentContext();
-  if (!context) {
-    throw new ProcurementError("BUSINESS_CONTEXT_REQUIRED", undefined, 403);
-  }
-  return {
-    context,
-    actor: { userId: user.platformUserId, permissions: ALL_PROCUREMENT_PERMISSIONS },
-  };
-}
 
 function toError(error: unknown): InvoiceActionError {
   if (error instanceof ProcurementError) {
@@ -63,7 +41,7 @@ function toError(error: unknown): InvoiceActionError {
 
 export async function listInvoicesAction(): Promise<InvoiceActionResult<InvoiceListView[]>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createInvoiceService().list(context, actor);
     return { success: true, data };
   } catch (error) {
@@ -75,7 +53,7 @@ export async function listPaymentReadyInvoicesAction(): Promise<
   InvoiceActionResult<PaymentReadyListView[]>
 > {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createInvoiceService().listPaymentReady(context, actor);
     return { success: true, data };
   } catch (error) {
@@ -87,7 +65,7 @@ export async function getInvoiceAction(
   invoiceId: string
 ): Promise<InvoiceActionResult<InvoiceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createInvoiceService().get(context, actor, invoiceId);
     return { success: true, data };
   } catch (error) {
@@ -99,7 +77,7 @@ export async function createInvoiceAction(
   input: CreateSupplierInvoiceCommand
 ): Promise<InvoiceActionResult<InvoiceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createInvoiceService().create(context, actor, input);
     revalidatePath("/procurement/invoices");
     if (input.purchaseOrderId) {
@@ -115,7 +93,7 @@ export async function captureInvoiceAction(
   invoiceId: string
 ): Promise<InvoiceActionResult<InvoiceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createInvoiceService().capture(context, actor, invoiceId);
     revalidatePath("/procurement/invoices");
     revalidatePath(`/procurement/invoices/${invoiceId}`);
@@ -132,7 +110,7 @@ export async function runInvoiceMatchAction(
   invoiceId: string
 ): Promise<InvoiceActionResult<InvoiceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createInvoiceService().runMatch(context, actor, invoiceId);
     revalidatePath(`/procurement/invoices/${invoiceId}`);
     return { success: true, data };
@@ -145,7 +123,7 @@ export async function approveInvoiceAction(
   invoiceId: string
 ): Promise<InvoiceActionResult<InvoiceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createInvoiceService().approve(context, actor, invoiceId);
     revalidatePath("/procurement/invoices");
     revalidatePath("/procurement/invoices/payment-ready");
@@ -161,7 +139,7 @@ export async function rejectInvoiceAction(
   input: InvoiceDecisionCommand
 ): Promise<InvoiceActionResult<InvoiceView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createInvoiceService().reject(context, actor, invoiceId, input);
     revalidatePath("/procurement/invoices");
     revalidatePath(`/procurement/invoices/${invoiceId}`);

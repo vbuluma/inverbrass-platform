@@ -8,13 +8,9 @@
 import { revalidatePath } from "next/cache";
 
 import { AuthError } from "@/core/auth/errors";
-import { createAuthService } from "@/core/auth/services/auth-service";
-import { createBusinessContextService } from "@/core/auth/services/business-context-service";
 import { isNextRedirectError } from "@/core/auth/utils/next-redirect";
-import {
-  ALL_PROCUREMENT_PERMISSIONS,
-  ProcurementError,
-} from "@/modules/procurement";
+import { ProcurementError } from "@/modules/procurement";
+import { requireProcurementChannelContext } from "@/modules/procurement/helpers/procurement-channel-context";
 import { createContractService } from "@/modules/procurement/services/contract-service";
 import { createPurchaseOrderService } from "@/modules/procurement/services/purchase-order-service";
 import type {
@@ -28,7 +24,6 @@ import type {
   CreateContractCommand,
   GenerateContractFromAwardCommand,
   GenerateContractFromPurchaseRequestCommand,
-  ProcurementActor,
   PurchaseOrderView,
   RenewContractCommand,
 } from "@/modules/procurement/types";
@@ -45,24 +40,6 @@ export type ContractActionResult<T> =
 
 function createServices() {
   return { contracts: createContractService() };
-}
-
-async function requireContext() {
-  const authService = createAuthService();
-  const user = await authService.getAuthenticatedUser();
-  if (!user) {
-    throw new ProcurementError("SESSION_REQUIRED", undefined, 401);
-  }
-  const businessContextService = createBusinessContextService();
-  const context = await businessContextService.getCurrentContext();
-  if (!context) {
-    throw new ProcurementError("BUSINESS_CONTEXT_REQUIRED", undefined, 403);
-  }
-  const actor: ProcurementActor = {
-    userId: user.platformUserId,
-    permissions: ALL_PROCUREMENT_PERMISSIONS,
-  };
-  return { context, actor };
 }
 
 function toActionError(error: unknown): ContractActionResult<never> {
@@ -98,7 +75,7 @@ export async function listContractsAction(
   filter: ContractListFilter = {}
 ): Promise<ContractActionResult<ContractListView[]>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createServices().contracts.list(context, actor, filter);
     return { success: true, data };
   } catch (error) {
@@ -110,7 +87,7 @@ export async function getContractAction(
   contractId: string
 ): Promise<ContractActionResult<ContractView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createServices().contracts.get(context, actor, contractId);
     return { success: true, data };
   } catch (error) {
@@ -122,7 +99,7 @@ export async function createContractAction(
   input: CreateContractCommand
 ): Promise<ContractActionResult<ContractView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createServices().contracts.create(context, actor, input);
     revalidatePath("/procurement/contracts");
     return { success: true, data };
@@ -135,7 +112,7 @@ export async function generateContractFromAwardAction(
   input: GenerateContractFromAwardCommand
 ): Promise<ContractActionResult<ContractView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createServices().contracts.generateFromAward(context, actor, input);
     revalidatePath("/procurement/contracts");
     return { success: true, data };
@@ -148,7 +125,7 @@ export async function submitContractAction(
   contractId: string
 ): Promise<ContractActionResult<ContractView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createServices().contracts.submit(context, actor, contractId);
     revalidatePath(`/procurement/contracts/${contractId}`);
     return { success: true, data };
@@ -161,7 +138,7 @@ export async function approveContractAction(
   contractId: string
 ): Promise<ContractActionResult<ContractView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createServices().contracts.approve(context, actor, contractId);
     revalidatePath(`/procurement/contracts/${contractId}`);
     return { success: true, data };
@@ -175,7 +152,7 @@ export async function rejectContractAction(
   input: ContractDecisionCommand
 ): Promise<ContractActionResult<ContractView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createServices().contracts.reject(context, actor, contractId, input);
     revalidatePath(`/procurement/contracts/${contractId}`);
     return { success: true, data };
@@ -189,7 +166,7 @@ export async function activateContractAction(
   input: ActivateContractCommand = {}
 ): Promise<ContractActionResult<ContractView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createServices().contracts.activate(context, actor, contractId, input);
     revalidatePath(`/procurement/contracts/${contractId}`);
     return { success: true, data };
@@ -203,7 +180,7 @@ export async function amendContractAction(
   input: AmendContractCommand
 ): Promise<ContractActionResult<ContractView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createServices().contracts.amend(context, actor, contractId, input);
     revalidatePath(`/procurement/contracts/${contractId}`);
     return { success: true, data };
@@ -217,7 +194,7 @@ export async function createContractCallOffAction(
   input: CreateContractCallOffCommand
 ): Promise<ContractActionResult<PurchaseOrderView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createServices().contracts.createCallOff(context, actor, contractId, input);
     revalidatePath(`/procurement/contracts/${contractId}`);
     revalidatePath("/procurement/orders");
@@ -232,7 +209,7 @@ export async function suspendContractAction(
   input: ContractDecisionCommand
 ): Promise<ContractActionResult<ContractView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createServices().contracts.suspend(context, actor, contractId, input);
     revalidatePath(`/procurement/contracts/${contractId}`);
     return { success: true, data };
@@ -246,7 +223,7 @@ export async function terminateContractAction(
   input: ContractDecisionCommand
 ): Promise<ContractActionResult<ContractView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createServices().contracts.terminate(context, actor, contractId, input);
     revalidatePath(`/procurement/contracts/${contractId}`);
     return { success: true, data };
@@ -260,7 +237,7 @@ export async function closeContractAction(
   input: ContractDecisionCommand = {}
 ): Promise<ContractActionResult<ContractView>> {
   try {
-    const { context, actor } = await requireContext();
+    const { context, actor } = await requireProcurementChannelContext();
     const data = await createServices().contracts.close(context, actor, contractId, input);
     revalidatePath(`/procurement/contracts/${contractId}`);
     return { success: true, data };
