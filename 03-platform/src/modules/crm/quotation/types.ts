@@ -112,6 +112,10 @@ export type CreateQuotationPayload = {
   termsTemplateCode?: string;
   metadata?: Record<string, unknown>;
   lines?: CreateQuotationLinePayload[];
+  /** Optional channel idempotency (required when requireIdempotencyKey). */
+  idempotencyKey?: string;
+  idempotencyPayloadHash?: string;
+  requireIdempotencyKey?: boolean;
 };
 
 export type CreateQuotationLinePayload = {
@@ -180,6 +184,7 @@ export type QuotationLineInsertValues = {
 };
 
 export type QuotationInsertValues = {
+  id?: string;
   businessId: string;
   quotationNumber: string;
   partyId: string;

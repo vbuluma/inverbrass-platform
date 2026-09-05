@@ -51,6 +51,14 @@ export type CreateDirectSaleInput = {
   lines: CreateDirectSaleLineInput[];
   /** Ignored — business scope always comes from authenticated context. */
   businessId?: string | null;
+  /** Required for customer-channel CREATE_SALE (SL-CUS-001). */
+  idempotencyKey?: string;
+  /** SHA-256 hash of canonical create payload — mismatch rejects replay abuse. */
+  idempotencyPayloadHash?: string;
+  /** Customer Web / channel metadata stored on order (guestSessionId, correlationId). */
+  channelMetadata?: Record<string, unknown> | null;
+  /** When true, missing idempotencyKey is rejected. Set by customer gateway only. */
+  requireIdempotencyKey?: boolean;
 };
 
 export type ConvertQuotationInput = {

@@ -13,6 +13,7 @@
  */
 
 import type { CurrentBusinessContext } from "@/core/auth/types";
+import { createHash } from "node:crypto";
 import { CommercialError } from "@/modules/commercial";
 import { canConvertQuotationToOrder } from "@/modules/crm/quotation/services/quotation-rules";
 import {
@@ -34,6 +35,7 @@ import {
 import { createSalesDeliveryRepository } from "@/modules/sales/repositories/sales-delivery-repository";
 import { createSalesExceptionRepository } from "@/modules/sales/repositories/sales-exception-repository";
 import { createSalesOrderRepository } from "@/modules/sales/repositories/sales-order-repository";
+import { createSalesIdempotencyRepository } from "@/modules/sales/repositories/sales-idempotency-repository";
 import { createSalesAuditAdapter } from "@/modules/sales/services/sales-order-audit-helper";
 import {
   SALES_AUDIT_ACTIONS,
@@ -67,6 +69,8 @@ import type {
   SalesExceptionRepositoryPort,
   SalesOrderRepositoryPort,
 } from "@/modules/sales/ports";
+import type { SalesIdempotencyRepositoryPort } from "@/modules/sales/repositories/sales-idempotency-repository";
+import { SALES_IDEMPOTENCY_OPERATIONS } from "@/modules/sales/constants";
 import { deliveryEventStatusLabel } from "@/modules/sales/services/delivery-rules";
 import {
   amendmentStatusLabel,
@@ -154,6 +158,7 @@ export type SalesOrderServiceDependencies = {
   commercial: CommercialContractPort;
   commercialResolver?: CommercialResolvePort | null;
   audit?: SalesAuditPort | null;
+  idempotency?: SalesIdempotencyRepositoryPort | null;
   confirmationPolicy?: SalesConfirmationPolicy;
   completionPolicy?: SalesCompletionPolicy;
   fulfilmentOutcomes?: FulfilmentOutcomePort;
@@ -171,6 +176,39 @@ export class SalesOrderService {
     input: CreateDirectSaleInput
   ): Promise<SalesOrderDetailView> {
     this.assertContext(context);
+
+    const idempotencyKey = input.idempotencyKey?.trim();
+    if (input.requireIdempotencyKey && !idempotencyKey) {
+      throw new SalesOrderError(
+        SALES_ERROR_CODES.IDEMPOTENCY_KEY_REQUIRED,
+        undefined,
+        400,
+        { field: "idempotencyKey", entity: "sale" }
+      );
+    }
+
+    if (idempotencyKey && this.deps.idempotency) {
+      const existing = await this.deps.idempotency.find(
+        context.businessId,
+        SALES_IDEMPOTENCY_OPERATIONS.CREATE_DIRECT_SALE,
+        idempotencyKey
+      );
+      if (existing) {
+        if (
+          input.idempotencyPayloadHash &&
+          existing.payloadHash !== input.idempotencyPayloadHash
+        ) {
+          throw new SalesOrderError(
+            SALES_ERROR_CODES.IDEMPOTENCY_PAYLOAD_MISMATCH,
+            undefined,
+            409,
+            { entity: "sale" }
+          );
+        }
+        return this.getOrder(context, existing.resourceId);
+      }
+    }
+
     const customer = await this.requireCustomer(context.businessId, input.customerPartyId);
     const prepared = await this.prepareLines(
       context,
@@ -181,6 +219,12 @@ export class SalesOrderService {
     );
 
     const orderNumber = await this.generateOrderNumber(context.businessId);
+    const channelMetadata = input.channelMetadata ?? {};
+    const metadata = {
+      source: SALES_ORDER_SOURCE_TYPES.DIRECT,
+      ...channelMetadata,
+    };
+
     const created = await this.deps.orders.insert({
       businessId: context.businessId,
       orderNumber,
@@ -211,15 +255,60 @@ export class SalesOrderService {
       confirmationRejectedReason: null,
       handoffStatus: SALES_ORDER_HANDOFF_STATUS_CODES.PENDING,
       paymentStatus: SALES_PAYMENT_STATUS_CODES.NOT_RECORDED,
-      metadata: { source: SALES_ORDER_SOURCE_TYPES.DIRECT },
+      metadata,
       createdBy: context.platformUserId,
       updatedBy: context.platformUserId,
     });
 
     await this.persistPrepared(context.businessId, created.id, prepared);
+
+    if (idempotencyKey && this.deps.idempotency) {
+      const payloadHash =
+        input.idempotencyPayloadHash ??
+        this.hashDirectSalePayload(input, customer.id, prepared.currencyCode);
+      try {
+        await this.deps.idempotency.insert({
+          businessId: context.businessId,
+          idempotencyKey,
+          operationType: SALES_IDEMPOTENCY_OPERATIONS.CREATE_DIRECT_SALE,
+          payloadHash,
+          resourceType: "sales_order",
+          resourceId: created.id,
+          createdBy: context.platformUserId,
+        });
+      } catch (error) {
+        if (
+          error instanceof SalesOrderError &&
+          error.code === SALES_ERROR_CODES.IDEMPOTENCY_CONFLICT
+        ) {
+          const replay = await this.deps.idempotency.find(
+            context.businessId,
+            SALES_IDEMPOTENCY_OPERATIONS.CREATE_DIRECT_SALE,
+            idempotencyKey
+          );
+          if (replay) {
+            if (
+              input.idempotencyPayloadHash &&
+              replay.payloadHash !== input.idempotencyPayloadHash
+            ) {
+              throw new SalesOrderError(
+                SALES_ERROR_CODES.IDEMPOTENCY_PAYLOAD_MISMATCH,
+                undefined,
+                409,
+                { entity: "sale" }
+              );
+            }
+            return this.getOrder(context, replay.resourceId);
+          }
+        }
+        throw error;
+      }
+    }
+
     await this.audit(context, created.id, customer.id, SALES_AUDIT_ACTIONS.ORDER_CREATED, {
       orderNumber,
       sourceType: SALES_ORDER_SOURCE_TYPES.DIRECT,
+      idempotencyKey: idempotencyKey ?? null,
     });
     return this.getOrder(context, created.id);
   }
@@ -1001,11 +1090,15 @@ export class SalesOrderService {
   }
 
   private async projectFulfilment(businessId: string, order: SalesOrderRecord) {
-    const [orderLines, outcomes, disposition] = await Promise.all([
-      this.deps.orders.listLines(businessId, order.id),
-      this.fulfilmentPort().getOrderOutcome(businessId, order.id),
-      this.dispositionPort().getDisposition(businessId, order.id),
-    ]);
+    const orderLines = await this.deps.orders.listLines(businessId, order.id);
+    const outcomes = await this.fulfilmentPort().getOrderOutcome(
+      businessId,
+      order.id
+    );
+    const disposition = await this.dispositionPort().getDisposition(
+      businessId,
+      order.id
+    );
     if (outcomes.businessId !== businessId || outcomes.orderId !== order.id) {
       throw new SalesOrderError(
         SALES_ERROR_CODES.CROSS_BUSINESS_ACCESS,
@@ -1092,6 +1185,24 @@ export class SalesOrderService {
         403
       );
     }
+  }
+
+  private hashDirectSalePayload(
+    input: CreateDirectSaleInput,
+    customerPartyId: string,
+    currencyCode: string
+  ): string {
+    const canonical = JSON.stringify({
+      customerPartyId,
+      currencyCode,
+      lines: input.lines.map((line) => ({
+        offeringId: line.offeringId,
+        quantity: line.quantity,
+        snapshotId: line.snapshot?.snapshotId ?? null,
+        expectedAmount: line.expected?.expectedAmount ?? null,
+      })),
+    });
+    return createHash("sha256").update(canonical).digest("hex");
   }
 
   private async requireOrder(businessId: string, orderId: string) {
@@ -1458,13 +1569,14 @@ export class SalesOrderService {
     order: SalesOrderRecord,
     viewerUserId?: string | null
   ): Promise<SalesOrderDetailView> {
-    const [lines, links, customer] = await Promise.all([
-      this.deps.orders.listLines(businessId, order.id),
-      this.deps.orders.listCommercialLinks(businessId, order.id),
-      order.partyId
-        ? this.deps.parties.findInBusiness(businessId, order.partyId)
-        : Promise.resolve(null),
-    ]);
+    const lines = await this.deps.orders.listLines(businessId, order.id);
+    const links = await this.deps.orders.listCommercialLinks(
+      businessId,
+      order.id
+    );
+    const customer = order.partyId
+      ? await this.deps.parties.findInBusiness(businessId, order.partyId)
+      : null;
     const projection = await this.projectFulfilment(businessId, order);
     const fulfilmentByLine = new Map(
       projection.lines.map((line) => [line.orderLineId, line])
@@ -1545,10 +1657,14 @@ export class SalesOrderService {
     if (!this.deps.deliveries) {
       return [];
     }
-    const [events, inspections] = await Promise.all([
-      this.deps.deliveries.listEventsByOrder(businessId, orderId),
-      this.deps.deliveries.listInspectionsByOrder(businessId, orderId),
-    ]);
+    const events = await this.deps.deliveries.listEventsByOrder(
+      businessId,
+      orderId
+    );
+    const inspections = await this.deps.deliveries.listInspectionsByOrder(
+      businessId,
+      orderId
+    );
     const inspectionByEvent = new Map(
       inspections.map((row) => [row.deliveryEventId, row])
     );
@@ -1749,6 +1865,7 @@ export function createDefaultSalesOrderDependencies(): SalesOrderServiceDependen
     commercial: createSalesCommercialContractAdapter(),
     commercialResolver: createBp005CommercialResolveAdapter(),
     audit: createSalesAuditAdapter(),
+    idempotency: createSalesIdempotencyRepository(),
     confirmationPolicy: SALES_CONFIRMATION_POLICY,
     completionPolicy: SALES_COMPLETION_POLICY,
     fulfilmentOutcomes: createPersistedFulfilmentOutcomeAdapter(deliveries, orders),

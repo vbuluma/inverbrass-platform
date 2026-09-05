@@ -16,7 +16,15 @@ import { NextResponse, type NextRequest } from "next/server";
 import { hasAuthSessionCookie } from "@/core/auth/session/auth-session-cookie-presence";
 import { hasBusinessContextCookie } from "@/core/auth/session/business-context-cookie-presence";
 
-const PUBLIC_PATHS = ["/", "/login", "/register", "/forgot-password", "/sourcing/respond", "/procurement/po/respond"];
+const PUBLIC_PATHS = [
+  "/",
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/sourcing/respond",
+  "/procurement/po/respond",
+  "/store",
+];
 
 const AUTHENTICATED_WITHOUT_BUSINESS_CONTEXT = [
   "/home",

@@ -64,6 +64,9 @@ export const SALES_ERROR_CODES = {
   AMENDMENT_NOT_PENDING: "AMENDMENT_NOT_PENDING",
   COMPLETED_ORDER_NOT_CANCELLABLE: "COMPLETED_ORDER_NOT_CANCELLABLE",
   PROVIDER_ERROR: "PROVIDER_ERROR",
+  IDEMPOTENCY_KEY_REQUIRED: "IDEMPOTENCY_KEY_REQUIRED",
+  IDEMPOTENCY_PAYLOAD_MISMATCH: "IDEMPOTENCY_PAYLOAD_MISMATCH",
+  IDEMPOTENCY_CONFLICT: "IDEMPOTENCY_CONFLICT",
 } as const;
 
 export type SalesErrorCode =
@@ -152,6 +155,12 @@ export const SALES_USER_MESSAGES: Record<SalesErrorCode, string> = {
   COMPLETED_ORDER_NOT_CANCELLABLE:
     "A completed sale cannot be cancelled as an ordinary edit. Use a controlled correction.",
   PROVIDER_ERROR: "The sale could not be completed. Please try again.",
+  IDEMPOTENCY_KEY_REQUIRED:
+    "This purchase request is missing a safety reference. Refresh and try again.",
+  IDEMPOTENCY_PAYLOAD_MISMATCH:
+    "This purchase reference was already used for a different order. Start a new checkout.",
+  IDEMPOTENCY_CONFLICT:
+    "This purchase is already being processed. Check your order status.",
 };
 
 export class SalesOrderError extends Error {

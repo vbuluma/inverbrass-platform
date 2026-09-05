@@ -83,3 +83,72 @@ export type {
   BusinessIntentCode,
   IntentResolution,
 } from "@/core/channel-experience/types";
+
+/** SL-ENG-003o-002 — Customer Web foundation */
+export {
+  CUSTOMER_WEB_SESSION_COOKIE,
+  CUSTOMER_WEB_COOKIE_OPTIONS,
+  CUSTOMER_WEB_PRESENTATION_PROFILE,
+  CUSTOMER_WEB_PERMISSIONS,
+  CUSTOMER_WEB_GUEST_GRANTS,
+  CUSTOMER_WEB_CAPABILITY_ALLOW_LIST,
+  CUSTOMER_WEB_AUTHENTICATED_ONLY_CAPABILITIES,
+  CUSTOMER_WEB_SALE_IDEMPOTENCY_NAMESPACE,
+  CUSTOMER_WEB_QUOTATION_IDEMPOTENCY_NAMESPACE,
+  CUSTOMER_WEB_PAYMENT_IDEMPOTENCY_NAMESPACE,
+} from "@/core/channel-experience/customer/constants";
+export {
+  evaluateCustomerWebPolicy,
+  isCustomerWebAllowListed,
+  listCustomerWebAllowList,
+} from "@/core/channel-experience/customer/policy";
+export {
+  WebCustomerChannelAdapter,
+  createWebCustomerChannelAdapter,
+  invokeCustomerWebCapability,
+} from "@/core/channel-experience/customer/adapter";
+export {
+  resolveCustomerTenantByBusinessCode,
+  normalizeBusinessCode,
+  isValidBusinessCodeFormat,
+  assertSessionMatchesTenant,
+} from "@/core/channel-experience/customer/tenant-resolution";
+export {
+  encodeCustomerWebSession,
+  decodeCustomerWebSession,
+  createCustomerWebSessionPayload,
+  isOpaqueSessionId,
+  CUSTOMER_CART_BOUNDARY,
+  buildCustomerSaleIdempotencyKey,
+  CREATE_SALE_IDEMPOTENCY_STATUS,
+  buildCustomerQuotationIdempotencyKey,
+  CREATE_QUOTATION_IDEMPOTENCY_STATUS,
+  buildCustomerPaymentIdempotencyKey,
+  INITIATE_PAYMENT_IDEMPOTENCY_STATUS,
+  assertCustomerResourceAccess,
+  canAccessCustomerResource,
+  toCustomerSafeBusinessSummary,
+  toCustomerSafeCatalogueItem,
+  toCustomerSafeOrderDetail,
+  toCustomerSafeOrderHubDetail,
+  toCustomerSafeOrderListItem,
+  toCustomerSafeOrderPaymentView,
+  toCustomerSafePaymentInitiationResult,
+  toCustomerSafeQuotationView,
+  toCustomerQuotationStatusLabel,
+  assertNoForbiddenCustomerFields,
+  hashCreateSalePayload,
+  hashCreateQuotationPayload,
+  resolveCustomerWebStoreContext,
+  buildGuestCustomerIdentity,
+  buildAuthenticatedCustomerIdentity,
+  resolveCustomerWebIdentity,
+  assertCustomerOrderAccess,
+  assertCustomerQuotationAccess,
+  resolveCustomerOrderContext,
+  resolveCustomerPaymentObligationContext,
+  createCustomerCommerceService,
+  createCustomerWebQuotationAdapter,
+  createCustomerWebOrderTrackingAdapter,
+  createCustomerWebPaymentAdapter,
+} from "@/core/channel-experience/customer";

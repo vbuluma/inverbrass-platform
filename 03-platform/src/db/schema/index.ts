@@ -195,6 +195,8 @@ export {
   salesOrderLine,
   salesOrderCommercialLink,
 } from "./sales-order";
+export { salesIdempotency } from "./sales-idempotency";
+export { quotationIdempotency } from "./quotation-idempotency";
 export { salesDeliveryEvent, salesInspectionOutcome } from "./sales-delivery";
 export {
   salesDispositionInstruction,

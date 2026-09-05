@@ -217,6 +217,29 @@ export class PartyRepository {
   }
 
   /**
+   * WHAT: Find party by exact guest-session marker in notes (Customer Web checkout).
+   * WHY: SL-CUS-001 guest party idempotency without a second customer master.
+   */
+  async searchByNotesMarker(
+    businessId: string,
+    notesMarker: string,
+    dbClient: DbClient = getDb()
+  ) {
+    const [row] = await dbClient
+      .select()
+      .from(party)
+      .where(
+        and(
+          eq(party.businessId, businessId),
+          eq(party.notes, notesMarker),
+          isNull(party.deletedAt)
+        )
+      )
+      .limit(1);
+    return row ?? null;
+  }
+
+  /**
    * WHAT: Search parties by display name, party number, org name, or contact value.
    * WHY: IP-005 relationship creation — connect existing parties only.
    */

@@ -30,13 +30,12 @@ export class PaymentCatalogueRepository implements PaymentCatalogueRepositoryPor
   constructor(private readonly db = getDb()) {}
 
   async loadSnapshot(): Promise<PaymentCatalogueSnapshot> {
-    const [methods, networks, providers, channels, capabilities] = await Promise.all([
-      this.db.select().from(paymentMethod),
-      this.db.select().from(paymentNetwork),
-      this.db.select().from(paymentProvider),
-      this.db.select().from(paymentChannel),
-      this.db.select().from(paymentChannelCapability),
-    ]);
+    // Sequential reads — postgres client is max:1 (session pooler safe).
+    const methods = await this.db.select().from(paymentMethod);
+    const networks = await this.db.select().from(paymentNetwork);
+    const providers = await this.db.select().from(paymentProvider);
+    const channels = await this.db.select().from(paymentChannel);
+    const capabilities = await this.db.select().from(paymentChannelCapability);
 
     return {
       methods: methods.map((row) => ({

@@ -20,17 +20,19 @@ import { createQuotationDocumentAdapter } from "@/modules/crm/adapters/quotation
 import { createPricingResolutionAdapter } from "@/modules/crm/adapters/pricing-resolution-adapter";
 import {
   CRM_TIMELINE_EVENT_TYPES,
-  DEFAULT_QUOTATION_APPROVAL_THRESHOLD,
   QUOTATION_ACCEPTANCE_CHANNELS,
   QUOTATION_APPROVAL_STATUS_CODES,
   QUOTATION_DEFAULT_VALIDITY_DAYS,
+  QUOTATION_IDEMPOTENCY_OPERATIONS,
   QUOTATION_NUMBER_PREFIX,
   QUOTATION_STATUS_CODES,
   approvalStatusLabel,
   quotationStatusLabel,
   type QuotationStatusCode,
 } from "@/modules/crm/constants";
-import { CrmError, CRM_USER_MESSAGES } from "@/modules/crm/errors";
+import { CrmError, CRM_ERROR_CODES, CRM_USER_MESSAGES } from "@/modules/crm/errors";
+import { createQuotationIdempotencyRepository } from "@/modules/crm/quotation/repositories/quotation-idempotency-repository";
+import type { QuotationIdempotencyRepositoryPort } from "@/modules/crm/quotation/repositories/quotation-idempotency-repository";
 import { createQuotationLineRepository } from "@/modules/crm/quotation/repositories/quotation-line-repository";
 import { createQuotationRepository } from "@/modules/crm/quotation/repositories/quotation-repository";
 import { createQuotationVersionRepository } from "@/modules/crm/quotation/repositories/quotation-version-repository";
@@ -99,14 +101,112 @@ export class QuotationService {
     private readonly salesOrderService = createSalesOrderService(),
     private readonly opportunityAdapter = createOpportunityHandoffAdapter(),
     private readonly timelineService = createPartyTimelineService(),
-    private readonly auditService = createAuditService()
+    private readonly auditService = createAuditService(),
+    private readonly idempotency: QuotationIdempotencyRepositoryPort | null = createQuotationIdempotencyRepository()
   ) {}
 
   async createQuotation(
     context: CurrentBusinessContext,
     payload: CreateQuotationPayload
   ): Promise<QuotationDetailView> {
-    const parsed = createQuotationSchema.safeParse(payload);
+    const idempotencyKey = payload.idempotencyKey?.trim();
+    if (payload.requireIdempotencyKey && !idempotencyKey) {
+      throw new CrmError(
+        CRM_ERROR_CODES.IDEMPOTENCY_KEY_REQUIRED,
+        CRM_USER_MESSAGES.IDEMPOTENCY_KEY_REQUIRED,
+        400,
+        "idempotencyKey"
+      );
+    }
+
+    if (idempotencyKey && this.idempotency) {
+      const existing = await this.idempotency.find(
+        context.businessId,
+        QUOTATION_IDEMPOTENCY_OPERATIONS.CREATE_QUOTATION,
+        idempotencyKey
+      );
+      if (existing) {
+        if (
+          payload.idempotencyPayloadHash &&
+          existing.payloadHash !== payload.idempotencyPayloadHash
+        ) {
+          throw new CrmError(
+            CRM_ERROR_CODES.IDEMPOTENCY_PAYLOAD_MISMATCH,
+            CRM_USER_MESSAGES.IDEMPOTENCY_PAYLOAD_MISMATCH,
+            409
+          );
+        }
+        return this.getQuotationDetail(context, existing.resourceId);
+      }
+    }
+
+    /**
+     * Claim-first idempotency: reserve the key before creating the quotation so
+     * concurrent callers with the same key converge on one resource id.
+     */
+    let claimedResourceId: string | null = null;
+    if (idempotencyKey && this.idempotency) {
+      claimedResourceId = crypto.randomUUID();
+      try {
+        await this.idempotency.insert({
+          businessId: context.businessId,
+          idempotencyKey,
+          operationType: QUOTATION_IDEMPOTENCY_OPERATIONS.CREATE_QUOTATION,
+          payloadHash: payload.idempotencyPayloadHash ?? "",
+          resourceType: "quotation",
+          resourceId: claimedResourceId,
+          createdBy: context.platformUserId ?? null,
+        });
+      } catch (error) {
+        const raced = await this.idempotency.find(
+          context.businessId,
+          QUOTATION_IDEMPOTENCY_OPERATIONS.CREATE_QUOTATION,
+          idempotencyKey
+        );
+        if (raced) {
+          if (
+            payload.idempotencyPayloadHash &&
+            raced.payloadHash !== payload.idempotencyPayloadHash
+          ) {
+            throw new CrmError(
+              CRM_ERROR_CODES.IDEMPOTENCY_PAYLOAD_MISMATCH,
+              CRM_USER_MESSAGES.IDEMPOTENCY_PAYLOAD_MISMATCH,
+              409
+            );
+          }
+          // Winner may still be inserting the quotation row — brief retry.
+          for (let attempt = 0; attempt < 20; attempt += 1) {
+            try {
+              return await this.getQuotationDetail(context, raced.resourceId);
+            } catch {
+              await new Promise((resolve) =>
+                setTimeout(resolve, 50 * (attempt + 1))
+              );
+            }
+          }
+          return this.getQuotationDetail(context, raced.resourceId);
+        }
+        if (
+          error instanceof CrmError &&
+          error.code === CRM_ERROR_CODES.IDEMPOTENCY_CONFLICT
+        ) {
+          throw error;
+        }
+        throw error;
+      }
+    }
+
+    const {
+      idempotencyKey: _ignoredKey,
+      idempotencyPayloadHash: _ignoredHash,
+      requireIdempotencyKey: _ignoredRequire,
+      ...createPayload
+    } = payload;
+    void _ignoredKey;
+    void _ignoredHash;
+    void _ignoredRequire;
+
+    const parsed = createQuotationSchema.safeParse(createPayload);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       throw new CrmError(
@@ -124,6 +224,7 @@ export class QuotationService {
       : resolveDefaultValidUntil(new Date(), QUOTATION_DEFAULT_VALIDITY_DAYS);
 
     const quotationRow = await this.quotationRepository.insert({
+      ...(claimedResourceId ? { id: claimedResourceId } : {}),
       businessId: context.businessId,
       quotationNumber,
       partyId: parsed.data.partyId,
@@ -189,6 +290,25 @@ export class QuotationService {
     quotationId: string
   ): Promise<QuotationDetailView> {
     const row = await this.requireQuotation(context, quotationId);
+    await this.applyExpiryIfNeeded(context, row);
+    return this.mapDetailView(context, row);
+  }
+
+  async getQuotationByNumber(
+    context: CurrentBusinessContext,
+    quotationNumber: string
+  ): Promise<QuotationDetailView> {
+    const row = await this.quotationRepository.findByNumber(
+      context.businessId,
+      quotationNumber
+    );
+    if (!row) {
+      throw new CrmError(
+        CRM_ERROR_CODES.QUOTATION_NOT_FOUND,
+        CRM_USER_MESSAGES.QUOTATION_NOT_FOUND,
+        404
+      );
+    }
     await this.applyExpiryIfNeeded(context, row);
     return this.mapDetailView(context, row);
   }
@@ -1309,6 +1429,24 @@ export class QuotationService {
   }
 }
 
-export function createQuotationService() {
+export function createQuotationService(options?: {
+  idempotency?: QuotationIdempotencyRepositoryPort | null;
+}) {
+  if (options?.idempotency !== undefined) {
+    return new QuotationService(
+      createQuotationRepository(),
+      createQuotationVersionRepository(),
+      createQuotationLineRepository(),
+      createPartyRepository(),
+      createPricingResolutionAdapter(),
+      createQuotationCalculationService(),
+      createQuotationDocumentAdapter(),
+      createSalesOrderService(),
+      createOpportunityHandoffAdapter(),
+      createPartyTimelineService(),
+      createAuditService(),
+      options.idempotency
+    );
+  }
   return new QuotationService();
 }

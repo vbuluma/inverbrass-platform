@@ -6,7 +6,7 @@
  * BP-006 / IP-01 – Sales & Order Creation
  */
 
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, or, sql } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 
 import { getDb } from "@/db/client";
@@ -367,6 +367,30 @@ export class SalesOrderRepository implements SalesOrderRepositoryPort {
       .from(salesOrder)
       .where(eq(salesOrder.businessId, businessId))
       .orderBy(desc(salesOrder.createdAt));
+    return rows.map(mapOrder);
+  }
+
+  /**
+   * Customer Web candidate orders for a guest/party scope.
+   * Callers MUST still run assertCustomerOrderAccess per row.
+   */
+  async listCandidatesForCustomerWebScope(
+    businessId: string,
+    scope: { partyId: string | null; guestSessionId: string },
+    limit = 50
+  ): Promise<SalesOrderRecord[]> {
+    const partyClause = scope.partyId
+      ? eq(salesOrder.partyId, scope.partyId)
+      : undefined;
+    const guestClause = sql`${salesOrder.metadata}->'customerWeb'->>'guestSessionId' = ${scope.guestSessionId}`;
+    const ownership = partyClause ? or(partyClause, guestClause) : guestClause;
+
+    const rows = await this.dbClient
+      .select()
+      .from(salesOrder)
+      .where(and(eq(salesOrder.businessId, businessId), ownership))
+      .orderBy(desc(salesOrder.createdAt))
+      .limit(limit);
     return rows.map(mapOrder);
   }
 

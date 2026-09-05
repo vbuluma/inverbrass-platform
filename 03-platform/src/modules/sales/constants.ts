@@ -93,8 +93,19 @@ export const SALES_AUDIT_ACTIONS = {
 export type SalesAuditAction =
   (typeof SALES_AUDIT_ACTIONS)[keyof typeof SALES_AUDIT_ACTIONS];
 
+export const SALES_IDEMPOTENCY_OPERATIONS = {
+  CREATE_DIRECT_SALE: "CREATE_DIRECT_SALE",
+} as const;
+
+export type SalesIdempotencyOperation =
+  (typeof SALES_IDEMPOTENCY_OPERATIONS)[keyof typeof SALES_IDEMPOTENCY_OPERATIONS];
+
 export const SALES_CONFIRMATION_POLICY = {
   requiresSegregationOfDuties: true,
+} as const;
+
+export const SALES_CUSTOMER_WEB_CONFIRMATION_POLICY = {
+  requiresSegregationOfDuties: false,
 } as const;
 
 export const SALES_COMPLETION_POLICY = {

@@ -680,6 +680,20 @@
       "when": 1784564888891,
       "tag": "0093_bp009_ip03_criteria_lock_governance",
       "breakpoints": true
+    },
+    {
+      "idx": 98,
+      "version": "7",
+      "when": 1784564988891,
+      "tag": "0094_bp006_sl_cus_001_sales_idempotency",
+      "breakpoints": true
+    },
+    {
+      "idx": 99,
+      "version": "7",
+      "when": 1784565088891,
+      "tag": "0095_bp004_sl_cus_003_quotation_idempotency",
+      "breakpoints": true
     }
   ]
 }

@@ -49,6 +49,9 @@ export const CRM_ERROR_CODES = {
   CAMPAIGN_CONSENT_REQUIRED: "CAMPAIGN_CONSENT_REQUIRED",
   PARTY_GROUP_NOT_FOUND: "PARTY_GROUP_NOT_FOUND",
   PROVIDER_ERROR: "PROVIDER_ERROR",
+  IDEMPOTENCY_KEY_REQUIRED: "IDEMPOTENCY_KEY_REQUIRED",
+  IDEMPOTENCY_PAYLOAD_MISMATCH: "IDEMPOTENCY_PAYLOAD_MISMATCH",
+  IDEMPOTENCY_CONFLICT: "IDEMPOTENCY_CONFLICT",
 } as const;
 
 export type CrmErrorCode =
@@ -121,4 +124,8 @@ export const CRM_USER_MESSAGES = {
     "Marketing consent is required before campaign outreach.",
   PARTY_GROUP_NOT_FOUND: "The selected party group could not be found.",
   PROVIDER_ERROR: "Something went wrong. Please try again.",
+  IDEMPOTENCY_KEY_REQUIRED: "A request key is required to submit this quotation.",
+  IDEMPOTENCY_PAYLOAD_MISMATCH:
+    "This request key was already used with different details.",
+  IDEMPOTENCY_CONFLICT: "This quotation request is already being processed.",
 } as const;

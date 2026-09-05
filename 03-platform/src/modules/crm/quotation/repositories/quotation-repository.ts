@@ -31,6 +31,7 @@ export class QuotationRepository {
     const [row] = await dbClient
       .insert(quotation)
       .values({
+        ...(values.id ? { id: values.id } : {}),
         businessId: values.businessId,
         quotationNumber: values.quotationNumber,
         partyId: values.partyId,

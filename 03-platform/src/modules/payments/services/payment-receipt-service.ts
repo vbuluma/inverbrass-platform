@@ -223,10 +223,14 @@ export class PaymentReceiptService {
     }
 
     const obligation = await this.requireObligation(context, transaction.obligationId);
-    const [allocations, invoice] = await Promise.all([
-      this.deps.allocations.listByTransaction(context.businessId, transaction.id),
-      this.deps.invoices.findActiveByObligation(context.businessId, obligation.id),
-    ]);
+    const allocations = await this.deps.allocations.listByTransaction(
+      context.businessId,
+      transaction.id
+    );
+    const invoice = await this.deps.invoices.findActiveByObligation(
+      context.businessId,
+      obligation.id
+    );
     const activeAllocations = allocations.filter((row) => isActiveAllocation(row));
     const amount = receiptAmountFromTransaction(transaction);
 
@@ -477,14 +481,18 @@ export class PaymentReceiptService {
     receipt: PaymentReceiptRecord,
     obligationNumber?: string
   ): Promise<ReceiptDetailView> {
-    const [obligation, allocations, deliveries] = await Promise.all([
-      this.deps.obligations.findById(context.businessId, receipt.paymentObligationId),
-      this.deps.allocations.listByTransaction(
-        context.businessId,
-        receipt.paymentTransactionId
-      ),
-      this.deps.receipts.listDeliveries(context.businessId, receipt.id),
-    ]);
+    const obligation = await this.deps.obligations.findById(
+      context.businessId,
+      receipt.paymentObligationId
+    );
+    const allocations = await this.deps.allocations.listByTransaction(
+      context.businessId,
+      receipt.paymentTransactionId
+    );
+    const deliveries = await this.deps.receipts.listDeliveries(
+      context.businessId,
+      receipt.id
+    );
     const active = allocations.filter((row) => isActiveAllocation(row));
     const allocatedAmount = active.reduce(
       (sum, row) => addPaymentAmounts(sum, row.allocatedAmount),

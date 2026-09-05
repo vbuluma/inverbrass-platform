@@ -157,6 +157,14 @@ export const QUOTATION_NUMBER_PREFIX = "QT";
 /** Default validity period in days when not configured. */
 export const QUOTATION_DEFAULT_VALIDITY_DAYS = 30;
 
+/** Reusable quotation-operation idempotency operation types (SL-CUS-003). */
+export const QUOTATION_IDEMPOTENCY_OPERATIONS = {
+  CREATE_QUOTATION: "CREATE_QUOTATION",
+} as const;
+
+export type QuotationIdempotencyOperation =
+  (typeof QUOTATION_IDEMPOTENCY_OPERATIONS)[keyof typeof QUOTATION_IDEMPOTENCY_OPERATIONS];
+
 export const QUOTATION_APPROVAL_STATUS_CODES = {
   NOT_REQUIRED: "NOT_REQUIRED",
   PENDING: "PENDING",

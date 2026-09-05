@@ -66,9 +66,14 @@ WEB · APP · STAFF · CONVERSATIONAL · API
 | Channel Gateway | `core/channel-experience/services/channel-gateway-service.ts` | Implemented |
 | Web adapter | `core/channel-experience/adapters/web-channel-adapter.ts` | Implemented |
 | Identity resolver | `core/channel-experience/identity/channel-identity-resolver.ts` | Implemented (Web staff) |
+| **Customer Web foundation (SL-ENG-003o-002)** | `core/channel-experience/customer/` | **CERTIFIED** (foundation) |
+| Customer Web adapter | `customer/adapter.ts` | Implemented |
+| Customer Web policy | `customer/policy.ts` | Implemented (deny-by-default allow-list) |
+| Guest session | `customer/guest-session.ts` | Implemented (HMAC HttpOnly, path `/store`) |
+| Tenant-from-URL | `customer/tenant-resolution.ts` | Implemented (`/store/[businessCode]`) |
 | Session context | `core/channel-experience/session/channel-session-context.ts` | Implemented |
 | Intent model | `core/channel-experience/intent/intent-model.ts` | Contract only |
-| Permission resolution | `core/auth/services/permission-resolution-service.ts` | Implemented (ENG-002) |
+| Permission resolution | `core/auth/services/permission-resolution-service.ts` | Implemented (ENG-002 staff) |
 
 ---
 
@@ -157,7 +162,31 @@ Tenant (business)
 Roles / Permissions (ENG-002)
 ```
 
-Web uses existing authenticated session and `CurrentBusinessContext`. Future conversational channels resolve external identity keys (phone, social handle) to the same BP-002 Party without a parallel customer store.
+Web uses existing authenticated session and `CurrentBusinessContext` for **staff**.
+
+**Customer Web (SL-ENG-003o-002)** uses a separate presentation profile:
+
+```
+/store/[businessCode]
+        ↓
+Tenant resolution (business.code → ACTIVE business) — never staff business-context cookie
+        ↓
+Guest session (HttpOnly) OR optional authenticated platform user
+        ↓
+CustomerChannelIdentity (CustomerWeb.* grants) — never staff RBAC
+        ↓
+evaluateCustomerWebPolicy (deny-by-default allow-list)
+        ↓
+Customer Channel Gateway → domain capability (future SL-CUS-001 handlers)
+```
+
+Party binding for authenticated customers is a **contract** in this slice; full platformUser→Party mapping within tenant remains for SL-CUS-001 / IAM (`PENDING_IAM`).
+
+Cart is **session/channel state only** (D-03) — not a Sales domain entity.
+
+CREATE_SALE **idempotency key contract** is ready at the channel boundary; BP-006 `createDirectSale` domain acceptance remains **BLOCKED** for SL-CUS-001.
+
+Certification evidence: `03-platform/scripts/eng003o-customer-web-foundation-smoke.ts`
 
 ---
 
@@ -244,6 +273,7 @@ No broad rewrites performed in this phase.
 | Intent model | Not present | Contract only (no LLM) | **Defined** |
 | RBAC | Procurement/commercial bypass | Real permissions from ENG-002 | **Fixed** |
 | Web adapter | Implicit | All domain server actions | **Reference impl** |
+| Customer Web boundary | Not present | Adapter + policy + guest session + tenant-from-URL | **CERTIFIED (SL-ENG-003o-002)** |
 | WhatsApp | N/A | Future adapter hook only | **Future** |
 | Audit | Domain helpers | Preserved via gateway context | **Unchanged** |
 | Idempotency | Domain paths | Preserved — no channel duplicate engine | **Unchanged** |
@@ -267,3 +297,5 @@ No broad rewrites performed in this phase.
 - [01 – Enterprise Solution Architecture](./01-Enterprise-Solution-Architecture.md) §5 — ENG-003o
 - `03-platform/src/core/channel-experience/`
 - `03-platform/scripts/eng003o-channel-smoke-validation.ts`
+- `03-platform/scripts/eng003o-customer-web-foundation-smoke.ts`
+- `03-platform/src/app/(public)/store/[businessCode]/`
